@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/clients/receiptListModel.dart';
 import 'package:login2/models/staff_report/targetReportModel.dart';
@@ -83,7 +84,7 @@ class _AchievementDetailsPageState extends State<AchievementDetailsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Achievement Details"),
-        backgroundColor: const Color.fromARGB(255, 57, 131, 243),
+        backgroundColor: const Color.fromARGB(255, 33, 130, 196),
         foregroundColor: Colors.white,
       ),
       body: isLoading
@@ -127,6 +128,14 @@ class _AchievementDetailsPageState extends State<AchievementDetailsPage> {
                       Text(
                         "🏆 Achieved: ${widget.targetData.achieved}",
                         style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "💰 Pending: ₹${NumberFormat("#,##0.00").format((double.tryParse(widget.targetData.targetAmount.toString().replaceAll(',', '')) ?? 0.0) - (double.tryParse(widget.targetData.achieved.toString().replaceAll(',', '')) ?? 0.0))}",
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange),
                       ),
                       // Padding(
                       //   padding: const EdgeInsets.only(left: 22),
@@ -276,8 +285,7 @@ class _AchievementDetailsPageState extends State<AchievementDetailsPage> {
                                                     "• $p",
                                                     style: const TextStyle(
                                                         fontSize: 15,
-                                                        color:
-                                                            Colors.black54),
+                                                        color: Colors.black54),
                                                   ),
                                                 ),
                                               ),

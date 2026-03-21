@@ -7,6 +7,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
+import 'package:login2/models/lead_management/getLeaveApprovalRejectTemplate.dart';
 import 'dart:async';
 
 class LeaveRequestFilter {
@@ -47,6 +48,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
   bool _filterApproved = false;
   bool _filterRejected = false;
   bool _filterPartial = false;
+  List<TemplateData>? _allTemplates;
 
   final List<String> _leaveTypeFilters = [
     'Casual Leave',
@@ -111,8 +113,22 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
       _fetchPendingLeaves(),
       _fetchApprovedLeaves(),
       _fetchPermissions(),
+      _fetchTemplates(),
     ]);
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _fetchTemplates() async {
+    try {
+      final res = await HttpService.getApprovalRejectTemplate();
+      if (res != null && (res.status == true || res.message == 'success')) {
+        setState(() {
+          _allTemplates = res.data;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching templates: $e");
+    }
   }
 
   Future<void> _fetchPermissions() async {
@@ -1224,27 +1240,27 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                             //   ],
                             // ),
                             const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: softOrange.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Icon(Icons.access_time,
-                                          size: 12, color: softOrange),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Day: ${item.dayType == "half" || item.dayType == "half_day" ? "Half Day${item.session != null ? " (${item.session})" : ""}" : item.dayType ?? "Full Day"}',
-                                      style: TextStyle(
-                                        color: darkGrey,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: softOrange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Icon(Icons.access_time,
+                                      size: 12, color: softOrange),
                                 ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Day: ${item.dayType == "half" || item.dayType == "half_day" ? "Half Day${item.session != null ? " (${item.session})" : ""}" : item.dayType ?? "Full Day"}',
+                                  style: TextStyle(
+                                    color: darkGrey,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -1590,6 +1606,33 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                           child: Text(
                             // '${item.fromDate ?? ''}  →  ${item.toDate ?? ''}',
                             'Applied On:${item.createdAt}',
+                            style: TextStyle(
+                              color: primaryBlue,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: lightGrey,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.note_alt_outlined,
+                            size: 16, color: primaryBlue),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            // '${item.fromDate ?? ''}  →  ${item.toDate ?? ''}',
+                            'Reason:${item.reason}',
                             style: TextStyle(
                               color: primaryBlue,
                               fontSize: 12,
@@ -2003,8 +2046,11 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                     _buildDetailRow(Icons.calendar_today_outlined, "Duration",
                         '${item.noOfDays ?? '0'} Days'),
                     if (item.session != null && item.session != "")
-                      _buildDetailRow(Icons.access_time, "Session",
-                          item.session[0].toUpperCase() + item.session.substring(1)),
+                      _buildDetailRow(
+                          Icons.access_time,
+                          "Session",
+                          item.session[0].toUpperCase() +
+                              item.session.substring(1)),
                     // _buildDetailRow(
                     //     Icons.date_range, "From Date", item.fromDate ?? 'N/A'),
                     // _buildDetailRow(
@@ -2277,6 +2323,43 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if (_allTemplates != null &&
+                      _allTemplates!.any((e) =>
+                          e.templateType?.toLowerCase() == 'approve')) ...[
+                    const Text(
+                      "Select Template",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: primaryBlue,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _allTemplates!
+                          .where(
+                              (e) => e.templateType?.toLowerCase() == 'approve')
+                          .map((t) => ActionChip(
+                                label: Text(t.templateName ?? '',
+                                    style: const TextStyle(fontSize: 12)),
+                                backgroundColor: softGreen.withOpacity(0.1),
+                                onPressed: () {
+                                  setState(() {
+                                    if (remarksCtrl.text.isEmpty) {
+                                      remarksCtrl.text = t.templateBody ?? '';
+                                    } else {
+                                      remarksCtrl.text +=
+                                          "\n${t.templateBody ?? ''}";
+                                    }
+                                  });
+                                },
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   const Text(
                     "Admin Remarks",
                     style: TextStyle(
@@ -2476,6 +2559,51 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                         style: TextStyle(fontSize: 15),
                         textAlign: TextAlign.center,
                       ),
+                      const SizedBox(height: 16),
+                      if (_allTemplates != null &&
+                          _allTemplates!.any((e) =>
+                              e.templateType?.toLowerCase() == 'reject')) ...[
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Select Template",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: primaryBlue,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                          ],
+                        ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _allTemplates!
+                              .where((e) =>
+                                  e.templateType?.toLowerCase() == 'reject')
+                              .map((t) => ActionChip(
+                                    label: Text(t.templateName ?? '',
+                                        style: const TextStyle(fontSize: 12)),
+                                    backgroundColor: softRed.withOpacity(0.1),
+                                    onPressed: () {
+                                      setState(() {
+                                        if (remarksCtrl.text.isEmpty) {
+                                          remarksCtrl.text =
+                                              t.templateBody ?? '';
+                                        } else {
+                                          remarksCtrl.text +=
+                                              "\n${t.templateBody ?? ''}";
+                                        }
+                                      });
+                                    },
+                                  ))
+                              .toList(),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       const SizedBox(height: 16),
                       TextField(
                         controller: remarksCtrl,

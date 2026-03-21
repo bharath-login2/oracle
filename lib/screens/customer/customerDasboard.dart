@@ -1799,9 +1799,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                 );
               },
               child: Text(
-                // _formatCurrency(totalInvoice.toString()),
-                '₹ ${totalInvoice.toString()}',
-
+                '₹ ${NumberFormat('#,##,###').format(totalInvoice)}',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
@@ -1909,7 +1907,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         );
                       },
                       child: Text(
-                        totalReceived.toString(),
+                        NumberFormat('#,##,###').format(totalReceived),
                         // _formatCurrency(totalReceived.toString()),
                         style: TextStyle(
                           fontSize: 16,
@@ -1990,7 +1988,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                         );
                       },
                       child: Text(
-                        _formatCurrency(balance.toString()),
+                        NumberFormat('#,##,###').format(balance),
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -2140,7 +2138,7 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                       ),
                     ),
                     Text(
-                      '₹${payment.recieptAmount}',
+                      '₹${NumberFormat('#,##,###').format(double.tryParse(payment.recieptAmount) ?? 0)}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,

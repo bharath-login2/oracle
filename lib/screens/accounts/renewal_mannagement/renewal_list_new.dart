@@ -1,5 +1,6 @@
 // ignore_for_file: must_be_immutable, use_build_context_synchronously
 
+import 'dart:async';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -73,7 +74,7 @@ class _RenewalListNewState extends State<RenewalListNew> {
   bool isLoading = true;
   int page = 1;
   int add = 1;
-  int pageSize = 20;
+  int pageSize = 40;
   String daysToExpire = "";
   List filteredNames = [];
   List selectedIds = [];
@@ -117,6 +118,7 @@ class _RenewalListNewState extends State<RenewalListNew> {
   // Pagination control
   bool hasMore = true;
   bool isRefreshing = false;
+  Timer? _searchDebounce;
 
   void filterCustomers(
     String query,
@@ -469,7 +471,16 @@ class _RenewalListNewState extends State<RenewalListNew> {
     }
   }
 
-  void _resetAndLoadList() {
+  Future<void> _resetAndLoadList() async {
+    int? jumpIndex;
+    try {
+      if (itemPositionsListener.itemPositions.value.isNotEmpty) {
+        jumpIndex = itemPositionsListener.itemPositions.value.first.index;
+      }
+    } catch (e) {
+      // Listener might not be attached yet
+    }
+
     setState(() {
       page = 1;
       add = 1;
@@ -480,7 +491,27 @@ class _RenewalListNewState extends State<RenewalListNew> {
       expiredItems.clear();
       renewedItems.clear();
     });
-    getList();
+    await getList();
+
+    if (jumpIndex != null && jumpIndex > 0) {
+      final int finalJumpIndex = jumpIndex;
+      // Give small delay for list to build
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (itemScrollController.isAttached) {
+          int maxIndex = _getTotalItemCount() - 1;
+          itemScrollController.jumpTo(
+            index: finalJumpIndex > maxIndex ? maxIndex : finalJumpIndex,
+          );
+        }
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    if (_searchDebounce?.isActive ?? false) _searchDebounce!.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+      _resetAndLoadList();
+    });
   }
 
   @override
@@ -615,138 +646,120 @@ class _RenewalListNewState extends State<RenewalListNew> {
           ),
         ),
       ),
-      body: RefreshIndicator(
-          onRefresh: (() async {
-            _resetAndLoadList();
-          }),
-          child: isLoading == true && page == 1
-              ? buildLoaderListItem()
-              : items.isNotEmpty
-                  ? SafeArea(
-                      child: listResponse == null
-                          ? const Center(
-                              child: Text("Something Went Wrong"),
-                            )
-                          : Column(
-                              children: [
-                                // Padding(
-                                //   padding: const EdgeInsets.all(8.0),
-                                //   child: Row(
-                                //     mainAxisAlignment:
-                                //         MainAxisAlignment.spaceBetween,
-                                //     children: [
-                                //       SizedBox(
-                                //         width:
-                                //             MediaQuery.of(context).size.width *
-                                //                 0.6,
-                                //         child: TextFormField(
-                                //           style: const TextStyle(
-                                //             color: Colors.black,
-                                //           ),
-                                //           controller: search,
-                                //           decoration: InputDecoration(
-                                //             contentPadding:
-                                //                 const EdgeInsets.all(8),
-                                //             hintStyle: const TextStyle(
-                                //                 color: Colors.grey),
-                                //             hintText: 'Search',
-                                //             filled: true,
-                                //             fillColor: Colors.white,
-                                //             border: OutlineInputBorder(
-                                //               borderRadius:
-                                //                   BorderRadius.circular(5),
-                                //               borderSide: BorderSide
-                                //                   .none, // Set the border color to none
-                                //             ),
-                                //             prefixIcon: const Icon(
-                                //               Icons.search,
-                                //               color: Colors.grey,
-                                //             ),
-                                //           ),
-                                //         ),
-                                //       ),
-                                //       InkWell(
-                                //         onTap: () {
-                                //           _resetAndLoadList();
-                                //         },
-                                //         child: Container(
-                                //           width: MediaQuery.of(context)
-                                //                   .size
-                                //                   .width *
-                                //               0.31,
-                                //           height: 45,
-                                //           decoration: BoxDecoration(
-                                //               borderRadius:
-                                //                   BorderRadius.circular(4),
-                                //               color: const Color(0xff2590cf)),
-                                //           child: const Center(
-                                //             child: Text("Submit",
-                                //                 style: TextStyle(
-                                //                   fontSize: 16,
-                                //                   color: Colors.white,
-                                //                   fontWeight: FontWeight.w600,
-                                //                 )),
-                                //           ),
-                                //         ),
-                                //       )
-                                //     ],
-                                //   ),
-                                // ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8),
-                                    child: ScrollablePositionedList.builder(
-                                      shrinkWrap: true,
-                                      itemScrollController:
-                                          itemScrollController,
-                                      itemPositionsListener:
-                                          itemPositionsListener,
-                                      itemCount: _getTotalItemCount(),
-                                      initialScrollIndex: 0,
-                                      itemBuilder: (context, index) {
-                                        // Check if this is the loading indicator
-                                        if (index == _getTotalItemCount() - 1 &&
-                                            hasMore &&
-                                            !isRefreshing) {
-                                          return _buildLoadingIndicator();
-                                        }
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                style: const TextStyle(
+                  color: Colors.black,
+                ),
+                controller: search,
+                onChanged: (value) {
+                  _onSearchChanged(value);
+                },
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.all(8),
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  hintText: 'Search by client name...',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none, // Set the border color to none
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Colors.grey,
+                  ),
+                  suffixIcon: search.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.grey),
+                          onPressed: () {
+                            search.clear();
+                            _resetAndLoadList();
+                          },
+                        )
+                      : null,
+                ),
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: (() async {
+                  _resetAndLoadList();
+                }),
+                child: isLoading == true && page == 1
+                    ? buildLoaderListItem()
+                    : items.isNotEmpty
+                        ? listResponse == null
+                            ? const Center(
+                                child: Text("Something Went Wrong"),
+                              )
+                            : Column(
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8),
+                                      child: ScrollablePositionedList.builder(
+                                        shrinkWrap: true,
+                                        itemScrollController:
+                                            itemScrollController,
+                                        itemPositionsListener:
+                                            itemPositionsListener,
+                                        itemCount: _getTotalItemCount(),
+                                        initialScrollIndex: 0,
+                                        itemBuilder: (context, index) {
+                                          // Check if this is the loading indicator
+                                          if (index ==
+                                                  _getTotalItemCount() - 1 &&
+                                              hasMore &&
+                                              !isRefreshing) {
+                                            return _buildLoadingIndicator();
+                                          }
 
-                                        // Determine which section and item index we're at
-                                        var sectionInfo =
-                                            _getSectionForIndex(index);
+                                          // Determine which section and item index we're at
+                                          var sectionInfo =
+                                              _getSectionForIndex(index);
 
-                                        if (sectionInfo.isSectionHeader) {
-                                          // This is a section header
-                                          return _buildSectionHeader(
-                                              sectionInfo.sectionIndex);
-                                        } else {
-                                          // This is a renewal item
-                                          return _buildRenewalItem(
-                                              context,
-                                              sectionInfo.sectionIndex,
-                                              sectionInfo.itemIndex);
-                                        }
-                                      },
+                                          if (sectionInfo.isSectionHeader) {
+                                            // This is a section header
+                                            return _buildSectionHeader(
+                                                sectionInfo.sectionIndex);
+                                          } else {
+                                            // This is a renewal item
+                                            return _buildRenewalItem(
+                                                context,
+                                                sectionInfo.sectionIndex,
+                                                sectionInfo.itemIndex);
+                                          }
+                                        },
+                                      ),
                                     ),
                                   ),
-                                ),
-                                _buildSummarySection(),
+                                  _buildSummarySection(),
+                                ],
+                              )
+                        : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                    height: 150,
+                                    width: 150,
+                                    child: Image.asset(
+                                        "assets/icons/nodatafound.png")),
+                                const Text("No Renewals")
                               ],
-                            ))
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                              height: 150,
-                              width: 150,
-                              child:
-                                  Image.asset("assets/icons/nodatafound.png")),
-                          const Text("No Renewals")
-                        ],
-                      ),
-                    )),
+                            ),
+                          ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1343,112 +1356,110 @@ class _RenewalListNewState extends State<RenewalListNew> {
     );
   }
 
-
   Widget _buildSectionHeader(int sectionIndex) {
-  String title = "";
-  int count = 0;
-  bool isExpanded = false;
-  Color headerColor = Colors.blue;
-  bool isFiltered = false;
+    String title = "";
+    int count = 0;
+    bool isExpanded = false;
+    Color headerColor = Colors.blue;
+    bool isFiltered = false;
 
-  switch (sectionIndex) {
-    case 0: // Upcoming
-      title = "UPCOMING RENEWALS";
-      count = upcomingItems.length;
-      isExpanded = isUpcomingExpanded;
-      headerColor = Colors.blue;
-      isFiltered = renewalstatus.text == 'Not Renewed';
-      break;
-    case 1: // Expired
-      title = "EXPIRED RENEWALS";
-      count = expiredItems.length;
-      isExpanded = isExpiredExpanded;
-      headerColor = Colors.red;
-      isFiltered = renewalstatus.text == 'Expired';
-      break;
-    case 2: // Renewed
-      title = "RENEWED ITEMS";
-      count = renewedItems.length;
-      isExpanded = isRenewedExpanded;
-      headerColor = Colors.green;
-      isFiltered = renewalstatus.text == 'Renewed';
-      break;
-  }
+    switch (sectionIndex) {
+      case 0: // Upcoming
+        title = "UPCOMING RENEWALS";
+        count = upcomingItems.length;
+        isExpanded = isUpcomingExpanded;
+        headerColor = Colors.blue;
+        isFiltered = renewalstatus.text == 'Not Renewed';
+        break;
+      case 1: // Expired
+        title = "EXPIRED RENEWALS";
+        count = expiredItems.length;
+        isExpanded = isExpiredExpanded;
+        headerColor = Colors.red;
+        isFiltered = renewalstatus.text == 'Expired';
+        break;
+      case 2: // Renewed
+        title = "RENEWED ITEMS";
+        count = renewedItems.length;
+        isExpanded = isRenewedExpanded;
+        headerColor = Colors.green;
+        isFiltered = renewalstatus.text == 'Renewed';
+        break;
+    }
 
-  return Padding(
-    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-    child: Container(
-      decoration: BoxDecoration(
-        color: headerColor.withOpacity(isFiltered ? 1.0 : 0.8),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(isFiltered ? 0.5 : 0.3),
-            spreadRadius: isFiltered ? 2 : 1,
-            blurRadius: isFiltered ? 4 : 2,
-            offset: const Offset(0, 1),
-          ),
-        ],
-        border: isFiltered 
-          ? Border.all(color: Colors.white, width: 2)
-          : null,
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                if (isFiltered)
-                  const Icon(Icons.filter_alt, color: Colors.white, size: 16),
-                if (isFiltered) const SizedBox(width: 8),
-                Text(
-                  "$title ($count)",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: isFiltered ? FontWeight.bold : FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            InkWell(
-              onTap: () {
-                setState(() {
-                  switch (sectionIndex) {
-                    case 0:
-                      isUpcomingExpanded = !isUpcomingExpanded;
-                      break;
-                    case 1:
-                      isExpiredExpanded = !isExpiredExpanded;
-                      break;
-                    case 2:
-                      isRenewedExpanded = !isRenewedExpanded;
-                      break;
-                  }
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isExpanded ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: headerColor.withOpacity(isFiltered ? 1.0 : 0.8),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(isFiltered ? 0.5 : 0.3),
+              spreadRadius: isFiltered ? 2 : 1,
+              blurRadius: isFiltered ? 4 : 2,
+              offset: const Offset(0, 1),
             ),
           ],
+          border: isFiltered ? Border.all(color: Colors.white, width: 2) : null,
+        ),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  if (isFiltered)
+                    const Icon(Icons.filter_alt, color: Colors.white, size: 16),
+                  if (isFiltered) const SizedBox(width: 8),
+                  Text(
+                    "$title ($count)",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight:
+                          isFiltered ? FontWeight.bold : FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    switch (sectionIndex) {
+                      case 0:
+                        isUpcomingExpanded = !isUpcomingExpanded;
+                        break;
+                      case 1:
+                        isExpiredExpanded = !isExpiredExpanded;
+                        break;
+                      case 2:
+                        isRenewedExpanded = !isRenewedExpanded;
+                        break;
+                    }
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // Widget _buildSectionHeader(int sectionIndex) {
   //   String title = "";
