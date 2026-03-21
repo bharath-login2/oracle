@@ -58,8 +58,8 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
     final String yearMonth =
         "${currentMonth.year.toString().padLeft(4, '0')}-${currentMonth.month.toString().padLeft(2, '0')}";
     try {
-      final result =
-          await HttpService().getStaffwiseWorkDataCounts(widget.staffId,yearMonth);
+      final result = await HttpService()
+          .getStaffwiseWorkDataCounts(widget.staffId, yearMonth);
 
       if (result != null && result.status) {
         setState(() {
@@ -1626,7 +1626,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
             ),
           ],
         ),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Color.fromARGB(255, 44, 126, 180),
         foregroundColor: Colors.white,
         centerTitle: false,
       ),
@@ -1683,12 +1683,13 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? Colors.blueAccent
+                                            ? Color.fromARGB(255, 44, 126, 180)
                                             : Colors.grey.shade200,
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                           color: isSelected
-                                              ? Colors.blueAccent
+                                              ? Color.fromARGB(
+                                                  255, 44, 126, 180)
                                               : Colors.grey.shade300,
                                           width: 1,
                                         ),

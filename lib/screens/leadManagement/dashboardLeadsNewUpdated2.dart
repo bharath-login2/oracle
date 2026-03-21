@@ -233,9 +233,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   DashboardLeadsCountsModel? dashboardCounts;
   DashboardLeadCounts? dashboardMainCounts;
   bool isDashboardCountsLoading = false;
-  String? targetStaffId;
+  String? targetStaffId = "";
   List<sl.Staff> staffList = [];
   TextEditingController searchController = TextEditingController();
+  TextEditingController staffSearchController = TextEditingController();
   final Color primaryBlue = const Color(0xFF2a86c9);
   final Color darkBlue = const Color(0xFF1a5a8c);
   final Color lightBlue = const Color(0xFF64b5f6);
@@ -386,6 +387,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   bool showStageWiseTable = false;
   bool showLeadSourceTable = false;
   bool showCategoryTable = false;
+  bool showCloudCallTable = false;
+  bool showPhoneCallTable = false;
   @override
   void initState() {
     super.initState();
@@ -395,7 +398,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
     _tabController.addListener(_handleTabSelection);
     _isTabControllerInitialized = true;
-    _loadReportsFromCache();
+    _loadReportStates().then((_) {
+      _loadReportsFromCache();
+    });
     _initializeData();
   }
 
@@ -408,6 +413,76 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
   int _getTabCount() {
     return 3;
+  }
+
+  Future<void> _loadReportStates() async {
+    _reportType1 =
+        await Common.getSharedPref("reportType1") ?? "Call Status Report";
+    _reportType2 =
+        await Common.getSharedPref("reportType2") ?? "Active Lead Summary";
+    _reportType3 =
+        await Common.getSharedPref("reportType3") ?? "Lead Source Report";
+    _reportType4 =
+        await Common.getSharedPref("reportType4") ?? "Category Report";
+
+    showCallStatusTable =
+        (await Common.getSharedPref("showCallStatusTable")) == "true";
+    showStageWiseTable =
+        (await Common.getSharedPref("showStageWiseTable")) == "true";
+    showLeadSourceTable =
+        (await Common.getSharedPref("showLeadSourceTable")) == "true";
+    showCategoryTable =
+        (await Common.getSharedPref("showCategoryTable")) == "true";
+    showCloudCallTable =
+        (await Common.getSharedPref("showCloudCallTable")) == "true";
+    showPhoneCallTable =
+        (await Common.getSharedPref("showPhoneCallTable")) == "true";
+
+    String? csFrom = await Common.getSharedPref("callStatusFromDate");
+    String? csTo = await Common.getSharedPref("callStatusToDate");
+    if (csFrom != null) callStatusFromDate = DateTime.parse(csFrom);
+    if (csTo != null) callStatusToDate = DateTime.parse(csTo);
+
+    String? swFrom = await Common.getSharedPref("stageWiseFromDate");
+    String? swTo = await Common.getSharedPref("stageWiseToDate");
+    if (swFrom != null) stageWiseFromDate = DateTime.parse(swFrom);
+    if (swTo != null) stageWiseToDate = DateTime.parse(swTo);
+
+    String? lsFrom = await Common.getSharedPref("leadSourceFromDate");
+    String? lsTo = await Common.getSharedPref("leadSourceToDate");
+    if (lsFrom != null) leadSourceFromDate = DateTime.parse(lsFrom);
+    if (lsTo != null) leadSourceToDate = DateTime.parse(lsTo);
+
+    String? catFrom = await Common.getSharedPref("categoryFromDate");
+    String? catTo = await Common.getSharedPref("categoryToDate");
+    if (catFrom != null) categoryFromDate = DateTime.parse(catFrom);
+    if (catTo != null) categoryToDate = DateTime.parse(catTo);
+
+    String? csStaffs = await Common.getSharedPref("callStatusStaffIdStr");
+    if (csStaffs != null && csStaffs.isNotEmpty)
+      callStatusStaffs = csStaffs.split(",");
+
+    String? swStaffs = await Common.getSharedPref("stageWiseStaffIdStr");
+    if (swStaffs != null && swStaffs.isNotEmpty)
+      stageWiseStaffs = swStaffs.split(",");
+
+    String? lsStaffs = await Common.getSharedPref("leadSourceStaffIdStr");
+    if (lsStaffs != null && lsStaffs.isNotEmpty)
+      leadSourceStaffs = lsStaffs.split(",");
+
+    String? lsProds = await Common.getSharedPref("leadSourceProductIdStr");
+    if (lsProds != null && lsProds.isNotEmpty)
+      leadSourceProducts = lsProds.split(",");
+
+    String? lsCats = await Common.getSharedPref("leadSourceCategoryIdStr");
+    if (lsCats != null && lsCats.isNotEmpty)
+      leadSourceCategories = lsCats.split(",");
+
+    String? catStaffs = await Common.getSharedPref("categoryStaffIdStr");
+    if (catStaffs != null && catStaffs.isNotEmpty)
+      categoryStaffs = catStaffs.split(",");
+
+    setState(() {});
   }
 
   void _updateTabController() {
@@ -486,7 +561,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (index == 0) {
       if (!_isTab0Loaded) {
         _isTab0Loaded = true;
-        await _fetchTabLeads();
+        if (_isGraphViewActive) {
+          await _fetchProgressBarLeads(_listTabFilter);
+        } else {
+          await _fetchTabLeads();
+        }
         await _fetchDashboardTabContent();
       }
     } else if (index == 1) {
@@ -1623,8 +1702,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             callStatusToDate = to;
             callStatusStaffs = staffIds;
           });
+          await Common.saveSharedPref(
+              "callStatusFromDate", from.toIso8601String());
+          await Common.saveSharedPref("callStatusToDate", to.toIso8601String());
+          await Common.saveSharedPref(
+              "callStatusStaffIdStr", staffIds.join(","));
           await _fetchCallStatusReport();
           if (showCallStatusTable) await _fetchCallStatusTableReport();
+          if (title == "Cloud Call Report") await _fetchCloudCallReport();
+          if (title == "Phone Call Report") await _fetchPhoneCallReport();
         } else if (title.contains('Active Lead Summary') ||
             title.contains('Stage-wise')) {
           setState(() {
@@ -1632,6 +1718,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             stageWiseToDate = to;
             stageWiseStaffs = staffIds;
           });
+          await Common.saveSharedPref(
+              "stageWiseFromDate", from.toIso8601String());
+          await Common.saveSharedPref("stageWiseToDate", to.toIso8601String());
+          await Common.saveSharedPref(
+              "stageWiseStaffIdStr", staffIds.join(","));
           await _fetchStageWiseReport();
           if (showStageWiseTable) await _fetchStageWiseTableReport();
         } else if (title.contains('Lead Source')) {
@@ -1642,6 +1733,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             leadSourceProducts = productIds ?? [];
             leadSourceCategories = categoryIds ?? [];
           });
+          await Common.saveSharedPref(
+              "leadSourceFromDate", from.toIso8601String());
+          await Common.saveSharedPref("leadSourceToDate", to.toIso8601String());
+          await Common.saveSharedPref(
+              "leadSourceStaffIdStr", staffIds.join(","));
+          await Common.saveSharedPref(
+              "leadSourceProductIdStr", (productIds ?? []).join(","));
+          await Common.saveSharedPref(
+              "leadSourceCategoryIdStr", (categoryIds ?? []).join(","));
           await _fetchLeadSourceReport();
           if (showLeadSourceTable) await _fetchLeadSourceTableReport();
         } else {
@@ -1650,6 +1750,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             categoryToDate = to;
             categoryStaffs = staffIds;
           });
+          await Common.saveSharedPref(
+              "categoryFromDate", from.toIso8601String());
+          await Common.saveSharedPref("categoryToDate", to.toIso8601String());
+          await Common.saveSharedPref("categoryStaffIdStr", staffIds.join(","));
           await _fetchCategoryReport();
           if (showCategoryTable) await _fetchCategoryTableReport();
         }
@@ -2785,18 +2889,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         color: appBarStart, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      targetStaffId != null
+                      targetStaffId != null && targetStaffId!.isNotEmpty
                           ? (staffList
                               .firstWhere(
                                 (s) =>
                                     s.userIdStaff.toString() == targetStaffId,
                                 orElse: () => sl.Staff(
-                                    id: '',
-                                    name: 'Selected User',
-                                    userIdStaff: ''),
+                                    id: '', name: 'All Staff', userIdStaff: ''),
                               )
                               .name)
-                          : "Select Staff",
+                          : "All Staff",
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -3360,6 +3462,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     setState(() {
       _isListTabLoading = true;
       _activeGraphCategory = category;
+      object1 = null;
+      staffProgressData = null;
+      categoryProgressData = null;
+      statusProgressData = null;
     });
 
     try {
@@ -4500,22 +4606,25 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               if (int.parse(lead.categoryCount) > 1)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 4),
-                                  child: InkWell(
-                                    onTap: () => _showCategoryPopup(lead),
-                                    child: Container(
-                                      height: 18,
-                                      width: 18,
-                                      decoration: const BoxDecoration(
-                                        color: accentOrange,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          lead.categoryCount,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                  child: IgnorePointer(
+                                    ignoring: selectedIUsers.isNotEmpty,
+                                    child: InkWell(
+                                      onTap: () => _showCategoryPopup(lead),
+                                      child: Container(
+                                        height: 18,
+                                        width: 18,
+                                        decoration: const BoxDecoration(
+                                          color: accentOrange,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            lead.categoryCount,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -4597,6 +4706,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   _buildMiniActionButton(
                                     icon: Icons.call,
                                     color: callGreen,
+                                    isEnabled: selectedIUsers.isEmpty,
                                     onTap: () {
                                       if (_listTabCallPermission == false) {
                                         _showCallPermissionDialog(index);
@@ -4609,6 +4719,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   _buildMiniActionButton(
                                     icon: FontAwesomeIcons.whatsapp,
                                     color: const Color(0xFF25D366),
+                                    isEnabled: selectedIUsers.isEmpty,
                                     onTap: () {
                                       if (lead.contactNumber1.isNotEmpty) {
                                         Common.openWhatsApp(
@@ -4741,22 +4852,25 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     if (int.parse(lead.categoryCount) > 1)
                       Padding(
                         padding: const EdgeInsets.only(left: 4),
-                        child: InkWell(
-                          onTap: () => _showCategoryPopup(lead),
-                          child: Container(
-                            height: 18,
-                            width: 18,
-                            decoration: const BoxDecoration(
-                              color: accentOrange,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                lead.categoryCount,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                        child: IgnorePointer(
+                          ignoring: selectedIUsers.isNotEmpty,
+                          child: InkWell(
+                            onTap: () => _showCategoryPopup(lead),
+                            child: Container(
+                              height: 18,
+                              width: 18,
+                              decoration: const BoxDecoration(
+                                color: accentOrange,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  lead.categoryCount,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -4986,6 +5100,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             _buildMiniActionButton(
                               icon: Icons.call,
                               color: callGreen,
+                              isEnabled: selectedIUsers.isEmpty,
                               onTap: () {
                                 if (_listTabCallPermission == false) {
                                   _showCallPermissionDialog(index);
@@ -4998,6 +5113,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             _buildMiniActionButton(
                               icon: FontAwesomeIcons.whatsapp,
                               color: const Color(0xFF25D366),
+                              isEnabled: selectedIUsers.isEmpty,
                               onTap: () {
                                 if (lead.contactNumber1.isNotEmpty) {
                                   Common.openWhatsApp(lead.contactNumber1);
@@ -5221,16 +5337,23 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
+    bool isEnabled = true,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          shape: BoxShape.circle,
+    return IgnorePointer(
+      ignoring: !isEnabled,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: isEnabled
+                ? color.withOpacity(0.12)
+                : Colors.grey.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: isEnabled ? color : Colors.grey, size: 18),
         ),
-        child: Icon(icon, color: color, size: 18),
       ),
     );
   }
@@ -5243,7 +5366,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildReportSection(1),
           const SizedBox(height: 10),
@@ -5270,18 +5393,48 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     if (index == 1) {
       title = _reportType1;
-      isTableActive = showCallStatusTable;
-      onToggleView = () {
-        setState(() => showCallStatusTable = !showCallStatusTable);
-        if (showCallStatusTable && callStatusTableData == null) {
-          _fetchCallStatusTableReport();
-        }
-      };
-      onRefresh = () {
-        _fetchCallStatusReport();
-        if (showCallStatusTable) _fetchCallStatusTableReport();
-      };
-      icon = Icons.call_rounded;
+      if (title == "Cloud Call Report") {
+        isTableActive = showCloudCallTable;
+        onToggleView = () {
+          setState(() => showCloudCallTable = !showCloudCallTable);
+          Common.saveSharedPref(
+              "showCloudCallTable", showCloudCallTable.toString());
+          if (showCloudCallTable && cloudCallReportData == null) {
+            _fetchCloudCallReport();
+          }
+        };
+        onRefresh = _fetchCloudCallReport;
+      } else if (title == "Phone Call Report") {
+        isTableActive = showPhoneCallTable;
+        onToggleView = () {
+          setState(() => showPhoneCallTable = !showPhoneCallTable);
+          Common.saveSharedPref(
+              "showPhoneCallTable", showPhoneCallTable.toString());
+          if (showPhoneCallTable && phoneCallReportData == null) {
+            _fetchPhoneCallReport();
+          }
+        };
+        onRefresh = _fetchPhoneCallReport;
+      } else {
+        isTableActive = showCallStatusTable;
+        onToggleView = () {
+          setState(() => showCallStatusTable = !showCallStatusTable);
+          Common.saveSharedPref(
+              "showCallStatusTable", showCallStatusTable.toString());
+          if (showCallStatusTable && callStatusTableData == null) {
+            _fetchCallStatusTableReport();
+          }
+        };
+        onRefresh = () {
+          _fetchCallStatusReport();
+          if (showCallStatusTable) _fetchCallStatusTableReport();
+        };
+      }
+      icon = title == "Cloud Call Report"
+          ? Icons.cloud_outlined
+          : (title == "Phone Call Report"
+              ? Icons.phone_outlined
+              : Icons.call_rounded);
       isFlipped = _isFlipped1;
       onFlip = () => setState(() => _isFlipped1 = !_isFlipped1);
     } else if (index == 2) {
@@ -5289,6 +5442,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       isTableActive = showStageWiseTable;
       onToggleView = () {
         setState(() => showStageWiseTable = !showStageWiseTable);
+        Common.saveSharedPref(
+            "showStageWiseTable", showStageWiseTable.toString());
         if (showStageWiseTable && stageWiseTableData == null) {
           _fetchStageWiseTableReport();
         }
@@ -5305,6 +5460,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       isTableActive = showLeadSourceTable;
       onToggleView = () {
         setState(() => showLeadSourceTable = !showLeadSourceTable);
+        Common.saveSharedPref(
+            "showLeadSourceTable", showLeadSourceTable.toString());
         if (showLeadSourceTable && leadSourceTableData == null) {
           _fetchLeadSourceTableReport();
         }
@@ -5321,6 +5478,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       isTableActive = showCategoryTable;
       onToggleView = () {
         setState(() => showCategoryTable = !showCategoryTable);
+        Common.saveSharedPref(
+            "showCategoryTable", showCategoryTable.toString());
         if (showCategoryTable && categoryTableData == null) {
           _fetchCategoryTableReport();
         }
@@ -5354,7 +5513,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildReportSectionHeader(
           title,
@@ -5363,6 +5522,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           onToggleView: onToggleView,
           onRefresh: onRefresh,
           onTypeChange: (newType) {
+            String key = index == 1
+                ? "reportType1"
+                : (index == 2
+                    ? "reportType2"
+                    : (index == 3 ? "reportType3" : "reportType4"));
+            Common.saveSharedPref(key, newType);
             setState(() {
               if (index == 1)
                 _reportType1 = newType;
@@ -5472,14 +5637,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               itemBuilder: (context) => [
                 _buildPopupItem("Call Status Report", Icons.analytics_outlined,
                     title == "Call Status Report"),
-                _buildPopupItem("Cloud Call Report", Icons.cloud_outlined,
-                    title == "Cloud Call Report"),
+                if (cloudCallPermission1)
+                  _buildPopupItem("Cloud Call Report", Icons.cloud_outlined,
+                      title == "Cloud Call Report"),
                 _buildPopupItem("Phone Call Report", Icons.phone_outlined,
                     title == "Phone Call Report"),
-                _buildPopupItem("Cloud Call Graph", Icons.bar_chart_rounded,
-                    title == "Cloud Call Graph"),
-                _buildPopupItem("Phone Call Graph", Icons.insert_chart_outlined,
-                    title == "Phone Call Graph"),
               ],
             )
         ],
@@ -5535,7 +5697,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     return Padding(
       padding: const EdgeInsets.only(top: 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildReportHeader(
               staffNames,
@@ -5558,6 +5720,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     }
                   },
                   child: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -5793,7 +5956,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     return Padding(
       padding: const EdgeInsets.only(top: 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildReportHeader(
               staffNames,
@@ -5816,6 +5979,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     }
                   },
                   child: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(26, 20, 24, 24),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -6003,7 +6167,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     return Padding(
       padding: const EdgeInsets.only(top: 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildReportHeader(
               staffNames,
@@ -6027,6 +6191,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     }
                   },
                   child: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(255, 2, 2, 2),
@@ -6254,7 +6419,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     return Padding(
       padding: const EdgeInsets.only(top: 0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildReportHeader(
               staffNames,
@@ -6277,6 +6442,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     }
                   },
                   child: Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(255, 255, 255, 255),
@@ -9030,6 +9196,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           .join(", ");
     }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildReportHeader(
           staffNames,
@@ -9038,8 +9205,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           toDate: callStatusToDate ?? DateTime.now(),
           onRefresh: _fetchCloudCallReport,
         ),
-        _buildRealCallReportTable(
-            "Cloud Call Report", cloudCallReportData!.data!, isFlipped),
+        showCloudCallTable
+            ? _buildRealCallReportTable(
+                "Cloud Call Report", cloudCallReportData!.data!, isFlipped)
+            : _buildCloudCallGraph(),
       ],
     );
   }
@@ -9062,6 +9231,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           .join(", ");
     }
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildReportHeader(
           staffNames,
@@ -9070,8 +9240,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           toDate: callStatusToDate ?? DateTime.now(),
           onRefresh: _fetchPhoneCallReport,
         ),
-        _buildRealCallReportTable(
-            "Phone Call Report", phoneCallReportData!.data!, isFlipped),
+        showPhoneCallTable
+            ? _buildRealCallReportTable(
+                "Phone Call Report", phoneCallReportData!.data!, isFlipped)
+            : _buildPhoneCallGraph(),
       ],
     );
   }
@@ -9715,6 +9887,26 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
+  String _formatLastUpdated(DateTime? lastUpdated) {
+    if (lastUpdated == null) return "Never";
+    final now = DateTime.now();
+    final dateStr = DateFormat('dd-MM-yyyy').format(lastUpdated);
+    final todayStr = DateFormat('dd-MM-yyyy').format(now);
+    final yesterdayStr =
+        DateFormat('dd-MM-yyyy').format(now.subtract(const Duration(days: 1)));
+
+    String prefix = "";
+    if (dateStr == todayStr) {
+      prefix = "Today ";
+    } else if (dateStr == yesterdayStr) {
+      prefix = "Yesterday ";
+    } else {
+      prefix = DateFormat('dd MMM').format(lastUpdated) + " ";
+    }
+
+    return "Updated $prefix${DateFormat('hh:mm a').format(lastUpdated)}";
+  }
+
   String _getFormattedDateRange(DateTime? from, DateTime? to) {
     if (from == null && to == null) return "Showing all data";
     if (from == null || to == null) return "";
@@ -9779,7 +9971,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             size: 11, color: textSecondary.withOpacity(0.5)),
                         const SizedBox(width: 4),
                         Text(
-                          "Updated ${DateFormat('hh:mm a').format(lastUpdated)}",
+                          _formatLastUpdated(lastUpdated),
                           style: TextStyle(
                             fontSize: 10,
                             color: textSecondary.withOpacity(0.6),
@@ -10044,27 +10236,27 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   letterSpacing: 0.5,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: primaryBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.calendar_month, size: 14, color: primaryBlue),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Period',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: primaryBlue,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              // Container(
+              //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              //   decoration: BoxDecoration(
+              //     color: primaryBlue.withOpacity(0.1),
+              //     borderRadius: BorderRadius.circular(8),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Icon(Icons.calendar_month, size: 14, color: primaryBlue),
+              //       const SizedBox(width: 4),
+              //       Text(
+              //         'Period',
+              //         style: TextStyle(
+              //           fontSize: 10,
+              //           fontWeight: FontWeight.bold,
+              //           color: primaryBlue,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
           const SizedBox(height: 16),
@@ -10255,17 +10447,18 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   void _showStaffSelectionModal() {
+    staffSearchController.clear();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        String searchQuery = "";
         return StatefulBuilder(
           builder: (context, setModalState) {
             final filteredStaff = staffList
-                .where((s) =>
-                    s.name.toLowerCase().contains(searchQuery.toLowerCase()))
+                .where((s) => s.name
+                    .toLowerCase()
+                    .contains(staffSearchController.text.toLowerCase()))
                 .toList();
             return Container(
               height: MediaQuery.of(context).size.height * 0.75,
@@ -10321,10 +10514,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: TextField(
+                        controller: staffSearchController,
                         onChanged: (val) {
-                          setModalState(() {
-                            searchQuery = val;
-                          });
+                          setModalState(() {});
                         },
                         decoration: InputDecoration(
                           hintText: "Search staff...",
@@ -10348,12 +10540,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         if (index == 0) {
                           return _buildStaffItem(
                             context,
-                            id: null,
+                            id: "",
                             name: "All Staff",
-                            isSelected: targetStaffId == null,
+                            isSelected:
+                                targetStaffId == "" || targetStaffId == null,
                             onTap: () {
                               setState(() {
-                                targetStaffId = null;
+                                targetStaffId = "";
                               });
                               getData(widget.token, fromDate, toDate,
                                   isRefresh: true);
@@ -11102,9 +11295,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         Expanded(
                           child: _buildListSummaryItem(
                             'Closed',
-                            dashboardMainCounts != null
-                                ? (dashboardMainCounts
-                                            ?.data.leads.closedLeads ??
+                            dashboardCounts != null
+                                ? (dashboardCounts?.data?.leads?.closedLeads ??
                                         0)
                                     .toString()
                                 : '0',
@@ -11334,6 +11526,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 bool labelChanged = _listTabFilter != label;
                 setState(() {
                   _listTabFilter = label;
+                  if (label == 'Closed') {
+                    fromDate = DateTime.now();
+                    toDate = DateTime.now();
+                  }
                   if (labelChanged) {
                     _listTabSelectedStatusIds.clear();
                     _listTabSelectedStaffIds.clear();
@@ -14388,6 +14584,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   void dispose() {
     _tabController.dispose();
     searchController.dispose();
+    staffSearchController.dispose();
     super.dispose();
   }
 

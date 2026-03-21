@@ -10,6 +10,7 @@ import 'package:login2/models/userPermissionModel.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
@@ -118,7 +119,8 @@ class _SplashScreenState extends State<SplashScreen> {
             Navigator.pushAndRemoveUntil(
               context,
               // MaterialPageRoute(builder: (_) =>  Dashboard(token)),
-              MaterialPageRoute(builder: (_) => Dashboard(token)),
+              MaterialPageRoute(
+                  builder: (_) => DashboardLeadNewUpdatedTwo(token)),
               (route) => false,
             );
             return;
@@ -174,7 +176,8 @@ class _SplashScreenState extends State<SplashScreen> {
           } else {
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => Dashboard(token)),
+              MaterialPageRoute(
+                  builder: (_) => DashboardLeadNewUpdatedTwo(token)),
               (route) => false,
             );
           }
@@ -211,12 +214,12 @@ class _SplashScreenState extends State<SplashScreen> {
     if (ProjectDashboardPermission == "true") {
       dashboardToOpen = const ProjectDashboard();
     } else if (LeadDashboard == "true") {
-      dashboardToOpen = Dashboard(token);
+      dashboardToOpen = DashboardLeadNewUpdatedTwo(token);
     } else if (AccountsDashboardPermission == "true") {
       if (token != null) {
         dashboardToOpen = AccountsDashboard(token: token);
       } else {
-        dashboardToOpen = Dashboard(token);
+        dashboardToOpen = DashboardLeadNewUpdatedTwo(token);
       }
     } else if (MenuDashboard == "true") {
       dashboardToOpen = HomePage(token);
@@ -229,14 +232,16 @@ class _SplashScreenState extends State<SplashScreen> {
     } else if (RoomDashboardPer == "true") {
       dashboardToOpen = RoomDashboard();
     } else {
-      dashboardToOpen = Dashboard(token);
+      dashboardToOpen = DashboardLeadNewUpdatedTwo(token);
     }
 
     if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
+      Navigator.of(context)
+          .pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => dashboardToOpen),
         (route) => false,
-      ).then((_) {
+      )
+          .then((_) {
         // After transition to dashboard, handle any pending deep links
         DeepLinkHandler().checkAndHandlePendingDeepLink();
       });

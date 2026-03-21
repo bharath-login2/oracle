@@ -74,6 +74,7 @@ import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/documentListModel.dart';
 import 'package:login2/models/lead_management/expenseTypeModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
+import 'package:login2/models/lead_management/getLeaveApprovalRejectTemplate.dart';
 import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/invoiceListHistory.dart';
@@ -13391,6 +13392,39 @@ class HttpService {
       }
     } catch (e) {
       log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetLeaveApprovalRejectTemplate?>
+      getApprovalRejectTemplate() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("getApprovalRejectTemplate error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_templates",
+        data: FormData.fromMap({
+          "token": token,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          log("getApprovalRejectTemplate: Templates fetched successfully, count: ${(data['data'] as List?)?.length ?? 0}");
+          return GetLeaveApprovalRejectTemplate.fromJson(data);
+        } else {
+          log("getApprovalRejectTemplate API error: ${data['message'] ?? 'Unknown error'}");
+        }
+      } else {
+        log("getApprovalRejectTemplate HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("getApprovalRejectTemplate error: $e");
     }
     return null;
   }

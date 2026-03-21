@@ -464,134 +464,221 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
   }
 
   Widget _buildIndividualReportCard(TargetGroupAll report) {
+    final targetAmount = _parseAmount(report.targetAmount);
+    final achievedAmount = _parseAmount(report.totalAchieved);
+    final pendingAmount = targetAmount - achievedAmount;
     final progress =
         _calculateProgress(report.targetAmount, report.totalAchieved);
+    final progressPercent = (progress * 100).toStringAsFixed(1);
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       elevation: 2,
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade50,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.person, color: Colors.blue, size: 24),
-        ),
-        title: Text(
-          report.groupName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text("Target: ₹${report.targetAmount}"),
-            Text("Achieved: ₹${report.totalAchieved}"),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 4,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        progress >= 1.0 ? Colors.green : Colors.blue,
+      child: InkWell(
+        onTap: () => _navigateToDetails(report),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child:
+                        const Icon(Icons.person, color: Colors.blue, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      report.groupName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF2D3142),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  "${(progress * 100).toStringAsFixed(1)}%",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: progress >= 1.0
+                          ? Colors.green.shade50
+                          : Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "$progressPercent%",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: progress >= 1.0 ? Colors.green : Colors.blue,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: Colors.grey.shade100,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    progress >= 1.0 ? Colors.green : Colors.blue,
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildAmountColumn(
+                    "Target",
+                    "₹${NumberFormat("#,##0").format(targetAmount)}",
+                    const Color(0xFF2D3142),
+                  ),
+                  _buildAmountColumn(
+                    "Achieved",
+                    "₹${NumberFormat("#,##0").format(achievedAmount)}",
+                    Colors.green,
+                  ),
+                  _buildAmountColumn(
+                    "Pending",
+                    "₹${NumberFormat("#,##0").format(pendingAmount)}",
+                    Colors.orange,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-        onTap: () => _navigateToDetails(report),
       ),
     );
   }
 
   Widget _buildGroupReportCard(TargetGroupAll report) {
+    final targetAmount = _parseAmount(report.targetAmount);
+    final achievedAmount = _parseAmount(report.totalAchieved);
+    final pendingAmount = targetAmount - achievedAmount;
     final progress =
         _calculateProgress(report.targetAmount, report.totalAchieved);
+    final progressPercent = (progress * 100).toStringAsFixed(1);
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
       elevation: 2,
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.green.shade50,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Icon(Icons.groups, color: Colors.green, size: 24),
-        ),
-        title: Text(
-          report.groupName,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text("Staff: ${report.staffName}"),
-            Text("Target: ₹${report.targetAmount}"),
-            Text("Achieved: ₹${report.totalAchieved}"),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 4,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        progress >= 1.0 ? Colors.green : Colors.blue,
+      child: InkWell(
+        onTap: () => _navigateToDetails(report),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child:
+                        const Icon(Icons.groups, color: Colors.green, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          report.groupName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color(0xFF2D3142),
+                          ),
+                        ),
+                        Text(
+                          "Staff: ${report.staffName}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: progress >= 1.0
+                          ? Colors.green.shade50
+                          : Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      "$progressPercent%",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: progress >= 1.0 ? Colors.green : Colors.blue,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  "${(progress * 100).toStringAsFixed(1)}%",
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 8,
+                  backgroundColor: Colors.grey.shade100,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    progress >= 1.0 ? Colors.green : Colors.blue,
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildAmountColumn(
+                    "Target",
+                    "₹${NumberFormat("#,##0").format(targetAmount)}",
+                    const Color(0xFF2D3142),
+                  ),
+                  _buildAmountColumn(
+                    "Achieved",
+                    "₹${NumberFormat("#,##0").format(achievedAmount)}",
+                    Colors.green,
+                  ),
+                  _buildAmountColumn(
+                    "Pending",
+                    "₹${NumberFormat("#,##0").format(pendingAmount)}",
+                    Colors.orange,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-        onTap: () => _navigateToDetails(report),
       ),
     );
   }

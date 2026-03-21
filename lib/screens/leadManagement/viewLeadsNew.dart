@@ -1334,57 +1334,58 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      height: 25,
-                      width: 25,
-                      decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white),
-                          shape: BoxShape.circle),
-                      child: const Icon(
-                        Icons.arrow_back_ios_outlined,
-                        color: Colors.white,
-                        size: 16,
+                    InkWell(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        height: 25,
+                        width: 25,
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            shape: BoxShape.circle),
+                        child: const Icon(
+                          Icons.arrow_back_ios_outlined,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 25),
-                  if (selectedIUsers.isNotEmpty)
-                    Text(
-                      '${selectedIUsers.length} selected',
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    )
-                  else
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.pageName.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (widget.staffName != null &&
-                              widget.staffName!.isNotEmpty)
+                    const SizedBox(width: 25),
+                    if (selectedIUsers.isNotEmpty)
+                      Text(
+                        '${selectedIUsers.length} selected',
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 18),
+                      )
+                    else
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                             Text(
-                              widget.staffName!,
+                              widget.pageName.toString(),
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 12,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                        ],
+                            if (widget.staffName != null &&
+                                widget.staffName!.isNotEmpty)
+                              Text(
+                                widget.staffName!,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -1976,6 +1977,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                 _buildMiniActionButton(
                                   icon: Icons.call,
                                   color: callGreen,
+                                  isEnabled: selectedIUsers.isEmpty,
                                   onTap: () async {
                                     if (viewLeads!.data.callPermission ==
                                         false) {
@@ -1994,6 +1996,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                 _buildMiniActionButton(
                                   icon: FontAwesomeIcons.whatsapp,
                                   color: const Color(0xFF25D366),
+                                  isEnabled: selectedIUsers.isEmpty,
                                   onTap: () {
                                     if (displayItem.contactNumber1.isNotEmpty) {
                                       Common.openWhatsApp(
@@ -2124,271 +2127,278 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                       int.parse(displayItem.categoryCount) > 1)
                     Padding(
                       padding: const EdgeInsets.only(left: 4),
-                      child: GestureDetector(
-                        onTap: () async {
-                          Common.showProgressDialog(
-                              context, "Loading categories...");
-                          try {
-                            await _loadLeadDetails(
-                                displayItem.callMasterId.toString());
-                            if (context.mounted) Navigator.pop(context);
-                            if (leadDetails == null ||
-                                leadDetails!.data?.leadCategories == null) {
+                      child: IgnorePointer(
+                        ignoring: selectedIUsers.isNotEmpty,
+                        child: GestureDetector(
+                          onTap: () async {
+                            Common.showProgressDialog(
+                                context, "Loading categories...");
+                            try {
+                              await _loadLeadDetails(
+                                  displayItem.callMasterId.toString());
+                              if (context.mounted) Navigator.pop(context);
+                              if (leadDetails == null ||
+                                  leadDetails!.data?.leadCategories == null) {
+                                if (context.mounted) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: const Text("No Data"),
+                                        content: const Text(
+                                            "Lead categories are not available yet."),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: const Text("OK"),
+                                          )
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                                return;
+                              }
                               if (context.mounted) {
                                 showDialog(
                                   context: context,
                                   builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text("No Data"),
-                                      content: const Text(
-                                          "Lead categories are not available yet."),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: const Text("OK"),
-                                        )
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  final categories =
-                                      leadDetails!.data!.leadCategories!;
-                                  return Dialog(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    insetPadding: const EdgeInsets.all(20),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      constraints: BoxConstraints(
-                                        maxHeight:
-                                            MediaQuery.of(context).size.height *
-                                                0.7,
-                                        maxWidth:
-                                            MediaQuery.of(context).size.width *
-                                                0.9,
+                                    final categories =
+                                        leadDetails!.data!.leadCategories!;
+                                    return Dialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text(
-                                                "Lead Categories",
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: appBarStart,
+                                      insetPadding: const EdgeInsets.all(20),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        constraints: BoxConstraints(
+                                          maxHeight: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.7,
+                                          maxWidth: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.9,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  "Lead Categories",
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: appBarStart,
+                                                  ),
                                                 ),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.close,
-                                                    color: textSecondary,
-                                                    size: 20),
-                                                onPressed: () =>
-                                                    Navigator.pop(context),
-                                              ),
-                                            ],
-                                          ),
-                                          const Divider(
-                                              thickness: 1, height: 12),
-                                          Expanded(
-                                            child: ListView.separated(
-                                              itemCount: categories.length,
-                                              separatorBuilder: (context, _) =>
-                                                  const Divider(
-                                                      color: borderLight,
-                                                      height: 8),
-                                              itemBuilder: (context, i) {
-                                                final category = categories[i];
-                                                return InkWell(
-                                                  onTap: () {
-                                                    Navigator.pop(context);
-                                                    callMasterId = category
-                                                        .callMasterId
-                                                        .toString();
-                                                    getData(
-                                                        'desc', true, status);
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            10),
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                          color: borderLight),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              6),
-                                                    ),
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Icon(
-                                                              category.isSelected ==
-                                                                      true
-                                                                  ? Icons
-                                                                      .check_circle
-                                                                  : Icons
-                                                                      .circle_outlined,
-                                                              size: 18,
-                                                              color: category
-                                                                          .isSelected ==
-                                                                      true
-                                                                  ? callGreen
-                                                                  : textSecondary,
-                                                            ),
-                                                            const SizedBox(
-                                                                width: 6),
-                                                            Expanded(
-                                                              child: Text(
-                                                                category.leadCategory ??
-                                                                    "-",
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
+                                                IconButton(
+                                                  icon: const Icon(Icons.close,
+                                                      color: textSecondary,
+                                                      size: 20),
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                ),
+                                              ],
+                                            ),
+                                            const Divider(
+                                                thickness: 1, height: 12),
+                                            Expanded(
+                                              child: ListView.separated(
+                                                itemCount: categories.length,
+                                                separatorBuilder:
+                                                    (context, _) =>
+                                                        const Divider(
+                                                            color: borderLight,
+                                                            height: 8),
+                                                itemBuilder: (context, i) {
+                                                  final category =
+                                                      categories[i];
+                                                  return InkWell(
+                                                    onTap: () {
+                                                      Navigator.pop(context);
+                                                      callMasterId = category
+                                                          .callMasterId
+                                                          .toString();
+                                                      getData(
+                                                          'desc', true, status);
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              10),
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: borderLight),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(6),
+                                                      ),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              Icon(
+                                                                category.isSelected ==
+                                                                        true
+                                                                    ? Icons
+                                                                        .check_circle
+                                                                    : Icons
+                                                                        .circle_outlined,
+                                                                size: 18,
+                                                                color: category
+                                                                            .isSelected ==
+                                                                        true
+                                                                    ? callGreen
+                                                                    : textSecondary,
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 6),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  category.leadCategory ??
+                                                                      "-",
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                  ),
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
                                                                 ),
-                                                                maxLines: 1,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
                                                               ),
-                                                            ),
-                                                            Container(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .symmetric(
-                                                                      horizontal:
-                                                                          6,
-                                                                      vertical:
-                                                                          2),
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: (category.leadStatus ??
-                                                                            "") ==
-                                                                        "New"
-                                                                    ? appBarStart
-                                                                        .withOpacity(
-                                                                            0.1)
-                                                                    : (category.leadStatus ??
-                                                                                "") ==
-                                                                            "Follow Up"
-                                                                        ? accentOrange.withOpacity(
-                                                                            0.1)
-                                                                        : (category.leadStatus ?? "") ==
-                                                                                "Rejected"
-                                                                            ? accentRed.withOpacity(0.1)
-                                                                            : accentOrange.withOpacity(0.1),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            4),
-                                                              ),
-                                                              child: Text(
-                                                                category.leadStatus ??
-                                                                    "-",
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
+                                                              Container(
+                                                                padding: const EdgeInsets
+                                                                    .symmetric(
+                                                                    horizontal:
+                                                                        6,
+                                                                    vertical:
+                                                                        2),
+                                                                decoration:
+                                                                    BoxDecoration(
                                                                   color: (category.leadStatus ??
                                                                               "") ==
                                                                           "New"
                                                                       ? appBarStart
+                                                                          .withOpacity(
+                                                                              0.1)
                                                                       : (category.leadStatus ?? "") ==
                                                                               "Follow Up"
                                                                           ? accentOrange
+                                                                              .withOpacity(0.1)
                                                                           : (category.leadStatus ?? "") == "Rejected"
-                                                                              ? accentRed
-                                                                              : accentOrange,
+                                                                              ? accentRed.withOpacity(0.1)
+                                                                              : accentOrange.withOpacity(0.1),
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              4),
+                                                                ),
+                                                                child: Text(
+                                                                  category.leadStatus ??
+                                                                      "-",
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontSize:
+                                                                        10,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w500,
+                                                                    color: (category.leadStatus ??
+                                                                                "") ==
+                                                                            "New"
+                                                                        ? appBarStart
+                                                                        : (category.leadStatus ?? "") ==
+                                                                                "Follow Up"
+                                                                            ? accentOrange
+                                                                            : (category.leadStatus ?? "") == "Rejected"
+                                                                                ? accentRed
+                                                                                : accentOrange,
+                                                                  ),
                                                                 ),
                                                               ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 6),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            Text(
-                                                              "👤 ${category.staffName ?? "-"}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 11,
-                                                                color:
-                                                                    textSecondary,
+                                                            ],
+                                                          ),
+                                                          const SizedBox(
+                                                              height: 6),
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                "👤 ${category.staffName ?? "-"}",
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 11,
+                                                                  color:
+                                                                      textSecondary,
+                                                                ),
                                                               ),
-                                                            ),
-                                                            Text(
-                                                              "📅 ${category.createdDate ?? "-"}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 11,
-                                                                color:
-                                                                    textSecondary,
+                                                              Text(
+                                                                "📅 ${category.createdDate ?? "-"}",
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 11,
+                                                                  color:
+                                                                      textSecondary,
+                                                                ),
                                                               ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ],
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              },
+                                                  );
+                                                },
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              );
+                                    );
+                                  },
+                                );
+                              }
+                            } catch (error) {
+                              if (context.mounted) Navigator.pop(context);
+                              if (context.mounted) {
+                                Common.toastMessaage(
+                                    "Failed to load categories", accentRed);
+                              }
                             }
-                          } catch (error) {
-                            if (context.mounted) Navigator.pop(context);
-                            if (context.mounted) {
-                              Common.toastMessaage(
-                                  "Failed to load categories", accentRed);
-                            }
-                          }
-                        },
-                        child: Container(
-                          height: 18,
-                          width: 18,
-                          decoration: const BoxDecoration(
-                            color: accentOrange,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              displayItem.categoryCount.toString(),
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                          },
+                          child: Container(
+                            height: 18,
+                            width: 18,
+                            decoration: const BoxDecoration(
+                              color: accentOrange,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                displayItem.categoryCount.toString(),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -2670,77 +2680,95 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                       Row(
                         children: [
                           // Call button
-                          InkWell(
-                            onTap: () async {
-                              if (viewLeads!.data.callPermission == false) {
-                                _showCallPermissionDialog(index);
-                              } else {
-                                if (widget.cloudCall == true) {
-                                  chooseCallDialog(context, index);
+                          IgnorePointer(
+                            ignoring: selectedIUsers.isNotEmpty,
+                            child: GestureDetector(
+                              onTap: () async {
+                                if (viewLeads!.data.callPermission == false) {
+                                  _showCallPermissionDialog(index);
                                 } else {
-                                  Common.dialPad(displayItem.contactNumber1);
+                                  if (widget.cloudCall == true) {
+                                    chooseCallDialog(context, index);
+                                  } else {
+                                    Common.dialPad(displayItem.contactNumber1);
+                                  }
                                 }
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: callGreen,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: callGreen.withOpacity(0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.call,
-                                      color: Colors.white, size: 14),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Call',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: selectedIUsers.isEmpty
+                                      ? callGreen
+                                      : Colors.grey,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (selectedIUsers.isEmpty
+                                              ? callGreen
+                                              : Colors.grey)
+                                          .withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.call,
+                                        color: Colors.white, size: 14),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Call',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 6),
 
                           // WhatsApp button
-                          InkWell(
-                            onTap: () {
-                              if (displayItem.contactNumber1.isNotEmpty) {
-                                Common.openWhatsApp(displayItem.contactNumber1);
-                              }
-                            },
-                            child: Container(
-                              width: 36,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF25D366),
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF25D366)
-                                        .withOpacity(0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Center(
-                                child: Icon(FontAwesomeIcons.whatsapp,
-                                    color: Colors.white, size: 16),
+                          IgnorePointer(
+                            ignoring: selectedIUsers.isNotEmpty,
+                            child: GestureDetector(
+                              onTap: () {
+                                if (displayItem.contactNumber1.isNotEmpty) {
+                                  Common.openWhatsApp(
+                                      displayItem.contactNumber1);
+                                }
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: Container(
+                                width: 36,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: selectedIUsers.isEmpty
+                                      ? const Color(0xFF25D366)
+                                      : Colors.grey,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (selectedIUsers.isEmpty
+                                              ? const Color(0xFF25D366)
+                                              : Colors.grey)
+                                          .withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Center(
+                                  child: Icon(FontAwesomeIcons.whatsapp,
+                                      color: Colors.white, size: 16),
+                                ),
                               ),
                             ),
                           ),
@@ -2794,16 +2822,23 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
+    bool isEnabled = true,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          shape: BoxShape.circle,
+    return IgnorePointer(
+      ignoring: !isEnabled,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: isEnabled
+                ? color.withOpacity(0.12)
+                : Colors.grey.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: isEnabled ? color : Colors.grey, size: 18),
         ),
-        child: Icon(icon, color: color, size: 18),
       ),
     );
   }
