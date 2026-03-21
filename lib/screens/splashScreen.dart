@@ -54,13 +54,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    firebaseServices.init(context);
+    print("[INIT] SplashScreen: initState");
+    try {
+      print("[INIT] SplashScreen: Initializing FirebaseServices");
+      firebaseServices.init(context);
+      print("[INIT] SplashScreen: FirebaseServices initialized");
+    } catch (e) {
+      print("[INIT] SplashScreen ERROR: FirebaseServices.init: $e");
+    }
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
       setState(() {
         navigation = message.data['navigation'];
       });
     });
+    print("[INIT] SplashScreen: handleAsync start");
     handleAsync();
+    print("[INIT] SplashScreen: getData start");
     getData();
     _updateSelectedDashboard();
     log('[DEEPLINK] SplashScreen: initState completed');

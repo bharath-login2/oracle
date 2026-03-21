@@ -80,21 +80,25 @@ class PhoneStateNotifier extends StateNotifier<PhoneState> {
   }
 
   void _listenToStream() {
-    _subscription = PhoneState.stream.listen((event) {
-      // Skip the first emission which is just the initial state
-      if (_isFirstEmission) {
-        _isFirstEmission = false;
-        log("Skipping initial phone state emission");
-        return;
-      }
+    if (Platform.isAndroid) {
+      _subscription = PhoneState.stream.listen((event) {
+        // Skip the first emission which is just the initial state
+        if (_isFirstEmission) {
+          _isFirstEmission = false;
+          log("Skipping initial phone state emission");
+          return;
+        }
 
-      state = event;
-      log("Updated status: ${state.status}");
-      // if (state.status == PhoneStateStatus.RINGING ||
-      //     state.status == PhoneStateStatus.OFF_HOOK) {
-      //   _showOverlay(state.number?.toString() ?? "");
-      // }
-    });
+        state = event;
+        log("Updated status: ${state.status}");
+        // if (state.status == PhoneStateStatus.RINGING ||
+        //     state.status == PhoneStateStatus.OFF_HOOK) {
+        //   _showOverlay(state.number?.toString() ?? "");
+        // }
+      });
+    } else {
+      log("PhoneState listener skipped on non-Android platform");
+    }
   }
 
   void _showOverlay(String number) {
@@ -145,53 +149,86 @@ void overlayMain() {
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await FlutterDownloader.initialize(
-      debug: true, // Set to false in production
-      ignoreSsl: true // If your server uses SSL
-      );
-  if (Platform.isAndroid) {
+  print("STARTING MAIN()");
+  runZonedGuarded(() async {
+    print("INSIDE runZonedGuarded");
+    WidgetsFlutterBinding.ensureInitialized();
+    print("WidgetsFlutterBinding initialized");
+    
     try {
-      final service = FlutterBackgroundService();
-      bool isRunning = await service.isRunning();
-      if (!isRunning) {
-        await initService();
-        service.invoke('setAsForeground');
+      if (Platform.isAndroid) {
+        print("Initializing FlutterDownloader...");
+        await FlutterDownloader.initialize(
+            debug: true, // Set to false in production
+            ignoreSsl: true // If your server uses SSL
+        );
+        print("FlutterDownloader initialized successfully");
+      } else {
+        print("Skipping FlutterDownloader initialization on ${Platform.operatingSystem} for debugging");
+        // Initialization can also be done without await if it's causing issues, but guard is safer for now
       }
     } catch (e) {
-      log("Error starting background service: $e");
+      print("Error initializing FlutterDownloader: $e");
     }
-  }
-  // await Hive.initFlutter();
-  // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
-  // await Hive.openBox<HiveCaallHistoryModel>('callHistoryBox');
-  try {
-    await HiveUtil.init();
-    await HiveUtil.safeOpenBox<HiveCaallHistoryModel>(
-        HiveUtil.CALL_HISTORY_BOX);
-  } catch (e) {
-    log('error on initializing hive: $e');
-  }
-  // Hive.registerAdapter(HiveCaallHistoryModelAdapter());
-  // await Hive.openBox<HiveCaallHistoryModel>('callHistoryBox');
 
-  // await Firebase.initializeApp();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
-  if (Platform.isAndroid) {
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'setAsBackgroundService') {
+    if (Platform.isAndroid) {
+      print("Platform is Android, setting up background service...");
+      try {
         final service = FlutterBackgroundService();
         bool isRunning = await service.isRunning();
         if (!isRunning) {
           await initService();
+          service.invoke('setAsForeground');
         }
-        service.invoke('setAsBackground');
-        log("============== called : setAsBackgroundService  ===========================");
+        print("Background service setup done");
+      } catch (e) {
+        print("Error starting background service: $e");
       }
-    });
-    Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
-  }
+    } else {
+      print("Platform is ${Platform.operatingSystem}, skipping background service setup");
+    }
+
+    try {
+      print("Initializing Hive...");
+      await HiveUtil.init();
+      await HiveUtil.safeOpenBox<HiveCaallHistoryModel>(
+          HiveUtil.CALL_HISTORY_BOX);
+      print("Hive initialized successfully");
+    } catch (e) {
+      print('error on initializing hive: $e');
+    }
+
+    try {
+      print("Initializing Firebase...");
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      print("Firebase initialized successfully");
+    } catch (e) {
+      print("Error initializing Firebase: $e");
+    }
+
+    print("Executing runApp(const MyApp())");
+    runApp(const MyApp());
+    print("runApp called");
+
+    if (Platform.isAndroid) {
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'setAsBackgroundService') {
+          final service = FlutterBackgroundService();
+          bool isRunning = await service.isRunning();
+          if (!isRunning) {
+            await initService();
+          }
+          service.invoke('setAsBackground');
+          log("============== called : setAsBackgroundService  ===========================");
+        }
+      });
+      Workmanager().initialize(callbackDispatcher, isInDebugMode: true);
+    }
+  }, (error, stack) {
+    print("CRITICAL: Uncaught error in main zone: $error");
+    print(stack);
+    log("Uncaught error in main zone: $error", stackTrace: stack);
+  });
 }

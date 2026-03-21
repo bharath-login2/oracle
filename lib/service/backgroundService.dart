@@ -87,12 +87,19 @@ void _startPhoneStateListener() {
       status1 = event;
       handleCallState(event);
       // Trigger overlay check immediately on state change
-      if (event.status == PhoneStateStatus.CALL_INCOMING ||
-          event.status == PhoneStateStatus.CALL_STARTED) {
-        showWindow();
-      } else if (event.status == PhoneStateStatus.CALL_ENDED) {
-        FlutterOverlayWindow.closeOverlay();
-        handleCallLogUpload();
+      if (Platform.isAndroid) {
+        if (event.status == PhoneStateStatus.CALL_INCOMING ||
+            event.status == PhoneStateStatus.CALL_STARTED) {
+          showWindow();
+        } else if (event.status == PhoneStateStatus.CALL_ENDED) {
+          FlutterOverlayWindow.closeOverlay();
+          handleCallLogUpload();
+        }
+      } else {
+        // iOS specific handling if any, for now just log
+        if (event.status == PhoneStateStatus.CALL_ENDED) {
+          handleCallLogUpload();
+        }
       }
     });
     log('DEBUG_STEP: Stream listener attached successfully');
@@ -198,12 +205,14 @@ Future<void> callBack(String tag) async {
   // const MethodChannel appChannel = MethodChannel('app_channel');
   switch (tag) {
     case "open_button":
-      final intent = AndroidIntent(
-        action: 'action_view',
-        data: Uri.encodeFull('example1://gizmos1/'),
-        package: 'com.android.chrome',
-      );
-      intent.launch();
+      if (Platform.isAndroid) {
+        final intent = AndroidIntent(
+          action: 'action_view',
+          data: Uri.encodeFull('example1://gizmos1/'),
+          package: 'com.android.chrome',
+        );
+        intent.launch();
+      }
       break;
     case "close_button":
       await Common.saveSharedPref("openAppLeadId", '0');
@@ -241,12 +250,14 @@ void isWindowActive() {
       isActive = false;
       break;
   }
-  if (isActive) {
-    log("DEBUG_STEP: 0. Window active condition met. Calling showWindow()...");
-    showWindow();
-  } else {
-    // log("Background Service: Window inactive");
-    FlutterOverlayWindow.closeOverlay();
+  if (Platform.isAndroid) {
+    if (isActive) {
+      log("DEBUG_STEP: 0. Window active condition met. Calling showWindow()...");
+      showWindow();
+    } else {
+      // log("Background Service: Window inactive");
+      FlutterOverlayWindow.closeOverlay();
+    }
   }
 }
 
@@ -265,6 +276,7 @@ void showWindow() async {
 
     case PhoneStateStatus.CALL_INCOMING:
     case PhoneStateStatus.CALL_STARTED:
+      if (!Platform.isAndroid) return;
       log('DEBUG_OVERLAY: Status is ${status1.status}. Attempting to show overlay.');
 
       String? callerNumber = status1.number;
@@ -307,7 +319,9 @@ void showWindow() async {
 
     case PhoneStateStatus.CALL_ENDED:
       log('DEBUG_OVERLAY: Status is CALL_ENDED. Closing overlay.');
-      await FlutterOverlayWindow.closeOverlay();
+      if (Platform.isAndroid) {
+        await FlutterOverlayWindow.closeOverlay();
+      }
       await handleCallLogUpload();
       break;
   }
