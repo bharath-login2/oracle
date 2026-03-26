@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/playWidget.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
@@ -123,15 +124,16 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
     callHistoryCount = 0;
     getHistoryCount();
 
-    // logHistory = await HttpService.callLogHistory(
-    //     widget.token, fromdate, todate, assignStaffId);
-    // if (logHistory != null) {
-    //   setState(() {
-    //     if (isSearch == false) {
-    //       Navigator.of(context).pop();
-    //     }
-    //   });
-    // }
+    logHistory = await HttpService.callLogHistory(
+        widget.token, fromdate, todate, assignStaffId);
+    if (logHistory != null) {
+      if (mounted) {
+        setState(() {
+          // If search was previously true, we might want to pop a dialog if one was showing
+          // but usually this is just a data refresh.
+        });
+      }
+    }
   }
 
   getHistoryCount() {
@@ -866,8 +868,9 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                                       .pushAndRemoveUntil(
                                                           MaterialPageRoute(
                                                               builder: (context) =>
-                                                                  Dashboard(widget
-                                                                      .token)),
+                                                                  DashboardLeadNewUpdatedTwo(
+                                                                      widget
+                                                                          .token)),
                                                           (Route<dynamic>
                                                                   route) =>
                                                               false);
@@ -1241,7 +1244,7 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                                           .pushAndRemoveUntil(
                                                               MaterialPageRoute(
                                                                   builder: (context) =>
-                                                                      Dashboard(
+                                                                      DashboardLeadNewUpdatedTwo(
                                                                           widget
                                                                               .token)),
                                                               (Route<dynamic>
@@ -1277,255 +1280,261 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                               ),
                                             ))
                                   : SizedBox(
-                                      child: callHistory!
-                                              .data!.phoneCallLog!.isNotEmpty
-                                          ? ListView.builder(
-                                              shrinkWrap: true,
-                                              itemCount: callHistory!
-                                                  .data!.phoneCallLog!.length,
-                                              physics:
-                                                  const NeverScrollableScrollPhysics(),
-                                              itemBuilder: (context, index) {
-                                                return InkWell(
-                                                    child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 10,
-                                                          right: 10,
-                                                          bottom: 10),
-                                                  child: Container(
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            1,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      boxShadow: const [
-                                                        BoxShadow(
-                                                          color: Colors.grey,
-                                                          offset:
-                                                              Offset(2.0, 2.0),
-                                                        )
-                                                      ],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
+                                      child: (logHistory
+                                                  ?.data?.lists?.isNotEmpty ??
+                                              false)
+                                          ? Column(
+                                              children: [
+                                                if (logHistory
+                                                        ?.data?.totalDuration !=
+                                                    null)
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10.0),
+                                                    child: Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 15,
+                                                          vertical: 10),
+                                                      decoration: BoxDecoration(
+                                                        color:
+                                                            Colors.blue.shade50,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        border: Border.all(
+                                                            color: Colors
+                                                                .blue.shade200),
+                                                      ),
+                                                      child: Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          const Text(
+                                                            'Total Call Duration:',
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color:
+                                                                  Colors.blue,
+                                                            ),
+                                                          ),
+                                                          Text(
+                                                            logHistory!.data!
+                                                                .totalDuration!,
+                                                            style:
+                                                                const TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 16,
+                                                              color:
+                                                                  Colors.blue,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
                                                     ),
-                                                    child: Column(
-                                                      children: [
-                                                        Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  top: 10,
-                                                                  right: 10,
-                                                                  left: 10),
-                                                          child: Column(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .start,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Row(
-                                                                children: [
-                                                                  Container(
-                                                                    constraints:
-                                                                        const BoxConstraints(
-                                                                      maxHeight:
-                                                                          60,
-                                                                    ),
-                                                                    child:
-                                                                        Container(
-                                                                      constraints:
-                                                                          const BoxConstraints(
-                                                                        minHeight:
-                                                                            20,
-                                                                        minWidth:
-                                                                            20,
-                                                                        maxHeight:
-                                                                            50,
-                                                                        maxWidth:
-                                                                            50,
-                                                                      ),
-                                                                      decoration:
-                                                                          BoxDecoration(
-                                                                        border: Border.all(
-                                                                            color:
-                                                                                Colors.white,
-                                                                            width: 0),
-                                                                        boxShadow: const [
-                                                                          BoxShadow(
-                                                                              color: Colors.grey,
-                                                                              blurRadius: 5,
-                                                                              offset: Offset(1, 1)),
-                                                                        ],
-                                                                        color: Colors
-                                                                            .white,
-                                                                        shape: BoxShape
-                                                                            .circle,
-                                                                        image: const DecorationImage(
-                                                                            fit:
-                                                                                BoxFit.cover,
-                                                                            image: AssetImage('assets/main/avatar.png')),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                  const SizedBox(
-                                                                    width: 20,
-                                                                  ),
-                                                                  Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .center,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
-                                                                    children: [
-                                                                      Text(
-                                                                        callHistory!
-                                                                            .data!
-                                                                            .phoneCallLog![index]
-                                                                            .name
-                                                                            .toString(),
-                                                                        style: const TextStyle(
-                                                                            fontSize:
-                                                                                16,
-                                                                            fontWeight:
-                                                                                FontWeight.w500),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            3,
-                                                                      ),
-                                                                      Text(
-                                                                        callHistory!
-                                                                            .data!
-                                                                            .phoneCallLog![index]
-                                                                            .phoneNumber
-                                                                            .toString(),
-                                                                        style: const TextStyle(
-                                                                            fontSize:
-                                                                                15,
-                                                                            fontWeight:
-                                                                                FontWeight.w400),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 10,
-                                                              ),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  Row(
-                                                                    children: [
-                                                                      Image.asset(
-                                                                          "assets/icons/calendar.png",
-                                                                          width:
-                                                                              20),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            15,
-                                                                      ),
-                                                                      Text(
-                                                                        callHistory!
-                                                                            .data!
-                                                                            .phoneCallLog![index]
-                                                                            .dateTime
-                                                                            .toString(),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                  Row(
-                                                                    children: [
-                                                                      const Icon(
-                                                                          Icons
-                                                                              .timer_outlined),
-                                                                      const SizedBox(
-                                                                        width:
-                                                                            10,
-                                                                      ),
-                                                                      Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            right:
-                                                                                10),
-                                                                        child:
-                                                                            Text(
-                                                                          callHistory!
-                                                                              .data!
-                                                                              .phoneCallLog![index]
-                                                                              .duration
-                                                                              .toString()
-                                                                              .split('.')[0]
-                                                                              .padLeft(8, '0'),
-                                                                          style: const TextStyle(
-                                                                              fontSize: 15,
-                                                                              color: Colors.green),
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 5,
-                                                              ),
-                                                              Row(
-                                                                mainAxisAlignment:
-                                                                    MainAxisAlignment
-                                                                        .spaceBetween,
-                                                                children: [
-                                                                  Text(
-                                                                    'Type  : ${callHistory!.data!.phoneCallLog![index].callType}',
-                                                                  ),
-                                                                  Container(
-                                                                    decoration: BoxDecoration(
-                                                                        color: Colors
-                                                                            .grey
-                                                                            .shade300,
-                                                                        borderRadius:
-                                                                            BorderRadius.circular(5)),
-                                                                    child:
-                                                                        const Padding(
-                                                                      padding: EdgeInsets.only(
-                                                                          left:
-                                                                              10,
-                                                                          right:
-                                                                              10,
-                                                                          top:
-                                                                              5,
-                                                                          bottom:
-                                                                              5),
-                                                                      child:
-                                                                          Text(
-                                                                        'SIM 1',
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 10,
+                                                  ),
+                                                ListView.builder(
+                                                    shrinkWrap: true,
+                                                    itemCount: logHistory!
+                                                        .data!.lists!.length,
+                                                    physics:
+                                                        const NeverScrollableScrollPhysics(),
+                                                    itemBuilder:
+                                                        (context, index) {
+                                                      return InkWell(
+                                                          child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                left: 10,
+                                                                right: 10,
+                                                                bottom: 10),
+                                                        child: Container(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              1,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Colors.white,
+                                                            boxShadow: const [
+                                                              BoxShadow(
+                                                                color:
+                                                                    Colors.grey,
+                                                                offset: Offset(
+                                                                    2.0, 2.0),
                                                               )
-                                                              // Text(
-                                                              //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
-                                                              //     ),
+                                                            ],
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
+                                                          ),
+                                                          child: Column(
+                                                            children: [
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        top: 10,
+                                                                        right:
+                                                                            10,
+                                                                        left:
+                                                                            10),
+                                                                child: Column(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .start,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        Container(
+                                                                          constraints:
+                                                                              const BoxConstraints(
+                                                                            maxHeight:
+                                                                                60,
+                                                                          ),
+                                                                          child:
+                                                                              Container(
+                                                                            constraints:
+                                                                                const BoxConstraints(
+                                                                              minHeight: 20,
+                                                                              minWidth: 20,
+                                                                              maxHeight: 50,
+                                                                              maxWidth: 50,
+                                                                            ),
+                                                                            decoration:
+                                                                                BoxDecoration(
+                                                                              border: Border.all(color: Colors.white, width: 0),
+                                                                              boxShadow: const [
+                                                                                BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
+                                                                              ],
+                                                                              color: Colors.white,
+                                                                              shape: BoxShape.circle,
+                                                                              image: const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              20,
+                                                                        ),
+                                                                        Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.center,
+                                                                          crossAxisAlignment:
+                                                                              CrossAxisAlignment.start,
+                                                                          children: [
+                                                                            Text(
+                                                                              logHistory!.data!.lists![index].name.toString(),
+                                                                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              height: 3,
+                                                                            ),
+                                                                            Text(
+                                                                              logHistory!.data!.lists![index].phoneNumber.toString(),
+                                                                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          10,
+                                                                    ),
+                                                                    Row(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceBetween,
+                                                                      children: [
+                                                                        Row(
+                                                                          children: [
+                                                                            Image.asset("assets/icons/calendar.png",
+                                                                                width: 20),
+                                                                            const SizedBox(
+                                                                              width: 15,
+                                                                            ),
+                                                                            Text(
+                                                                              logHistory!.data!.lists![index].dateTime.toString(),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                        Row(
+                                                                          children: [
+                                                                            const Icon(Icons.timer_outlined),
+                                                                            const SizedBox(
+                                                                              width: 10,
+                                                                            ),
+                                                                            Padding(
+                                                                              padding: const EdgeInsets.only(right: 10),
+                                                                              child: Text(
+                                                                                logHistory!.data!.lists![index].duration.toString().split('.')[0].padLeft(8, '0'),
+                                                                                style: const TextStyle(fontSize: 15, color: Colors.green),
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height: 5,
+                                                                    ),
+                                                                    Row(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .spaceBetween,
+                                                                      children: [
+                                                                        Text(
+                                                                          'Type  : ${logHistory!.data!.lists![index].callType}',
+                                                                        ),
+                                                                        Container(
+                                                                          decoration: BoxDecoration(
+                                                                              color: Colors.grey.shade300,
+                                                                              borderRadius: BorderRadius.circular(5)),
+                                                                          child:
+                                                                              const Padding(
+                                                                            padding: EdgeInsets.only(
+                                                                                left: 10,
+                                                                                right: 10,
+                                                                                top: 5,
+                                                                                bottom: 5),
+                                                                            child:
+                                                                                Text(
+                                                                              'SIM 1',
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          10,
+                                                                    )
+                                                                    // Text(
+                                                                    //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
+                                                                    //     ),
+                                                                  ],
+                                                                ),
+                                                              ),
                                                             ],
                                                           ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ));
-                                              })
+                                                      ));
+                                                    }),
+                                              ],
+                                            )
                                           : SizedBox(
                                               height: MediaQuery.of(context)
                                                       .size
@@ -1568,7 +1577,7 @@ class _CallHistoryPageState extends State<CallHistoryPage> {
                                                           .pushAndRemoveUntil(
                                                               MaterialPageRoute(
                                                                   builder: (context) =>
-                                                                      Dashboard(
+                                                                      DashboardLeadNewUpdatedTwo(
                                                                           widget
                                                                               .token)),
                                                               (Route<dynamic>

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_auto_orientation/flutter_auto_orientation.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/lead_management/leadDetailsModel.dart';
@@ -24,6 +25,7 @@ import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/activeLeads.dart';
 import 'package:login2/screens/leadManagement/add_leads_new.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
+import 'package:login2/screens/leadManagement/callHistoryPageNew.dart';
 import 'package:login2/screens/leadManagement/newLeads.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
@@ -88,7 +90,7 @@ import '../homePage.dart';
 import '../search/search.dart';
 import '../leadManagement/notification_page.dart';
 import '../leadManagement/lead_details_popup.dart';
-import '../leadManagement/product_details_popup.dart';
+
 import '../leadManagement/callHistoryPage.dart';
 import '../leadManagement/projectDashboard.dart';
 import '../leadManagement/minimalDashboard.dart';
@@ -170,6 +172,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "cache_category_table_updated_v2";
   DateTime fromDate = DateTime.now();
   DateTime toDate = DateTime.now();
+  DateTime fromDateClosed = DateTime.now();
+  DateTime toDateClosed = DateTime.now();
+  DateTime fromDateLost = DateTime.now();
+  DateTime toDateLost = DateTime.now();
+  String closedCount = "0";
+  String lostCount = "0";
+  bool isClosedDateFiltered = false;
+  bool isLostDateFiltered = false;
   DateTime fromDate1 = DateTime(DateTime.now().year, DateTime.now().month, 1);
   DateTime toDate1 = DateTime.now();
   DateTime targetFromDate =
@@ -272,6 +282,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   static const Color callGreen = Color(0xFF4CAF50);
   static const Color accentOrange = Color(0xFFFF9800);
   static const Color accentRed = Color(0xFFF44336);
+  static const Color followupBlue = Color(0xFF2196F3);
   static const Color textPrimary = Color(0xFF2C3E50);
   static const Color textSecondary = Color(0xFF7F8C8D);
   static const Color borderLight = Color(0xFFECF0F1);
@@ -285,30 +296,20 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   bool _isFlipped3 = false;
   bool _isFlipped4 = false;
   final List<Color> _colors = [
-    Colors.blueAccent,
-    Colors.teal,
-    Colors.orange.shade800,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.indigoAccent,
-    Colors.blueAccent,
-    Colors.teal,
-    Colors.orange.shade800,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.indigoAccent,
-    Colors.blueAccent,
-    Colors.teal,
-    Colors.orange.shade800,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.indigoAccent,
-    Colors.blueAccent,
-    Colors.teal,
-    Colors.orange.shade800,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.indigoAccent,
+    const Color(0xFF2196F3), // Vibrant Blue (index 0)
+    const Color(0xFF2196F3), // Blue at index 1 for "New"
+    const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
+    const Color(0xFFFFC107), // Amber/Yellow at index 3 for Followup
+    const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
+    const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
+    const Color(0xFF9C27B0), // Purple 500 (index 6)
+    const Color(0xFF2a84c9), // Primary Blue (index 7)
+    const Color(0xFF009688), // Teal (index 8)
+    const Color(0xFFFF6F00), // Amber 900 (index 9)
+    const Color(0xFFD32F2F), // Red 700 (index 10)
+    const Color(0xFF1B5E20), // Green 900 (index 11)
+    const Color(0xFF0D47A1), // Blue 900 (index 12)
+    const Color(0xFF3F51B5), // Indigo (index 13)
   ];
 
   Map<String, double> reportDataMap = {};
@@ -326,7 +327,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   DateTime? stageWiseToDate;
   DateTime? callStatusFromDate;
   DateTime? callStatusToDate;
-
   List<String> stageWiseStaffs = [];
   bool isStageWiseLoading = false;
   LeadCategoryStaffWiseModel? stageWiseData;
@@ -450,6 +450,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     String? lsFrom = await Common.getSharedPref("leadSourceFromDate");
     String? lsTo = await Common.getSharedPref("leadSourceToDate");
+    String? cloudCallPermission =
+        await Common.getSharedPref("cloudCallPermission");
     if (lsFrom != null) leadSourceFromDate = DateTime.parse(lsFrom);
     if (lsTo != null) leadSourceToDate = DateTime.parse(lsTo);
 
@@ -667,9 +669,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       firebaseToken = await FirebaseMessaging.instance.getToken();
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
-      if (loginCheck?.data == false) {
-        Common.toastMessaage('Session Expired', Colors.red);
+      if (loginCheck == null || loginCheck.data == false) {
         if (mounted) {
+          Common.toastMessaage('Session Expired', Colors.red);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const Login()),
             (route) => false,
@@ -782,7 +784,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (dismissedDate != today && startAndStopWorkPermission == "true") {
       if (loginOrNot?.data != true) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showLoginPrompt(context);
+          if (mounted) {
+            _showLoginPrompt(context);
+          }
         });
       }
     }
@@ -803,12 +807,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Lottie.asset(
-                'assets/lottie/morning_login.json',
-                height: 120,
-                repeat: true,
-              ),
-              const SizedBox(height: 16),
+              // Lottie.asset(
+              //   'assets/lottie/morning_login.json',
+              //   height: 120,
+              //   repeat: true,
+              // ),
+              // const SizedBox(height: 16),
               const Text(
                 "You haven't logged in today. Start your work session now?",
                 textAlign: TextAlign.center,
@@ -1026,56 +1030,49 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     }
   }
 
-  Future<void> getLeadProgressbar(String token, DateTime fromDate,
-      DateTime toDate, String callStatus) async {
-    final now = DateTime.now();
+  Future<void> getLeadProgressbar(
+      String token, dynamic fromDate, dynamic toDate, String callStatus) async {
     object1 = await HttpService.leadProgressbar(
-        token, now.toString(), now.toString(), callStatus);
+        token, fromDate.toString(), toDate.toString(), callStatus);
   }
 
-  Future<void> getLeadProgressbarNew(String token, DateTime fromDate,
-      DateTime toDate, String callStatus) async {
-    final now = DateTime.now();
+  Future<void> getLeadProgressbarNew(
+      String token, dynamic fromDate, dynamic toDate, String callStatus) async {
     object1 = await HttpService.newleadProgressbar(
-        token, now.toString(), now.toString(), callStatus);
+        token, fromDate.toString(), toDate.toString(), callStatus);
   }
 
-  Future<void> getLeadProgressbarFollowup(String token, DateTime fromDate,
-      DateTime toDate, String callStatus) async {
-    final now = DateTime.now();
+  Future<void> getLeadProgressbarFollowup(
+      String token, dynamic fromDate, dynamic toDate, String callStatus) async {
     object1 = await HttpService.followupleadProgressbar(
-        token, now.toString(), now.toString(), callStatus);
+        token, fromDate.toString(), toDate.toString(), callStatus);
   }
 
-  Future<void> getLeadProgressbarMissed(String token, DateTime fromDate,
-      DateTime toDate, String callStatus) async {
-    final now = DateTime.now();
+  Future<void> getLeadProgressbarMissed(
+      String token, dynamic fromDate, dynamic toDate, String callStatus) async {
     object1 = await HttpService.missedleadProgressbar(
-        token, now.toString(), now.toString(), callStatus);
+        token, fromDate.toString(), toDate.toString(), callStatus);
   }
 
-  Future<void> getLeadProgressbarTransferred(String token, DateTime fromDate,
-      DateTime toDate, String callStatus) async {
-    final now = DateTime.now();
+  Future<void> getLeadProgressbarTransferred(
+      String token, dynamic fromDate, dynamic toDate, String callStatus) async {
     object1 = await HttpService.transferredleadProgressbar(
-        token, now.toString(), now.toString(), callStatus);
+        token, fromDate.toString(), toDate.toString(), callStatus);
   }
 
-  Future<void> getLeadProgressbarCalled(String token, DateTime fromDate,
-      DateTime toDate, String callStatus) async {
-    final now = DateTime.now();
+  Future<void> getLeadProgressbarCalled(
+      String token, dynamic fromDate, dynamic toDate, String callStatus) async {
     object1 = await HttpService.calledleadProgressbar(
-        token, now.toString(), now.toString(), callStatus);
+        token, fromDate.toString(), toDate.toString(), callStatus);
   }
 
   Future<void> getLeadProgressBarStaffData({
     required String leadStatus,
     required String selectedType,
   }) async {
-    final now = DateTime.now();
     staffProgressData = await HttpService.leadProgressBarStaff(
-      fromDate: now.toString(),
-      toDate: now.toString(),
+      fromDate: fromDate.toString(),
+      toDate: toDate.toString(),
       leadStatus: leadStatus,
       selectedType: selectedType,
     );
@@ -1084,10 +1081,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   Future<void> getLeadProgressBarCategoryData({
     required String leadStatus,
   }) async {
-    final now = DateTime.now();
     categoryProgressData = await HttpService.leadProgressBarCategory(
-      fromDate: now.toString(),
-      toDate: now.toString(),
+      fromDate: fromDate.toString(),
+      toDate: toDate.toString(),
       leadStatus: leadStatus,
     );
   }
@@ -1095,10 +1091,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   Future<void> getLeadProgressBarStatusData({
     required String leadStatus,
   }) async {
-    final now = DateTime.now();
     statusProgressData = await HttpService.leadProgressBarStatus(
-      fromDate: now.toString(),
-      toDate: now.toString(),
+      fromDate: fromDate.toString(),
+      toDate: toDate.toString(),
       leadStatus: leadStatus,
     );
   }
@@ -2822,15 +2817,18 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             ),
             _buildDashboardBox(
               title: 'Closed',
-              mainValue:
-                  (dashboardCounts?.data?.leads?.closedLeads ?? 0).toString(),
+              mainValue: isClosedDateFiltered
+                  ? closedCount
+                  : (dashboardCounts?.data?.leads?.closedLeads ?? 0).toString(),
               color: callGreen,
               child: _buildBoxIcons('Closed', '4', 'Closed Leads'),
             ),
             _buildDashboardBox(
               title: 'Lost',
-              mainValue:
-                  (dashboardCounts?.data?.leads?.rejectedLeads ?? 0).toString(),
+              mainValue: isLostDateFiltered
+                  ? lostCount
+                  : (dashboardCounts?.data?.leads?.rejectedLeads ?? 0)
+                      .toString(),
               color: accentRed,
               child: _buildBoxIcons('Lost', '3', 'Lost Leads'),
             ),
@@ -3132,8 +3130,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 deleteLeadPermission1,
                 cloudCallPermission1,
                 pageName: 'Closed Leads',
-                fromDate: fromDate.toString(),
-                toDate: toDate.toString(),
+                fromDate: isClosedDateFiltered
+                    ? fromDateClosed.toString()
+                    : fromDate.toString(),
+                toDate: isClosedDateFiltered
+                    ? toDateClosed.toString()
+                    : toDate.toString(),
                 status: '4',
               ),
             ),
@@ -3150,8 +3152,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 deleteLeadPermission1,
                 cloudCallPermission1,
                 pageName: 'Lost Leads',
-                fromDate: fromDate.toString(),
-                toDate: toDate.toString(),
+                fromDate: isLostDateFiltered
+                    ? fromDateLost.toString()
+                    : fromDate.toString(),
+                toDate: isLostDateFiltered
+                    ? toDateLost.toString()
+                    : toDate.toString(),
                 status: '3',
               ),
             ),
@@ -3266,7 +3272,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       ),
                       if (title == 'Closed' || title == 'Lost')
                         GestureDetector(
-                          onTap: _showGlobalDateRangePickerDialog,
+                          onTap: () => _showStatusDateRangePickerDialog(title),
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
@@ -3479,26 +3485,40 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       ? '1'
                       : _listTabFilter == 'Transferred'
                           ? '2'
-                          : '';
+                          : _listTabFilter == 'Closed'
+                              ? '4'
+                              : '';
+
+      dynamic fDate = fromDate;
+      dynamic tDate = toDate;
 
       if (category == "New") {
         await getLeadProgressbarNew(
-            widget.token!, fromDate, toDate, effectiveGraphStatus);
+            widget.token!, fDate, tDate, effectiveGraphStatus);
       } else if (category == "Followup") {
         await getLeadProgressbarFollowup(
-            widget.token!, fromDate, toDate, effectiveGraphStatus);
+            widget.token!, fDate, tDate, effectiveGraphStatus);
       } else if (category == "Missed") {
         await getLeadProgressbarMissed(
-            widget.token!, fromDate, toDate, effectiveGraphStatus);
+            widget.token!, fDate, tDate, effectiveGraphStatus);
       } else if (category == "Called") {
         await getLeadProgressbarCalled(
-            widget.token!, fromDate, toDate, effectiveGraphStatus);
+            widget.token!, fDate, tDate, effectiveGraphStatus);
       } else if (category == "Transferred") {
         await getLeadProgressbarTransferred(
-            widget.token!, fromDate, toDate, effectiveGraphStatus);
+            widget.token!, fDate, tDate, effectiveGraphStatus);
       } else {
+        if (category == "Closed") {
+          if (!isClosedDateFiltered) {
+            fDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+            tDate = DateFormat('dd-MM-yyyy').format(DateTime.now());
+          } else {
+            fDate = DateFormat('dd-MM-yyyy').format(fromDateClosed);
+            tDate = DateFormat('dd-MM-yyyy').format(toDateClosed);
+          }
+        }
         await getLeadProgressbar(
-            widget.token!, fromDate, toDate, effectiveGraphStatus);
+            widget.token!, fDate, tDate, effectiveGraphStatus);
       }
 
       List<Detail> newLeads = [];
@@ -3515,6 +3535,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               callStatusId: "",
               isNewCall: false,
               followupDate: "",
+              nextFollowupDate: "",
               scheduledDate: "",
               clientName: sl.staffName ?? "Unknown Staff",
               contactNumber1: sl.staffCount ?? "0",
@@ -3783,6 +3804,55 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               category: categoryId,
               callResId: callResId,
               callResName: callResName,
+              callStatus: callStatus)),
+    ).then((r) => getData(widget.token, fromDate, toDate, isRefresh: true));
+  }
+
+  void _navigateToFilteredLeadsActive({
+    required BuildContext context,
+    String? staffName,
+    String? staffId,
+    String? categoryName,
+    String? categoryId,
+    String? label,
+    String? title,
+    String? status,
+    String? type,
+    String? callStatus,
+    String? callResName,
+    String? callResId,
+    DateTime? from,
+    DateTime? to,
+    bool isGlobalContext = false,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => ViewLeadsNew(
+              widget.token,
+              updateLeadPermission1,
+              deleteLeadPermission1,
+              cloudCallPermission1,
+              pageName: title ?? 'Leads',
+              fromDate: from != null
+                  ? from.toString()
+                  : (isGlobalContext
+                      ? (_isGlobalDateFiltered ? fromDate.toString() : null)
+                      : (_isListTabDateFiltered ? fromDate.toString() : null)),
+              toDate: to != null
+                  ? to.toString()
+                  : (isGlobalContext
+                      ? (_isGlobalDateFiltered ? toDate.toString() : null)
+                      : (_isListTabDateFiltered ? toDate.toString() : null)),
+              status: status ?? '0',
+              leadType: type ?? '',
+              staffName: staffName,
+              staff: staffId,
+              categoryName: categoryName,
+              category: categoryId,
+              callResId: callResId,
+              callResName: callResName,
+              isActiveReport: "1",
               callStatus: callStatus)),
     ).then((r) => getData(widget.token, fromDate, toDate, isRefresh: true));
   }
@@ -4260,7 +4330,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
-  Future<void> _showLeadDetailsPopup(int index) async {
+  Future<void> _showLeadDetailsPopup(int index,
+      {bool autoExpandFollowup = false}) async {
     if (index >= listTabLeads.length) return;
 
     final displayItem = listTabLeads[index];
@@ -4327,6 +4398,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           leadDetailsFollowup: leadDetailsFollowup,
           commonDetails: commonDetails,
           pageName: 'Dashboard',
+          autoExpandFollowup: autoExpandFollowup,
           onDataChanged: () {
             getData(widget.token, fromDate, toDate, isRefresh: true);
           },
@@ -4349,28 +4421,30 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                dense: true,
-                leading:
-                    const Icon(Icons.cloud_circle_rounded, color: appBarStart),
-                title: const Text('Cloud Call'),
-                onTap: () async {
-                  Common.showProgressDialog(context, "Loading..");
-                  var object1 = await HttpService.addCloudCall(
-                      widget.token, item.callMasterId, item.contactNumber1);
-                  if (object1.data == true) {
-                    if (context.mounted) {
-                      Common.toastMessaage(object1.message, callGreen);
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+              if (cloudCallPermission1) ...[
+                ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.cloud_circle_rounded,
+                      color: appBarStart),
+                  title: const Text('Cloud Call'),
+                  onTap: () async {
+                    Common.showProgressDialog(context, "Loading..");
+                    var object1 = await HttpService.addCloudCall(
+                        widget.token, item.callMasterId, item.contactNumber1);
+                    if (object1.data == true) {
+                      if (context.mounted) {
+                        Common.toastMessaage(object1.message, callGreen);
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      }
+                    } else {
+                      Common.toastMessaage(object1.message, accentRed);
+                      if (context.mounted) Navigator.pop(context);
                     }
-                  } else {
-                    Common.toastMessaage(object1.message, accentRed);
-                    if (context.mounted) Navigator.pop(context);
-                  }
-                },
-              ),
-              const Divider(height: 1),
+                  },
+                ),
+                const Divider(height: 1),
+              ],
               ListTile(
                 dense: true,
                 leading:
@@ -4525,231 +4599,263 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 color: lead.isSelected ? appBarStart : borderLight,
                 width: lead.isSelected ? 2 : 1),
           ),
-          child: InkWell(
-            onTap: () {
-              if (selectedIUsers.isNotEmpty) {
-                _handleLongPress(index);
-              } else {
-                _showLeadDetailsPopup(index);
-              }
-            },
-            onLongPress: () => _handleLongPress(index),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 5,
-                    height: 75,
-                    color: lead.priority == '1'
-                        ? Colors.grey.shade300
-                        : lead.priority == '2'
-                            ? callGreen
-                            : lead.priority == '3'
-                                ? accentRed
-                                : lead.priority == '4'
-                                    ? textSecondary
-                                    : Colors.grey.shade300,
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => _showLeadDetailsPopup(index),
-                                  child: Text(
-                                    lead.clientName.isEmpty ||
-                                            lead.clientName == "null"
-                                        ? "Unknown"
-                                        : lead.clientName,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: lead.isCustomer
-                                          ? callGreen
-                                          : textPrimary,
-                                      decoration: lead.priority == '4'
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                      letterSpacing: -0.2,
+          child: Slidable(
+            key: ValueKey(lead.callMasterId),
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) =>
+                      _showLeadDetailsPopup(index, autoExpandFollowup: true),
+                  backgroundColor: followupBlue,
+                  foregroundColor: Colors.white,
+                  icon: Icons.add_comment_rounded,
+                  label: 'Followup',
+                ),
+              ],
+            ),
+            child: InkWell(
+              onTap: () {
+                if (selectedIUsers.isNotEmpty) {
+                  _handleLongPress(index);
+                } else {
+                  _showLeadDetailsPopup(index);
+                }
+              },
+              onLongPress: () => _handleLongPress(index),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 75,
+                      color: lead.priority == '1'
+                          ? Colors.grey.shade300
+                          : lead.priority == '2'
+                              ? callGreen
+                              : lead.priority == '3'
+                                  ? accentRed
+                                  : lead.priority == '4'
+                                      ? textSecondary
+                                      : Colors.grey.shade300,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => _showLeadDetailsPopup(index),
+                                    child: Text(
+                                      lead.clientName.isEmpty ||
+                                              lead.clientName == "null"
+                                          ? "Unknown"
+                                          : lead.clientName,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: lead.isCustomer
+                                            ? callGreen
+                                            : textPrimary,
+                                        decoration: lead.priority == '4'
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                        letterSpacing: -0.2,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: accentRed.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: accentRed.withOpacity(0.2)),
-                                ),
-                                child: Text(
-                                  lead.leadCategory,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: accentRed,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5,
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: accentRed.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: accentRed.withOpacity(0.2)),
+                                  ),
+                                  child: Text(
+                                    lead.leadCategory,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: accentRed,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (int.parse(lead.categoryCount) > 1)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: IgnorePointer(
-                                    ignoring: selectedIUsers.isNotEmpty,
-                                    child: InkWell(
-                                      onTap: () => _showCategoryPopup(lead),
-                                      child: Container(
-                                        height: 18,
-                                        width: 18,
-                                        decoration: const BoxDecoration(
-                                          color: accentOrange,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            lead.categoryCount,
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
+                                if (int.parse(lead.categoryCount) > 1)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: IgnorePointer(
+                                      ignoring: selectedIUsers.isNotEmpty,
+                                      child: InkWell(
+                                        onTap: () => _showCategoryPopup(lead),
+                                        child: Container(
+                                          height: 18,
+                                          width: 18,
+                                          decoration: const BoxDecoration(
+                                            color: accentOrange,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              lead.categoryCount,
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    String id = lead.callMasterId;
-                                    if (_expandedLeadIds.contains(id)) {
-                                      _expandedLeadIds.remove(id);
-                                    } else {
-                                      _expandedLeadIds.add(id);
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: backgroundLight,
-                                    shape: BoxShape.circle,
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      String id = lead.callMasterId;
+                                      if (_expandedLeadIds.contains(id)) {
+                                        _expandedLeadIds.remove(id);
+                                      } else {
+                                        _expandedLeadIds.add(id);
+                                      }
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: backgroundLight,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        color: textSecondary,
+                                        size: 20),
                                   ),
-                                  child: Icon(Icons.keyboard_arrow_down_rounded,
-                                      color: textSecondary, size: 20),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: lead.callResultId >= 0 &&
-                                          lead.callResultId < _colors.length
-                                      ? _colors[lead.callResultId]
-                                          .withOpacity(0.1)
-                                      : accentOrange.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: lead.callResultId >= 0 &&
+                                            lead.callResultId < _colors.length
+                                        ? _colors[lead.callResultId]
+                                            .withOpacity(0.15)
+                                        : accentOrange.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: lead.callResultId >= 0 &&
+                                              lead.callResultId < _colors.length
+                                          ? _colors[lead.callResultId]
+                                              .withOpacity(0.4)
+                                          : accentOrange.withOpacity(0.4),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: lead.callResultId >= 0 &&
+                                                  lead.callResultId <
+                                                      _colors.length
+                                              ? _colors[lead.callResultId]
+                                              : accentOrange,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        lead.callResult.isEmpty
+                                            ? "Pending"
+                                            : lead.callResult,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: lead.callResultId >= 0 &&
+                                                  lead.callResultId <
+                                                      _colors.length
+                                              ? _colors[lead.callResultId]
+                                              : accentOrange,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                Row(
                                   children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: lead.callResultId >= 0 &&
-                                                lead.callResultId <
-                                                    _colors.length
-                                            ? _colors[lead.callResultId]
-                                            : accentOrange,
-                                      ),
+                                    _buildMiniActionButton(
+                                      icon: Icons.call,
+                                      color: callGreen,
+                                      isEnabled: selectedIUsers.isEmpty,
+                                      onTap: () {
+                                        if (_listTabCallPermission == false) {
+                                          _showCallPermissionDialog(index);
+                                        } else {
+                                          if (cloudCallPermission1) {
+                                            chooseCallDialog(context, index);
+                                          } else {
+                                            Common.dialPad(lead.contactNumber1);
+                                          }
+                                        }
+                                      },
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      lead.callResult,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: lead.callResultId >= 0 &&
-                                                lead.callResultId <
-                                                    _colors.length
-                                            ? _colors[lead.callResultId]
-                                            : accentOrange,
-                                      ),
+                                    const SizedBox(width: 12),
+                                    _buildMiniActionButton(
+                                      icon: FontAwesomeIcons.whatsapp,
+                                      color: const Color(0xFF25D366),
+                                      isEnabled: selectedIUsers.isEmpty,
+                                      onTap: () {
+                                        if (lead.contactNumber1.isNotEmpty) {
+                                          Common.openWhatsApp(
+                                              lead.contactNumber1);
+                                        }
+                                      },
                                     ),
+                                    // const SizedBox(width: 12),
+                                    // _buildMiniActionButton(
+                                    //   icon: Icons.inventory_2_rounded,
+                                    //   color: Colors.blue,
+                                    //   onTap: () {
+                                    //     showModalBottomSheet(
+                                    //       context: context,
+                                    //       isScrollControlled: true,
+                                    //       backgroundColor: Colors.transparent,
+                                    //       builder: (context) =>
+                                    //           const ProductDetailsPopup(),
+                                    //     );
+                                    //   },
+                                    // ),
                                   ],
                                 ),
-                              ),
-                              Row(
-                                children: [
-                                  _buildMiniActionButton(
-                                    icon: Icons.call,
-                                    color: callGreen,
-                                    isEnabled: selectedIUsers.isEmpty,
-                                    onTap: () {
-                                      if (_listTabCallPermission == false) {
-                                        _showCallPermissionDialog(index);
-                                      } else {
-                                        chooseCallDialog(context, index);
-                                      }
-                                    },
-                                  ),
-                                  const SizedBox(width: 12),
-                                  _buildMiniActionButton(
-                                    icon: FontAwesomeIcons.whatsapp,
-                                    color: const Color(0xFF25D366),
-                                    isEnabled: selectedIUsers.isEmpty,
-                                    onTap: () {
-                                      if (lead.contactNumber1.isNotEmpty) {
-                                        Common.openWhatsApp(
-                                            lead.contactNumber1);
-                                      }
-                                    },
-                                  ),
-                                  // const SizedBox(width: 12),
-                                  // _buildMiniActionButton(
-                                  //   icon: Icons.inventory_2_rounded,
-                                  //   color: Colors.blue,
-                                  //   onTap: () {
-                                  //     showModalBottomSheet(
-                                  //       context: context,
-                                  //       isScrollControlled: true,
-                                  //       backgroundColor: Colors.transparent,
-                                  //       builder: (context) =>
-                                  //           const ProductDetailsPopup(),
-                                  //     );
-                                  //   },
-                                  // ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -5073,18 +5179,21 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           decoration: BoxDecoration(
                             color: lead.callResultId >= 0 &&
                                     lead.callResultId < _colors.length
-                                ? _colors[lead.callResultId].withOpacity(0.12)
-                                : accentOrange.withOpacity(0.12),
+                                ? _colors[lead.callResultId].withOpacity(0.15)
+                                : accentOrange.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
                                 color: lead.callResultId >= 0 &&
                                         lead.callResultId < _colors.length
                                     ? _colors[lead.callResultId]
-                                        .withOpacity(0.3)
-                                    : accentOrange.withOpacity(0.3)),
+                                        .withOpacity(0.4)
+                                    : accentOrange.withOpacity(0.4),
+                                width: 1),
                           ),
                           child: Text(
-                            lead.callResult,
+                            lead.callResult.isEmpty
+                                ? "Pending"
+                                : lead.callResult,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -5105,7 +5214,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                 if (_listTabCallPermission == false) {
                                   _showCallPermissionDialog(index);
                                 } else {
-                                  chooseCallDialog(context, index);
+                                  if (cloudCallPermission1) {
+                                    chooseCallDialog(context, index);
+                                  } else {
+                                    Common.dialPad(lead.contactNumber1);
+                                  }
                                 }
                               },
                             ),
@@ -10309,7 +10422,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CallHistoryPage(
+                        builder: (context) => CallHistoryPageTwo(
                           widget.token!,
                           name,
                           userId,
@@ -11117,7 +11230,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.newLeads.toString(),
                           Icons.person_add_rounded,
-                          const Color(0xFF2a86c9),
+                          _colors[1], // Standardized Blue
                           '1',
                           isCalled: true,
                         ),
@@ -11130,7 +11243,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.followupLeads.toString(),
                           Icons.schedule_rounded,
-                          Colors.orange,
+                          _colors[2], // Standardized Amber
                           '2',
                           isCalled: false,
                         ),
@@ -11142,7 +11255,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.missedLeads.toString(),
                           Icons.event_busy_rounded,
-                          const Color(0xFFF44336),
+                          _colors[5], // Standardized Red
                           '0',
                           leadType: '1',
                           callStatus: '-1',
@@ -11157,7 +11270,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.totalCalled.toString(),
                           Icons.phone_in_talk_rounded,
-                          Colors.purple,
+                          _colors[6], // Purple
                           '0',
                           leadType: '-1',
                           callStatus: '1',
@@ -11173,26 +11286,26 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.transferLeads.toString(),
                           Icons.swap_horiz_rounded,
-                          Colors.teal,
+                          _colors[8], // Teal
                           '0',
                           leadType: '2',
                           callStatus: '-2',
                           isCalled: true,
                         ),
-                        // _buildListSummaryItemOld(
-                        //   'Closed',
-                        //   dashboardMainCounts != null
-                        //       ? (dashboardMainCounts?.data.leads.closedLeads ??
-                        //               0)
-                        //           .toString()
-                        //       : '0',
-                        //   Icons.check_circle_outline_rounded,
-                        //   Colors.green,
-                        //   '4',
-                        //   isCalled: false,
-                        //   graphId:
-                        //       '4', // Or whichever graph ID works for Closed
-                        // ),
+                        _buildListSummaryItemOld(
+                          'Closed',
+                          dashboardMainCounts != null
+                              ? (dashboardMainCounts?.data.leads.closedLeads ??
+                                      0)
+                                  .toString()
+                              : '0',
+                          Icons.check_circle_outline_rounded,
+                          _colors[4], // Standardized Green
+                          '4',
+                          isCalled: false,
+                          graphId:
+                              '4', // Or whichever graph ID works for Closed
+                        ),
                       ],
                     ),
                   ),
@@ -11210,7 +11323,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.newLeads.toString(),
                             Icons.person_add_rounded,
-                            const Color(0xFF2a86c9),
+                            _colors[1], // Standardized Blue for New
                             '1',
                             isCalled: true,
                           ),
@@ -11226,7 +11339,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.followupLeads.toString(),
                             Icons.schedule_rounded,
-                            Colors.orange,
+                            _colors[2], // Standardized Amber for Followup
                             '2',
                             isCalled: false,
                           ),
@@ -11242,7 +11355,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.missedLeads.toString(),
                             Icons.event_busy_rounded,
-                            const Color(0xFFF44336),
+                            _colors[5], // Standardized Red for Missed
                             '0',
                             leadType: '1',
                             callStatus: '-1',
@@ -11265,7 +11378,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.totalCalled.toString(),
                             Icons.phone_in_talk_rounded,
-                            Colors.purple,
+                            _colors[6], // Purple for Called
                             '0',
                             leadType: '-1',
                             callStatus: '1',
@@ -11284,7 +11397,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.transferLeads.toString(),
                             Icons.swap_horiz_rounded,
-                            Colors.teal,
+                            _colors[8], // Teal for Transferred
                             '0',
                             leadType: '2',
                             callStatus: '-2',
@@ -11301,11 +11414,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : '0',
                             Icons.check_circle_outline_rounded,
-                            Colors.green,
+                            _colors[4], // Standardized Green for Closed
                             '4',
                             isCalled: false,
-                            graphId:
-                                '4', // Or whichever graph ID works for Closed
+                            graphId: '4',
                           ),
                         ),
                       ],
@@ -12061,6 +12173,738 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
+  Future<Object?> leadProgressBarStaffDialogActive(
+      BuildContext context, String title, String status) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      transitionAnimationController: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 400),
+      ),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 48,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.people_alt_rounded,
+                        color: primaryBlue, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Staff-wise $title',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          "Staff-wise distribution",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          size: 18, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [primaryBlue, const Color(0xFF1D4ED8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryBlue.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -20,
+                            top: -20,
+                            child: Icon(
+                              Icons.groups_rounded,
+                              size: 100,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Total Count",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    staffProgressData?.data?.staffTotal
+                                            ?.toString() ??
+                                        "0",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Leads",
+                                    style: TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    if (staffProgressData?.data?.staffLeads?.isNotEmpty ??
+                        false) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Staff Performance',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          Text(
+                            '${staffProgressData!.data!.staffLeads!.length} Staffs',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: staffProgressData!.data!.staffLeads!.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, i) {
+                          final staff = staffProgressData!.data!.staffLeads![i];
+                          double total = double.tryParse(staffProgressData
+                                      ?.data?.staffTotal
+                                      ?.toString() ??
+                                  "0") ??
+                              0;
+                          double count =
+                              double.tryParse(staff.staffCount ?? "0") ?? 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
+                          final color = _getStaffColor(i);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _navigateToFilteredLeadsActive(
+                                  context: context,
+                                  staffName: staff.staffName,
+                                  staffId: staff.staffId,
+                                  title: title,
+                                  status: status,
+                                  isGlobalContext: true,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                color.withOpacity(0.2),
+                                                color.withOpacity(0.1)
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              (staff.staffName?.isNotEmpty ==
+                                                      true)
+                                                  ? staff.staffName![0]
+                                                      .toUpperCase()
+                                                  : "?",
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                staff.staffName ?? "N/A",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF334155),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Contribution Progress",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade500,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              staff.staffCount ?? "0",
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Leads",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    LinearPercentIndicator(
+                                      padding: EdgeInsets.zero,
+                                      animation: true,
+                                      lineHeight: 8.0,
+                                      animationDuration: 1200,
+                                      percent: percentage.clamp(0.0, 1.0),
+                                      barRadius: const Radius.circular(4),
+                                      progressColor: color,
+                                      backgroundColor: const Color(0xFFF1F5F9),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 12),
+                                        child: Text(
+                                          "${(percentage * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<Object?> leadProgressBarCategoryDialogActive(
+      BuildContext context, String title, String status) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      transitionAnimationController: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 400),
+      ),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 48,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.category_rounded,
+                        color: primaryBlue, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Category-wise $title',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          "Category-wise distribution",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          size: 18, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [primaryBlue, const Color(0xFF1D4ED8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryBlue.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -20,
+                            top: -20,
+                            child: Icon(
+                              Icons.pie_chart_rounded,
+                              size: 100,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Total Count",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    categoryProgressData?.data?.categoryTotal
+                                            ?.toString() ??
+                                        "0",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Leads",
+                                    style: TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    if (categoryProgressData?.data?.categoryLeads?.isNotEmpty ??
+                        false) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Category Distribution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          Text(
+                            '${categoryProgressData!.data!.categoryLeads!.length} Categories',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount:
+                            categoryProgressData!.data!.categoryLeads!.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, i) {
+                          final cat =
+                              categoryProgressData!.data!.categoryLeads![i];
+                          double total = double.tryParse(categoryProgressData
+                                      ?.data?.categoryTotal
+                                      ?.toString() ??
+                                  "0") ??
+                              0;
+                          double count =
+                              double.tryParse(cat.categoryCount ?? "0") ?? 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
+                          final color = _getStaffColor(i);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _navigateToFilteredLeadsActive(
+                                  context: context,
+                                  categoryName: cat.categoryName,
+                                  categoryId: cat.categoryId,
+                                  title: title,
+                                  status: status,
+                                  isGlobalContext: true,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                color.withOpacity(0.2),
+                                                color.withOpacity(0.1)
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              (cat.categoryName?.isNotEmpty ==
+                                                      true)
+                                                  ? cat.categoryName![0]
+                                                      .toUpperCase()
+                                                  : "?",
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                cat.categoryName ?? "N/A",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF334155),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Category Performance",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade500,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              cat.categoryCount ?? "0",
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Leads",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    LinearPercentIndicator(
+                                      padding: EdgeInsets.zero,
+                                      animation: true,
+                                      lineHeight: 8.0,
+                                      animationDuration: 1200,
+                                      percent: percentage.clamp(0.0, 1.0),
+                                      barRadius: const Radius.circular(4),
+                                      progressColor: color,
+                                      backgroundColor: const Color(0xFFF1F5F9),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 12),
+                                        child: Text(
+                                          "${(percentage * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<Object?> leadProgressBarCategoryDialog(
       BuildContext context, String title, String status) {
     return showModalBottomSheet(
@@ -12428,6 +13272,371 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
+  Future<Object?> leadProgressBarStatusDialogActive(
+      BuildContext context, String title, String status) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      transitionAnimationController: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 400),
+      ),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 48,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.assignment_rounded,
+                        color: primaryBlue, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Stage Wise $title',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          "Stage-wise distribution",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          size: 18, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [primaryBlue, const Color(0xFF1D4ED8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryBlue.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -20,
+                            top: -20,
+                            child: Icon(
+                              Icons.analytics_rounded,
+                              size: 100,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Total Count",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    statusProgressData?.data?.statusTotal
+                                            ?.toString() ??
+                                        "0",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Leads",
+                                    style: TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    if (statusProgressData?.data?.statusLeads?.isNotEmpty ??
+                        false) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Stage Performance',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          Text(
+                            '${statusProgressData!.data!.statusLeads!.length} Stages',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount:
+                            statusProgressData!.data!.statusLeads!.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, i) {
+                          final st = statusProgressData!.data!.statusLeads![i];
+                          double total = double.tryParse(statusProgressData
+                                      ?.data?.statusTotal
+                                      ?.toString() ??
+                                  "0") ??
+                              0;
+                          double count =
+                              double.tryParse(st.statusCount ?? "0") ?? 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
+                          final color = _getReportItemColor(st.statusName, i);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _navigateToFilteredLeadsActive(
+                                  context: context,
+                                  title: title,
+                                  status: status,
+                                  type: st.statusId,
+                                  isGlobalContext: true,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                color.withOpacity(0.2),
+                                                color.withOpacity(0.1)
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              (st.statusName?.isNotEmpty ==
+                                                      true)
+                                                  ? st.statusName![0]
+                                                      .toUpperCase()
+                                                  : "?",
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                st.statusName ?? "N/A",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF334155),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Stage Progression",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade500,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              st.statusCount ?? "0",
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Leads",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    LinearPercentIndicator(
+                                      padding: EdgeInsets.zero,
+                                      animation: true,
+                                      lineHeight: 8.0,
+                                      animationDuration: 1200,
+                                      percent: percentage.clamp(0.0, 1.0),
+                                      barRadius: const Radius.circular(4),
+                                      progressColor: color,
+                                      backgroundColor: const Color(0xFFF1F5F9),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 12),
+                                        child: Text(
+                                          "${(percentage * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<Object?> leadProgressBarStatusDialog(
       BuildContext context, String title, String status) {
     return showModalBottomSheet(
@@ -12641,7 +13850,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               double.tryParse(st.statusCount ?? "0") ?? 0;
                           final double percentage =
                               total > 0 ? count / total : 0;
-                          final color = _getStaffColor(i);
+                          final color = _getReportItemColor(st.statusName, i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: GestureDetector(
@@ -12651,8 +13860,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   context: context,
                                   title: title,
                                   status: status,
-                                  callResName: st.statusName,
-                                  callResId: st.statusId,
+                                  type: st.statusId,
                                   isGlobalContext: true,
                                 );
                               },
@@ -14299,31 +15507,34 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
-  Future<void> _showGlobalDateRangePickerDialog() async {
+  Future<void> _showStatusDateRangePickerDialog(String statusType) async {
+    DateTime currentFrom =
+        statusType == 'Closed' ? fromDateClosed : fromDateLost;
+    DateTime currentTo = statusType == 'Closed' ? toDateClosed : toDateLost;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Select Period"),
+          title: Text("Select Period for $statusType"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: Icon(Icons.calendar_today, color: appBarStart),
                 title: const Text("From Date"),
-                subtitle: Text(DateFormat('dd-MM-yyyy').format(fromDate)),
+                subtitle: Text(DateFormat('dd-MM-yyyy').format(currentFrom)),
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: fromDate,
+                    initialDate: currentFrom,
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2100),
                   );
                   if (picked != null) {
-                    setDialogState(() => fromDate = picked);
-                    setState(() {});
+                    setDialogState(() => currentFrom = picked);
                   }
                 },
               ),
@@ -14331,17 +15542,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               ListTile(
                 leading: Icon(Icons.calendar_today, color: appBarStart),
                 title: const Text("To Date"),
-                subtitle: Text(DateFormat('dd-MM-yyyy').format(toDate)),
+                subtitle: Text(DateFormat('dd-MM-yyyy').format(currentTo)),
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: toDate,
+                    initialDate: currentTo,
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2100),
                   );
                   if (picked != null) {
-                    setDialogState(() => toDate = picked);
-                    setState(() {});
+                    setDialogState(() => currentTo = picked);
                   }
                 },
               ),
@@ -14358,9 +15568,20 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                getData(widget.token, fromDate, toDate, isDateFiltered: true);
+                setState(() {
+                  if (statusType == 'Closed') {
+                    fromDateClosed = currentFrom;
+                    toDateClosed = currentTo;
+                    isClosedDateFiltered = true;
+                  } else {
+                    fromDateLost = currentFrom;
+                    toDateLost = currentTo;
+                    isLostDateFiltered = true;
+                  }
+                });
+                _fetchStatusLeadCount(statusType);
               },
               child: const Text("Apply", style: TextStyle(color: Colors.white)),
             ),
@@ -14368,6 +15589,29 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         ),
       ),
     );
+  }
+
+  Future<void> _fetchStatusLeadCount(String statusType) async {
+    final status = statusType == 'Closed' ? '4' : '3';
+    final from = statusType == 'Closed' ? fromDateClosed : fromDateLost;
+    final to = statusType == 'Closed' ? toDateClosed : toDateLost;
+
+    final response = await HttpService.dashboardLeadsCounts(
+      fromDate: DateFormat('dd-MM-yyyy').format(from),
+      toDate: DateFormat('dd-MM-yyyy').format(to),
+      userId: targetStaffId ?? userId,
+      status: status,
+    );
+
+    if (response != null && response.status == true) {
+      setState(() {
+        if (statusType == 'Closed') {
+          closedCount = (response.data?.leads?.closedLeads ?? 0).toString();
+        } else {
+          lostCount = (response.data?.leads?.rejectedLeads ?? 0).toString();
+        }
+      });
+    }
   }
 
   void _handleStaffIconTap(String status, String pageName) async {
@@ -14416,24 +15660,99 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     }
   }
 
+  void _handleStageIconTapActive(String status, String pageName) async {
+    Common.showProgressDialog(context, "Loading Stage Analytics..");
+    await getLeadProgressBarStatusData(
+      leadStatus: status,
+    );
+    if (statusProgressData?.status == true) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        leadProgressBarStatusDialogActive(context, "$pageName", status);
+      }
+    } else {
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
+  void _handleCategoryIconTapActive(String status, String pageName) async {
+    Common.showProgressDialog(context, "Loading Category Analytics..");
+    await getLeadProgressBarCategoryData(
+      leadStatus: status,
+    );
+    if (categoryProgressData?.status == true) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        leadProgressBarCategoryDialogActive(context, "$pageName", status);
+      }
+    } else {
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
+  // void _handleStaffIconTapActive(String status, String pageName) async {
+  //   Common.showProgressDialog(context, "Loading Stage Analytics..");
+  //   await getLeadProgressBarStatusData(
+  //     leadStatus: status,
+  //   );
+  //   if (statusProgressData?.status == true) {
+  //     if (context.mounted) {
+  //       Navigator.pop(context);
+  //       leadProgressBarStatusDialogActive(context, "$pageName", status);
+  //     }
+  //   } else {
+  //     if (context.mounted) Navigator.pop(context);
+  //   }
+  // }
+
+  void _handleStaffIconTapActive(String status, String pageName) async {
+    Common.showProgressDialog(context, "Loading Staff Analytics..");
+    await getLeadProgressBarStaffData(
+      leadStatus: status,
+      selectedType: "1",
+    );
+    if (staffProgressData?.status == true) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        leadProgressBarStaffDialogActive(context, "$pageName", status);
+      }
+    } else {
+      if (context.mounted) Navigator.pop(context);
+    }
+  }
+
   Widget _buildBoxIcons(String boxType, String status, String pageName) {
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildBoxActionIcon(
-            icon: Icons.people_outline,
-            onTap: () => _handleStaffIconTap(status, pageName),
-          ),
-          _buildBoxActionIcon(
-            icon: Icons.category_outlined,
-            onTap: () => _handleCategoryIconTap(status, pageName),
-          ),
+          if (boxType != 'Active')
+            _buildBoxActionIcon(
+              icon: Icons.people_outline,
+              onTap: () => _handleStaffIconTap(status, pageName),
+            ),
+          if (boxType != 'Active')
+            _buildBoxActionIcon(
+              icon: Icons.category_outlined,
+              onTap: () => _handleCategoryIconTap(status, pageName),
+            ),
+
+          /////////////////////// Activveeeee boxxxxxxxxxxxxxx
+          if (boxType == 'Active')
+            _buildBoxActionIcon(
+              icon: Icons.people_outline,
+              onTap: () => _handleStaffIconTapActive(status, pageName),
+            ),
+          if (boxType == 'Active')
+            _buildBoxActionIcon(
+              icon: Icons.category_outlined,
+              onTap: () => _handleCategoryIconTapActive(status, pageName),
+            ),
           if (boxType == 'Active')
             _buildBoxActionIcon(
               icon: Icons.assignment_outlined,
-              onTap: () => _handleStageIconTap(status, pageName),
+              onTap: () => _handleStageIconTapActive(status, pageName),
             ),
         ],
       ),
@@ -14591,10 +15910,29 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   Color _getReportItemColor(String? name, int index) {
     if (name == null) return _colors[index % _colors.length];
     String n = name.toLowerCase();
-    if (n.contains("followup") || n.contains("follow up"))
-      return Colors.yellow.shade700;
-    if (n.contains("pending")) return Colors.orange;
-    if (n.contains("not responding")) return Colors.red;
+
+    // Standardized mapping for status names and IDs
+    if (n == 'new' || n == '1') return _colors[1];
+    if (n == 'followup' || n == '2' || n == '3') return _colors[2];
+    if (n == 'closed' || n == '4' || n == '7') {
+      return _colors[4]; // Standard Green for Closed/Success
+    }
+    if (n == 'rejected' || n == 'lost' || n == '0' || n.contains('missed')) {
+      return _colors[5]; // Standard Red for Rejected/Missed
+    }
+    if (n == 'called' || n == '6') return _colors[6];
+    if (n == 'transferred') return _colors[8]; // Teal
+
+    // Fallback logic for specific phrases
+    if (n.contains("new")) return _colors[1];
+    if (n.contains("followup") || n.contains("follow up")) {
+      return _colors[2];
+    }
+    if (n.contains("rejected")) return _colors[5];
+    if (n.contains("completed")) return _colors[4];
+    if (n.contains("pending")) return _colors[6];
+    if (n.contains("not responding")) return _colors[5];
+
     return _colors[index % _colors.length];
   }
 }

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 import 'package:login2/models/lead_management/attendnceListModel.dart';
+import 'package:login2/models/lead_management/getAttendanceReportModel.dart';
 import 'package:login2/models/lead_management/staffwiseWorkDataCountModel.dart';
 import 'package:login2/models/lead_management/workDetailsCompanyModel.dart';
+import 'package:login2/screens/leadManagement/AttendanceReportListPage.dart';
 import 'package:login2/screens/leadManagement/AttendanceHistory.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
 import 'package:login2/screens/staff_reports/timeline_page.dart';
@@ -37,6 +39,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
   List<Staff> allStaffs = [];
   StaffListModel? staffListModel;
   StaffwiseWorkDataCountModel? workDataCounts;
+  GetAttendanceReportModel? attendanceReport;
   String? selectedStaffName;
   String? selectedStaffId;
 
@@ -64,6 +67,26 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
       if (result != null && result.status) {
         setState(() {
           workDataCounts = result;
+        });
+      }
+
+      // Fetch Attendance Report Summary
+      final firstDayOfMonth =
+          DateTime(currentMonth.year, currentMonth.month, 1);
+      final lastDayOfMonth =
+          DateTime(currentMonth.year, currentMonth.month + 1, 0);
+      final fromDateStr = DateFormat('yyyy-MM-dd').format(firstDayOfMonth);
+      final toDateStr = DateFormat('yyyy-MM-dd').format(lastDayOfMonth);
+
+      final reportResult = await HttpService.getAttendanceReport(
+        fromDateStr,
+        toDateStr,
+        widget.staffId,
+      );
+
+      if (reportResult != null && reportResult.status == true) {
+        setState(() {
+          attendanceReport = reportResult;
           isLoadingWorkData = false;
         });
       } else {
@@ -2018,6 +2041,181 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                           ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 18),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      "Attendance Report",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: () {
+                                        final firstDayOfMonth = DateTime(
+                                          _focusedDay.year,
+                                          _focusedDay.month,
+                                          1,
+                                        );
+                                        final lastDayOfMonth = DateTime(
+                                          _focusedDay.year,
+                                          _focusedDay.month + 1,
+                                          0,
+                                        );
+                                        final fromDateStr =
+                                            DateFormat('yyyy-MM-dd')
+                                                .format(firstDayOfMonth);
+                                        final toDateStr =
+                                            DateFormat('yyyy-MM-dd')
+                                                .format(lastDayOfMonth);
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                AttendanceReportListPage(
+                                              staffId: widget.staffId,
+                                              staffName: widget.staffName,
+                                              fromDate: fromDateStr,
+                                              toDate: toDateStr,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.arrow_forward_ios,
+                                          size: 18, color: Colors.blue),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                if (attendanceReport != null &&
+                                    attendanceReport!.data != null &&
+                                    attendanceReport!.data!.summary != null)
+                                  Column(
+                                    children: [
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 143, 46, 78),
+                                        label: "Total Workable Hours",
+                                        count: attendanceReport!.data!.summary!
+                                                .totalWorkableTime ??
+                                            "0",
+                                        icon: Icons.timer,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 48, 139, 139),
+                                        label: "Total Worked Hours",
+                                        count: attendanceReport!.data!.summary!
+                                                .totalWorkingTime ??
+                                            "0",
+                                        icon: Icons.timer_sharp,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 23, 109, 124),
+                                        label: "Allowed Break Time",
+                                        count: attendanceReport!.data!.summary!
+                                                .totalAllowedIdleTime ??
+                                            "0",
+                                        icon: Icons.timeline,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 21, 104, 129),
+                                        label: "Break Time Taken",
+                                        count: attendanceReport!
+                                                .data!.summary!.totalIdleTime ??
+                                            "0",
+                                        icon: Icons.work_off,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 20, 116, 139),
+                                        label: "Effective Working Hours",
+                                        count: attendanceReport!
+                                                .data!.summary!.effectiveTime ??
+                                            "0",
+                                        icon: Icons.work_history,
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Column(
+                                    children: [
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 143, 46, 78),
+                                        label: "Total Workable Hours",
+                                        count: "0",
+                                        icon: Icons.timer,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 48, 139, 139),
+                                        label: "Total Worked Hours",
+                                        count: "0",
+                                        icon: Icons.timer,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 23, 109, 124),
+                                        label: "Allowed Break Time",
+                                        count: "0",
+                                        icon: Icons.timeline,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 21, 104, 129),
+                                        label: "Break Time Taken",
+                                        count: "0",
+                                        icon: Icons.work_off,
+                                      ),
+                                      const SizedBox(height: 5),
+                                      _buildReportRow(
+                                        context: context,
+                                        color: const Color.fromARGB(
+                                            255, 20, 116, 139),
+                                        label: "Effective Working Hours",
+                                        count: "0",
+                                        icon: Icons.work_history,
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Card(
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 14),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2131,6 +2329,92 @@ class LegendRow extends StatelessWidget {
       ],
     );
   }
+}
+
+Widget _buildReportRow({
+  required BuildContext context,
+  required Color color,
+  required String label,
+  required String count,
+  required IconData icon,
+}) {
+  // Format the time string to be more compact
+  String formattedCount = count;
+
+  // Check if the count is in "X hr Y m Z s" format and simplify it
+  if (count.contains('hr') && count.contains('m') && count.contains('s')) {
+    // Remove spaces to make it more compact
+    formattedCount = count.replaceAll(' ', '');
+    // Or you can convert to a shorter format like "7h 45m"
+    final hoursMatch = RegExp(r'(\d+)\s*hr').firstMatch(count);
+    final minutesMatch = RegExp(r'(\d+)\s*m').firstMatch(count);
+
+    if (hoursMatch != null && minutesMatch != null) {
+      final hours = hoursMatch.group(1);
+      final minutes = minutesMatch.group(1);
+      formattedCount = '${hours}h ${minutes}m';
+    }
+  }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 12),
+    decoration: BoxDecoration(
+      border: Border(
+        bottom: BorderSide(
+          color: Colors.grey.shade200,
+          width: 1,
+        ),
+      ),
+    ),
+    child: Row(
+      children: [
+        // Icon container
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Label - Expanded to take available space
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        // Value - Fixed width for numbers
+        Container(
+          constraints: const BoxConstraints(minWidth: 80),
+          child: Text(
+            formattedCount,
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class WorkRow extends StatelessWidget {

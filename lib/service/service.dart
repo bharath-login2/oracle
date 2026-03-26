@@ -74,6 +74,8 @@ import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/documentListModel.dart';
 import 'package:login2/models/lead_management/expenseTypeModel.dart';
 import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
+import 'package:login2/models/lead_management/getActiveStatusModel.dart';
+import 'package:login2/models/lead_management/getAttendanceReportModel.dart';
 import 'package:login2/models/lead_management/getLeaveApprovalRejectTemplate.dart';
 import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
@@ -760,6 +762,21 @@ class HttpService {
   static Future leadReport(body) async {
     try {
       var result = await _dio.post("${await Config.getUrl()}leadReport",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
+  static Future leadReportAll(body) async {
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}leadReportByCreatedDate",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           data: jsonEncode(body));
       if (result.statusCode == 200) {
@@ -12655,6 +12672,7 @@ class HttpService {
     String? userId,
     String? targetFromDate,
     String? targetToDate,
+    String? status,
   }) async {
     try {
       final token = await Common.getSharedPref("token");
@@ -12671,6 +12689,7 @@ class HttpService {
           "user_id": userId ?? "",
           "target_from_date": targetFromDate ?? "",
           "target_to_date": targetToDate ?? "",
+          "status": status ?? "",
         }),
       );
       if (response.statusCode == 200) {
@@ -13425,6 +13444,73 @@ class HttpService {
       }
     } catch (e) {
       log("getApprovalRejectTemplate error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetAttendanceReportModel?> getAttendanceReport(
+    String? fromDate,
+    String? toDate,
+    String? staffId,
+  ) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getAttendanceReport",
+        data: FormData.fromMap({
+          "token": token,
+          "from_date": fromDate,
+          "to_date": toDate,
+          "staff_id": staffId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return GetAttendanceReportModel.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetActiveStatusModel?> getActiveStatus() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token == null || token.isEmpty) {
+        log("leaveAvailable error: Token not found");
+        return null;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getActiveStatus",
+        data: FormData.fromMap({
+          "token": token,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['status'] == true || data['status'] == 'success') {
+          return GetActiveStatusModel.fromJson(data);
+        }
+        log("leaveAvailable API error: ${data['message']}");
+      } else {
+        log("leaveAvailable HTTP error: ${response.statusCode}");
+      }
+    } catch (e) {
+      log("leaveAvailable error: $e");
     }
     return null;
   }

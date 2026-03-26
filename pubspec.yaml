@@ -175,6 +175,9 @@ flutter:
     - assets/lottie/location_loader.json
     - assets/icons/comingsoon.jpg
     - assets/icons/suiticon.png
+    - assets/icons/drive.png
+    - assets/icons/cloud2.jpg
+    - assets/icons/email.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
   # For details regarding adding assets from package dependencies, see

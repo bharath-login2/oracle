@@ -12,6 +12,7 @@ import 'package:login2/models/lead_management/leadSubTypeModel.dart';
 import 'package:login2/models/lead_management/listFolderName.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalLeadDetails.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
@@ -1754,7 +1755,8 @@ class _ViewLeadsState extends State<ViewLeads>
           InkWell(
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => Dashboard(widget.token)));
+                  builder: (context) =>
+                      DashboardLeadNewUpdatedTwo(widget.token)));
             },
             child: Container(
               width: MediaQuery.of(context).size.width * 0.4,

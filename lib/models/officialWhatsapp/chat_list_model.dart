@@ -11,7 +11,7 @@ String chatListModelToJson(ChatListModel data) => json.encode(data.toJson());
 
 class ChatListModel {
   List<ChatData> data;
-  bool message;
+  dynamic message;
   bool status;
 
   ChatListModel({
@@ -21,10 +21,11 @@ class ChatListModel {
   });
 
   factory ChatListModel.fromJson(Map<String, dynamic> json) => ChatListModel(
-        data:
-            List<ChatData>.from(json["data"].map((x) => ChatData.fromJson(x))),
+        data: json["data"] != null
+            ? List<ChatData>.from(json["data"].map((x) => ChatData.fromJson(x)))
+            : [],
         message: json["message"],
-        status: json["status"],
+        status: json["status"] ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -61,17 +62,17 @@ class ChatData {
   });
 
   factory ChatData.fromJson(Map<String, dynamic> json) => ChatData(
-        groupId: json["group_id"],
-        profilePic: json["profile_pic"],
-        groupName: json["group_name"],
-        phoneNumber: json["phone_number"],
-        lastMsgTime: json["last_msg_time"],
-        canSendMessage: json["canSendMessage"],
-        msgStatus: json["msgStatus"],
-        lastMessage: json["lastMessage"],
-        fromMe: json["fromMe"],
+        groupId: json["group_id"]?.toString() ?? "",
+        profilePic: json["profile_pic"]?.toString() ?? "",
+        groupName: json["group_name"]?.toString() ?? "",
+        phoneNumber: json["phone_number"]?.toString() ?? "",
+        lastMsgTime: json["last_msg_time"]?.toString() ?? "",
+        canSendMessage: json["canSendMessage"] ?? false,
+        msgStatus: json["msgStatus"]?.toString() ?? "",
+        lastMessage: json["lastMessage"]?.toString() ?? "",
+        fromMe: json["fromMe"] ?? false,
         unreadMessageCount: json["unreadMessageCount"] ?? 0,
-        chatType: json["chat_type"],
+        chatType: json["chat_type"]?.toString() ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -85,5 +86,6 @@ class ChatData {
         "lastMessage": lastMessage,
         "fromMe": fromMe,
         "chat_type": chatType,
+        "unreadMessageCount": unreadMessageCount,
       };
 }

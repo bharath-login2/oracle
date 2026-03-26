@@ -234,13 +234,14 @@ class _HomePageState extends State<HomePage> {
     LoginCheckModel? loginCheck =
         await HttpService.loginCheck(token, firebaseToken!);
 
-    if (loginCheck!.data == false) {
-      Common.toastMessaage('Token Expired', Colors.red);
+    if (loginCheck == null || loginCheck.data == false) {
       if (mounted) {
+        Common.toastMessaage('Session Expired', Colors.red);
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const Login()),
             (Route<dynamic> route) => false);
       }
+      return;
     } else {
       configure = await HttpService.configure(token);
       if (configure != null) {
@@ -282,7 +283,9 @@ class _HomePageState extends State<HomePage> {
       loginOrNot = await HttpService.getLoginorNot(widget.token);
       if (loginOrNot?.data != true && startAndStopWorkPermission == "true") {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          showLoginPrompt(context);
+          if (mounted) {
+            showLoginPrompt(context);
+          }
         });
       }
     }
@@ -2050,7 +2053,7 @@ class _HomePageState extends State<HomePage> {
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.centerDocked,
                 floatingActionButton: FloatingActionButton(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Color(0xFF2a86c9),
                   onPressed: () {
                     // MenuDashboard =="true"?
                     // Navigator.push(
@@ -2099,7 +2102,8 @@ class _HomePageState extends State<HomePage> {
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    Dashboard(token)),
+                                                    DashboardLeadNewUpdatedTwo(
+                                                        token)),
                                           );
                   },
                   child: Image.asset("assets/icons/menu.png",
@@ -2412,7 +2416,8 @@ class _HomePageState extends State<HomePage> {
                                             context,
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    Dashboard(widget.token)),
+                                                    DashboardLeadNewUpdatedTwo(
+                                                        widget.token)),
                                           );
                   } else {
                     showError(res?.message ?? "Failed to start work");

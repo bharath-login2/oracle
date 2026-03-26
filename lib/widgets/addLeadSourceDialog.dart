@@ -55,6 +55,7 @@ class _AddLeadSourceDialogState extends State<AddLeadSourceDialog> {
             String leadSource = _leadSourceController.text.trim();
             if (leadSource.isNotEmpty) {
               widget.onSubmit(leadSource);
+              Navigator.pop(context);
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Enter a valid lead source")),

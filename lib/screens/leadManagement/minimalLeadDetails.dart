@@ -4022,61 +4022,75 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                       CircularProgressIndicator())
                                               : (callDetailsDataS
                                                           ?.data
-                                                          ?.callHistory!
+                                                          ?.lists!
                                                           .isNotEmpty ??
                                                       false)
-                                                  ? ListView.builder(
-                                                      shrinkWrap: true,
-                                                      physics:
-                                                          const NeverScrollableScrollPhysics(),
-                                                      itemCount:
-                                                          callDetailsDataS!
-                                                              .data!
-                                                              .callHistory!
-                                                              .length,
-                                                      itemBuilder:
-                                                          (context, i) {
-                                                        final call =
-                                                            callDetailsDataS!
-                                                                .data!
-                                                                .callHistory![i];
-                                                        return AudioItem(
-                                                          call.direction,
-                                                          call.time,
-                                                          call.isAttended,
-                                                          call.date,
-                                                          call.status,
-                                                          call.resourceUrl,
-                                                          call.callDurationHr,
-                                                          leadDetailsAdditional!
-                                                              .data
-                                                              .voiceListerningPermission,
-                                                          call.id,
-                                                          call.isTransfered,
-                                                          widget.token,
-                                                          widget.editLead,
-                                                          widget.deleteLead,
-                                                          widget.cloudCall,
-                                                          callMasterId,
-                                                          call.callHistoryImage,
-                                                          call.staffName,
-                                                          leadDetails!
-                                                              .data!.clientName,
-                                                          leadDetails!
-                                                              .data!.callResult,
-                                                          pageName:
-                                                              widget.pageName,
-                                                          sts: widget.status,
-                                                          staff: widget.staff,
-                                                          isCalled:
-                                                              widget.isCalled,
-                                                          fromDate:
-                                                              widget.fromDate,
-                                                          toDate: widget.toDate,
-                                                          category:
-                                                              widget.category,
-                                                        );
-                                                      },
+                                                  ? Column(
+                                                      children: [
+                                                        if (callDetailsDataS?.data?.totalDuration != null)
+                                                          Container(
+                                                            width: double.infinity,
+                                                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                                            color: Colors.blue.shade50,
+                                                            child: Row(
+                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                              children: [
+                                                                const Text(
+                                                                  'Total Call Duration:',
+                                                                  style: TextStyle(
+                                                                    fontWeight: FontWeight.bold,
+                                                                    fontSize: 13,
+                                                                    color: Color(0xFF2a86c9),
+                                                                  ),
+                                                                ),
+                                                                Text(
+                                                                  callDetailsDataS!.data!.totalDuration!,
+                                                                  style: const TextStyle(
+                                                                    fontWeight: FontWeight.bold,
+                                                                    fontSize: 13,
+                                                                    color: Color(0xFF2a86c9),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ListView.builder(
+                                                          shrinkWrap: true,
+                                                          physics: const NeverScrollableScrollPhysics(),
+                                                          itemCount: callDetailsDataS!.data!.lists!.length,
+                                                          itemBuilder: (context, i) {
+                                                            final call = callDetailsDataS!.data!.lists![i];
+                                                            return AudioItem(
+                                                              call.direction,
+                                                              call.time,
+                                                              call.isAttended,
+                                                              call.date,
+                                                              call.status,
+                                                              call.resourceUrl,
+                                                              call.callDurationHr,
+                                                              leadDetailsAdditional!.data.voiceListerningPermission,
+                                                              call.id,
+                                                              call.isTransfered,
+                                                              widget.token,
+                                                              widget.editLead,
+                                                              widget.deleteLead,
+                                                              widget.cloudCall,
+                                                              callMasterId,
+                                                              call.callHistoryImage,
+                                                              call.staffName,
+                                                              leadDetails!.data!.clientName,
+                                                              leadDetails!.data!.callResult,
+                                                              pageName: widget.pageName,
+                                                              sts: widget.status,
+                                                              staff: widget.staff,
+                                                              isCalled: widget.isCalled,
+                                                              fromDate: widget.fromDate,
+                                                              toDate: widget.toDate,
+                                                              category: widget.category,
+                                                            );
+                                                          },
+                                                        ),
+                                                      ],
                                                     )
 
                                                   // : SizedBox(

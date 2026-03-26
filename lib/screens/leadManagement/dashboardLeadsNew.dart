@@ -297,9 +297,9 @@ class _DashboardLeadNewState extends State<DashboardLeadNew>
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
 
-      if (loginCheck?.data == false) {
-        Common.toastMessaage('Session Expired', Colors.red);
+      if (loginCheck == null || loginCheck.data == false) {
         if (mounted) {
+          Common.toastMessaage('Session Expired', Colors.red);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const Login()),
             (route) => false,
@@ -424,7 +424,9 @@ class _DashboardLeadNewState extends State<DashboardLeadNew>
     if (dismissedDate != today && startAndStopWorkPermission == "true") {
       if (loginOrNot?.data != true) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showLoginPrompt(context);
+          if (mounted) {
+            _showLoginPrompt(context);
+          }
         });
       }
     }

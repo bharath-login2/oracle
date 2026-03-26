@@ -152,20 +152,28 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
   }
 
   void _openWhatsApp(String countryCode, String phoneNumber) async {
-    String cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    String cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = cleanPhone.substring(1);
     }
     final countryCodeDigits = countryCode.replaceAll(RegExp(r'[^\d]'), '');
     final whatsappNumber = '$countryCodeDigits$cleanPhone';
 
-    final url = Uri.parse('https://wa.me/$whatsappNumber');
+    final whatsappUrl = Uri.parse('whatsapp://send?phone=$whatsappNumber');
+    final webUrl = Uri.parse('https://wa.me/$whatsappNumber');
 
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    } else {
+    try {
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl);
+      } else if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      } else {
+        // Many modern OSs block canLaunchUrl, so try launching directly as a last resort
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Cannot open WhatsApp'),
         ),
       );

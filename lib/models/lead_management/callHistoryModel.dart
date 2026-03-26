@@ -149,6 +149,8 @@ class History {
   int? currentpos;
   String? currentpostlabel;
 
+  String? remarks;
+
   History(
       {this.leadCategory,
         this.clientName,
@@ -171,7 +173,8 @@ class History {
         this.isplayed,
         this.audioplayed,
         this.currentpos,
-        this.currentpostlabel});
+        this.currentpostlabel,
+        this.remarks});
 
   History.fromJson(Map<String, dynamic> json) {
     leadCategory = json['lead_category'];
@@ -196,6 +199,7 @@ class History {
     audioplayed = json['audioplayed'];
     currentpos = json['currentpos'];
     currentpostlabel = json['currentpostlabel'];
+    remarks = json['remarks'];
   }
 
   Map<String, dynamic> toJson() {
@@ -222,8 +226,10 @@ class History {
     data['audioplayed'] = audioplayed;
     data['currentpos'] = currentpos;
     data['currentpostlabel'] = currentpostlabel;
+    data['remarks'] = remarks;
     return data;
   }
+
 }
 
 class PhoneCallLog {

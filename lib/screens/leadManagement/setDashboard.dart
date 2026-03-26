@@ -4,6 +4,7 @@ import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
@@ -232,7 +233,8 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
                 object1.data!.leadModule == "true") {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => Dashboard(token)),
+                MaterialPageRoute(
+                    builder: (_) => DashboardLeadNewUpdatedTwo(token)),
                 (route) => false,
               );
               return;
@@ -301,7 +303,8 @@ class _SetDashboardPageState extends State<SetDashboardPage> {
             } else {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => Dashboard(token)),
+                MaterialPageRoute(
+                    builder: (_) => DashboardLeadNewUpdatedTwo(token)),
                 (route) => false,
               );
             }

@@ -23,22 +23,25 @@ class CallHistoryResponse {
 }
 
 class Data {
-  final List<CallHistoryData>? callHistory;
+  final List<CallHistoryData>? lists;
+  final String? totalDuration;
 
-  Data({this.callHistory});
+  Data({this.lists, this.totalDuration});
 
   factory Data.fromJson(Map<String, dynamic> json) {
     return Data(
-      callHistory: json['callHistory'] != null
+      lists: json['lists'] != null
           ? List<CallHistoryData>.from(
-              json['callHistory'].map((x) => CallHistoryData.fromJson(x)))
+              json['lists'].map((x) => CallHistoryData.fromJson(x)))
           : [],
+      totalDuration: json['total_duration'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      "callHistory": callHistory?.map((x) => x.toJson()).toList(),
+      "lists": lists?.map((x) => x.toJson()).toList(),
+      "total_duration": totalDuration,
     };
   }
 }
@@ -89,26 +92,26 @@ class CallHistoryData {
     });
 
     factory CallHistoryData.fromJson(Map<String, dynamic> json) => CallHistoryData(
-        id: json["id"]??"",
-        staffName: json["staffName"]??"",
-        callHistoryImage: json["callHistoryImage"]??"",
-        sourceNumber: json["SourceNumber"]??"",
-        destinationNumber: json["DestinationNumber"]??"",
-        date: json["date"]??"",
-        startTime: json["StartTime"]??"",
-        endTime: json["EndTime"]??"",
-        time: json["time"]??"",
-        callDuration: json["CallDuration"]??"",
-        callDurationHr: json["CallDurationHr"]??"",
-        resourceUrl: json["ResourceURL"]??"",
-        status: json["Status"]??"",
-        isAttended: json["isAttended"]??"",
-        direction: json["Direction"]??"",
-        isTransfered: json["isTransfered"]??"",
-        isplayed: json["isplayed"]??"",
-        audioplayed: json["audioplayed"]??"",
-        currentpos: json["currentpos"]??"",
-        currentpostlabel: json["currentpostlabel"]??"",
+        id: json["id"] ?? "",
+        staffName: json["staffName"] ?? "",
+        callHistoryImage: json["callHistoryImage"] ?? "",
+        sourceNumber: json["SourceNumber"] ?? "",
+        destinationNumber: json["DestinationNumber"] ?? "",
+        date: json["date"] ?? "",
+        startTime: json["StartTime"] ?? "",
+        endTime: json["EndTime"] ?? "",
+        time: json["time"] ?? "",
+        callDuration: json["CallDuration"] ?? 0,
+        callDurationHr: json["CallDurationHr"] ?? "",
+        resourceUrl: json["ResourceURL"] ?? "",
+        status: json["Status"] ?? "",
+        isAttended: json["isAttended"] ?? false,
+        direction: json["Direction"] ?? "",
+        isTransfered: json["isTransfered"] ?? false,
+        isplayed: json["isplayed"] ?? false,
+        audioplayed: json["audioplayed"] ?? false,
+        currentpos: json["currentpos"] ?? 0,
+        currentpostlabel: json["currentpostlabel"] ?? "",
     );
 
     Map<String, dynamic> toJson() => {

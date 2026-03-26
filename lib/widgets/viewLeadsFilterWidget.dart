@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/lead_management/addLeadCommonDataModel.dart';
 import 'package:login2/models/lead_management/leadProductsModel.dart';
+import 'package:login2/service/service.dart';
+import 'package:login2/models/lead_management/getActiveStatusModel.dart';
 
 class ViewLeadsFilterWidget extends StatefulWidget {
   final Function(Map<String, dynamic>) onApplyFilters;
@@ -9,7 +11,7 @@ class ViewLeadsFilterWidget extends StatefulWidget {
   final LeadProductSectionModel? productSectionModel;
   final String? currentTab;
   final Map<String, dynamic>? initialFilters;
-
+  final String? isActiveLeads;
   const ViewLeadsFilterWidget({
     super.key,
     required this.onApplyFilters,
@@ -17,6 +19,7 @@ class ViewLeadsFilterWidget extends StatefulWidget {
     this.productSectionModel,
     this.currentTab,
     this.initialFilters,
+    this.isActiveLeads,
   });
 
   @override
@@ -38,11 +41,33 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
 
   final DateFormat _formatter = DateFormat('dd-MM-yyyy');
   final TextEditingController _searchController = TextEditingController();
+  GetActiveStatusModel? _activeStatusModel;
+  bool _isActiveStatusLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadInitialFilters();
+    if (widget.isActiveLeads == '1') {
+      _fetchActiveStatus();
+    }
+  }
+
+  Future<void> _fetchActiveStatus() async {
+    setState(() => _isActiveStatusLoading = true);
+    try {
+      final res = await HttpService.getActiveStatus();
+      if (mounted) {
+        setState(() {
+          _activeStatusModel = res;
+          _isActiveStatusLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isActiveStatusLoading = false);
+      }
+    }
   }
 
   void _loadInitialFilters() {
@@ -221,7 +246,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   bool _hasFiltersForCategory(String category) {
     switch (category) {
       case 'Leads Date':
-        return isDateFiltered; 
+        return isDateFiltered;
       case 'Stages':
         return selectedStatusIds.isNotEmpty;
       case 'Assigned Staff':
@@ -397,6 +422,35 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   }
 
   Widget _buildStatusOptions() {
+    if (widget.isActiveLeads == 'Y') {
+      if (_isActiveStatusLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (_activeStatusModel == null ||
+          (_activeStatusModel?.data?.isEmpty ?? true)) {
+        return const Center(child: Text('No active statuses found'));
+      }
+      return _buildSelectionList(
+        items: _activeStatusModel?.data
+                ?.map((e) => {
+                      'id': e.callResultId.toString(),
+                      'name': e.callResult ?? ''
+                    })
+                .toList() ??
+            [],
+        selectedIds: selectedStatusIds,
+        isSingleSelect: true,
+        onToggle: (id) => setState(() {
+          if (selectedStatusIds.contains(id)) {
+            selectedStatusIds.remove(id);
+          } else {
+            selectedStatusIds.clear();
+            selectedStatusIds.add(id);
+          }
+        }),
+      );
+    }
+
     if (widget.commonDetails == null)
       return const Center(child: Text('Loading...'));
     final items = widget.commonDetails!.data.callResult;
@@ -405,9 +459,15 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
           .map((e) => {'id': e.callResultId.toString(), 'name': e.callResult})
           .toList(),
       selectedIds: selectedStatusIds,
-      onToggle: (id) => setState(() => selectedStatusIds.contains(id)
-          ? selectedStatusIds.remove(id)
-          : selectedStatusIds.add(id)),
+      isSingleSelect: true,
+      onToggle: (id) => setState(() {
+        if (selectedStatusIds.contains(id)) {
+          selectedStatusIds.remove(id);
+        } else {
+          selectedStatusIds.clear();
+          selectedStatusIds.add(id);
+        }
+      }),
     );
   }
 
@@ -476,6 +536,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     required List<Map<String, String>> items,
     required Set<String> selectedIds,
     required Function(String) onToggle,
+    bool isSingleSelect = false,
   }) {
     return Column(
       children: [
@@ -510,6 +571,19 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                 return const SizedBox.shrink();
               }
 
+              if (isSingleSelect) {
+                return RadioListTile<String>(
+                  value: id,
+                  groupValue:
+                      selectedIds.length == 1 ? selectedIds.first : null,
+                  onChanged: (v) => onToggle(id),
+                  toggleable: true,
+                  title: Text(name, style: const TextStyle(fontSize: 13)),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                );
+              }
               final isSelected = selectedIds.contains(id);
 
               return CheckboxListTile(
