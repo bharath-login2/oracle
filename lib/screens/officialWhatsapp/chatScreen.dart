@@ -14,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/officialWhatsapp/socket_chat_model.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/officialWhatsapp/audioPlayer.dart';
 
 import 'package:login2/screens/officialWhatsapp/imageviewscreenBottom.dart';
@@ -44,7 +45,7 @@ class ChatScreen extends StatefulWidget {
   const ChatScreen({
     super.key,
     required this.groupId,
-   // required this.chatType,
+    // required this.chatType,
     required this.nav,
   });
 
@@ -323,7 +324,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (context) => Dashboard(token),
+                builder: (context) => DashboardLeadNewUpdatedTwo(token),
               ),
               (route) => false);
         }
@@ -349,7 +350,8 @@ class _ChatScreenState extends State<ChatScreen> {
                               Navigator.pushAndRemoveUntil(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => Dashboard(token),
+                                    builder: (context) =>
+                                        DashboardLeadNewUpdatedTwo(token),
                                   ),
                                   (route) => false);
                             } else {

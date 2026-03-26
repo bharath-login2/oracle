@@ -115,7 +115,8 @@ class Data {
     address = json['address'] ?? "";
     cost = json['cost'] ?? "";
     assignedUserId = json['assigned_user_id'] ?? "";
-    callResultId = json['call_result_id'] ?? "";
+    callResultId =
+        (json['call_result_id'] ?? json['call_response_id'] ?? "").toString();
     calledDate = json['called_date'] ?? "";
     createdDate = json['created_date'] ?? "";
     nextFollowupDate = json['next_followup_date'] ?? "";
@@ -123,7 +124,7 @@ class Data {
     leadMethod = json['lead_method'] ?? "";
     leadCategory = json['lead_category'] ?? "";
     leadSubCategory = json['lead_sub_category'] ?? "";
-    callResult = json['call_result'] ?? "";
+    callResult = json['call_result'] ?? json['call_response'] ?? "";
     staffName = json['staff_name'] ?? "";
     priorityId = json['priority_id'] ?? "";
     priority = json['priority'] ?? "";
@@ -164,7 +165,7 @@ class Data {
     products = json['products'] ?? "";
     state = json['state'] ?? "";
     district = json['district'] ?? "";
-    whatsappNumberCountryCode = json['whatsapp_number_country_code'] ?? "";
+    whatsappNumberCountryCode = json['whatsapp_country_code'] ?? "";
   }
 }
 

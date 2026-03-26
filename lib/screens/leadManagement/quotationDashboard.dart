@@ -89,13 +89,14 @@ class _QuotationDashboardState extends State<QuotationDashboard>
     LoginCheckModel? loginCheck =
         await HttpService.loginCheck(token, firebaseToken!);
     log(firebaseToken.toString());
-    if (loginCheck!.data == false) {
-      Common.toastMessaage('Token Expired', Colors.red);
+    if (loginCheck == null || loginCheck.data == false) {
       if (mounted) {
+        Common.toastMessaage('Session Expired', Colors.red);
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const Login()),
             (Route<dynamic> route) => false);
       }
+      return;
     }
     final value = await Common.getSharedPref("multipleWorks");
     userId = await Common.getSharedPref("userId");

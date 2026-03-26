@@ -6,9 +6,10 @@ import 'package:get/get.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 // import '../models/pushNotificationModel.dart';
 import '../models/pushNotificationModel.dart';
-import 'leadManagement/leadDetails.dart';
+import 'leadManagement/viewLeadsNew.dart';
 import 'officialWhatsapp/chatScreen.dart';
 
 class FirebaseServices {
@@ -117,21 +118,21 @@ class FirebaseServices {
       } else if (notificationMessage.contains("Work")) {
         Get.to(() => AssignReport(workId: detailId.toString(), sectionId: ""));
       } else if (notificationMessage.contains("logout")) {
-        Get.to(() => Dashboard(token));
+        Get.to(() => DashboardLeadNewUpdatedTwo(token));
       } else if (notificationMessage.contains("login")) {
-        Get.to(() => Dashboard(token));
+        Get.to(() => DashboardLeadNewUpdatedTwo(token));
       } else {
-        Get.to(() => LeadDetails(
+        Get.to(() => ViewLeadsNew(
               token!,
               editLead!,
               deleteLead!,
               cloudCall!,
-              detailId!,
+              notificationLeadId: detailId!,
               pageName: 'notification',
             ));
       }
     } else {
-      Get.to(() => Dashboard(token!));
+      Get.to(() => DashboardLeadNewUpdatedTwo(token!));
     }
   }
 }

@@ -60,29 +60,29 @@ class Data {
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
-        voiceListerningPermission: json["voiceListerningPermission"]??"",
-        voiceUploadPermission: json["voiceUploadPermission"]??"",
-        createCustomerInvoice: json["createCustomerInvoice"]??"",
-        createRenewal: json["createRenewal"]??"",
-        createInstallment: json["createInstallment"]??"",
-        isCreateOrder: json["isCreateOrder"]??"",
-        customerId: json["customer_id"]??"",
-        // followUpData: List<FollowUpDatum>.from(json["followUpData"].map((x) => FollowUpDatum.fromJson(x))),
-        // callHistory: List<CallHistory>.from(json["callHistory"].map((x) => CallHistory.fromJson(x))),
-        // activities: List<Activity>.from(json["activities"].map((x) => Activity.fromJson(x))),
-        // additionalFields: List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x))),
-         followUpData: (json["followUpData"] != null)
-      ? List<FollowUpDatum>.from(json["followUpData"].map((x) => FollowUpDatum.fromJson(x)))
-      : [],
-  callHistory: (json["callHistory"] != null)
-      ? List<CallHistory>.from(json["callHistory"].map((x) => CallHistory.fromJson(x)))
-      : [],
-  activities: (json["activities"] != null)
-      ? List<Activity>.from(json["activities"].map((x) => Activity.fromJson(x)))
-      : [],
-  additionalFields: (json["additionalFields"] != null)
-      ? List<AdditionalField>.from(json["additionalFields"].map((x) => AdditionalField.fromJson(x)))
-      : [],
+        voiceListerningPermission: json["voiceListerningPermission"] ?? false,
+        voiceUploadPermission: json["voiceUploadPermission"] ?? false,
+        createCustomerInvoice: json["createCustomerInvoice"] ?? false,
+        createRenewal: json["createRenewal"] ?? false,
+        createInstallment: json["createInstallment"] ?? false,
+        isCreateOrder: json["isCreateOrder"] ?? false,
+        customerId: json["customer_id"] ?? "",
+        followUpData: (json["followUpData"] != null)
+            ? List<FollowUpDatum>.from(
+                json["followUpData"].map((x) => FollowUpDatum.fromJson(x)))
+            : [],
+        callHistory: (json["callHistory"] != null)
+            ? List<CallHistory>.from(
+                json["callHistory"].map((x) => CallHistory.fromJson(x)))
+            : [],
+        activities: (json["activities"] != null)
+            ? List<Activity>.from(
+                json["activities"].map((x) => Activity.fromJson(x)))
+            : [],
+        additionalFields: (json["additionalFields"] != null)
+            ? List<AdditionalField>.from(
+                json["additionalFields"].map((x) => AdditionalField.fromJson(x)))
+            : [],
 
     );
 
@@ -316,16 +316,16 @@ class FollowUpDatum {
         callResponse: json["call_response"]??"",
         reasonId: json["reason_id"]??"",
         reason: json["reason"]??"",
-        isCalled: json["is_called"]??"",
-        isEdit: json["is_edit"]??"",
-        isDelete: json["is_delete"]??"",
-        dispalyDate: json["dispaly_date"]??"",
-        isSetReminder: json["isSetReminder"]??"",
-        isReminder: json["isReminder"]??"",
-        time: json["time"]??"",
-        voiceFile: json["voice_file"]??"",
-        voiceUploadPermission: json["voiceUploadPermission"]??"",
-        playVoicePermission: json["playVoicePermission"]??"",
+        isCalled: json["is_called"] ?? false,
+        isEdit: json["is_edit"] ?? false,
+        isDelete: json["is_delete"] ?? false,
+        dispalyDate: json["dispaly_date"] ?? "",
+        isSetReminder: json["isSetReminder"] ?? false,
+        isReminder: json["isReminder"] ?? false,
+        time: json["time"] ?? "",
+        voiceFile: json["voice_file"] ?? "",
+        voiceUploadPermission: json["voiceUploadPermission"] ?? false,
+        playVoicePermission: json["playVoicePermission"] ?? false,
     );
 
     Map<String, dynamic> toJson() => {

@@ -17,18 +17,40 @@ import '../../models/lead_management/leadProductsModel.dart';
 import '../../service/service.dart';
 
 class AddLeadsNew extends StatefulWidget {
-  String? token;
-  String? page;
-  String? leadMasterId;
-  String? clientName;
-  String? phoneNumber;
-  String? fromDate;
-  String? toDate;
-  bool? editLead;
-  bool? deleteLead;
-  bool? cloudCall;
-  String? countryCode;
-  String? address;
+  final String? token;
+  final String? page;
+  final String? leadMasterId;
+  final String? clientName;
+  final String? phoneNumber;
+  final String? whatsappNumber;
+  final String? fromDate;
+  final String? toDate;
+  final bool? editLead;
+  final bool? deleteLead;
+  final bool? cloudCall;
+  final String? countryCode;
+  final String? address;
+  final String? email;
+  final String? cost;
+  final String? leadCategoryId;
+  final String? leadSubCategoryId;
+  final String? priorityId;
+  final String? leadSourceId;
+  final String? remarks;
+  final String? pinCode;
+  final String? stateId;
+  final String? districtId;
+  final String? assignedUserId;
+  final String? leadCategory;
+  final String? leadSubCategory;
+  final String? leadSource;
+  final String? priority;
+  final String? stateName;
+  final String? districtName;
+  final String? products;
+  final String? whatsappCode;
+  final String? assignStaff;
+  final String? postOffice;
 
   AddLeadsNew(this.token,
       {super.key,
@@ -36,13 +58,35 @@ class AddLeadsNew extends StatefulWidget {
       this.leadMasterId,
       this.clientName,
       this.phoneNumber,
+      this.whatsappNumber,
       this.fromDate,
       this.toDate,
       this.editLead,
       this.deleteLead,
       this.cloudCall,
       this.countryCode,
-      this.address});
+      this.address,
+      this.email,
+      this.cost,
+      this.leadCategoryId,
+      this.leadSubCategoryId,
+      this.priorityId,
+      this.leadSourceId,
+      this.remarks,
+      this.pinCode,
+      this.stateId,
+      this.districtId,
+      this.assignedUserId,
+      this.leadCategory,
+      this.leadSubCategory,
+      this.leadSource,
+      this.priority,
+      this.stateName,
+      this.districtName,
+      this.products,
+      this.whatsappCode,
+      this.assignStaff,
+      this.postOffice});
 
   @override
   State<AddLeadsNew> createState() => _AddLeadsNewState();
@@ -54,6 +98,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   StateModel? stateDetails;
   CommonConfigureModel? configure;
   LeadSubTypeModel? leadSubTypeList;
+  final ScrollController _scrollController = ScrollController();
 
   // Form Fields
   String leadType = 'Lead Category', leadTypeId = '';
@@ -61,7 +106,20 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   String assignStaff = 'Assign Staff', assignStaffId = '';
   String callResult = 'New', callResultId = '1';
   String leadSource = 'Direct Entry', leadSourceId = "1";
-  String priority = 'Warm', priorityId = '2';
+  String priority = 'Normal', priorityId = '2';
+
+  final TextEditingController leadTypeCtrl =
+      TextEditingController(text: 'Lead Category');
+  final TextEditingController leadSubTypeCtrl =
+      TextEditingController(text: 'Lead Sub Category');
+  final TextEditingController assignStaffCtrl =
+      TextEditingController(text: 'Assign Staff');
+  final TextEditingController leadSourceCtrl =
+      TextEditingController(text: 'Direct Entry');
+  final TextEditingController priorityCtrl =
+      TextEditingController(text: 'Normal');
+  final TextEditingController callResultCtrl =
+      TextEditingController(text: 'New');
   String callResponse = 'Call Response', callResponseId = '';
 
   final TextEditingController clientNameCtrl = TextEditingController();
@@ -108,8 +166,73 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     super.initState();
     clientNameCtrl.text = widget.clientName ?? "";
     contactNoCtrl.text = _trimPlus91(widget.phoneNumber ?? "");
-    whatsappNoCtrl.text = _trimPlus91(widget.phoneNumber ?? "");
+    whatsappNoCtrl.text = _trimPlus91(widget.whatsappNumber ?? "");
     addressCtrl.text = widget.address ?? "";
+    emailCtrl.text = widget.email ?? "";
+
+    // Pre-fill fields from widget parameters
+    costCtrl.text = widget.cost ?? "";
+    remarkCtrl.text = widget.remarks ?? "";
+    pinCodeCtrl.text = widget.pinCode ?? "";
+    stateCtrl.text = widget.stateName ?? "";
+    districtCtrl.text = widget.districtName ?? "";
+
+    if (widget.leadCategory != null) {
+      leadType = widget.leadCategory!;
+      leadTypeCtrl.text = widget.leadCategory!;
+    }
+    if (widget.leadCategoryId != null) {
+      leadTypeId = widget.leadCategoryId!;
+    }
+
+    if (widget.leadSubCategory != null) {
+      leadSubType = widget.leadSubCategory!;
+      leadSubTypeCtrl.text = widget.leadSubCategory!;
+    }
+    if (widget.leadSubCategoryId != null) {
+      leadSubTypeId = widget.leadSubCategoryId!;
+    }
+
+    if (widget.leadSource != null) {
+      leadSource = widget.leadSource!;
+      leadSourceCtrl.text = widget.leadSource!;
+    }
+    if (widget.leadSourceId != null) {
+      leadSourceId = widget.leadSourceId!;
+    }
+
+    if (widget.priority != null) {
+      priority = widget.priority!;
+      priorityCtrl.text = widget.priority!;
+    }
+    if (widget.priorityId != null) {
+      priorityId = widget.priorityId!;
+    }
+
+    if (widget.assignStaff != null) {
+      assignStaff = widget.assignStaff!;
+      assignStaffCtrl.text = widget.assignStaff!;
+    }
+    if (widget.assignedUserId != null) {
+      assignStaffId = widget.assignedUserId!;
+    }
+
+    if (widget.countryCode != null) {
+      code = widget.countryCode!;
+    }
+    if (widget.whatsappCode != null) {
+      whatsappCode = widget.whatsappCode!;
+    } else if (widget.countryCode != null) {
+      whatsappCode = widget.countryCode!;
+    }
+
+    if (widget.stateId != null) {
+      StateId = widget.stateId;
+    }
+    if (widget.districtId != null) {
+      DistrictId = widget.districtId;
+    }
+
     _initializeData();
   }
 
@@ -136,6 +259,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     emailCtrl.dispose();
     _productSearchCtrl.dispose();
     for (var ctrl in _additionalCtrls) ctrl.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -152,18 +276,59 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     contactPermission = await Common.getSharedPref("getContactPermission");
     createLeadCategory = await Common.getSharedPref("createLeadCategory");
     addLeadSource = await Common.getSharedPref("addLeadSource");
-    assignStaff = await Common.getSharedPref("name") ?? 'Assign Staff';
-    assignStaffId = await Common.getSharedPref("userId") ?? '';
+
+    if (assignStaff == 'Assign Staff' || assignStaff.isEmpty) {
+      assignStaff = await Common.getSharedPref("name") ?? 'Assign Staff';
+    }
+    if (assignStaffId.isEmpty) {
+      assignStaffId = await Common.getSharedPref("userId") ?? '';
+    }
+
     roleId = await Common.getSharedPref("roleId") ?? '';
     multiBranch = await Common.getSharedPref("multiBranch") ?? '';
 
     commonDetails = await HttpService.addLeadCommonData(widget.token);
     if (commonDetails != null) {
-      code = commonDetails!.data.countryCode.toString();
+      if (widget.countryCode == null) {
+        code = commonDetails!.data.countryCode.toString();
+      }
       configure = await HttpService.configure(widget.token);
     }
     stateDetails = await HttpService.getState();
     productSectionModel = await HttpService.leadProductSection();
+
+    if (widget.products != null &&
+        widget.products!.isNotEmpty &&
+        productSectionModel?.data != null) {
+      final productIds = widget.products!.split(',');
+      _selectedProducts = productSectionModel!.data!
+          .where((p) => productIds.any((id) => id.trim() == p.id))
+          .toList();
+    }
+
+    if (leadTypeId.isNotEmpty) {
+      leadSubTypeList = await HttpService.leadSubType(leadTypeId);
+    }
+
+    if (pinCodeCtrl.text.length == 6) {
+      final model = await HttpService.fetchPostOffice(pinCodeCtrl.text);
+      postOffices = model?.postOffice ?? [];
+      if (postOffices.isNotEmpty && widget.postOffice != null) {
+        try {
+          selectedPostOffice = postOffices.firstWhere(
+            (po) => po.name?.toLowerCase() == widget.postOffice!.toLowerCase(),
+          );
+        } catch (e) {
+          // If not found, keep it null
+        }
+      }
+    }
+
+    if (StateId != null && StateId!.isNotEmpty) {
+      final result = await HttpService.getDistrict(StateId!);
+      districtList = result?.data ?? [];
+    }
+
     setState(() => isLoading = false);
   }
 
@@ -191,7 +356,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: Text(
-        widget.editLead == true ? 'Edit Lead' : 'Create Lead',
+        widget.editLead == true ? 'Create Lead' : 'Create Lead',
         style: const TextStyle(color: Colors.white, fontSize: 18),
       ),
       backgroundColor: const Color(0xFF2a86c9),
@@ -270,6 +435,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       child: Form(
         key: _formKey,
@@ -479,7 +645,10 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
         labelStyle: const TextStyle(color: Colors.grey),
       ),
       validator: (v) {
-        if (whatsappCode == '91' && v != null && v.isNotEmpty && v.length != 10) {
+        if (whatsappCode == '91' &&
+            v != null &&
+            v.isNotEmpty &&
+            v.length != 10) {
           return 'Enter 10 digit number';
         }
         return null;
@@ -537,9 +706,25 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           onTap: () => _showCategoryDialog(),
           child: AbsorbPointer(
             child: TextFormField(
-              controller: TextEditingController(text: leadType),
+              controller: leadTypeCtrl,
               decoration: _inputDecoration(
-                  'Lead Category', Icons.arrow_drop_down_circle_outlined),
+                      'Lead Category', Icons.arrow_drop_down_circle_outlined)
+                  .copyWith(
+                suffixIcon: leadTypeId.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          setState(() {
+                            leadType = 'Lead Category';
+                            leadTypeId = '';
+                            leadSubType = 'Lead Sub Category';
+                            leadSubTypeId = '';
+                            leadSubTypeList = null;
+                          });
+                        },
+                      )
+                    : null,
+              ),
             ),
           ),
         ),
@@ -560,7 +745,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       onTap: () => _showSubCategoryDialog(),
       child: AbsorbPointer(
         child: TextFormField(
-          controller: TextEditingController(text: leadSubType),
+          controller: leadSubTypeCtrl,
           decoration: _inputDecoration(
               'Lead Sub Category', Icons.arrow_drop_down_circle_outlined),
         ),
@@ -576,7 +761,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           onTap: () => _showSourceDialog(),
           child: AbsorbPointer(
             child: TextFormField(
-              controller: TextEditingController(text: leadSource),
+              controller: leadSourceCtrl,
               decoration: _inputDecoration(
                   'Lead Source', Icons.arrow_drop_down_circle_outlined),
             ),
@@ -599,7 +784,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       onTap: () => _showPriorityDialog(),
       child: AbsorbPointer(
         child: TextFormField(
-          controller: TextEditingController(text: priority),
+          controller: priorityCtrl,
           decoration: _inputDecoration(
               'Priority', Icons.arrow_drop_down_circle_outlined),
         ),
@@ -679,12 +864,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           const Center(child: CircularProgressIndicator())
         else if (districtList.isNotEmpty)
           DropdownButtonFormField<DistrictList>(
-            value: districtList.firstWhere(
-              (d) => d.id == DistrictId,
-              orElse: () => districtList.first,
-            ),
+            value: districtList.any((d) => d.id == DistrictId)
+                ? districtList.firstWhere((d) => d.id == DistrictId)
+                : null,
             decoration: _inputDecoration(
                 'Select District', Icons.arrow_drop_down_circle_outlined),
+            hint: const Text("Select District"),
             items: districtList.map((d) {
               return DropdownMenuItem(value: d, child: Text(d.name));
             }).toList(),
@@ -983,7 +1168,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   void _calculateTotalAmount() {
     double total = 0;
     for (var p in _selectedProducts) {
-      total += double.tryParse(p.totalAmount ?? '0') ?? 0;
+      String amountStr = (p.totalAmount ?? '0').replaceAll(',', '');
+      total += double.tryParse(amountStr) ?? 0;
     }
     costCtrl.text = total.toStringAsFixed(2);
   }
@@ -1015,12 +1201,13 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
 
   // Dialog Methods
   void _showStaffDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) {
         final searchCtrl = TextEditingController();
         var filtered = List.from(commonDetails!.data.staff);
-        return StatefulBuilder(builder: (ctx, setState) {
+        return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
             title: const Text('Assign Staff'),
             content: SizedBox(
@@ -1037,7 +1224,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onChanged: (v) => setState(() {
+                    onChanged: (v) => setDialogState(() {
                       filtered = commonDetails!.data.staff
                           .where((s) => s.staffName
                               .toLowerCase()
@@ -1063,10 +1250,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   ListTile(
                     title: const Text('Un Assigned'),
                     onTap: () {
-                      assignStaff = 'Un Assigned';
-                      assignStaffId = '';
+                      setState(() {
+                        assignStaff = 'Un Assigned';
+                        assignStaffId = '';
+                        assignStaffCtrl.text = assignStaff;
+                      });
                       Navigator.pop(context);
-                      setState(() {});
                     },
                   ),
                 ],
@@ -1079,12 +1268,13 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showCategoryDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) {
         final searchCtrl = TextEditingController();
         var filtered = List.from(commonDetails!.data.leadCategory);
-        return StatefulBuilder(builder: (ctx, setState) {
+        return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
             title: const Text('Lead Category'),
             content: SizedBox(
@@ -1101,7 +1291,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onChanged: (v) => setState(() {
+                    onChanged: (v) => setDialogState(() {
                       filtered = commonDetails!.data.leadCategory
                           .where((c) => c.leadCategory
                               .toLowerCase()
@@ -1122,8 +1312,10 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                                 cat.leadCategoryId.toString());
                             setState(() {
                               leadType = cat.leadCategory;
+                              leadTypeCtrl.text = leadType;
                               leadTypeId = cat.leadCategoryId.toString();
                               leadSubType = 'Lead Sub Category';
+                              leadSubTypeCtrl.text = leadSubType;
                               leadSubTypeId = '';
                             });
                             Navigator.pop(context);
@@ -1142,7 +1334,13 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showSubCategoryDialog() {
-    if (leadSubTypeList == null) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (leadSubTypeList == null ||
+        leadSubTypeList!.data == null ||
+        leadSubTypeList!.data!.isEmpty) {
+      Common.toastMessaage('No Sub Category found', Colors.orange);
+      return;
+    }
     showDialog(
       context: context,
       builder: (_) {
@@ -1160,6 +1358,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   onTap: () {
                     setState(() {
                       leadSubType = sub.leadSubCategory!;
+                      leadSubTypeCtrl.text = leadSubType;
                       leadSubTypeId = sub.leadSubCategoryId.toString();
                     });
                     Navigator.pop(context);
@@ -1174,12 +1373,13 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showSourceDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) {
         final searchCtrl = TextEditingController();
         var filtered = List.from(commonDetails!.data.leadSource);
-        return StatefulBuilder(builder: (ctx, setState) {
+        return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
             title: const Text('Lead Source'),
             content: SizedBox(
@@ -1196,7 +1396,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onChanged: (v) => setState(() {
+                    onChanged: (v) => setDialogState(() {
                       filtered = commonDetails!.data.leadSource
                           .where((s) => s.leadSource
                               .toLowerCase()
@@ -1215,6 +1415,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                           onTap: () {
                             setState(() {
                               leadSource = src.leadSource;
+                              leadSourceCtrl.text = leadSource;
                               leadSourceId = src.leadSourceId;
                             });
                             Navigator.pop(context);
@@ -1233,6 +1434,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showPriorityDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) {
@@ -1250,6 +1452,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   onTap: () {
                     setState(() {
                       priority = p.priority;
+                      priorityCtrl.text = priority;
                       priorityId = p.priorityId.toString();
                     });
                     Navigator.pop(context);
@@ -1264,6 +1467,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showCallResultDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) {
@@ -1281,6 +1485,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   onTap: () {
                     setState(() {
                       callResult = cr.callResult;
+                      callResultCtrl.text = callResult;
                       callResultId = cr.callResultId.toString();
                       if (callResultId != '2') nextFollowupCtrl.clear();
                     });
@@ -1296,12 +1501,13 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showCallResponseDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) {
         final searchCtrl = TextEditingController();
         var filtered = List.from(commonDetails!.data.callResponseStatus);
-        return StatefulBuilder(builder: (ctx, setState) {
+        return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
             title: const Text('Call Response'),
             content: SizedBox(
@@ -1318,7 +1524,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onChanged: (v) => setState(() {
+                    onChanged: (v) => setDialogState(() {
                       filtered = commonDetails!.data.callResponseStatus
                           .where((r) => r.callResponse
                               .toString()
@@ -1357,6 +1563,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showStateDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) {
@@ -1408,6 +1615,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                             setState(() {
                               districtList = result?.data ?? [];
                               isDistrictLoading = false;
+                              DistrictId = null;
+                              districtCtrl.clear();
                             });
                           },
                         );
@@ -1424,6 +1633,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showAddCategoryDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) => AddLeadCategoryDialog(
@@ -1432,8 +1642,49 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           final response = await HttpService.postLeadCategory(name, cost, sub);
           if (response?.status ?? false) {
             commonDetails = await HttpService.addLeadCommonData(token);
+            if (commonDetails != null) {
+              try {
+                final newCat = commonDetails!.data.leadCategory.firstWhere(
+                  (c) => c.leadCategory.toLowerCase() == name.toLowerCase(),
+                );
+                setState(() {
+                  leadType = newCat.leadCategory;
+                  leadTypeCtrl.text = leadType;
+                  leadTypeId = newCat.leadCategoryId.toString();
+                  if (cost.isNotEmpty) {
+                    costCtrl.text = cost;
+                  }
+                  leadSubType = 'Lead Sub Category';
+                  leadSubTypeCtrl.text = leadSubType;
+                  leadSubTypeId = '';
+                });
+
+                // Load sub-categories for the new category
+                leadSubTypeList = await HttpService.leadSubType(leadTypeId);
+
+                if (sub != null &&
+                    sub.isNotEmpty &&
+                    leadSubTypeList?.data != null) {
+                  try {
+                    final newSub = leadSubTypeList!.data!.firstWhere(
+                      (s) =>
+                          s.leadSubCategory?.toLowerCase() == sub.toLowerCase(),
+                    );
+                    setState(() {
+                      leadSubType = newSub.leadSubCategory!;
+                      leadSubTypeCtrl.text = leadSubType;
+                      leadSubTypeId = newSub.leadSubCategoryId.toString();
+                    });
+                  } catch (e) {
+                    // Sub-category not found in refreshed list
+                  }
+                }
+              } catch (e) {
+                // Category not found in refreshed list
+              }
+            }
             setState(() {});
-            Navigator.pop(context);
+            // Navigator.pop(context); // REMOVED: AddLeadCategoryDialog already pops itself
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                   content: Text('Category added'),
@@ -1451,6 +1702,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showAddSourceDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
     showDialog(
       context: context,
       builder: (_) => AddLeadSourceDialog(
@@ -1459,8 +1711,22 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           final response = await HttpService.postLeadSource(name);
           if (response?.status ?? false) {
             commonDetails = await HttpService.addLeadCommonData(token);
+            if (commonDetails != null) {
+              try {
+                final newSrc = commonDetails!.data.leadSource.firstWhere(
+                  (s) => s.leadSource.toLowerCase() == name.toLowerCase(),
+                );
+                setState(() {
+                  leadSource = newSrc.leadSource;
+                  leadSourceCtrl.text = leadSource;
+                  leadSourceId = newSrc.leadSourceId;
+                });
+              } catch (e) {
+                // Source not found in refreshed list
+              }
+            }
             setState(() {});
-            Navigator.pop(context);
+            // Navigator.pop(context); // REMOVED: AddLeadSourceDialog already pops itself
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Failed')),
@@ -1567,7 +1833,11 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _scrollController.animateTo(0,
+          duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+      return;
+    }
     _formKey.currentState!.save();
 
     if (multiBranch == 'true' && roleId == '2' && branch == null) {
@@ -1593,6 +1863,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   void _showDuplicateDialog() {
+    FocusScope.of(context).unfocus();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

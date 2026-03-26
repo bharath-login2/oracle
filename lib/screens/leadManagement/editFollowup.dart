@@ -65,7 +65,7 @@ class _EditFollowupState extends State<EditFollowup> {
   String leadTypeId = '';
   String leadSubType = 'Lead Sub Category';
   String leadSubTypeId = '';
-  String callResultReasonName = 'Reason';
+  String callResultReasonName = 'Tag';
   String callResultReasonId = '';
 
   final TextEditingController cost = TextEditingController();
@@ -402,6 +402,8 @@ class _EditFollowupState extends State<EditFollowup> {
               children: [
                 const SizedBox(height: 12),
                 _buildProductSelection(),
+                const SizedBox(height: 12),
+                _buildCostField(),
               ],
             ),
             const SizedBox(height: 12),
@@ -437,8 +439,8 @@ class _EditFollowupState extends State<EditFollowup> {
               title: 'Additional Information',
               icon: Icons.note_outlined,
               children: [
-                const SizedBox(height: 12),
-                _buildCostField(),
+                // const SizedBox(height: 12),
+                // _buildCostField(),
                 const SizedBox(height: 12),
                 _buildRemarksField(),
               ],
@@ -596,8 +598,10 @@ class _EditFollowupState extends State<EditFollowup> {
                 label: Text(product.productName ?? 'Unknown',
                     style: const TextStyle(fontSize: 12)),
                 deleteIcon: const Icon(Icons.close, size: 16),
-                onDeleted: () =>
-                    setState(() => _selectedProducts.remove(product)),
+                onDeleted: () => setState(() {
+                  _selectedProducts.remove(product);
+                  _updateCostFromProducts();
+                }),
                 backgroundColor: Colors.blue.shade50,
                 side: BorderSide(color: Colors.blue.shade200),
               );
@@ -694,7 +698,7 @@ class _EditFollowupState extends State<EditFollowup> {
   Widget _buildCallReasonField() {
     return GestureDetector(
       onTap: () => _showSelectionDialog(
-        title: 'Reason',
+        title: 'Tags',
         items: callResultReason!.data!.map((r) => r.reason.toString()).toList(),
         onSelected: (index) {
           setState(() {
@@ -709,7 +713,7 @@ class _EditFollowupState extends State<EditFollowup> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callReasonVal,
-          decoration: _inputDecoration('Reason', Icons.reply_all_sharp),
+          decoration: _inputDecoration('Tags', Icons.reply_all_sharp),
         ),
       ),
     );
@@ -751,8 +755,8 @@ class _EditFollowupState extends State<EditFollowup> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: leadTypeVal,
-          validator: (v) => v!.isEmpty ? 'Lead category is required' : null,
-          decoration: _inputDecoration('Lead Category *', Icons.category),
+          //   validator: (v) => v!.isEmpty ? 'Lead category is required' : null,
+          decoration: _inputDecoration('Lead Category', Icons.category),
         ),
       ),
     );
@@ -1091,8 +1095,9 @@ class _EditFollowupState extends State<EditFollowup> {
                   onPressed: () {
                     setState(() {
                       _selectedProducts = List.from(localSelected);
+                      _updateCostFromProducts();
                     });
-                    Navigator.pop(context);
+                    if (context.mounted) Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2a86c9),
@@ -1105,5 +1110,17 @@ class _EditFollowupState extends State<EditFollowup> {
         );
       },
     );
+  }
+
+  void _updateCostFromProducts() {
+    double total = 0;
+    for (var prod in _selectedProducts) {
+      if (prod.totalAmount != null && prod.totalAmount!.isNotEmpty) {
+        total += double.tryParse(prod.totalAmount!) ?? 0.0;
+      }
+    }
+    setState(() {
+      cost.text = total > 0 ? total.toStringAsFixed(2) : "";
+    });
   }
 }

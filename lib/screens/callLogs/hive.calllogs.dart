@@ -420,7 +420,7 @@ isCurrentUserSearchResult=false;
             isCurrentUserSearchResult=true;
             search=false;
             completedLoading=true;
-            if (logHistory!.data!.isNotEmpty) {
+            if (logHistory!.data!.lists!.isNotEmpty) {
                 showStaffSearchResult=true;
             }else{
               showStaffSearchResult=false;
@@ -1022,7 +1022,7 @@ setState(() {
                                     ),
                                     if (logHistory != null)
                                       Text(
-                                        ' (${logHistory!.data!.length})',
+                                        ' (${logHistory!.data!.lists!.length})',
                                         style: TextStyle(
                                           color: selectedIndex == 1
                                               ? const Color(0xFF3c9f9a)
@@ -1943,7 +1943,7 @@ setState(() {
                                             ? ListView.builder(
                                                 shrinkWrap: true,
                                                 itemCount:
-                                                    logHistory!.data!.length,
+                                                    logHistory!.data!.lists!.length,
                                                 physics:
                                                     const NeverScrollableScrollPhysics(),
                                                 itemBuilder: (context, index) {
@@ -2026,8 +2026,7 @@ setState(() {
                                                           DismissDirection
                                                               .startToEnd) {
                                                         Common.dialPad(
-                                                            logHistory!
-                                                                .data![index]
+                                                            logHistory!.data!.lists![index]
                                                                 .phoneNumber
                                                                 .toString());
                                                       } else {
@@ -2039,14 +2038,10 @@ setState(() {
                                                                       AddLeads(
                                                                 widget.token,
                                                                 clientName:
-                                                                    logHistory!
-                                                                        .data![
-                                                                            index]
+                                                                    logHistory!.data!.lists![index]
                                                                         .name,
                                                                 phoneNumber:
-                                                                    logHistory!
-                                                                        .data![
-                                                                            index]
+                                                                    logHistory!.data!.lists![index]
                                                                         .phoneNumber,
                                                               ),
                                                             ));
@@ -2060,9 +2055,7 @@ setState(() {
                                                             onLongPressHistory =
                                                                 true;
                                                             deleteHistoryIds
-                                                                .add(logHistory!
-                                                                    .data![
-                                                                        index]
+                                                                .add(logHistory!.data!.lists![index]
                                                                     .id
                                                                     .toString());
                                                           });
@@ -2071,22 +2064,16 @@ setState(() {
                                                           if (onLongPressHistory ==
                                                               true) {
                                                             if (deleteHistoryIds
-                                                                .contains(logHistory!
-                                                                    .data![
-                                                                        index]
+                                                                .contains(logHistory!.data!.lists![index]
                                                                     .id
                                                                     .toString())) {
                                                               deleteHistoryIds
-                                                                  .remove(logHistory!
-                                                                      .data![
-                                                                          index]
+                                                                  .remove(logHistory!.data!.lists![index]
                                                                       .id
                                                                       .toString());
                                                             } else {
                                                               deleteHistoryIds
-                                                                  .add(logHistory!
-                                                                      .data![
-                                                                          index]
+                                                                  .add(logHistory!.data!.lists![index]
                                                                       .id
                                                                       .toString());
                                                             }
@@ -2109,9 +2096,7 @@ setState(() {
                                                             decoration:
                                                                 BoxDecoration(
                                                               color: deleteHistoryIds.contains(
-                                                                      logHistory!
-                                                                          .data![
-                                                                              index]
+                                                                      logHistory!.data!.lists![index]
                                                                           .id
                                                                           .toString())
                                                                   ? Colors
@@ -2191,14 +2176,14 @@ setState(() {
                                                                                 CrossAxisAlignment.start,
                                                                             children: [
                                                                               Text(
-                                                                                logHistory!.data![index].name.toString() == "" || logHistory!.data![index].name.toString() == "null" ? "Unknown" : logHistory!.data![index].name.toString(),
+                                                                                logHistory!.data!.lists![index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
                                                                                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                               ),
                                                                               const SizedBox(
                                                                                 height: 3,
                                                                               ),
                                                                               Text(
-                                                                                logHistory!.data![index].phoneNumber.toString(),
+                                                                                logHistory!.data!.lists![index].phoneNumber.toString(),
                                                                                 style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
                                                                               ),
                                                                             ],
@@ -2220,7 +2205,7 @@ setState(() {
                                                                                 width: 15,
                                                                               ),
                                                                               Text(
-                                                                                logHistory!.data![index].dateTime.toString(),
+                                                                                logHistory!.data!.lists![index].dateTime.toString(),
                                                                               ),
                                                                             ],
                                                                           ),
@@ -2233,7 +2218,7 @@ setState(() {
                                                                               Padding(
                                                                                 padding: const EdgeInsets.only(right: 10),
                                                                                 child: Text(
-                                                                                  logHistory!.data![index].duration.toString().split('.')[0].padLeft(8, '0'),
+                                                                                  logHistory!.data!.lists![index].duration.toString().split('.')[0].padLeft(8, '0'),
                                                                                   style: const TextStyle(fontSize: 15, color: Colors.green),
                                                                                 ),
                                                                               ),
@@ -2250,7 +2235,7 @@ setState(() {
                                                                             MainAxisAlignment.spaceBetween,
                                                                         children: [
                                                                           Text(
-                                                                            'Type  : ${logHistory!.data![index].callType}',
+                                                                            'Type  : ${logHistory!.data!.lists![index].callType}',
                                                                           ),
                                                                           const SizedBox(),
                                                                           Container(
@@ -2266,7 +2251,7 @@ setState(() {
                                                                                   bottom: 5),
                                                                               child:
                                                                                   Text(
-                                                                                "${logHistory!.data![index].simName}",
+                                                                                "${logHistory!.data!.lists![index].simName}",
                                                                               ),
                                                                             ),
                                                                           ),
@@ -2538,7 +2523,7 @@ setState(() {
                                                                               allCallLogData[index].name.toString() == "" ||
                                                                                allCallLogData[index].name.toString() == "null" ? "Unknown" :
                                                                                 allCallLogData[index].name.toString(),
-                                                                              // allCallLogData[index].name.toString() == "" || logHistory!.data![index].name.toString() == "null" ? "Unknown" : logHistory!.data![index].name.toString(),
+                                                                              // allCallLogData[index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
                                                                                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                                                               ),
                                                                               const SizedBox(
@@ -2950,11 +2935,11 @@ setState(() {
                               //             height: 20,
                               //           ),
                               //           widget.userId.toString()!=assignStaffId?
-                              //           logHistory!.data!.isNotEmpty 
+                              //           logHistory!.data!.lists!.isNotEmpty 
                               //               ? ListView.builder(
                               //                   shrinkWrap: true,
                               //                   itemCount:
-                              //                       logHistory!.data!.length,
+                              //                       logHistory!.data!.lists!.length,
                               //                   physics:
                               //                       const NeverScrollableScrollPhysics(),
                               //                   itemBuilder: (context, index) {
@@ -3202,14 +3187,14 @@ setState(() {
                               //                                                   CrossAxisAlignment.start,
                               //                                               children: [
                               //                                                 Text(
-                              //                                                   logHistory!.data![index].name.toString() == "" || logHistory!.data![index].name.toString() == "null" ? "Unknown" : logHistory!.data![index].name.toString(),
+                              //                                                   logHistory!.data!.lists![index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
                               //                                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                               //                                                 ),
                               //                                                 const SizedBox(
                               //                                                   height: 3,
                               //                                                 ),
                               //                                                 Text(
-                              //                                                   logHistory!.data![index].phoneNumber.toString(),
+                              //                                                   logHistory!.data!.lists![index].phoneNumber.toString(),
                               //                                                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
                               //                                                 ),
                               //                                               ],
@@ -3231,7 +3216,7 @@ setState(() {
                               //                                                   width: 15,
                               //                                                 ),
                               //                                                 Text(
-                              //                                                   logHistory!.data![index].dateTime.toString(),
+                              //                                                   logHistory!.data!.lists![index].dateTime.toString(),
                               //                                                 ),
                               //                                               ],
                               //                                             ),
@@ -3244,7 +3229,7 @@ setState(() {
                               //                                                 Padding(
                               //                                                   padding: const EdgeInsets.only(right: 10),
                               //                                                   child: Text(
-                              //                                                     logHistory!.data![index].duration.toString().split('.')[0].padLeft(8, '0'),
+                              //                                                     logHistory!.data!.lists![index].duration.toString().split('.')[0].padLeft(8, '0'),
                               //                                                     style: const TextStyle(fontSize: 15, color: Colors.green),
                               //                                                   ),
                               //                                                 ),
@@ -3261,7 +3246,7 @@ setState(() {
                               //                                               MainAxisAlignment.spaceBetween,
                               //                                           children: [
                               //                                             Text(
-                              //                                               'Type  : ${logHistory!.data![index].callType}',
+                              //                                               'Type  : ${logHistory!.data!.lists![index].callType}',
                               //                                             ),
                               //                                             const SizedBox(),
                               //                                             Container(
@@ -3277,7 +3262,7 @@ setState(() {
                               //                                                     bottom: 5),
                               //                                                 child:
                               //                                                     Text(
-                              //                                                   "${logHistory!.data![index].simName}",
+                              //                                                   "${logHistory!.data!.lists![index].simName}",
                               //                                                 ),
                               //                                               ),
                               //                                             ),
@@ -3543,16 +3528,16 @@ setState(() {
                               //                                               children: [
                               //                                                 Text(
                               //                                                 allCallLogData[index].name.toString() == "" ||
-                              //                                                  logHistory!.data![index].name.toString() == "null" ? "Unknown" :
-                              //                                                   logHistory!.data![index].name.toString(),
-                              //                                                 // allCallLogData[index].name.toString() == "" || logHistory!.data![index].name.toString() == "null" ? "Unknown" : logHistory!.data![index].name.toString(),
+                              //                                                  logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" :
+                              //                                                   logHistory!.data!.lists![index].name.toString(),
+                              //                                                 // allCallLogData[index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
                               //                                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                               //                                                 ),
                               //                                                 const SizedBox(
                               //                                                   height: 3,
                               //                                                 ),
                               //                                                 Text(
-                              //                                                   logHistory!.data![index].phoneNumber.toString(),
+                              //                                                   logHistory!.data!.lists![index].phoneNumber.toString(),
                               //                                                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
                               //                                                 ),
                               //                                               ],
@@ -3574,7 +3559,7 @@ setState(() {
                               //                                                   width: 15,
                               //                                                 ),
                               //                                                 Text(
-                              //                                                   logHistory!.data![index].dateTime.toString(),
+                              //                                                   logHistory!.data!.lists![index].dateTime.toString(),
                               //                                                 ),
                               //                                               ],
                               //                                             ),
@@ -3587,7 +3572,7 @@ setState(() {
                               //                                                 Padding(
                               //                                                   padding: const EdgeInsets.only(right: 10),
                               //                                                   child: Text(
-                              //                                                     logHistory!.data![index].duration.toString().split('.')[0].padLeft(8, '0'),
+                              //                                                     logHistory!.data!.lists![index].duration.toString().split('.')[0].padLeft(8, '0'),
                               //                                                     style: const TextStyle(fontSize: 15, color: Colors.green),
                               //                                                   ),
                               //                                                 ),
@@ -3604,7 +3589,7 @@ setState(() {
                               //                                               MainAxisAlignment.spaceBetween,
                               //                                           children: [
                               //                                             Text(
-                              //                                               'Type  : ${logHistory!.data![index].callType}',
+                              //                                               'Type  : ${logHistory!.data!.lists![index].callType}',
                               //                                             ),
                               //                                             const SizedBox(),
                               //                                             Container(
@@ -3620,7 +3605,7 @@ setState(() {
                               //                                                     bottom: 5),
                               //                                                 child:
                               //                                                     Text(
-                              //                                                   "${logHistory!.data![index].simName}",
+                              //                                                   "${logHistory!.data!.lists![index].simName}",
                               //                                                 ),
                               //                                               ),
                               //                                             ),

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
@@ -56,12 +55,24 @@ class _EditLeadNewState extends State<EditLeadNew> {
   CommonConfigureModel? configure;
   LeadSubTypeModel? leadSubTypeList;
   LeadDeatailsModel? leadDetails;
+  final ScrollController _scrollController = ScrollController();
   String leadType = 'Lead Category', leadTypeId = '';
-  String leadSubType = 'Lead Sub Category', leadSubTypeId = '';
+  String leadSubType = 'Sub Category', leadSubTypeId = '';
   String assignStaff = 'Assign Staff', assignStaffId = '';
+  String leadSource = 'Lead Source', leadSourceId = '';
+  String priority = 'Priority', priorityId = '';
   String callResult = 'New', callResultId = '1';
-  String leadSource = 'Direct Entry', leadSourceId = "1";
-  String priority = 'Warm', priorityId = '2';
+
+  final TextEditingController leadTypeCtrl =
+      TextEditingController(text: 'Lead Category');
+  final TextEditingController leadSubTypeCtrl =
+      TextEditingController(text: 'Sub Category');
+  final TextEditingController assignStaffCtrl =
+      TextEditingController(text: 'Assign Staff');
+  final TextEditingController leadSourceCtrl =
+      TextEditingController(text: 'Lead Source');
+  final TextEditingController priorityCtrl =
+      TextEditingController(text: 'Priority');
 
   final TextEditingController clientNameCtrl = TextEditingController();
   final TextEditingController contactNoCtrl = TextEditingController();
@@ -108,7 +119,13 @@ class _EditLeadNewState extends State<EditLeadNew> {
     districtCtrl.dispose();
     whatsappNoCtrl.dispose();
     emailCtrl.dispose();
+    leadTypeCtrl.dispose();
+    leadSubTypeCtrl.dispose();
+    assignStaffCtrl.dispose();
+    leadSourceCtrl.dispose();
+    priorityCtrl.dispose();
     for (var ctrl in _additionalCtrls) ctrl.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -136,8 +153,10 @@ class _EditLeadNewState extends State<EditLeadNew> {
     if (leadDetails?.data != null) {
       final data = leadDetails!.data!;
       clientNameCtrl.text = data.clientName ?? "";
-      code = data.countryCode?.toString() ?? '91';
-      whatsappCode = data.whatsappNumberCountryCode?.toString() ?? '91';
+      final cc = data.countryCode?.toString() ?? "";
+      code = cc.isEmpty ? '91' : cc;
+      final wc = data.whatsappNumberCountryCode?.toString() ?? "";
+      whatsappCode = wc.isEmpty ? '91' : wc;
       contactNoCtrl.text = Common.trimCountryCode(
           mobileNumber: data.contactNumber1 ?? "", countryCode: code);
       whatsappNoCtrl.text = data.whatsaAppNumber ?? "";
@@ -148,15 +167,20 @@ class _EditLeadNewState extends State<EditLeadNew> {
       remarkCtrl.text = data.remarks ?? "";
       branch = data.branchId?.toString();
       leadType = data.leadCategory ?? 'Lead Category';
+      leadTypeCtrl.text = leadType;
       leadTypeId = data.leadCategoryId?.toString() ?? '';
-      leadSubType = data.leadSubCategory ?? 'Lead Sub Category';
+      leadSubType = data.leadSubCategory ?? 'Sub Category';
+      leadSubTypeCtrl.text = leadSubType;
       leadSubTypeId = data.leadSubCategoryId?.toString() ?? '';
       assignStaff = data.staffName ?? 'Assign Staff';
+      assignStaffCtrl.text = assignStaff;
       assignStaffId = data.assignedUserId?.toString() ?? '';
-      priority = data.priority ?? 'Normal';
-      priorityId = data.priorityId?.toString() ?? '2';
-      leadSource = data.leadSource ?? 'Direct Entry';
-      leadSourceId = data.leadSourceId?.toString() ?? '1';
+      priority = data.priority ?? 'Priority';
+      priorityCtrl.text = priority;
+      priorityId = data.priorityId?.toString() ?? '';
+      leadSource = data.leadSource ?? 'Lead Source';
+      leadSourceCtrl.text = leadSource;
+      leadSourceId = data.leadSourceId?.toString() ?? '';
       callResult = data.callResult ?? 'New';
       callResultId = data.callResultId?.toString() ?? '1';
       if (leadTypeId.isNotEmpty) {
@@ -178,6 +202,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
               .toList();
         }
       }
+      _updateTotalCost();
       final addonDet =
           await HttpService.listAddonDet(widget.token, widget.callMasterId);
       if (addonDet?.data != null) {
@@ -288,6 +313,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
 
   Widget _buildForm() {
     return SingleChildScrollView(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       child: Form(
         key: _formKey,
@@ -489,7 +515,10 @@ class _EditLeadNewState extends State<EditLeadNew> {
         labelStyle: const TextStyle(color: Colors.grey),
       ),
       validator: (v) {
-        if (whatsappCode == '91' && v != null && v.isNotEmpty && v.length != 10) {
+        if (whatsappCode == '91' &&
+            v != null &&
+            v.isNotEmpty &&
+            v.length != 10) {
           return 'Enter 10 digit number';
         }
         return null;
@@ -525,7 +554,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
               onTap: () => _showStaffDialog(),
               child: AbsorbPointer(
                   child: TextFormField(
-                      controller: TextEditingController(text: assignStaff),
+                      controller: assignStaffCtrl,
                       decoration:
                           _inputDecoration('Assign Staff', Icons.person))))),
     ]);
@@ -537,9 +566,27 @@ class _EditLeadNewState extends State<EditLeadNew> {
             onTap: () => _showCategoryDialog(),
             child: AbsorbPointer(
                 child: TextFormField(
-                    controller: TextEditingController(text: leadType),
+                    controller: leadTypeCtrl,
                     decoration:
-                        _inputDecoration('Lead Category', Icons.category)))),
+                        _inputDecoration('Lead Category', Icons.category)
+                            .copyWith(
+                      suffixIcon: leadTypeId.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, size: 20),
+                              onPressed: () {
+                                setState(() {
+                                  leadType = 'Lead Category';
+                                  leadTypeCtrl.text = leadType;
+                                  leadTypeId = '';
+                                  leadSubType = 'Sub Category';
+                                  leadSubTypeCtrl.text = leadSubType;
+                                  leadSubTypeId = '';
+                                  leadSubTypeList = null;
+                                });
+                              },
+                            )
+                          : null,
+                    )))),
         if (createLeadCategory == 'true')
           Positioned(
               right: 5,
@@ -552,7 +599,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       onTap: () => _showSubCategoryDialog(),
       child: AbsorbPointer(
           child: TextFormField(
-              controller: TextEditingController(text: leadSubType),
+              controller: leadSubTypeCtrl,
               decoration: _inputDecoration(
                   'Sub Category', Icons.subdirectory_arrow_right))));
 
@@ -562,7 +609,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
             onTap: () => _showSourceDialog(),
             child: AbsorbPointer(
                 child: TextFormField(
-                    controller: TextEditingController(text: leadSource),
+                    controller: leadSourceCtrl,
                     decoration:
                         _inputDecoration('Lead Source', Icons.source)))),
         if (addLeadSource == 'true')
@@ -577,7 +624,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       onTap: () => _showPriorityDialog(),
       child: AbsorbPointer(
           child: TextFormField(
-              controller: TextEditingController(text: priority),
+              controller: priorityCtrl,
               decoration: _inputDecoration('Priority', Icons.priority_high))));
 
   Widget _buildAddressField() => TextFormField(
@@ -636,9 +683,11 @@ class _EditLeadNewState extends State<EditLeadNew> {
         const Center(child: CircularProgressIndicator())
       else if (districtList.isNotEmpty)
         DropdownButtonFormField<DistrictList>(
-            value: districtList.firstWhere((d) => d.id == DistrictId,
-                orElse: () => districtList.first),
+            value: districtList.any((d) => d.id == DistrictId)
+                ? districtList.firstWhere((d) => d.id == DistrictId)
+                : null,
             decoration: _inputDecoration('District', Icons.location_city),
+            hint: const Text("Select District"),
             items: districtList
                 .map((d) => DropdownMenuItem(value: d, child: Text(d.name)))
                 .toList(),
@@ -701,8 +750,11 @@ class _EditLeadNewState extends State<EditLeadNew> {
   }
 
   void _updateTotalCost() {
-    double total = _selectedProducts.fold(
-        0, (sum, p) => sum + (double.tryParse(p.totalAmount ?? '0') ?? 0));
+    double total = 0;
+    for (var p in _selectedProducts) {
+      String amountStr = (p.totalAmount ?? '0').replaceAll(',', '');
+      total += double.tryParse(amountStr) ?? 0;
+    }
     costCtrl.text = total.toStringAsFixed(2);
   }
 
@@ -743,210 +795,235 @@ class _EditLeadNewState extends State<EditLeadNew> {
               const EdgeInsets.symmetric(horizontal: 10, vertical: 12));
 
   // Dialogs
-  void _showStaffDialog() => showDialog(
-      context: context,
-      builder: (_) {
-        var search = TextEditingController();
-        var list = List.from(commonDetails!.data.staff);
-        return StatefulBuilder(
-            builder: (c, setS) => AlertDialog(
-                  title: const Text('Assign Staff'),
-                  content: SizedBox(
-                      width: 300,
-                      height: 400,
-                      child: Column(children: [
-                        TextField(
-                            controller: search,
-                            decoration:
-                                const InputDecoration(hintText: "Search"),
-                            onChanged: (v) => setS(() => list = commonDetails!
-                                .data.staff
-                                .where((s) => s.staffName
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(v.toLowerCase()))
-                                .toList())),
-                        Expanded(
-                            child: ListView.builder(
-                                itemCount: list.length,
-                                itemBuilder: (c, i) => ListTile(
-                                    title: Text(list[i].staffName!),
-                                    onTap: () {
-                                      setState(() {
-                                        assignStaff = list[i].staffName!;
-                                        assignStaffId =
-                                            list[i].userId.toString();
-                                      });
-                                      Navigator.pop(context);
-                                    })))
-                      ])),
-                ));
-      });
+  void _showStaffDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    showDialog(
+        context: context,
+        builder: (_) {
+          var search = TextEditingController();
+          var list = List.from(commonDetails!.data.staff);
+          return StatefulBuilder(
+              builder: (c, setS) => AlertDialog(
+                    title: const Text('Assign Staff'),
+                    content: SizedBox(
+                        width: 300,
+                        height: 400,
+                        child: Column(children: [
+                          TextField(
+                              controller: search,
+                              decoration:
+                                  const InputDecoration(hintText: "Search"),
+                              onChanged: (v) => setS(() => list = commonDetails!
+                                  .data.staff
+                                  .where((s) => s.staffName
+                                      .toString()
+                                      .toLowerCase()
+                                      .contains(v.toLowerCase()))
+                                  .toList())),
+                          Expanded(
+                              child: ListView.builder(
+                                  itemCount: list.length,
+                                  itemBuilder: (c, i) => ListTile(
+                                      title: Text(list[i].staffName!),
+                                      onTap: () {
+                                        setState(() {
+                                          assignStaff = list[i].staffName!;
+                                          assignStaffCtrl.text = assignStaff;
+                                          assignStaffId =
+                                              list[i].userId.toString();
+                                        });
+                                        Navigator.pop(context);
+                                      })))
+                        ])),
+                  ));
+        });
+  }
 
-  void _showCategoryDialog() => showDialog(
-      context: context,
-      builder: (_) {
-        var search = TextEditingController();
-        var list = List.from(commonDetails!.data.leadCategory);
-        return StatefulBuilder(
-            builder: (c, setS) => AlertDialog(
-                  title: const Text('Lead Category'),
-                  content: SizedBox(
-                      width: 300,
-                      height: 400,
-                      child: Column(children: [
-                        TextField(
-                            controller: search,
-                            decoration:
-                                const InputDecoration(hintText: "Search"),
-                            onChanged: (v) => setS(() => list = commonDetails!
-                                .data.leadCategory
-                                .where((cat) => cat.leadCategory
-                                    .toLowerCase()
-                                    .contains(v.toLowerCase()))
-                                .toList())),
-                        Expanded(
-                            child: ListView.builder(
-                                itemCount: list.length,
-                                itemBuilder: (c, i) => ListTile(
-                                    title: Text(list[i].leadCategory),
-                                    onTap: () async {
-                                      setState(() {
-                                        leadType = list[i].leadCategory;
-                                        leadTypeId =
-                                            list[i].leadCategoryId.toString();
-                                        leadSubType = 'Sub Category';
-                                        leadSubTypeId = '';
-                                      });
-                                      Navigator.pop(context);
-                                      leadSubTypeList =
-                                          await HttpService.leadSubType(
-                                              leadTypeId);
-                                      setState(() {});
-                                    })))
-                      ])),
-                ));
-      });
+  void _showCategoryDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    showDialog(
+        context: context,
+        builder: (_) {
+          var search = TextEditingController();
+          var list = List.from(commonDetails!.data.leadCategory);
+          return StatefulBuilder(
+              builder: (c, setS) => AlertDialog(
+                    title: const Text('Lead Category'),
+                    content: SizedBox(
+                        width: 300,
+                        height: 400,
+                        child: Column(children: [
+                          TextField(
+                              controller: search,
+                              decoration:
+                                  const InputDecoration(hintText: "Search"),
+                              onChanged: (v) => setS(() => list = commonDetails!
+                                  .data.leadCategory
+                                  .where((cat) => cat.leadCategory
+                                      .toLowerCase()
+                                      .contains(v.toLowerCase()))
+                                  .toList())),
+                          Expanded(
+                              child: ListView.builder(
+                                  itemCount: list.length,
+                                  itemBuilder: (c, i) => ListTile(
+                                      title: Text(list[i].leadCategory),
+                                      onTap: () async {
+                                        setState(() {
+                                          leadType = list[i].leadCategory;
+                                          leadTypeCtrl.text = leadType;
+                                          leadTypeId =
+                                              list[i].leadCategoryId.toString();
+                                          leadSubType = 'Sub Category';
+                                          leadSubTypeCtrl.text = leadSubType;
+                                          leadSubTypeId = '';
+                                        });
+                                        Navigator.pop(context);
+                                        leadSubTypeList =
+                                            await HttpService.leadSubType(
+                                                leadTypeId);
+                                        setState(() {});
+                                      })))
+                        ])),
+                  ));
+        });
+  }
 
-  void _showSubCategoryDialog() => showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-          title: const Text('Sub Category'),
-          content: SizedBox(
-              width: 300,
-              height: 400,
-              child: ListView.builder(
-                  itemCount: leadSubTypeList?.data?.length ?? 0,
-                  itemBuilder: (c, i) => ListTile(
-                      title: Text(leadSubTypeList!.data![i].leadSubCategory!),
-                      onTap: () {
-                        setState(() {
-                          leadSubType =
-                              leadSubTypeList!.data![i].leadSubCategory!;
-                          leadSubTypeId = leadSubTypeList!
-                              .data![i].leadSubCategoryId
-                              .toString();
-                        });
-                        Navigator.pop(context);
-                      })))));
+  void _showSubCategoryDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+            title: const Text('Sub Category'),
+            content: SizedBox(
+                width: 300,
+                height: 400,
+                child: ListView.builder(
+                    itemCount: leadSubTypeList?.data?.length ?? 0,
+                    itemBuilder: (c, i) => ListTile(
+                        title: Text(leadSubTypeList!.data![i].leadSubCategory!),
+                        onTap: () {
+                          setState(() {
+                            leadSubType =
+                                leadSubTypeList!.data![i].leadSubCategory!;
+                            leadSubTypeCtrl.text = leadSubType;
+                            leadSubTypeId = leadSubTypeList!
+                                .data![i].leadSubCategoryId
+                                .toString();
+                          });
+                          Navigator.pop(context);
+                        })))));
+  }
 
-  void _showSourceDialog() => showDialog(
-      context: context,
-      builder: (_) {
-        var search = TextEditingController();
-        var list = List.from(commonDetails!.data.leadSource);
-        return StatefulBuilder(
-            builder: (c, setS) => AlertDialog(
-                  title: const Text('Lead Source'),
-                  content: SizedBox(
-                      width: 300,
-                      height: 400,
-                      child: Column(children: [
-                        TextField(
-                            controller: search,
-                            decoration:
-                                const InputDecoration(hintText: "Search"),
-                            onChanged: (v) => setS(() => list = commonDetails!
-                                .data.leadSource
-                                .where((src) => src.leadSource
-                                    .toLowerCase()
-                                    .contains(v.toLowerCase()))
-                                .toList())),
-                        Expanded(
-                            child: ListView.builder(
-                                itemCount: list.length,
-                                itemBuilder: (c, i) => ListTile(
-                                    title: Text(list[i].leadSource),
-                                    onTap: () {
-                                      setState(() {
-                                        leadSource = list[i].leadSource;
-                                        leadSourceId =
-                                            list[i].leadSourceId.toString();
-                                      });
-                                      Navigator.pop(context);
-                                    })))
-                      ])),
-                ));
-      });
+  void _showSourceDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    showDialog(
+        context: context,
+        builder: (_) {
+          var search = TextEditingController();
+          var list = List.from(commonDetails!.data.leadSource);
+          return StatefulBuilder(
+              builder: (c, setS) => AlertDialog(
+                    title: const Text('Lead Source'),
+                    content: SizedBox(
+                        width: 300,
+                        height: 400,
+                        child: Column(children: [
+                          TextField(
+                              controller: search,
+                              decoration:
+                                  const InputDecoration(hintText: "Search"),
+                              onChanged: (v) => setS(() => list = commonDetails!
+                                  .data.leadSource
+                                  .where((src) => src.leadSource
+                                      .toLowerCase()
+                                      .contains(v.toLowerCase()))
+                                  .toList())),
+                          Expanded(
+                              child: ListView.builder(
+                                  itemCount: list.length,
+                                  itemBuilder: (c, i) => ListTile(
+                                      title: Text(list[i].leadSource),
+                                      onTap: () {
+                                        setState(() {
+                                          leadSource = list[i].leadSource;
+                                          leadSourceCtrl.text = leadSource;
+                                          leadSourceId =
+                                              list[i].leadSourceId.toString();
+                                        });
+                                        Navigator.pop(context);
+                                      })))
+                        ])),
+                  ));
+        });
+  }
 
-  void _showPriorityDialog() => showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-          title: const Text('Priority'),
-          content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: commonDetails!.data.priority
-                  .map((p) => ListTile(
-                      title: Text(p.priority),
-                      onTap: () {
-                        setState(() {
-                          priority = p.priority;
-                          priorityId = p.priorityId.toString();
-                        });
-                        Navigator.pop(context);
-                      }))
-                  .toList())));
+  void _showPriorityDialog() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+            title: const Text('Priority'),
+            content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: commonDetails!.data.priority
+                    .map((p) => ListTile(
+                        title: Text(p.priority),
+                        onTap: () {
+                          setState(() {
+                            priority = p.priority;
+                            priorityCtrl.text = priority;
+                            priorityId = p.priorityId.toString();
+                          });
+                          Navigator.pop(context);
+                        }))
+                    .toList())));
+  }
 
-  void _showStateDialog() => showDialog(
-      context: context,
-      builder: (_) {
-        var search = TextEditingController();
-        var list = List.from(stateDetails!.data);
-        return StatefulBuilder(
-            builder: (c, setS) => AlertDialog(
-                  title: const Text('Select State'),
-                  content: SizedBox(
-                      width: 300,
-                      height: 400,
-                      child: Column(children: [
-                        TextField(
-                            controller: search,
-                            decoration:
-                                const InputDecoration(hintText: "Search"),
-                            onChanged: (v) => setS(() => list = stateDetails!
-                                .data
-                                .where((s) => s.name
-                                    .toLowerCase()
-                                    .contains(v.toLowerCase()))
-                                .toList())),
-                        Expanded(
-                            child: ListView.builder(
-                                itemCount: list.length,
-                                itemBuilder: (c, i) => ListTile(
-                                    title: Text(list[i].name),
-                                    onTap: () {
-                                      Navigator.pop(context);
-                                      setState(() {
-                                        stateCtrl.text = list[i].name;
-                                        StateId = list[i].id;
-                                      });
-                                      _loadDistricts(StateId!);
-                                    })))
-                      ])),
-                ));
-      });
+  void _showStateDialog() {
+    FocusScope.of(context).unfocus();
+    showDialog(
+        context: context,
+        builder: (_) {
+          var search = TextEditingController();
+          var list = List.from(stateDetails!.data);
+          return StatefulBuilder(
+              builder: (c, setS) => AlertDialog(
+                    title: const Text('Select State'),
+                    content: SizedBox(
+                        width: 300,
+                        height: 400,
+                        child: Column(children: [
+                          TextField(
+                              controller: search,
+                              decoration:
+                                  const InputDecoration(hintText: "Search"),
+                              onChanged: (v) => setS(() => list = stateDetails!
+                                  .data
+                                  .where((s) => s.name
+                                      .toLowerCase()
+                                      .contains(v.toLowerCase()))
+                                  .toList())),
+                          Expanded(
+                              child: ListView.builder(
+                                  itemCount: list.length,
+                                  itemBuilder: (c, i) => ListTile(
+                                      title: Text(list[i].name),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        setState(() {
+                                          stateCtrl.text = list[i].name;
+                                          StateId = list[i].id;
+                                        });
+                                        _loadDistricts(StateId!);
+                                      })))
+                        ])),
+                  ));
+        });
+  }
 
   void _showProductSelectionDialog() {
+    FocusScope.of(context).unfocus();
     showDialog(
       context: context,
       builder: (_) {
@@ -1022,6 +1099,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
   }
 
   void _showAddCategoryDialog() {
+    FocusScope.of(context).unfocus();
     showDialog(
       context: context,
       builder: (_) => AddLeadCategoryDialog(
@@ -1041,6 +1119,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
   }
 
   void _showAddSourceDialog() {
+    FocusScope.of(context).unfocus();
     showDialog(
       context: context,
       builder: (_) => AddLeadSourceDialog(
@@ -1097,7 +1176,11 @@ class _EditLeadNewState extends State<EditLeadNew> {
               ]));
 
   Future<void> _submitLead() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      _scrollController.animateTo(0,
+          duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+      return;
+    }
     Common.showProgressDialog(context, "Updating...");
 
     _additionalValues.clear();

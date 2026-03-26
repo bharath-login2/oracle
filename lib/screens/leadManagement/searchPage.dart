@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:login2/screens/leadManagement/add_followup.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/lead_management/cloudCallModel.dart';
@@ -1204,7 +1205,8 @@ class _SearchPageState extends State<SearchPage> {
                                           Navigator.of(context).push(
                                             MaterialPageRoute(
                                                 builder: (context) =>
-                                                    Dashboard(widget.token)),
+                                                    DashboardLeadNewUpdatedTwo(
+                                                        widget.token)),
                                           );
                                         },
                                         child: Container(

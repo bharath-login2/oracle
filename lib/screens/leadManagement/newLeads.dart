@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:lottie/lottie.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shimmer/shimmer.dart';
@@ -29,9 +30,9 @@ import '../../models/lead_management/fileManagerPermissionModel.dart';
 import '../../models/lead_management/leadSubTypeModel.dart';
 import '../../models/clients/postalCodeModel.dart';
 import '../../models/expense/expense_post.dart';
-import 'add_followup.dart';
 import 'lead_details_popup.dart';
 import '../../widgets/viewLeadsFilterWidget.dart';
+import '../../models/lead_management/leadProductsModel.dart';
 import 'product_details_popup.dart';
 
 // ignore: must_be_immutable
@@ -144,6 +145,7 @@ class _NewLeadsState extends State<NewLeads>
   ListFolderNameModel? listFolder;
   FileManagerPermissionModel? fileManagerPermission;
   PostalCodeModel? postalCodeModel;
+  LeadProductSectionModel? productSectionModel;
 
   // State variables
   bool? result = true;
@@ -186,30 +188,20 @@ class _NewLeadsState extends State<NewLeads>
   String? DistrictId;
 
   final List<Color> _colors = [
-    Colors.black,
-    Colors.teal,
-    Colors.amberAccent,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.blueAccent,
-    Colors.black,
-    Colors.teal,
-    Colors.amberAccent,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.blueAccent,
-    Colors.black,
-    Colors.teal,
-    Colors.amberAccent,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.blueAccent,
-    Colors.black,
-    Colors.teal,
-    Colors.amberAccent,
-    Colors.redAccent,
-    Colors.green.shade800,
-    Colors.blueAccent,
+    const Color(0xFF2196F3), // Vibrant Blue (index 0)
+    const Color(0xFF2196F3), // Blue at index 1 for "New"
+    const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
+    const Color(0xFFFFC107), // Amber/Yellow at index 3 for Followup
+    const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
+    const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
+    const Color(0xFF9C27B0), // Purple 500 (index 6)
+    const Color(0xFF2a86c9), // Primary Blue (index 7)
+    const Color(0xFF009688), // Teal (index 8)
+    const Color(0xFFFF6F00), // Amber 900 (index 9)
+    const Color(0xFFD32F2F), // Red 700 (index 10)
+    const Color(0xFF1B5E20), // Green 900 (index 11)
+    const Color(0xFF0D47A1), // Blue 900 (index 12)
+    const Color(0xFF3F51B5), // Indigo (index 13)
   ];
 
   final ItemScrollController itemScrollController = ItemScrollController();
@@ -229,6 +221,8 @@ class _NewLeadsState extends State<NewLeads>
   List<String> checkedPriorityItemsName = [];
   List<String> checkedAssignedStaffItems = [];
   List<String> checkedAssignedStaffItemsName = [];
+  List<String> checkedProductItems = [];
+  List<String> checkedProductItemsName = [];
   List<String> checkedSubCategoryItems = [];
   List<String> checkedSubCategoryItemsName = [];
   List<TransferStaff> filteredStaff = [];
@@ -516,6 +510,10 @@ class _NewLeadsState extends State<NewLeads>
     if (configure == null) {
       configure = await HttpService.configure(widget.token);
     }
+
+    if (productSectionModel == null) {
+      productSectionModel = await HttpService.leadProductSection();
+    }
   }
 
   Map<String, dynamic> _buildRequestBody(
@@ -539,7 +537,8 @@ class _NewLeadsState extends State<NewLeads>
       "state": StateId ?? "",
       "district": DistrictId ?? "",
       "branchId": branch ?? "",
-      "leadSourceId": widget.leadSourceId ?? ""
+      "leadSourceId": widget.leadSourceId ?? "",
+      "productId": checkedProductItems
     };
 
     bool shouldSendDates = isDateFiltered ||
@@ -695,7 +694,8 @@ class _NewLeadsState extends State<NewLeads>
   @override
   bool get wantKeepAlive => true;
 
-  Future<void> _showLeadDetailsPopup(int index) async {
+  Future<void> _showLeadDetailsPopup(int index,
+      {bool autoExpandFollowup = false}) async {
     if (index >= items.length) return;
 
     final displayItem =
@@ -767,6 +767,7 @@ class _NewLeadsState extends State<NewLeads>
           toDate: widget.toDate,
           category: widget.category,
           leadType: widget.leadType,
+          autoExpandFollowup: autoExpandFollowup,
           onDataChanged: () {
             _updateSingleLead(
                 index, displayItem.callMasterId, _searchQuery.isNotEmpty);
@@ -1056,7 +1057,8 @@ class _NewLeadsState extends State<NewLeads>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => Dashboard(widget.token)),
+                        builder: (context) =>
+                            DashboardLeadNewUpdatedTwo(widget.token)),
                   );
                 },
                 child: Image.asset("assets/icons/menu.png",
@@ -1116,45 +1118,7 @@ class _NewLeadsState extends State<NewLeads>
         _searchQuery.isEmpty ? items[index] : _filteredItems[index];
 
     if (displayItem.callResult != "Confirmed") {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AddFollowup(
-            widget.token,
-            widget.editLead,
-            widget.deleteLead,
-            widget.cloudCall,
-            displayItem.callMasterId,
-            pageName: widget.pageName,
-            status: widget.status,
-            staff: widget.staff,
-            isCalled: widget.isCalled,
-            fromDate: widget.fromDate,
-            toDate: widget.toDate,
-            category: widget.category,
-            leadType: displayItem.leadCategory,
-            leadTypeId: displayItem.leadCategoryId,
-            leadSubType: displayItem.leadSubCategory,
-            leadSubTypeId: displayItem.leadSubCategoryId,
-            priorityId: displayItem.priority,
-            priority: displayItem.priorityName,
-            cost: displayItem.cost,
-            address: displayItem.address,
-            leadType1: widget.leadType,
-            preservedFromDate: fromdate,
-            preservedToDate: todate,
-            preservedSortOrder: currentSortOrder,
-            preservedSortAscending: sortAscending,
-            preservedCategoryItems: List<String>.from(checkedCategoryItems),
-            preservedPriorityItems: List<String>.from(checkedPriorityItems),
-            preservedAssignedStaffItems:
-                List<String>.from(checkedAssignedStaffItems),
-            preservedResponseItems: List<String>.from(checkedResponseItems),
-          ),
-        ),
-      ).then((value) {
-        _handleReturnedData(value);
-      });
+      _showLeadDetailsPopup(index, autoExpandFollowup: true);
     } else {
       Common.toastMessaage(
           "You can't follow up on confirmed leads", accentOrange);
@@ -1221,27 +1185,6 @@ class _NewLeadsState extends State<NewLeads>
     });
   }
 
-  void _handleReturnedData(dynamic returnedData) {
-    if (returnedData != null && returnedData is Map) {
-      setState(() {
-        fromdate = returnedData['preservedFromDate'];
-        todate = returnedData['preservedToDate'];
-        currentSortOrder =
-            returnedData['preservedSortOrder'] ?? currentSortOrder;
-        sortAscending = returnedData['preservedSortAscending'] ?? sortAscending;
-        checkedCategoryItems = List<String>.from(
-            returnedData['preservedCategoryItems'] ?? checkedCategoryItems);
-        checkedPriorityItems = List<String>.from(
-            returnedData['preservedPriorityItems'] ?? checkedPriorityItems);
-        checkedAssignedStaffItems = List<String>.from(
-            returnedData['preservedAssignedStaffItems'] ??
-                checkedAssignedStaffItems);
-        checkedResponseItems = List<String>.from(
-            returnedData['preservedResponseItems'] ?? checkedResponseItems);
-      });
-    }
-  }
-
   void _showCallPermissionDialog(int index) {
     final displayItem =
         _searchQuery.isEmpty ? items[index] : _filteredItems[index];
@@ -1267,31 +1210,7 @@ class _NewLeadsState extends State<NewLeads>
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddFollowup(
-                      widget.token!,
-                      widget.editLead,
-                      widget.deleteLead,
-                      widget.cloudCall,
-                      viewLeads!.data.callLeadId.toString(),
-                      pageName: widget.pageName.toString(),
-                      status: widget.status,
-                      staff: widget.staff,
-                      isCalled: widget.isCalled,
-                      fromDate: widget.fromDate,
-                      toDate: widget.toDate,
-                      category: widget.category,
-                      scrollToIndex: index,
-                      leadType: widget.leadType,
-                    ),
-                  ),
-                ).then((r) {
-                  items.clear();
-                  page = 1;
-                  getData('desc', true, status);
-                });
+                _showLeadDetailsPopup(index, autoExpandFollowup: true);
               },
               child: const Text('Followup'),
             ),
@@ -1578,7 +1497,9 @@ class _NewLeadsState extends State<NewLeads>
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
                         builder: (context) => ViewLeadsFilterWidget(
+                          currentTab: 'New',
                           commonDetails: commonDetails,
+                          productSectionModel: productSectionModel,
                           initialFilters: {
                             'isDateFiltered': isDateFiltered,
                             'fromDate': fromdate,
@@ -1588,6 +1509,7 @@ class _NewLeadsState extends State<NewLeads>
                             'staffIds': checkedAssignedStaffItems,
                             'categoryIds': checkedCategoryItems,
                             'priorityIds': checkedPriorityItems,
+                            'productIds': checkedProductItems,
                           },
                           onApplyFilters: (filters) {
                             setState(() {
@@ -1599,6 +1521,8 @@ class _NewLeadsState extends State<NewLeads>
                                   List<String>.from(filters['categoryIds']);
                               checkedPriorityItems =
                                   List<String>.from(filters['priorityIds']);
+                              checkedProductItems =
+                                  List<String>.from(filters['productIds']);
 
                               final statusIds =
                                   List<String>.from(filters['statusIds']);
@@ -1746,6 +1670,20 @@ class _NewLeadsState extends State<NewLeads>
         ? _expandedLeadIds.contains(displayItem.callMasterId.toString())
         : !_expandedLeadIds.contains(displayItem.callMasterId.toString());
 
+    // Check if the lead was created today
+    bool isCreatedToday = false;
+    try {
+      if (displayItem.createdDate.isNotEmpty) {
+        // Handle formats like dd-MM-yyyy or yyyy-MM-dd
+        String dateStr = displayItem.createdDate.split(' ')[0];
+        String today = DateFormat('dd-MM-yyyy').format(DateTime.now());
+        String todayAlt = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        if (dateStr == today || dateStr == todayAlt) {
+          isCreatedToday = true;
+        }
+      }
+    } catch (_) {}
+
     if (!isDetailed) {
       return Padding(
         padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
@@ -1753,7 +1691,9 @@ class _NewLeadsState extends State<NewLeads>
           decoration: BoxDecoration(
             color: displayItem.isSelected
                 ? appBarStart.withOpacity(0.08)
-                : backgroundLight,
+                : (isCreatedToday
+                    ? const Color(0xFFE8F5E9) // Light green for today
+                    : backgroundLight),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -1999,7 +1939,9 @@ class _NewLeadsState extends State<NewLeads>
         decoration: BoxDecoration(
           color: displayItem.isSelected
               ? appBarStart.withOpacity(0.05)
-              : Colors.white,
+              : (isCreatedToday
+                  ? const Color(0xFFE8F5E9) // Light green for today
+                  : Colors.white),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -2800,7 +2742,8 @@ class _NewLeadsState extends State<NewLeads>
           InkWell(
             onTap: () {
               Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => Dashboard(widget.token)));
+                  builder: (context) =>
+                      DashboardLeadNewUpdatedTwo(widget.token)));
             },
             child: Container(
               width: MediaQuery.of(context).size.width * 0.3,

@@ -10,7 +10,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/search/search.dart';
 import 'package:login2/screens/accounts/clients/clientDetails.dart';
 import 'package:login2/screens/customer/customerDasboard.dart';
-import 'package:login2/screens/leadManagement/leadDetails.dart';
+import 'package:login2/screens/leadManagement/viewLeadsNew.dart';
 import 'package:login2/service/service.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -836,12 +836,12 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LeadDetails(
+                  builder: (context) => ViewLeadsNew(
                     widget.token,
                     widget.editLead,
                     widget.deleteLead,
                     widget.cloudCall,
-                    lead.callMasterId.toString(),
+                    notificationLeadId: lead.callMasterId.toString(),
                     pageName: "",
                   ),
                 ),
@@ -1217,12 +1217,12 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LeadDetails(
+                  builder: (context) => ViewLeadsNew(
                     widget.token,
                     widget.editLead,
                     widget.deleteLead,
                     widget.cloudCall,
-                    lead.callMasterId,
+                    notificationLeadId: lead.callMasterId.toString(),
                     pageName: "",
                   ),
                 ),

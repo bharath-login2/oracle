@@ -1,19 +1,14 @@
 class CallLogHistoryModel {
   bool? status;
   String? message;
-  List<Data>? data;
+  Data? data;
 
   CallLogHistoryModel({this.status, this.message, this.data});
 
   CallLogHistoryModel.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
-    if (json['data'] != null) {
-      data = <Data>[];
-      json['data'].forEach((v) {
-        data!.add(Data.fromJson(v));
-      });
-    }
+    data = json['data'] != null ? Data.fromJson(json['data']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -21,13 +16,39 @@ class CallLogHistoryModel {
     data['status'] = status;
     data['message'] = message;
     if (this.data != null) {
-      data['data'] = this.data!.map((v) => v.toJson()).toList();
+      data['data'] = this.data!.toJson();
     }
     return data;
   }
 }
 
 class Data {
+  List<CallLogData>? lists;
+  String? totalDuration;
+
+  Data({this.lists, this.totalDuration});
+
+  Data.fromJson(Map<String, dynamic> json) {
+    if (json['lists'] != null) {
+      lists = <CallLogData>[];
+      json['lists'].forEach((v) {
+        lists!.add(CallLogData.fromJson(v));
+      });
+    }
+    totalDuration = json['total_duration'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    if (lists != null) {
+      data['lists'] = lists!.map((v) => v.toJson()).toList();
+    }
+    data['total_duration'] = totalDuration;
+    return data;
+  }
+}
+
+class CallLogData {
   String? id;
   String? name;
   String? phoneNumber;
@@ -38,7 +59,8 @@ class Data {
   String? userId;
   String? staffName;
   String? isMannual;
-  Data(
+
+  CallLogData(
       {this.id,
       this.name,
       this.phoneNumber,
@@ -50,9 +72,9 @@ class Data {
       this.staffName,
       this.isMannual});
 
-  Data.fromJson(Map<String, dynamic> json) {
+  CallLogData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    name = json['name'];
+    name = json['name']?.toString();
     phoneNumber = json['phone_number'];
     callType = json['callType'];
     duration = json['duration'];
@@ -60,7 +82,7 @@ class Data {
     dateTime = json['date_time'];
     userId = json['user_id'];
     staffName = json['staff_name'];
-    isMannual = json['is_mannual'];
+    isMannual = json['is_mannual']?.toString();
   }
 
   Map<String, dynamic> toJson() {

@@ -122,8 +122,8 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
   }
 
   bool _isImage(String ext) {
-  return ['jpg', 'jpeg', 'png'].contains(ext.toLowerCase());
-}
+    return ['jpg', 'jpeg', 'png'].contains(ext.toLowerCase());
+  }
 
   initData() async {
     setState(() {
@@ -1007,7 +1007,7 @@ class _StaffReportDashboardState extends State<StaffReportDashboard> {
                                                     pageName: 'Total Called',
                                                     fromDate: fromDate,
                                                     toDate: toDate,
-                                                     staffId: widget.id,
+                                                    staffId: widget.id,
                                                     callStatus: "1",
                                                     leadType: "-1",
                                                     callResId: callDetails!

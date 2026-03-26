@@ -16,6 +16,7 @@ import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/authentication/forgot_password.dart';
 import 'package:login2/screens/homePage.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/service/backgroundService.dart';
@@ -587,7 +588,9 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
               if (projectDash == "true") {
                 dashboardToOpen = ProjectDashboard();
               } else if (leadDash == "true") {
-                dashboardToOpen = Dashboard(object.data!.token.toString());
+                // dashboardToOpen = Dashboard(object.data!.token.toString());
+                dashboardToOpen =
+                    DashboardLeadNewUpdatedTwo(object.data!.token.toString());
               } else if (accountsDash == "true") {
                 dashboardToOpen =
                     AccountsDashboard(token: object.data!.token.toString());
@@ -598,8 +601,10 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
               } else if (quotationDash == "true") {
                 dashboardToOpen = QuotationDashboard();
               } else {
+                // dashboardToOpen =
+                //     Dashboard(object.data!.token.toString()); // fallback
                 dashboardToOpen =
-                    Dashboard(object.data!.token.toString()); // fallback
+                    DashboardLeadNewUpdatedTwo(object.data!.token.toString());
               }
 
               if (object.status == true) {

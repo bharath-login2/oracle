@@ -17,11 +17,10 @@ class LeadFollowupData {
     required this.message,
   });
 
-  factory LeadFollowupData.fromJson(Map<String, dynamic> json) =>
-      LeadFollowupData(
-        data: Data.fromJson(json["data"]),
-        status: json["status"],
-        message: json["message"],
+  factory LeadFollowupData.fromJson(Map<String, dynamic> json) => LeadFollowupData(
+        data: json["data"] != null ? Data.fromJson(json["data"]) : Data(followUpData: []),
+        status: json["status"] ?? false,
+        message: json["message"] ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -39,8 +38,10 @@ class Data {
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-        followUpData: List<FollowUpDatum>.from(
-            json["followUpData"].map((x) => FollowUpDatum.fromJson(x))),
+        followUpData: json["followUpData"] != null
+            ? List<FollowUpDatum>.from(
+                json["followUpData"].map((x) => FollowUpDatum.fromJson(x)))
+            : [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -122,16 +123,16 @@ class FollowUpDatum {
         reasonId: json["reason_id"] ?? "",
         reason: json["reason"] ?? "",
         productNames: json["product_names"] ?? "",
-        isCalled: json["is_called"] ?? "",
-        isEdit: json["is_edit"] ?? "",
-        isDelete: json["is_delete"] ?? "",
+        isCalled: json["is_called"] ?? false,
+        isEdit: json["is_edit"] ?? false,
+        isDelete: json["is_delete"] ?? false,
         dispalyDate: json["dispaly_date"] ?? "",
-        isSetReminder: json["isSetReminder"] ?? "",
-        isReminder: json["isReminder"] ?? "",
+        isSetReminder: json["isSetReminder"] ?? false,
+        isReminder: json["isReminder"] ?? false,
         time: json["time"] ?? "",
         voiceFile: json["voice_file"] ?? "",
-        voiceUploadPermission: json["voiceUploadPermission"] ?? "",
-        playVoicePermission: json["playVoicePermission"] ?? "",
+        voiceUploadPermission: json["voiceUploadPermission"] ?? false,
+        playVoicePermission: json["playVoicePermission"] ?? false,
       );
 
   Map<String, dynamic> toJson() => {

@@ -85,6 +85,7 @@ class Detail {
   String callStatusId;
   bool isNewCall;
   String followupDate;
+  String nextFollowupDate;
   String scheduledDate;
   String clientName;
   String contactNumber1;
@@ -116,6 +117,7 @@ class Detail {
     required this.callStatusId,
     required this.isNewCall,
     required this.followupDate,
+    required this.nextFollowupDate,
     required this.scheduledDate,
     required this.clientName,
     required this.contactNumber1,
@@ -144,14 +146,15 @@ class Detail {
         calledDate: json["called_date"] ?? "",
         createdDate: json["created_date"] ?? "",
         lastCalledDate: json["last_called_date"] ?? "",
-        callResultId: json["call_result_id"] ?? 0,
+        callResultId: int.tryParse((json["call_result_id"] ?? json["call_response_id"] ?? "0").toString()) ?? 0,
         callStatusId: json["call_status_id"] ?? "",
         isNewCall: json["is_new_call"] ?? false,
         followupDate: json["followup_date"] ?? "",
+        nextFollowupDate: json["next_followup_date"] ?? "",
         scheduledDate: json["scheduled_date"] ?? "",
         clientName: json["client_name"] ?? "",
         contactNumber1: json["contact_number1"] ?? "",
-        callResult: json["call_result"] ?? "",
+        callResult: json["call_result"] ?? json["call_response"] ?? json["lead_status"] ?? "",
         proPicThumb: json["pro_pic_thumb"] ?? "",
         staffName: json["staff_name"] ?? "",
         leadCategory: json["lead_category"] ?? "",
@@ -180,6 +183,7 @@ class Detail {
         "call_status_id": callStatusId,
         "is_new_call": isNewCall,
         "followup_date": followupDate,
+        "next_followup_date": nextFollowupDate,
         "scheduled_date": scheduledDate,
         "client_name": clientName,
         "contact_number1": contactNumber1,

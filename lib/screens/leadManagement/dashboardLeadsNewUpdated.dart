@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_auto_orientation/flutter_auto_orientation.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/lead_management/leadDetailsModel.dart';
@@ -88,7 +89,7 @@ import '../homePage.dart';
 import '../search/search.dart';
 import '../leadManagement/notification_page.dart';
 import '../leadManagement/lead_details_popup.dart';
-import '../leadManagement/product_details_popup.dart';
+
 import '../leadManagement/callHistoryPage.dart';
 import '../leadManagement/projectDashboard.dart';
 import '../leadManagement/minimalDashboard.dart';
@@ -271,6 +272,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
   static const Color callGreen = Color(0xFF4CAF50);
   static const Color accentOrange = Color(0xFFFF9800);
   static const Color accentRed = Color(0xFFF44336);
+  static const Color followupBlue = Color(0xFF2196F3);
   static const Color textPrimary = Color(0xFF2C3E50);
   static const Color textSecondary = Color(0xFF7F8C8D);
   static const Color borderLight = Color(0xFFECF0F1);
@@ -588,9 +590,9 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
       firebaseToken = await FirebaseMessaging.instance.getToken();
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
-      if (loginCheck?.data == false) {
-        Common.toastMessaage('Session Expired', Colors.red);
+      if (loginCheck == null || loginCheck.data == false) {
         if (mounted) {
+          Common.toastMessaage('Session Expired', Colors.red);
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const Login()),
             (route) => false,
@@ -703,7 +705,9 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     if (dismissedDate != today && startAndStopWorkPermission == "true") {
       if (loginOrNot?.data != true) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showLoginPrompt(context);
+          if (mounted) {
+            _showLoginPrompt(context);
+          }
         });
       }
     }
@@ -3409,6 +3413,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
               callStatusId: "",
               isNewCall: false,
               followupDate: "",
+              nextFollowupDate: "",
               scheduledDate: "",
               clientName: sl.staffName ?? "Unknown Staff",
               contactNumber1: sl.staffCount ?? "0",
@@ -4154,7 +4159,8 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     );
   }
 
-  Future<void> _showLeadDetailsPopup(int index) async {
+  Future<void> _showLeadDetailsPopup(int index,
+      {bool autoExpandFollowup = false}) async {
     if (index >= listTabLeads.length) return;
 
     final displayItem = listTabLeads[index];
@@ -4221,6 +4227,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
           leadDetailsFollowup: leadDetailsFollowup,
           commonDetails: commonDetails,
           pageName: 'Dashboard',
+          autoExpandFollowup: autoExpandFollowup,
           onDataChanged: () {
             getData(widget.token, fromDate, toDate, isRefresh: true);
           },
@@ -4419,226 +4426,237 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                 color: lead.isSelected ? appBarStart : borderLight,
                 width: lead.isSelected ? 2 : 1),
           ),
-          child: InkWell(
-            onTap: () {
-              if (selectedIUsers.isNotEmpty) {
-                _handleLongPress(index);
-              } else {
-                _showLeadDetailsPopup(index);
-              }
-            },
-            onLongPress: () => _handleLongPress(index),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 5,
-                    height: 75,
-                    color: lead.priority == '1'
-                        ? Colors.grey.shade300
-                        : lead.priority == '2'
-                            ? callGreen
-                            : lead.priority == '3'
-                                ? accentRed
-                                : lead.priority == '4'
-                                    ? textSecondary
-                                    : Colors.grey.shade300,
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () => _showLeadDetailsPopup(index),
-                                  child: Text(
-                                    lead.clientName.isEmpty ||
-                                            lead.clientName == "null"
-                                        ? "Unknown"
-                                        : lead.clientName,
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: lead.isCustomer
-                                          ? callGreen
-                                          : textPrimary,
-                                      decoration: lead.priority == '4'
-                                          ? TextDecoration.lineThrough
-                                          : null,
-                                      letterSpacing: -0.2,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: accentRed.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: accentRed.withOpacity(0.2)),
-                                ),
-                                child: Text(
-                                  lead.leadCategory,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: accentRed,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ),
-                              if (int.parse(lead.categoryCount) > 1)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
+          child: Slidable(
+            key: ValueKey(lead.callMasterId),
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              children: [
+                SlidableAction(
+                  onPressed: (context) =>
+                      _showLeadDetailsPopup(index, autoExpandFollowup: true),
+                  backgroundColor: followupBlue,
+                  foregroundColor: Colors.white,
+                  icon: Icons.add_comment_rounded,
+                  label: 'Followup',
+                ),
+              ],
+            ),
+            child: InkWell(
+              onTap: () => _showLeadDetailsPopup(index),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 75,
+                      color: lead.priority == '1'
+                          ? Colors.grey.shade300
+                          : lead.priority == '2'
+                              ? callGreen
+                              : lead.priority == '3'
+                                  ? accentRed
+                                  : lead.priority == '4'
+                                      ? textSecondary
+                                      : Colors.grey.shade300,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
                                   child: InkWell(
-                                    onTap: () => _showCategoryPopup(lead),
-                                    child: Container(
-                                      height: 18,
-                                      width: 18,
-                                      decoration: const BoxDecoration(
-                                        color: accentOrange,
-                                        shape: BoxShape.circle,
+                                    onTap: () => _showLeadDetailsPopup(index),
+                                    child: Text(
+                                      lead.clientName.isEmpty ||
+                                              lead.clientName == "null"
+                                          ? "Unknown"
+                                          : lead.clientName,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: lead.isCustomer
+                                            ? callGreen
+                                            : textPrimary,
+                                        decoration: lead.priority == '4'
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                        letterSpacing: -0.2,
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          lead.categoryCount,
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: accentRed.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: accentRed.withOpacity(0.2)),
+                                  ),
+                                  child: Text(
+                                    lead.leadCategory,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: accentRed,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                                if (int.parse(lead.categoryCount) > 1)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 4),
+                                    child: InkWell(
+                                      onTap: () => _showCategoryPopup(lead),
+                                      child: Container(
+                                        height: 18,
+                                        width: 18,
+                                        decoration: const BoxDecoration(
+                                          color: accentOrange,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            lead.categoryCount,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    String id = lead.callMasterId;
-                                    if (_expandedLeadIds.contains(id)) {
-                                      _expandedLeadIds.remove(id);
-                                    } else {
-                                      _expandedLeadIds.add(id);
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: backgroundLight,
-                                    shape: BoxShape.circle,
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      String id = lead.callMasterId;
+                                      if (_expandedLeadIds.contains(id)) {
+                                        _expandedLeadIds.remove(id);
+                                      } else {
+                                        _expandedLeadIds.add(id);
+                                      }
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: backgroundLight,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        color: textSecondary,
+                                        size: 20),
                                   ),
-                                  child: Icon(Icons.keyboard_arrow_down_rounded,
-                                      color: textSecondary, size: 20),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: lead.callResultId >= 0 &&
-                                          lead.callResultId < _colors.length
-                                      ? _colors[lead.callResultId]
-                                          .withOpacity(0.1)
-                                      : accentOrange.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: lead.callResultId >= 0 &&
+                                            lead.callResultId < _colors.length
+                                        ? _colors[lead.callResultId]
+                                            .withOpacity(0.1)
+                                        : accentOrange.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: lead.callResultId >= 0 &&
+                                                  lead.callResultId <
+                                                      _colors.length
+                                              ? _colors[lead.callResultId]
+                                              : accentOrange,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        lead.callResult,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: lead.callResultId >= 0 &&
+                                                  lead.callResultId <
+                                                      _colors.length
+                                              ? _colors[lead.callResultId]
+                                              : accentOrange,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                                Row(
                                   children: [
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: lead.callResultId >= 0 &&
-                                                lead.callResultId <
-                                                    _colors.length
-                                            ? _colors[lead.callResultId]
-                                            : accentOrange,
-                                      ),
+                                    _buildMiniActionButton(
+                                      icon: Icons.call,
+                                      color: callGreen,
+                                      onTap: () {
+                                        if (_listTabCallPermission == false) {
+                                          _showCallPermissionDialog(index);
+                                        } else {
+                                          chooseCallDialog(context, index);
+                                        }
+                                      },
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      lead.callResult,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: lead.callResultId >= 0 &&
-                                                lead.callResultId <
-                                                    _colors.length
-                                            ? _colors[lead.callResultId]
-                                            : accentOrange,
-                                      ),
+                                    const SizedBox(width: 12),
+                                    _buildMiniActionButton(
+                                      icon: FontAwesomeIcons.whatsapp,
+                                      color: const Color(0xFF25D366),
+                                      onTap: () {
+                                        if (lead.contactNumber1.isNotEmpty) {
+                                          Common.openWhatsApp(
+                                              lead.contactNumber1);
+                                        }
+                                      },
                                     ),
+                                    // const SizedBox(width: 12),
+                                    // _buildMiniActionButton(
+                                    //   icon: Icons.inventory_2_rounded,
+                                    //   color: Colors.blue,
+                                    //   onTap: () {
+                                    //     showModalBottomSheet(
+                                    //       context: context,
+                                    //       isScrollControlled: true,
+                                    //       backgroundColor: Colors.transparent,
+                                    //       builder: (context) =>
+                                    //           const ProductDetailsPopup(),
+                                    //     );
+                                    //   },
+                                    // ),
                                   ],
                                 ),
-                              ),
-                              Row(
-                                children: [
-                                  _buildMiniActionButton(
-                                    icon: Icons.call,
-                                    color: callGreen,
-                                    onTap: () {
-                                      if (_listTabCallPermission == false) {
-                                        _showCallPermissionDialog(index);
-                                      } else {
-                                        chooseCallDialog(context, index);
-                                      }
-                                    },
-                                  ),
-                                  const SizedBox(width: 12),
-                                  _buildMiniActionButton(
-                                    icon: FontAwesomeIcons.whatsapp,
-                                    color: const Color(0xFF25D366),
-                                    onTap: () {
-                                      if (lead.contactNumber1.isNotEmpty) {
-                                        Common.openWhatsApp(
-                                            lead.contactNumber1);
-                                      }
-                                    },
-                                  ),
-                                  // const SizedBox(width: 12),
-                                  // _buildMiniActionButton(
-                                  //   icon: Icons.inventory_2_rounded,
-                                  //   color: Colors.blue,
-                                  //   onTap: () {
-                                  //     showModalBottomSheet(
-                                  //       context: context,
-                                  //       isScrollControlled: true,
-                                  //       backgroundColor: Colors.transparent,
-                                  //       builder: (context) =>
-                                  //           const ProductDetailsPopup(),
-                                  //     );
-                                  //   },
-                                  // ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

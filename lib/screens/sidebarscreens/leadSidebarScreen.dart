@@ -1,5 +1,7 @@
 // settings_menu_widget.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:login2/screens/leadManagement/viewLeadsNew.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/callLogs/callLogs.dart';
@@ -275,41 +277,41 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
   }
 
   Widget _buildMenuItemTitle({
-  required String title,
-  required VoidCallback onTap,
-}) {
-  return Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Row(
-          children: [
-            const SizedBox(width: 16),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft, 
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                    decoration: TextDecoration.underline, // Add underline
-                    decorationColor: Colors.blue, // Blue underline color
-                    decorationThickness: 2.0, // Thickness of underline
-                    decorationStyle: TextDecorationStyle.solid, // Solid line
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            children: [
+              const SizedBox(width: 16),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                      decoration: TextDecoration.underline, // Add underline
+                      decorationColor: Colors.blue, // Blue underline color
+                      decorationThickness: 2.0, // Thickness of underline
+                      decorationStyle: TextDecorationStyle.solid, // Solid line
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   List<Widget> _buildMenuItemsList(BuildContext context) {
     final menuItems = <Widget>[];
@@ -318,7 +320,7 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
     menuItems.addAll([
       //_buildSectionHeader('Quick Actions'),
       _buildMenuItemTitle(
-       // icon: Icons.pending_actions_rounded,
+        // icon: Icons.pending_actions_rounded,
         title: 'Quick Actions',
         onTap: () {
           // Navigator.pop(context);
@@ -367,29 +369,27 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
 
     // Lead Management Section
     menuItems.add(
-      
-     // _buildSectionHeader('Lead Management')
-       _buildMenuItemTitle(
-       // icon: Icons.pending_actions_rounded,
+      // _buildSectionHeader('Lead Management')
+      _buildMenuItemTitle(
+        // icon: Icons.pending_actions_rounded,
         title: 'Lead Management',
         onTap: () {
           // Navigator.pop(context);
           //  _handleMenuItemTap(context, 2);
         },
       ),
-    
     );
 
     if (viewLeadPermission == 'true') {
       menuItems.addAll([
-        _buildMenuItem(
-          icon: Icons.people,
-          title: 'View Leads',
-          onTap: () {
-            Navigator.pop(context);
-            _handleMenuItemTap(context, 5);
-          },
-        ),
+        // _buildMenuItem(
+        //   icon: Icons.people,
+        //   title: 'View Leads',
+        //   onTap: () {
+        //     Navigator.pop(context);
+        //     _handleMenuItemTap(context, 5);
+        //   },
+        // ),
         _buildMenuItem(
           icon: Icons.phone_missed,
           title: 'Missed Leads',
@@ -489,7 +489,7 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
                   title,
                   style: const TextStyle(
                     fontSize: 16,
-                   // fontWeight: FontWeight.w500,
+                    // fontWeight: FontWeight.w500,
                     color: Colors.black87,
                   ),
                 ),
@@ -542,7 +542,7 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ViewLeads(
+              builder: (context) => ViewLeadsNew(
                 widget.token,
                 updateLeadPermission1,
                 deleteLeadPermission1,
@@ -587,7 +587,7 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ViewLeads(
+              builder: (context) => ViewLeadsNew(
                 widget.token,
                 updateLeadPermission1,
                 deleteLeadPermission1,
@@ -616,7 +616,7 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ViewLeads(
+              builder: (context) => ViewLeadsNew(
                 widget.token,
                 updateLeadPermission1,
                 deleteLeadPermission1,
@@ -641,15 +641,30 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
       case 9:
         Common.saveSharedPref("statusWise", 'no');
         if (viewLeadPermission == 'true') {
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (context) => AllReport(
+          //       widget.token,
+          //       updateLeadPermission1,
+          //       deleteLeadPermission1,
+          //       cloudCallPermission1,
+          //       pageName: 'AllLeads',
+          //     ),
+          //   ),
+          // );
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AllReport(
+              builder: (context) => ViewLeadsNew(
                 widget.token,
                 updateLeadPermission1,
                 deleteLeadPermission1,
                 cloudCallPermission1,
-                pageName: 'AllLeads',
+                pageName: 'All Leads',
+                isAllLeads: "1",
+                fromDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                toDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
               ),
             ),
           );

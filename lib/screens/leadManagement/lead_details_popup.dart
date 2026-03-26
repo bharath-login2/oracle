@@ -41,7 +41,6 @@ import 'dart:convert';
 import 'package:login2/models/lead_management/deleteLeadFollowupModel.dart';
 import '../customer/customerDasboard.dart';
 import 'editFollowup.dart';
-import 'package:dotted_border/dotted_border.dart';
 import '../../models/lead_management/fileManagerPermissionModel.dart';
 import 'docViewWebView.dart';
 import 'package:login2/models/lead_management/updateReminderSetings.dart';
@@ -69,6 +68,7 @@ class LeadDetailsPopup extends StatefulWidget {
   final String? category;
   final String? leadType;
   final VoidCallback onDataChanged;
+  final bool autoExpandFollowup;
 
   const LeadDetailsPopup({
     Key? key,
@@ -92,6 +92,7 @@ class LeadDetailsPopup extends StatefulWidget {
     this.category,
     this.leadType,
     required this.onDataChanged,
+    this.autoExpandFollowup = false,
   }) : super(key: key);
 
   @override
@@ -103,13 +104,20 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   int selectedIndex = 0;
   late TabController _tabController;
   final List<Color> _colors = [
-    Colors.teal,
-    Colors.blueAccent,
-    Colors.amberAccent,
-    Colors.redAccent,
-    Colors.purple,
-    Colors.pinkAccent,
-    Colors.blueGrey,
+    const Color(0xFF2196F3), // Vibrant Blue (index 0)
+    const Color(0xFF2196F3), // Blue at index 1 for "New"
+    const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
+    const Color(0xFFFFC107), // Amber/Yellow at index 3 for Followup
+    const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
+    const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
+    const Color(0xFF9C27B0), // Purple 500 (index 6)
+    const Color(0xFF2a84c9), // Primary Blue (index 7)
+    const Color(0xFF009688), // Teal (index 8)
+    const Color(0xFFFF6F00), // Amber 900 (index 9)
+    const Color(0xFFD32F2F), // Red 700 (index 10)
+    const Color(0xFF1B5E20), // Green 900 (index 11)
+    const Color(0xFF0D47A1), // Blue 900 (index 12)
+    const Color(0xFF3F51B5), // Indigo (index 13)
   ];
 
   String? contactPermission;
@@ -162,6 +170,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   PlatformFile? file;
   List checkedItems = [];
   List checkedItemsName = [];
+  String selectedDocumentType = 'none'; // none, s3, drive
+  String drivePath = '';
 
   // Followup form variables
   String callResultId = '2';
@@ -174,7 +184,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String leadSubType = 'Lead Sub Category';
   String priorityId = '2';
   String priority = 'Normal';
-  String callResultReasonName = 'Reason';
+  String callResultReasonName = 'Tags';
   String callResultReasonId = '';
   String templateId = "";
   String invoiceNumber = '';
@@ -277,6 +287,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   @override
   void initState() {
     super.initState();
+    isExpand = widget.autoExpandFollowup;
     _initializeData();
 
     _tabController = TabController(length: _getTabCount(), vsync: this);
@@ -358,6 +369,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         priority = data.priority ?? 'Normal';
         whatsappLead.text = data.whatsaAppNumber ?? '';
         emailLead.text = data.emailId ?? '';
+
+        // Initialize followup date
+        calledDate1.text =
+            DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
       }
     });
 
@@ -800,11 +815,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color:
-                          _getStatusColor(data.callResultId).withOpacity(0.1),
+                          _getStatusColor(data.callResultId).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                           color: _getStatusColor(data.callResultId)
-                              .withOpacity(0.3)),
+                              .withOpacity(0.4)),
                     ),
                     child: Text(
                       data.callResult ?? 'New',
@@ -1440,6 +1455,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                             leadMasterId: leadDetails!.data!.callMasterId,
                             clientName: leadDetails!.data!.clientName,
                             phoneNumber: leadDetails!.data!.contactNumber1,
+                            whatsappNumber: leadDetails!.data!.whatsaAppNumber,
                             countryCode: leadDetails!.data!.countryCode,
                             fromDate: widget.fromDate,
                             toDate: widget.toDate,
@@ -1447,6 +1463,29 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                             deleteLead: widget.deleteLead,
                             cloudCall: widget.cloudCall,
                             address: leadDetails!.data!.address,
+                            email: leadDetails!.data!.emailId,
+                            cost: leadDetails!.data!.cost,
+                            leadCategoryId: leadDetails!.data!.leadCategoryId,
+                            leadSubCategoryId:
+                                leadDetails!.data!.leadSubCategoryId,
+                            priorityId: leadDetails!.data!.priorityId,
+                            leadSourceId: leadDetails!.data!.leadSourceId,
+                            remarks: leadDetails!.data!.remarks,
+                            pinCode: leadDetails!.data!.pinCode,
+                            stateId: leadDetails!.data!.stateId,
+                            districtId: leadDetails!.data!.districtId,
+                            assignedUserId: leadDetails!.data!.assignedUserId,
+                            leadCategory: leadDetails!.data!.leadCategory,
+                            leadSubCategory: leadDetails!.data!.leadSubCategory,
+                            leadSource: leadDetails!.data!.leadSource,
+                            priority: leadDetails!.data!.priority,
+                            stateName: leadDetails!.data!.stateName,
+                            districtName: leadDetails!.data!.districtName,
+                            products: leadDetails!.data!.productsOnAdd,
+                            whatsappCode:
+                                leadDetails!.data!.whatsappNumberCountryCode,
+                            assignStaff: leadDetails!.data!.staffName,
+                            postOffice: leadDetails!.data!.postOffice,
                           ),
                         ),
                       ).then((_) => widget.onDataChanged());
@@ -1915,7 +1954,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
           // List of existing followups
           leadDetailsFollowup == null ||
-                  leadDetailsFollowup!.data.followUpData.isEmpty
+                  leadDetailsFollowup!.data!.followUpData.isEmpty
               ? const Center(
                   child: Padding(
                     padding: EdgeInsets.all(32),
@@ -1927,12 +1966,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   physics: const NeverScrollableScrollPhysics(),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  itemCount: leadDetailsFollowup!.data.followUpData.length,
+                  itemCount:
+                      leadDetailsFollowup?.data?.followUpData?.length ?? 0,
                   itemBuilder: (BuildContext context, int index) {
                     final followup =
-                        leadDetailsFollowup!.data.followUpData[index];
+                        leadDetailsFollowup!.data!.followUpData[index];
                     final fNo =
-                        leadDetailsFollowup!.data.followUpData.length - index;
+                        leadDetailsFollowup!.data!.followUpData.length - index;
                     final isLatest = index == 0; // First item is the latest
 
                     return Padding(
@@ -2151,6 +2191,29 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 setState(() {
                                   nextFollowupDate1.text =
                                       DateFormat('dd-MM-yyyy HH:mm').format(dt);
+
+                                  // Auto-adjust reminder if needed
+                                  if (checked && timeBefore.text.isNotEmpty) {
+                                    int minutes =
+                                        int.tryParse(timeBefore.text) ?? 10;
+                                    DateTime reminderTime =
+                                        dt.subtract(Duration(minutes: minutes));
+                                    if (reminderTime.isBefore(DateTime.now())) {
+                                      int maxMinutes = dt
+                                          .difference(DateTime.now())
+                                          .inMinutes;
+                                      if (maxMinutes <= 0) {
+                                        timeBefore.text = "0";
+                                      } else {
+                                        timeBefore.text = maxMinutes.toString();
+                                      }
+                                      if (context.mounted) {
+                                        Common.toastMessaage(
+                                            'Reminder time adjusted to ${timeBefore.text} mins before',
+                                            Colors.orange);
+                                      }
+                                    }
+                                  }
                                 });
                               }
                             }
@@ -2185,6 +2248,33 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           onChanged: (value) {
                             setState(() {
                               checked = value!;
+                              if (checked &&
+                                  nextFollowupDate1.text.isNotEmpty) {
+                                try {
+                                  DateTime dt = DateFormat('dd-MM-yyyy HH:mm')
+                                      .parse(nextFollowupDate1.text);
+                                  int minutes =
+                                      int.tryParse(timeBefore.text) ?? 10;
+                                  DateTime reminderTime =
+                                      dt.subtract(Duration(minutes: minutes));
+                                  if (reminderTime.isBefore(DateTime.now())) {
+                                    int maxMinutes =
+                                        dt.difference(DateTime.now()).inMinutes;
+                                    if (maxMinutes <= 0) {
+                                      timeBefore.text = "0";
+                                    } else {
+                                      timeBefore.text = maxMinutes.toString();
+                                    }
+                                    if (context.mounted) {
+                                      Common.toastMessaage(
+                                          'Reminder time adjusted to ${timeBefore.text} mins before',
+                                          Colors.orange);
+                                    }
+                                  }
+                                } catch (e) {
+                                  // Ignore parsing error
+                                }
+                              }
                             });
                           },
                           controlAffinity: ListTileControlAffinity.leading,
@@ -2221,8 +2311,33 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                             int val =
                                                 int.tryParse(timeBefore.text) ??
                                                     0;
-                                            setState(() =>
-                                                timeBefore.text = "${val + 1}");
+                                            int newVal = val + 1;
+
+                                            // Validate before incrementing
+                                            if (nextFollowupDate1
+                                                .text.isNotEmpty) {
+                                              try {
+                                                DateTime dt = DateFormat(
+                                                        'dd-MM-yyyy HH:mm')
+                                                    .parse(
+                                                        nextFollowupDate1.text);
+                                                DateTime reminderTime =
+                                                    dt.subtract(Duration(
+                                                        minutes: newVal));
+                                                if (reminderTime
+                                                    .isBefore(DateTime.now())) {
+                                                  Common.toastMessaage(
+                                                      'Cannot set reminder time in the past',
+                                                      Colors.red);
+                                                  return;
+                                                }
+                                              } catch (e) {
+                                                // Ignore
+                                              }
+                                            }
+
+                                            setState(() => timeBefore.text =
+                                                newVal.toString());
                                           },
                                           child: const Icon(Icons.arrow_drop_up,
                                               size: 18),
@@ -2560,7 +2675,37 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            // const SizedBox(width: 12),
+                            // Expanded(
+                            //   child: TextField(
+                            //     controller: address,
+                            //     decoration: const InputDecoration(
+                            //       labelText: 'Address',
+                            //       border: OutlineInputBorder(),
+                            //       contentPadding: EdgeInsets.all(12),
+                            //       prefixIcon: Icon(Icons.home, size: 18),
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            // Expanded(
+                            //   child: TextField(
+                            //     controller: cost,
+                            //     keyboardType: TextInputType.number,
+                            //     decoration: const InputDecoration(
+                            //       labelText: 'Cost',
+                            //       border: OutlineInputBorder(),
+                            //       contentPadding: EdgeInsets.all(12),
+                            //       prefixIcon:
+                            //           Icon(Icons.currency_rupee, size: 18),
+                            //     ),
+                            //   ),
+                            // ),
+                            // const SizedBox(width: 12),
                             Expanded(
                               child: TextField(
                                 controller: address,
@@ -3723,13 +3868,16 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   ),
                                 ),
                               ),
-                            if (leadDetailsAdditional!
-                                        .data.createCustomerInvoice ==
+                            if (leadDetailsAdditional
+                                        ?.data.createCustomerInvoice ==
                                     true &&
+                                (leadDetailsFollowup
+                                        ?.data?.followUpData?.isNotEmpty ??
+                                    false) &&
                                 leadDetailsFollowup!
-                                        .data.followUpData[0].callResult ==
+                                        .data!.followUpData[0].callResult ==
                                     "Closed" &&
-                                leadDetailsAdditional!.data.isCreateOrder ==
+                                leadDetailsAdditional?.data.isCreateOrder ==
                                     true)
                               InkWell(
                                 onTap: () {
@@ -3875,7 +4023,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Reason: ${followup.reason.isNotEmpty ? followup.reason : "Not Added"}',
+                      'Tags: ${followup.reason.isNotEmpty ? followup.reason : "Not Added"}',
                       style: TextStyle(
                         fontSize: 12,
                         color: isLatest
@@ -5519,7 +5667,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     }
     if (callDetailsDataS == null ||
         callDetailsDataS!.data == null ||
-        callDetailsDataS!.data!.callHistory!.isEmpty) {
+        callDetailsDataS!.data!.lists == null ||
+        callDetailsDataS!.data!.lists!.isEmpty) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(32),
@@ -5527,13 +5676,46 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         ),
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: callDetailsDataS!.data!.callHistory!.length,
-      itemBuilder: (context, index) {
-        final call = callDetailsDataS!.data!.callHistory![index];
-        return _buildCallHistoryItem(call);
-      },
+    return Column(
+      children: [
+        if (callDetailsDataS?.data?.totalDuration != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            color: Colors.blue.shade50,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Total Call Duration:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Color(0xFF2a86c9),
+                  ),
+                ),
+                Text(
+                  callDetailsDataS!.data!.totalDuration!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Color(0xFF2a86c9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: callDetailsDataS!.data!.lists!.length,
+            itemBuilder: (context, index) {
+              final call = callDetailsDataS!.data!.lists![index];
+              return _buildCallHistoryItem(call);
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -5628,6 +5810,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Widget _buildDetailsTab() {
+    if (leadDetails == null || leadDetails!.data == null) {
+      return const Center(child: Text('No details available'));
+    }
     final data = leadDetails!.data!;
 
     return SingleChildScrollView(
@@ -5640,10 +5825,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             _buildDetailRow('WhatsApp Number', data.whatsaAppNumber ?? '-'),
             // _buildDetailRow(
             //     'WhatsApp (', _stripCountryCode(data.whatsaAppNumber)),
-            _buildDetailRow(
-                'Country Code', data.whatsappNumberCountryCode ?? '-'),
+            _buildDetailRow('Country Code', data.countryCode ?? '-'),
             _buildDetailRow('Email', data.emailId ?? '-'),
-            _buildDetailRow('Products', data.products ?? '-'),
+            _buildDetailRow('Address', data.address ?? '-'),
+            //  _buildDetailRow('Products', data.products ?? '-'),
             _buildDetailRow('Category', data.leadCategory ?? '-'),
             _buildDetailRow('Sub Category', data.leadSubCategory ?? '-'),
             _buildDetailRow('Assigned to', data.staffName ?? '-'),
@@ -5783,6 +5968,521 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Widget _buildDocumentsTab() {
+    if (selectedDocumentType == 'none') {
+      return _buildDocumentStorageSelection();
+    } else if (selectedDocumentType == 'drive') {
+      return _buildDriveDocuments();
+    } else {
+      return _buildS3Documents();
+    }
+  }
+
+  Widget _buildDocumentStorageSelection() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'Select Storage Provider',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2a86c9),
+            ),
+          ),
+          const SizedBox(height: 30),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildStorageOption(
+                assetPath: 'assets/icons/drive.png',
+                label: 'Google Drive',
+                colors: [const Color(0xFF4285F4), const Color(0xFF34A853)],
+                onTap: () => setState(() => selectedDocumentType = 'drive'),
+              ),
+              const SizedBox(width: 40),
+              _buildStorageOption(
+                assetPath: 'assets/icons/cloud2.jpg',
+                label: 'S3 Bucket',
+                colors: [const Color(0xFF2a86c9), const Color(0xFF406dbe)],
+                onTap: () => setState(() => selectedDocumentType = 's3'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStorageOption({
+    required String assetPath,
+    required String label,
+    required List<Color> colors,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: colors.first.withOpacity(0.12),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colors.first.withOpacity(0.1),
+                    colors.last.withOpacity(0.05),
+                  ],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: Image.asset(
+                assetPath,
+                width: 45,
+                height: 45,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: colors.first,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDriveDocuments() {
+    return Column(
+      children: [
+        const SizedBox(height: 15),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    if (drivePath.isEmpty) {
+                      selectedDocumentType = 'none';
+                    } else if (drivePath == '@root') {
+                      drivePath = '';
+                    } else {
+                      drivePath = '@root';
+                    }
+                  });
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.arrow_back,
+                          size: 16, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Text(
+                        drivePath.isEmpty ? 'Exit Drive' : 'Back',
+                        style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (drivePath.isNotEmpty)
+                Expanded(
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      if (drivePath == '@root')
+                        InkWell(
+                          onTap: () => _showCreateFolderDialogDrive(),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2a86c9).withOpacity(0.05),
+                              border:
+                                  Border.all(color: const Color(0xFF2a86c9)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.folder_open_rounded,
+                                    color: Color(0xFF2a86c9), size: 14),
+                                SizedBox(width: 6),
+                                Text('Add Folder',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2a86c9),
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const Spacer(),
+                      // Voice Record Icon
+                      InkWell(
+                        onTap: () => _showVoiceUploadDialog(),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.mic_none_rounded,
+                              color: Colors.red, size: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Image Upload Icon
+                      InkWell(
+                        onTap: () => _showImageUploadDialog(),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.image_outlined,
+                              color: Colors.green, size: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // File Upload Icon
+                      InkWell(
+                        onTap: () => _showFileUploadDialog(),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.file_copy_outlined,
+                              color: Colors.orange, size: 18),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                const Text(
+                  "Drive / Accounts",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.blue),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 15),
+        if (drivePath.isEmpty) ...[
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              children: [
+                _buildDriveEmailCard('drive-upload@login2pro.com'),
+                const SizedBox(height: 16),
+                _buildDriveEmailCard('backup-docs@login2pro.com'),
+                const SizedBox(height: 16),
+                _buildDriveEmailCard('team-files@login2pro.com'),
+              ],
+            ),
+          ),
+        ] else if (drivePath == '@root') ...[
+          Expanded(
+            child: GridView(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 0.85,
+              ),
+              children: [
+                _buildDummyFolder('Shared Files', 1),
+                _buildDummyFolder('Invoices', 2),
+                _buildDummyFolder('Reports', 3),
+              ],
+            ),
+          ),
+        ] else ...[
+          // Inside Folder Content: Dummy file
+          const Spacer(),
+          _buildDummyFile(drivePath),
+          const Spacer(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDriveEmailCard(String email) {
+    return InkWell(
+      onTap: () => setState(() => drivePath = '@root'),
+      child: Center(
+        child: Container(
+          width: 280,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.blue.shade100),
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/icons/email.jpeg',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Connected Account',
+                      style: TextStyle(color: Colors.grey, fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDummyFile(String folderName) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: () => _viewDocument(null), // Dummy view document
+          child: Column(
+            children: [
+              const Icon(Icons.insert_drive_file_rounded,
+                  size: 80, color: Colors.orange),
+              const SizedBox(height: 16),
+              const Text(
+                'Dummy_Report.pdf',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text('1.2 MB | PDF File',
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 40),
+        ElevatedButton.icon(
+          onPressed: () => _showFileUploadDialog(),
+          icon: const Icon(Icons.file_upload_outlined, color: Colors.white),
+          label: const Text('New File', style: TextStyle(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2a86c9),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showCreateFolderDialogDrive() {
+    final folderName = TextEditingController();
+    showGeneralDialog(
+      barrierLabel: "showGeneralDialogDrive",
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      context: context,
+      pageBuilder: (context, _, __) {
+        return Align(
+          alignment: Alignment.center,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('New Drive Folder',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: folderName,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: "Folder Name",
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.shade200),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2a86c9),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () {
+                            // Dummy logic: just show message and close
+                            Common.toastMessaage(
+                                'Drive Folder Created Successfully(Mock)',
+                                Colors.green);
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Create',
+                              style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDummyFolder(String name, int index) {
+    return InkWell(
+      onTap: () => setState(() => drivePath = name),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.folder_rounded, size: 50, color: Colors.blue),
+            const SizedBox(height: 8),
+            Text(
+              name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildS3Documents() {
     if (listFolder == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -5814,33 +6514,69 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       listFolderList(widget.token, callMasterId, backPath);
                     });
                   },
-                  child: DottedBorder(
-                    borderType: BorderType.RRect,
-                    radius: const Radius.circular(5),
-                    dashPattern: const [8, 4],
-                    strokeCap: StrokeCap.round,
-                    color: Colors.black,
-                    child: Container(
-                      width: 80,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50.withOpacity(.3),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.arrow_back_ios,
-                              color: Colors.black, size: 12),
-                          SizedBox(width: 8),
-                          Text('Back', style: TextStyle(fontSize: 12)),
-                        ],
-                      ),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.arrow_back, size: 16, color: Colors.blue),
+                        SizedBox(width: 8),
+                        Text(
+                          'Back',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue),
+                        ),
+                      ],
                     ),
                   ),
                 )
               else
-                const SizedBox(),
+                InkWell(
+                  onTap: () => setState(() => selectedDocumentType = 'none'),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.arrow_back, size: 16, color: Colors.grey),
+                        SizedBox(width: 8),
+                        Text(
+                          'Exit S3',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               Expanded(
                 child: Row(
                   children: [
@@ -5852,30 +6588,27 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           _dialogue(context, 'Create Folder');
                         }
                       },
-                      child: DottedBorder(
-                        borderType: BorderType.RRect,
-                        radius: const Radius.circular(5),
-                        dashPattern: const [8, 4],
-                        strokeCap: StrokeCap.round,
-                        color: const Color(0xFF2a86c9),
-                        child: Container(
-                          width: 110,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2a86c9).withOpacity(.05),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.folder_open_rounded,
-                                  color: Color(0xFF2a86c9), size: 16),
-                              SizedBox(width: 8),
-                              Text('New Folder',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Color(0xFF2a86c9))),
-                            ],
-                          ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2a86c9).withOpacity(0.05),
+                          border: Border.all(color: const Color(0xFF2a86c9)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.folder_open_rounded,
+                                color: Color(0xFF2a86c9), size: 14),
+                            SizedBox(width: 6),
+                            Text('New Folder',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2a86c9),
+                                )),
+                          ],
                         ),
                       ),
                     ),
@@ -6024,19 +6757,20 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   child: Container(
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.blue.shade50 : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(15),
                       border: Border.all(
                         color: isSelected
                             ? const Color(0xFF2a86c9)
-                            : Colors.grey.shade200,
+                            : Colors.grey.shade100,
                       ),
                       boxShadow: [
-                        if (isSelected)
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
+                        BoxShadow(
+                          color: isSelected
+                              ? const Color(0xFF2a86c9).withOpacity(0.1)
+                              : Colors.black.withOpacity(0.02),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
                     child: Column(
@@ -6055,7 +6789,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               fontSize: 11,
                               fontWeight: isSelected
                                   ? FontWeight.bold
-                                  : FontWeight.normal,
+                                  : FontWeight.w600,
                               color: isSelected
                                   ? const Color(0xFF2a86c9)
                                   : Colors.black87,
@@ -6773,22 +7507,36 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Widget _getFileIcon(dynamic item) {
-    String assetPath = 'assets/icons/picture.png';
     if (item.isFolder == 'Y') {
-      assetPath = 'assets/icons/folder.png';
-    } else if (item.extension == 'M4A' || item.extension == 'm4a') {
-      assetPath = 'assets/icons/audio.png';
-    } else if (item.extension == 'doc' || item.extension == 'docx') {
-      assetPath = 'assets/icons/doc.png';
-    } else if (item.extension == 'pdf' || item.extension == 'PDF') {
-      assetPath = 'assets/icons/pdf.png';
+      return const Icon(
+        Icons.folder_rounded,
+        size: 50,
+        color: Colors.blue,
+      );
     }
 
-    return Image.asset(
-      assetPath,
-      height: 48,
-      width: 48,
-      fit: BoxFit.contain,
+    IconData icon = Icons.insert_drive_file_rounded;
+    Color color = Colors.orange;
+
+    String ext = (item.extension ?? '').toLowerCase();
+    if (ext == 'pdf') {
+      icon = Icons.picture_as_pdf_rounded;
+      color = Colors.red;
+    } else if (ext == 'doc' || ext == 'docx') {
+      icon = Icons.description_rounded;
+      color = Colors.blue;
+    } else if (ext == 'm4a' || ext == 'wav' || ext == 'mp3') {
+      icon = Icons.audiotrack_rounded;
+      color = Colors.purple;
+    } else if (ext == 'png' || ext == 'jpg' || ext == 'jpeg') {
+      icon = Icons.image_rounded;
+      color = Colors.green;
+    }
+
+    return Icon(
+      icon,
+      size: 50,
+      color: color,
     );
   }
 
@@ -6884,32 +7632,35 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Color _getStatusColor(String? statusId) {
-    switch (statusId) {
+    if (statusId == null) return const Color(0xFF2196F3);
+    String s = statusId.toLowerCase();
+    switch (s) {
       case '1':
-        return Colors.teal;
+        return const Color(0xFF2196F3); // Blue for "New"
       case '2':
-        return Colors.blue;
+        return const Color(0xFFFFC107); // Yellow/Amber for Followup
       case '3':
-        return Colors.amber;
+        return const Color(0xFFFFC107);
       case '4':
-        return Colors.red;
+        return const Color(0xFFF44336); // Red
       case '5':
-        return Colors.purple;
+        return const Color(0xFF9C27B0); // Purple
       case '6':
         return Colors.pink;
-      case 'New':
-        return const Color(0xFF2196F3);
-      case 'Follow Up':
-        return const Color(0xFFFF9800);
-      case 'Rejected':
-        return const Color(0xFFF44336);
-      case 'Completed':
-        return const Color(0xFF4CAF50);
-      case 'Pending':
-        return const Color(0xFF9C27B0);
-      default:
-        return const Color.fromARGB(255, 114, 161, 25);
+      case '7':
+        return const Color(0xFF4CAF50); // Green
     }
+
+    if (s.contains('new')) return const Color(0xFF2196F3);
+    if (s.contains('follow up') || s.contains('followup')) {
+      return const Color(0xFFFFC107);
+    }
+    if (s.contains('rejected')) return const Color(0xFFF44336);
+    if (s.contains('completed')) return const Color(0xFF4CAF50);
+    if (s.contains('pending')) return const Color(0xFF9C27B0);
+    if (s.contains('not responding')) return const Color(0xFFF12F2F);
+
+    return const Color(0xFF2a86c9);
   }
 
   void _handleCallAction() async {
@@ -8327,6 +9078,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Future<dynamic> collectedStaffDialog(BuildContext context) {
+    if (filteredStaffList.isEmpty && commonDetails != null) {
+      filteredStaffList.addAll(commonDetails!.data.colloctedStaff);
+    }
     return showDialog(
       context: context,
       builder: (context) {

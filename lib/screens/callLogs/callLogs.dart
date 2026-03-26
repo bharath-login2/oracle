@@ -16,6 +16,8 @@ import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/screens/leadManagement/add_leads.dart';
+import 'package:login2/screens/leadManagement/add_leads_new.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/service/backgroundService.dart';
 import 'package:lottie/lottie.dart';
 // import 'package:mobile_number/mobile_number.dart';
@@ -947,7 +949,8 @@ class _CallLogsState extends State<CallLogs> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) =>
-                                        Dashboard(widget.token)),
+                                        DashboardLeadNewUpdatedTwo(
+                                            widget.token)),
                               );
                             },
                             style: ElevatedButton.styleFrom(
@@ -2146,7 +2149,7 @@ class _CallLogsState extends State<CallLogs> {
                                     ),
                                     if (logHistory != null)
                                       Text(
-                                        ' (${logHistory!.data!.length})',
+                                        ' (${logHistory!.data!.lists!.length})',
                                         style: TextStyle(
                                           color: selectedIndex == 1
                                               ? const Color(0xFF3c9f9a)
@@ -2315,7 +2318,7 @@ class _CallLogsState extends State<CallLogs> {
                                                               MaterialPageRoute(
                                                                 builder:
                                                                     (context) =>
-                                                                        AddLeads(
+                                                                        AddLeadsNew(
                                                                   widget.token,
                                                                   clientName: _callLogEntries
                                                                       .elementAt(
@@ -3031,365 +3034,418 @@ class _CallLogsState extends State<CallLogs> {
                                         const SizedBox(
                                           height: 20,
                                         ),
-                                        logHistory!.data!.isNotEmpty
-                                            ? ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount:
-                                                    logHistory!.data!.length,
-                                                physics:
-                                                    const NeverScrollableScrollPhysics(),
-                                                itemBuilder: (context, index) {
-                                                  return Dismissible(
-                                                    key: const Key('0'),
-                                                    background: Container(
-                                                      color: Colors.green,
-                                                      child: const Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
+                                        (logHistory?.data?.lists?.isNotEmpty ??
+                                                false)
+                                            ? Column(
+                                                children: [
+                                                  if (logHistory?.data
+                                                          ?.totalDuration !=
+                                                      null)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              10.0),
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 15,
+                                                                vertical: 10),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors
+                                                              .blue.shade50,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          border: Border.all(
+                                                              color: Colors.blue
+                                                                  .shade200),
+                                                        ),
                                                         child: Row(
                                                           mainAxisAlignment:
                                                               MainAxisAlignment
-                                                                  .start,
-                                                          children: <Widget>[
-                                                            SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                            Icon(
-                                                              Icons.call,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                            Text(
-                                                              " Call",
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            const Text(
+                                                              'Total Call Duration:',
                                                               style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
                                                                 fontWeight:
                                                                     FontWeight
-                                                                        .w700,
+                                                                        .bold,
+                                                                color:
+                                                                    Colors.blue,
                                                               ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .left,
+                                                            ),
+                                                            Text(
+                                                              logHistory!.data!
+                                                                  .totalDuration!,
+                                                              style:
+                                                                  const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 16,
+                                                                color:
+                                                                    Colors.blue,
+                                                              ),
                                                             ),
                                                           ],
                                                         ),
                                                       ),
                                                     ),
-                                                    secondaryBackground:
-                                                        Container(
-                                                      color: Colors.blue,
-                                                      child: const Align(
-                                                        alignment: Alignment
-                                                            .centerRight,
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .end,
-                                                          children: <Widget>[
-                                                            Icon(
-                                                              Icons.add,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                            Text(
-                                                              "Add Lead",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
+                                                  ListView.builder(
+                                                      shrinkWrap: true,
+                                                      itemCount: logHistory!
+                                                          .data!.lists!.length,
+                                                      physics:
+                                                          const NeverScrollableScrollPhysics(),
+                                                      itemBuilder:
+                                                          (context, index) {
+                                                        return Dismissible(
+                                                          key: const Key('0'),
+                                                          background: Container(
+                                                            color: Colors.green,
+                                                            child: const Align(
+                                                              alignment: Alignment
+                                                                  .centerLeft,
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .start,
+                                                                children: <Widget>[
+                                                                  SizedBox(
+                                                                    width: 20,
+                                                                  ),
+                                                                  Icon(
+                                                                    Icons.call,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                                  Text(
+                                                                    " Call",
+                                                                    style:
+                                                                        TextStyle(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                    ),
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .left,
+                                                                  ),
+                                                                ],
                                                               ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .right,
                                                             ),
-                                                            SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    confirmDismiss:
-                                                        (direction) async {
-                                                      if (direction ==
-                                                          DismissDirection
-                                                              .startToEnd) {
-                                                        Common.dialPad(
-                                                            logHistory!
-                                                                .data![index]
-                                                                .phoneNumber
-                                                                .toString());
-                                                      } else {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      AddLeads(
-                                                                widget.token,
-                                                                clientName:
-                                                                    logHistory!
-                                                                        .data![
-                                                                            index]
-                                                                        .name,
-                                                                phoneNumber:
-                                                                    logHistory!
-                                                                        .data![
-                                                                            index]
-                                                                        .phoneNumber,
+                                                          ),
+                                                          secondaryBackground:
+                                                              Container(
+                                                            color: Colors.blue,
+                                                            child: const Align(
+                                                              alignment: Alignment
+                                                                  .centerRight,
+                                                              child: Row(
+                                                                mainAxisAlignment:
+                                                                    MainAxisAlignment
+                                                                        .end,
+                                                                children: <Widget>[
+                                                                  Icon(
+                                                                    Icons.add,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                                  Text(
+                                                                    "Add Lead",
+                                                                    style:
+                                                                        TextStyle(
+                                                                      color: Colors
+                                                                          .white,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w700,
+                                                                    ),
+                                                                    textAlign:
+                                                                        TextAlign
+                                                                            .right,
+                                                                  ),
+                                                                  SizedBox(
+                                                                    width: 20,
+                                                                  ),
+                                                                ],
                                                               ),
-                                                            ));
-                                                      }
-
-                                                      return null;
-                                                    },
-                                                    child: InkWell(
-                                                        onLongPress: () {
-                                                          setState(() {
-                                                            onLongPressHistory =
-                                                                true;
-                                                            deleteHistoryIds
-                                                                .add(logHistory!
-                                                                    .data![
-                                                                        index]
-                                                                    .id
-                                                                    .toString());
-                                                          });
-                                                        },
-                                                        onTap: () {
-                                                          if (onLongPressHistory ==
-                                                              true) {
-                                                            if (deleteHistoryIds
-                                                                .contains(logHistory!
-                                                                    .data![
-                                                                        index]
-                                                                    .id
-                                                                    .toString())) {
-                                                              deleteHistoryIds
-                                                                  .remove(logHistory!
-                                                                      .data![
+                                                            ),
+                                                          ),
+                                                          confirmDismiss:
+                                                              (direction) async {
+                                                            if (direction ==
+                                                                DismissDirection
+                                                                    .startToEnd) {
+                                                              Common.dialPad(
+                                                                  logHistory!
+                                                                      .data!
+                                                                      .lists![
                                                                           index]
-                                                                      .id
+                                                                      .phoneNumber
                                                                       .toString());
                                                             } else {
-                                                              deleteHistoryIds
-                                                                  .add(logHistory!
-                                                                      .data![
+                                                              Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            AddLeadsNew(
+                                                                      widget
+                                                                          .token,
+                                                                      clientName: logHistory!
+                                                                          .data!
+                                                                          .lists![
+                                                                              index]
+                                                                          .name,
+                                                                      phoneNumber: logHistory!
+                                                                          .data!
+                                                                          .lists![
+                                                                              index]
+                                                                          .phoneNumber,
+                                                                    ),
+                                                                  ));
+                                                            }
+
+                                                            return null;
+                                                          },
+                                                          child: InkWell(
+                                                              onLongPress: () {
+                                                                setState(() {
+                                                                  onLongPressHistory =
+                                                                      true;
+                                                                  deleteHistoryIds.add(logHistory!
+                                                                      .data!
+                                                                      .lists![
                                                                           index]
                                                                       .id
                                                                       .toString());
-                                                            }
-                                                          }
-                                                          setState(() {});
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10,
-                                                                  right: 10,
-                                                                  bottom: 10),
-                                                          child: Container(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                1,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: deleteHistoryIds.contains(
-                                                                      logHistory!
-                                                                          .data![
-                                                                              index]
-                                                                          .id
-                                                                          .toString())
-                                                                  ? Colors.blueGrey
-                                                                      .shade200
-                                                                  : logHistory!
-                                                                              .data![
-                                                                                  index]
-                                                                              .isMannual ==
-                                                                          "1"
-                                                                      ? const Color
-                                                                          .fromARGB(
-                                                                          255,
-                                                                          224,
-                                                                          248,
-                                                                          223)
-                                                                      : Colors
-                                                                          .white,
-                                                              boxShadow: const [
-                                                                BoxShadow(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  offset:
-                                                                      Offset(
-                                                                          2.0,
-                                                                          2.0),
-                                                                )
-                                                              ],
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                            ),
-                                                            child: Column(
-                                                              children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                          top:
-                                                                              10,
-                                                                          right:
-                                                                              10,
-                                                                          left:
-                                                                              10),
-                                                                  child: Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .start,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
-                                                                    children: [
-                                                                      Row(
-                                                                        children: [
-                                                                          Container(
-                                                                            constraints:
-                                                                                const BoxConstraints(
-                                                                              maxHeight: 60,
-                                                                            ),
-                                                                            child:
-                                                                                Container(
-                                                                              constraints: const BoxConstraints(
-                                                                                minHeight: 20,
-                                                                                minWidth: 20,
-                                                                                maxHeight: 50,
-                                                                                maxWidth: 50,
-                                                                              ),
-                                                                              decoration: BoxDecoration(
-                                                                                border: Border.all(color: Colors.white, width: 0),
-                                                                                boxShadow: const [
-                                                                                  BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
-                                                                                ],
-                                                                                color: Colors.white,
-                                                                                shape: BoxShape.circle,
-                                                                                image: const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            width:
-                                                                                20,
-                                                                          ),
-                                                                          Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.center,
-                                                                            crossAxisAlignment:
-                                                                                CrossAxisAlignment.start,
-                                                                            children: [
-                                                                              Text(
-                                                                                logHistory!.data![index].name.toString() == "" || logHistory!.data![index].name.toString() == "null" ? "Unknown" : logHistory!.data![index].name.toString(),
-                                                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 3,
-                                                                              ),
-                                                                              Text(
-                                                                                logHistory!.data![index].phoneNumber.toString(),
-                                                                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
+                                                                });
+                                                              },
+                                                              onTap: () {
+                                                                if (onLongPressHistory ==
+                                                                    true) {
+                                                                  if (deleteHistoryIds.contains(logHistory!
+                                                                      .data!
+                                                                      .lists![
+                                                                          index]
+                                                                      .id
+                                                                      .toString())) {
+                                                                    deleteHistoryIds.remove(logHistory!
+                                                                        .data!
+                                                                        .lists![
+                                                                            index]
+                                                                        .id
+                                                                        .toString());
+                                                                  } else {
+                                                                    deleteHistoryIds.add(logHistory!
+                                                                        .data!
+                                                                        .lists![
+                                                                            index]
+                                                                        .id
+                                                                        .toString());
+                                                                  }
+                                                                }
+                                                                setState(() {});
+                                                              },
+                                                              child: Padding(
+                                                                padding:
+                                                                    const EdgeInsets
+                                                                        .only(
+                                                                        left:
                                                                             10,
-                                                                      ),
-                                                                      Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Row(
-                                                                            children: [
-                                                                              Image.asset("assets/icons/calendar.png", width: 20),
-                                                                              const SizedBox(
-                                                                                width: 15,
-                                                                              ),
-                                                                              Text(
-                                                                                logHistory!.data![index].dateTime.toString(),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              const Icon(Icons.timer_outlined),
-                                                                              const SizedBox(
-                                                                                width: 10,
-                                                                              ),
-                                                                              Padding(
-                                                                                padding: const EdgeInsets.only(right: 10),
-                                                                                child: Text(
-                                                                                  logHistory!.data![index].duration.toString().split('.')[0].padLeft(8, '0'),
-                                                                                  style: const TextStyle(fontSize: 15, color: Colors.green),
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            5,
-                                                                      ),
-                                                                      Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Text(
-                                                                            'Type  : ${logHistory!.data![index].callType}',
-                                                                          ),
-                                                                          const SizedBox()
-                                                                          // Container(
-                                                                          //   decoration: BoxDecoration(
-                                                                          //       color: Colors.grey.shade300,
-                                                                          //       borderRadius: BorderRadius.circular(5)),
-                                                                          //   child:
-                                                                          //       Padding(
-                                                                          //     padding: const EdgeInsets.only(
-                                                                          //         left: 10,
-                                                                          //         right: 10,
-                                                                          //         top: 5,
-                                                                          //         bottom: 5),
-                                                                          //     child:
-                                                                          //         Text(
-                                                                          //       "${logHistory!.data![index].simName}",
-                                                                          //     ),
-                                                                          //   ),
-                                                                          // ),
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
+                                                                        right:
                                                                             10,
+                                                                        bottom:
+                                                                            10),
+                                                                child:
+                                                                    Container(
+                                                                  width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width *
+                                                                      1,
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color: deleteHistoryIds.contains(logHistory!
+                                                                            .data!
+                                                                            .lists![
+                                                                                index]
+                                                                            .id
+                                                                            .toString())
+                                                                        ? Colors
+                                                                            .blueGrey
+                                                                            .shade200
+                                                                        : logHistory!.data!.lists![index].isMannual ==
+                                                                                "1"
+                                                                            ? const Color.fromARGB(
+                                                                                255,
+                                                                                224,
+                                                                                248,
+                                                                                223)
+                                                                            : Colors.white,
+                                                                    boxShadow: const [
+                                                                      BoxShadow(
+                                                                        color: Colors
+                                                                            .grey,
+                                                                        offset: Offset(
+                                                                            2.0,
+                                                                            2.0),
                                                                       )
-                                                                      // Text(
-                                                                      //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
-                                                                      //     ),
+                                                                    ],
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            10),
+                                                                  ),
+                                                                  child: Column(
+                                                                    children: [
+                                                                      Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            top:
+                                                                                10,
+                                                                            right:
+                                                                                10,
+                                                                            left:
+                                                                                10),
+                                                                        child:
+                                                                            Column(
+                                                                          mainAxisAlignment:
+                                                                              MainAxisAlignment.start,
+                                                                          crossAxisAlignment:
+                                                                              CrossAxisAlignment.start,
+                                                                          children: [
+                                                                            Row(
+                                                                              children: [
+                                                                                Container(
+                                                                                  constraints: const BoxConstraints(
+                                                                                    maxHeight: 60,
+                                                                                  ),
+                                                                                  child: Container(
+                                                                                    constraints: const BoxConstraints(
+                                                                                      minHeight: 20,
+                                                                                      minWidth: 20,
+                                                                                      maxHeight: 50,
+                                                                                      maxWidth: 50,
+                                                                                    ),
+                                                                                    decoration: BoxDecoration(
+                                                                                      border: Border.all(color: Colors.white, width: 0),
+                                                                                      boxShadow: const [
+                                                                                        BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
+                                                                                      ],
+                                                                                      color: Colors.white,
+                                                                                      shape: BoxShape.circle,
+                                                                                      image: const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                const SizedBox(
+                                                                                  width: 20,
+                                                                                ),
+                                                                                Column(
+                                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                                                  children: [
+                                                                                    Text(
+                                                                                      logHistory!.data!.lists![index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
+                                                                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                                                                    ),
+                                                                                    const SizedBox(
+                                                                                      height: 3,
+                                                                                    ),
+                                                                                    Text(
+                                                                                      logHistory!.data!.lists![index].phoneNumber.toString(),
+                                                                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              height: 10,
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Row(
+                                                                                  children: [
+                                                                                    Image.asset("assets/icons/calendar.png", width: 20),
+                                                                                    const SizedBox(
+                                                                                      width: 15,
+                                                                                    ),
+                                                                                    Text(
+                                                                                      logHistory!.data!.lists![index].dateTime.toString(),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                                Row(
+                                                                                  children: [
+                                                                                    const Icon(Icons.timer_outlined),
+                                                                                    const SizedBox(
+                                                                                      width: 10,
+                                                                                    ),
+                                                                                    Padding(
+                                                                                      padding: const EdgeInsets.only(right: 10),
+                                                                                      child: Text(
+                                                                                        logHistory!.data!.lists![index].duration.toString().split('.')[0].padLeft(8, '0'),
+                                                                                        style: const TextStyle(fontSize: 15, color: Colors.green),
+                                                                                      ),
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                              ],
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              height: 5,
+                                                                            ),
+                                                                            Row(
+                                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                                              children: [
+                                                                                Text(
+                                                                                  'Type  : ${logHistory!.data!.lists![index].callType}',
+                                                                                ),
+                                                                                const SizedBox()
+                                                                                // Container(
+                                                                                //   decoration: BoxDecoration(
+                                                                                //       color: Colors.grey.shade300,
+                                                                                //       borderRadius: BorderRadius.circular(5)),
+                                                                                //   child:
+                                                                                //       Padding(
+                                                                                //     padding: const EdgeInsets.only(
+                                                                                //         left: 10,
+                                                                                //         right: 10,
+                                                                                //         top: 5,
+                                                                                //         bottom: 5),
+                                                                                //     child:
+                                                                                //         Text(
+                                                                                //       "${logHistory!.data!.lists![index].simName}",
+                                                                                //     ),
+                                                                                //   ),
+                                                                                // ),
+                                                                              ],
+                                                                            ),
+                                                                            const SizedBox(
+                                                                              height: 10,
+                                                                            )
+                                                                            // Text(
+                                                                            //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
+                                                                            //     ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
                                                                     ],
                                                                   ),
                                                                 ),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        )),
-                                                  );
-                                                })
+                                                              )),
+                                                        );
+                                                      }),
+                                                ],
+                                              )
                                             : Center(
                                                 child: Lottie.asset(
                                                     'assets/main/no_history.json',

@@ -8,7 +8,7 @@ import '../../models/lead_management/delete_notification.dart';
 import '../../models/lead_management/leadNotificationListModel.dart';
 import '../../service/service.dart';
 import '../officialWhatsapp/chatScreen.dart';
-import 'leadDetails.dart';
+import 'viewLeadsNew.dart';
 
 // ignore: must_be_immutable
 class NotificationPage extends StatefulWidget {
@@ -228,13 +228,15 @@ class _NotificationPageState extends State<NotificationPage> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    LeadDetails(
+                                                    ViewLeadsNew(
                                                   widget.token!,
                                                   widget.editLead,
                                                   widget.deleteLead,
                                                   widget.cloudCall,
-                                                  leadNotification!.data[i].id
-                                                      .toString(),
+                                                  notificationLeadId:
+                                                      leadNotification!
+                                                          .data[i].id
+                                                          .toString(),
                                                   pageName: 'LeadNotification',
                                                 ),
                                               ),

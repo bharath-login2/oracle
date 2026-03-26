@@ -879,13 +879,14 @@ class _DashboardState extends State<Dashboard> {
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
       log(firebaseToken.toString());
-      if (loginCheck!.data == false) {
-        Common.toastMessaage('Token Expired', Colors.red);
+      if (loginCheck == null || loginCheck.data == false) {
         if (mounted) {
+          Common.toastMessaage('Session Expired', Colors.red);
           Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const Login()),
               (Route<dynamic> route) => false);
         }
+        return;
       } else {
         configure = await HttpService.configure(token);
         if (configure != null) {
@@ -924,7 +925,9 @@ class _DashboardState extends State<Dashboard> {
           if (loginOrNot?.data != true &&
               startAndStopWorkPermission == "true") {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              showLoginPrompt(context);
+              if (mounted) {
+                showLoginPrompt(context);
+              }
             });
           }
         }

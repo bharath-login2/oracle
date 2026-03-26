@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/officialWhatsapp/campaignsChatScreen.dart';
 import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
@@ -151,7 +152,8 @@ class _ChatHomeScreenState extends State<ChatHomeScreen> {
                 )
               : Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Dashboard(token)),
+                  MaterialPageRoute(
+                      builder: (context) => DashboardLeadNewUpdatedTwo(token)),
                 );
         }
       },
