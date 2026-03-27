@@ -8,6 +8,8 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/product_mannagement/post_product.dart';
 import 'package:login2/models/product_mannagement/product_categories.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
+import 'package:login2/screens/product_mannagement/categories.dart';
+import 'package:login2/screens/product_mannagement/subcategories.dart';
 import 'package:login2/service/service.dart';
 
 class AddProducts extends StatefulWidget {
@@ -93,7 +95,7 @@ class _AddProductsState extends State<AddProducts> {
         tax.text,
         totalAmount.text,
         description.text,
-        productImage.toString());
+        productImage);
     if (postResponse != null && postResponse!.status == true) {
       Navigator.pop(context);
       Navigator.pop(context, true);
@@ -174,7 +176,7 @@ class _AddProductsState extends State<AddProducts> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        "Product Image *",
+                        "Product Image",
                         style: TextStyle(
                           fontSize: 18,
                         ),
@@ -248,53 +250,116 @@ class _AddProductsState extends State<AddProducts> {
                     ),
                   ),
                   const SizedBox(height: 14.0),
-                  TextFormField(
-                    controller: category,
-                    readOnly: true,
-                    onTap: (() {
-                      dropDialog(context, "category");
-                    }),
-                    // validator: (value) {
-                    //   if (value!.isEmpty) {
-                    //     return "Please Add Category";
-                    //   }
-                    //   return null;
-                    // },
-                    decoration: const InputDecoration(
-                        labelText: 'Category',
-                        prefixIcon: Icon(Icons.category, color: Colors.grey),
-                        border: OutlineInputBorder(),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: category,
+                          readOnly: true,
+                          onTap: (() {
+                            dropDialog(context, "category");
+                          }),
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return "Please Add Category";
+                            }
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                              labelText: 'Category *',
+                              prefixIcon:
+                                  Icon(Icons.category, color: Colors.grey),
+                              border: OutlineInputBorder(),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.grey),
+                              ),
+                              labelStyle: TextStyle(color: Colors.grey)),
                         ),
-                        labelStyle: TextStyle(color: Colors.grey)),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const ProductCategories()),
+                          ).then((value) {
+                            getProductCategory();
+                          });
+                        },
+                        child: Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                                colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.add, color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
                   Visibility(
                     visible: categoryId != "",
                     child: Padding(
                       padding: const EdgeInsets.only(top: 14.0),
-                      child: TextFormField(
-                        controller: subCategory,
-                        readOnly: true,
-                        onTap: (() {
-                          // subCategory.clear();
-                          dropDialog(context, "sub category");
-                        }),
-                        // validator: (value) {
-                        //   if (value!.isEmpty) {
-                        //     return "Please Add Sub Category";
-                        //   }
-                        //   return null;
-                        // },
-                        decoration: const InputDecoration(
-                            labelText: 'Sub Category',
-                            prefixIcon:
-                                Icon(Icons.category, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: subCategory,
+                              readOnly: true,
+                              onTap: (() {
+                                dropDialog(context, "sub category");
+                              }),
+                              validator: (value) {
+                                if (value!.isEmpty) {
+                                  return "Please Add Sub Category";
+                                }
+                                return null;
+                              },
+                              decoration: const InputDecoration(
+                                  labelText: 'Sub Category *',
+                                  prefixIcon:
+                                      Icon(Icons.category, color: Colors.grey),
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
+                                  ),
+                                  labelStyle: TextStyle(color: Colors.grey)),
                             ),
-                            labelStyle: TextStyle(color: Colors.grey)),
+                          ),
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SubCategories(
+                                    catId: categoryId,
+                                    title: category.text,
+                                  ),
+                                ),
+                              ).then((value) {
+                                getProductSubCategory();
+                              });
+                            },
+                            child: Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [
+                                  Color(0xFF2a86c9),
+                                  Color(0xFF406dbe)
+                                ]),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.add, color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -495,6 +560,18 @@ class _AddProductsState extends State<AddProducts> {
                         }
                       }
                     },
+                    validator: (value) {
+                      if (value!.isEmpty) {
+                        return "Please Enter MRP";
+                      }
+                      double mrpValue = double.tryParse(value) ?? 0;
+                      double totalValue =
+                          double.tryParse(totalAmount.text) ?? 0;
+                      if (mrpValue < totalValue) {
+                        return "MRP should not be lower than the selling price";
+                      }
+                      return null;
+                    },
                     controller: mrp,
                     decoration: const InputDecoration(
                       labelText: 'MRP *',
@@ -522,45 +599,45 @@ class _AddProductsState extends State<AddProducts> {
                       labelStyle: TextStyle(color: Colors.grey),
                     ),
                   ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please Enter Number of Days";
-                      }
-                      return null;
-                    },
-                    controller: noOfDays,
-                    decoration: const InputDecoration(
-                      labelText: 'Validity*',
-                      prefixIcon:
-                          Icon(Icons.calendar_month, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.number,
-                    controller: remindBefore,
-                    decoration: const InputDecoration(
-                      labelText: 'Remind me before (Days)',
-                      prefixIcon: Icon(Icons.edit_calendar, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
+                  // const SizedBox(
+                  //   height: 14,
+                  // ),
+                  // TextFormField(
+                  //   keyboardType: TextInputType.number,
+                  //   validator: (value) {
+                  //     if (value!.isEmpty) {
+                  //       return "Please Enter Number of Days";
+                  //     }
+                  //     return null;
+                  //   },
+                  //   controller: noOfDays,
+                  //   decoration: const InputDecoration(
+                  //     labelText: 'Validity*',
+                  //     prefixIcon:
+                  //         Icon(Icons.calendar_month, color: Colors.grey),
+                  //     border: OutlineInputBorder(),
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderSide: BorderSide(color: Colors.grey),
+                  //     ),
+                  //     labelStyle: TextStyle(color: Colors.grey),
+                  //   ),
+                  // ),
+                  // const SizedBox(
+                  //   height: 14,
+                  // ),
+                  // TextFormField(
+                  //   keyboardType: TextInputType.number,
+                  //   controller: remindBefore,
+                  //   decoration: const InputDecoration(
+                  //     labelText: 'Remind me before (Days)',
+                  //     prefixIcon: Icon(Icons.edit_calendar, color: Colors.grey),
+                  //     border: OutlineInputBorder(),
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderSide: BorderSide(color: Colors.grey),
+                  //     ),
+                  //     labelStyle: TextStyle(color: Colors.grey),
+                  //   ),
+                  // ),
                   const SizedBox(
                     height: 14,
                   ),
@@ -588,13 +665,13 @@ class _AddProductsState extends State<AddProducts> {
                     child: RawMaterialButton(
                       onPressed: () {
                         if (formKey.currentState!.validate()) {
-                          if (productImage != null) {
+                        //  if (productImage != null) {
                             Common.showProgressDialog(context, "Loading...");
                             postProducts();
-                          } else {
-                            Common.toastMessaage(
-                                "Please Add Product Image", Colors.red);
-                          }
+                          // } else {
+                          //   Common.toastMessaage(
+                          //       "Please Add Product Image", Colors.red);
+                          // }
                         } else {
                           Common.toastMessaage(
                               "Please add all the fields", Colors.red);
@@ -614,19 +691,21 @@ class _AddProductsState extends State<AddProducts> {
       ),
     );
   }
-String _calculateRoundedTotal(String sellingPriceStr, String taxStr) {
-  if (sellingPriceStr.isEmpty) return "";
-  
-  double sellingPrice = double.tryParse(sellingPriceStr) ?? 0;
-  
-  if (taxStr.isEmpty) {
-    return sellingPrice.roundToDouble().toString();
-  } else {
-    double taxPercent = double.tryParse(taxStr) ?? 0;
-    double total = sellingPrice + (sellingPrice * taxPercent / 100);
-    return total.roundToDouble().toString();
+
+  String _calculateRoundedTotal(String sellingPriceStr, String taxStr) {
+    if (sellingPriceStr.isEmpty) return "";
+
+    double sellingPrice = double.tryParse(sellingPriceStr) ?? 0;
+
+    if (taxStr.isEmpty) {
+      return sellingPrice.roundToDouble().toString();
+    } else {
+      double taxPercent = double.tryParse(taxStr) ?? 0;
+      double total = sellingPrice + (sellingPrice * taxPercent / 100);
+      return total.roundToDouble().toString();
+    }
   }
-}
+
   Future<dynamic> dropDialog(BuildContext context, String title) {
     return showDialog(
       context: context,

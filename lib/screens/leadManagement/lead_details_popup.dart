@@ -33,7 +33,6 @@ import 'package:login2/screens/officialWhatsapp/chatScreen.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:date_time_picker/date_time_picker.dart';
-import 'add_leads.dart';
 import 'add_followup.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -46,6 +45,8 @@ import 'docViewWebView.dart';
 import 'package:login2/models/lead_management/updateReminderSetings.dart';
 import 'package:login2/models/lead_management/unsetReminderModel.dart';
 import 'package:path/path.dart' as p;
+import 'package:login2/screens/authentication/googleDriveAccountsModel.dart';
+import 'package:login2/screens/authentication/googleDriveFilesModel.dart';
 
 class LeadDetailsPopup extends StatefulWidget {
   final String token;
@@ -252,6 +253,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   List<LeadProduct> _selectedProducts = [];
   final TextEditingController _productSearchCtrl = TextEditingController();
   List<LeadProduct> _productSearchResults = [];
+  List<DriveAccount> googleDriveAccounts = [];
+  DriveAccount? selectedDriveAccount;
+  bool isDriveAccountsLoading = false;
+  List<GoogleDriveFile> googleDriveFiles = [];
+  bool isDriveFilesLoading = false;
 
   static const Color appBarStart = Color(0xFF2a86c9);
   static const Color textPrimary = Color(0xFF2C3E50);
@@ -382,6 +388,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     _fetchActivitiesAndCallHistory();
     _fetchProductSection();
     listFolderList(widget.token, widget.callMasterId, '');
+    _fetchGoogleDriveAccounts();
   }
 
   listFolderList(token, callMasterId, pathValue) async {
@@ -428,7 +435,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     setState(() => isCallHistoryLoading = true);
     try {
       final response =
-          await HttpService.callDetailsData(widget.token, widget.callMasterId);
+          await HttpService.callDetailsData(widget.token, callMasterId!);
       if (mounted) {
         setState(() {
           callDetailsDataS = response;
@@ -446,7 +453,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     setState(() => isActivityLoading = true);
     try {
       final response =
-          await HttpService.activityMode(widget.token, widget.callMasterId);
+          await HttpService.activityMode(widget.token, callMasterId!);
       if (mounted) {
         setState(() {
           activeMode = response?.data;
@@ -540,6 +547,58 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
     setState(() {});
+  }
+
+  Future<void> _fetchGoogleDriveAccounts() async {
+    if (!mounted) return;
+    setState(() => isDriveAccountsLoading = true);
+    try {
+      final response = await HttpService.getGoogleDriveAccounts();
+      if (mounted && response != null && response.status) {
+        setState(() {
+          googleDriveAccounts = response.data;
+          // Set default account (isActive == "1")
+          try {
+            selectedDriveAccount = googleDriveAccounts.firstWhere(
+              (account) => account.isActive == "1",
+            );
+          } catch (e) {
+            if (googleDriveAccounts.isNotEmpty) {
+              selectedDriveAccount = null; // No default found
+            }
+          }
+          isDriveAccountsLoading = false;
+        });
+      } else {
+        if (mounted) setState(() => isDriveAccountsLoading = false);
+      }
+    } catch (e) {
+      log("Error fetching drive accounts: $e");
+      if (mounted) setState(() => isDriveAccountsLoading = false);
+    }
+  }
+
+  Future<void> _fetchGoogleDriveFiles(String accountId) async {
+    if (!mounted) return;
+    setState(() {
+      isDriveFilesLoading = true;
+      googleDriveFiles = [];
+    });
+    try {
+      final response =
+          await HttpService.getGoogleDriveFiles(widget.callMasterId, accountId);
+      if (mounted && response != null && response.status) {
+        setState(() {
+          googleDriveFiles = response.data;
+          isDriveFilesLoading = false;
+        });
+      } else {
+        if (mounted) setState(() => isDriveFilesLoading = false);
+      }
+    } catch (e) {
+      log("Error fetching drive files: $e");
+      if (mounted) setState(() => isDriveFilesLoading = false);
+    }
   }
 
   @override
@@ -1420,7 +1479,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         MaterialPageRoute(
                           builder: (context) => EditLeadNew(
                             widget.token,
-                            widget.callMasterId,
+                            callMasterId!,
                             widget.editLead,
                             widget.deleteLead,
                             widget.cloudCall,
@@ -6220,33 +6279,44 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         const SizedBox(height: 15),
         if (drivePath.isEmpty) ...[
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              children: [
-                _buildDriveEmailCard('drive-upload@login2pro.com'),
-                const SizedBox(height: 16),
-                _buildDriveEmailCard('backup-docs@login2pro.com'),
-                const SizedBox(height: 16),
-                _buildDriveEmailCard('team-files@login2pro.com'),
-              ],
-            ),
+            child: isDriveAccountsLoading
+                ? const Center(child: CircularProgressIndicator())
+                : googleDriveAccounts.isEmpty
+                    ? const Center(child: Text("No Drive Accounts Connected"))
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        itemCount: googleDriveAccounts.length,
+                        itemBuilder: (context, index) {
+                          final account = googleDriveAccounts[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: _buildDriveEmailCard(account),
+                          );
+                        },
+                      ),
           ),
         ] else if (drivePath == '@root') ...[
           Expanded(
-            child: GridView(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.85,
-              ),
-              children: [
-                _buildDummyFolder('Shared Files', 1),
-                _buildDummyFolder('Invoices', 2),
-                _buildDummyFolder('Reports', 3),
-              ],
-            ),
+            child: isDriveFilesLoading
+                ? const Center(child: CircularProgressIndicator())
+                : GridView(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.85,
+                    ),
+                    children: [
+                      _buildDummyFolder('Shared Files', 1),
+                      _buildDummyFolder('Invoices', 2),
+                      _buildDummyFolder('Reports', 3),
+                      ...googleDriveFiles
+                          .map((file) => _buildGoogleDriveFileItem(file))
+                          .toList(),
+                    ],
+                  ),
           ),
         ] else ...[
           // Inside Folder Content: Dummy file
@@ -6258,40 +6328,69 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  Widget _buildDriveEmailCard(String email) {
+  Widget _buildDriveEmailCard(DriveAccount account) {
+    bool isDefault = account.isActive == "1";
     return InkWell(
-      onTap: () => setState(() => drivePath = '@root'),
+      onTap: () {
+        setState(() {
+          selectedDriveAccount = account;
+          drivePath = '@root';
+        });
+        _fetchGoogleDriveFiles(account.id);
+      },
+      borderRadius: BorderRadius.circular(20),
       child: Center(
         child: Container(
-          width: 280,
-          padding: const EdgeInsets.all(16),
+          width: 320,
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDefault ? const Color(0xFF4285F4) : Colors.grey.shade100,
+              width: isDefault ? 2 : 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: isDefault
+                    ? const Color(0xFF4285F4).withOpacity(0.12)
+                    : Colors.black.withOpacity(0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Row(
             children: [
               Container(
-                width: 50,
-                height: 50,
-                padding: const EdgeInsets.all(4),
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF4285F4).withOpacity(0.1),
+                      const Color(0xFF34A853).withOpacity(0.1),
+                    ],
+                  ),
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.blue.shade100),
                 ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/icons/email.jpeg',
-                    fit: BoxFit.cover,
+                child: Center(
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/icons/email.jpeg',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.alternate_email_rounded,
+                                color: Color(0xFF4285F4)),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -6301,28 +6400,176 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      email,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.blue,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            account.accountEmail,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDefault
+                                  ? const Color(0xFF4285F4)
+                                  : Colors.black87,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isDefault)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF34A853), Color(0xFF43A047)],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFF34A853).withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'DEFAULT',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Connected Account',
-                      style: TextStyle(color: Colors.grey, fontSize: 10),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          isDefault
+                              ? Icons.verified_user_rounded
+                              : Icons.account_circle_outlined,
+                          size: 12,
+                          color: isDefault
+                              ? const Color(0xFF34A853)
+                              : Colors.grey.shade400,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          isDefault
+                              ? 'Primary Drive Account'
+                              : 'Connected Account',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded,
+                  color: isDefault
+                      ? const Color(0xFF4285F4)
+                      : Colors.grey.shade300,
+                  size: 24),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _viewGoogleDriveFile(GoogleDriveFile file) async {
+    if (file.thumbnailLink != null && file.thumbnailLink!.isNotEmpty) {
+      Get.to(() => DocumentViewerScreen(
+            documentUrl: file.thumbnailLink,
+            title: file.fileName,
+            extension: file.fileName.split('.').last.toLowerCase(),
+            fileSize: 'N/A',
+            createdDate: file.uploadedAt,
+            createdBy: 'Google Drive',
+          ));
+    } else {
+      final url = Uri.parse(file.webViewLink);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        Common.toastMessaage("Could not open file", Colors.red);
+      }
+    }
+  }
+
+  Widget _buildGoogleDriveFileItem(GoogleDriveFile file) {
+    String extension = file.fileName.split('.').last.toLowerCase();
+    IconData icon;
+    Color iconColor;
+
+    switch (extension) {
+      case 'pdf':
+        icon = Icons.picture_as_pdf_rounded;
+        iconColor = Colors.red.shade600;
+        break;
+      case 'doc':
+      case 'docx':
+        icon = Icons.description_rounded;
+        iconColor = Colors.blue.shade600;
+        break;
+      case 'xls':
+      case 'xlsx':
+        icon = Icons.table_chart_rounded;
+        iconColor = Colors.green.shade600;
+        break;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        icon = Icons.image_rounded;
+        iconColor = Colors.purple.shade600;
+        break;
+      default:
+        icon = Icons.insert_drive_file_rounded;
+        iconColor = Colors.orange.shade600;
+    }
+
+    return InkWell(
+      onTap: () => _viewGoogleDriveFile(file),
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              file.fileName,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -7642,7 +7889,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       case '3':
         return const Color(0xFFFFC107);
       case '4':
-        return const Color(0xFFF44336); // Red
+        return const Color(0xFF4CAF50); // Red
       case '5':
         return const Color(0xFF9C27B0); // Purple
       case '6':
@@ -9156,6 +9403,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Future<dynamic> targetGroupDialog(BuildContext context) {
+    if (filteredTargetsList.isEmpty && commonDetails != null) {
+      filteredTargetsList.addAll(commonDetails!.data.targetGroups);
+    }
     return showDialog(
       context: context,
       builder: (context) {
@@ -9171,13 +9421,16 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       autocorrect: false,
                       keyboardType: TextInputType.visiblePassword,
                       onChanged: (value) {
-                        setState(() {
-                          filteredTargetsList = commonDetails!.data.targetGroups
-                              .where((item) => item.groupName
-                                  .toLowerCase()
-                                  .contains(value.toLowerCase()))
-                              .toList();
-                        });
+                        if (commonDetails != null) {
+                          setState(() {
+                            filteredTargetsList = commonDetails!
+                                .data.targetGroups
+                                .where((item) => item.groupName
+                                    .toLowerCase()
+                                    .contains(value.toLowerCase()))
+                                .toList();
+                          });
+                        }
                       },
                       decoration: const InputDecoration(
                         contentPadding: EdgeInsets.all(8),

@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../widgets/premium_toast.dart';
 
 class Common {
   static toastMessaage(message, color) {
@@ -15,6 +16,16 @@ class Common {
         backgroundColor: color,
         textColor: Colors.white,
         fontSize: 16.0);
+  }
+
+  static void premiumToast(BuildContext context, String message, IconData icon,
+      {Color color = Colors.blue}) {
+    PremiumToast.show(
+      context: context,
+      message: message,
+      icon: icon,
+      color: color,
+    );
   }
 
   static String trimPlus91(String mobileNumber) {

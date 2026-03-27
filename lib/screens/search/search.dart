@@ -57,9 +57,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   bool isLoadingMore = false;
   late ScrollController scrollController;
   late TextEditingController searchController;
-  late AnimationController _fadeController;
   late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
   SearchDataModel? response;
@@ -118,17 +116,9 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     scrollController = ScrollController();
     searchController = TextEditingController();
 
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
     );
 
     _slideAnimation = Tween<Offset>(
@@ -136,7 +126,6 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
 
-    _fadeController.forward();
     _slideController.forward();
 
     getData('desc', false, widget.status);
@@ -155,7 +144,8 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   }
 
   void _onSearchChanged() {
-    setState(() {}); // Immediate update for clear icon
+    // No full state rebuild on every keystroke. 
+    // The clear icon will be handled by a ValueListenableBuilder in _buildSearchBar.
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (searchController.text.isNotEmpty) {
@@ -171,7 +161,6 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     scrollController.dispose();
     searchController.dispose();
     _searchFocusNode.dispose();
-    _fadeController.dispose();
     _slideController.dispose();
     _debounceTimer?.cancel();
     super.dispose();
@@ -275,8 +264,6 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
         setState(() {
           response = newResponse;
           isLoading = false;
-          _fadeController.reset();
-          _fadeController.forward();
         });
       }
     } catch (e) {
@@ -329,25 +316,16 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _fadeAnimation,
-      builder: (context, child) {
-        return FadeTransition(
-          opacity: _fadeAnimation,
-          child: child,
-        );
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          title: const Text("Search",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          backgroundColor: const Color.fromARGB(255, 63, 139, 202),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        body: result ? _buildMainContent() : _buildNoInternetWidget(),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        title: const Text("Search",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        backgroundColor: const Color.fromARGB(255, 63, 139, 202),
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
+      body: result ? _buildMainContent() : _buildNoInternetWidget(),
     );
   }
 
@@ -414,16 +392,21 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
               Icons.search_rounded,
               color: Color(0xFF2a86c9),
             ),
-            suffixIcon: searchController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear_rounded,
-                        color: Color(0xFF94A3B8)),
-                    onPressed: () {
-                      searchController.clear();
-                      setState(() => response = null);
-                    },
-                  )
-                : null,
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: searchController,
+              builder: (context, value, child) {
+                return value.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded,
+                            color: Color(0xFF94A3B8)),
+                        onPressed: () {
+                          searchController.clear();
+                          setState(() => response = null);
+                        },
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
@@ -842,7 +825,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
                     widget.deleteLead,
                     widget.cloudCall,
                     notificationLeadId: lead.callMasterId.toString(),
-                    pageName: "",
+                    pageName: "All Report",
                   ),
                 ),
               );
@@ -1223,7 +1206,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
                     widget.deleteLead,
                     widget.cloudCall,
                     notificationLeadId: lead.callMasterId.toString(),
-                    pageName: "",
+                    pageName: "All Report",
                   ),
                 ),
               );

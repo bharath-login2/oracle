@@ -337,10 +337,6 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     }
   }
 
-  void _showFollowupSuccessMessage() {
-    Common.toastMessaage("Followup initiated", followupBlue);
-  }
-
   void _showCallInitiatedMessage() {
     Common.toastMessaage("Call initiated", callGreen);
   }
@@ -361,15 +357,15 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     }
     if (widget.staff != null) {
       checkedAssignedStaffItems.add(widget.staff!);
-      checkedAssignedStaffItemsName.add(widget.staffName!);
+      checkedAssignedStaffItemsName.add(widget.staffName ?? '');
     }
     if (widget.category != null) {
       checkedCategoryItems.add(widget.category!);
-      checkedCategoryItemsName.add(widget.categoryName!);
+      checkedCategoryItemsName.add(widget.categoryName ?? '');
     }
     if (widget.callResId != null) {
       checkedResponseItems.add(widget.callResId!);
-      checkedresponseItemsName.add(widget.callResName!);
+      checkedresponseItemsName.add(widget.callResName ?? '');
     }
   }
 
@@ -542,7 +538,9 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       "callResponseId": checkedResponseItems,
       "staffId": (checkedAssignedStaffItems.isNotEmpty)
           ? checkedAssignedStaffItems
-          : widget.staffId,
+          : (widget.staffId != null && widget.staffId!.isNotEmpty)
+              ? [widget.staffId!]
+              : [],
       "isCalled": isCalled,
       "priority": checkedPriorityItems,
       "sort": sort,
@@ -1116,13 +1114,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                         return false;
                                       },
                                       onDismissed: (direction) {
-                                        if (direction ==
-                                            DismissDirection.endToStart) {
-                                          _showFollowupSuccessMessage();
-                                        } else if (direction ==
-                                            DismissDirection.startToEnd) {
-                                          _showCallInitiatedMessage();
-                                        }
+                                        // Items are no longer dismissed on swipe
                                       },
                                       child: InkWell(
                                         onLongPress: () =>
@@ -1238,10 +1230,11 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       } else {
         if (widget.cloudCall == true) {
           await chooseCallDialog(context, index);
-          return true;
+          return false;
         } else {
           Common.dialPad(displayItem.contactNumber1);
-          return true;
+          _showCallInitiatedMessage();
+          return false;
         }
       }
     } catch (e) {
@@ -2674,7 +2667,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                               ? _colors[displayItem.callResultId]
                                   .withOpacity(0.15)
                               : const Color.fromARGB(255, 59, 140, 233)
-                                  .withOpacity(0.4),
+                                  .withOpacity(0.2),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                               color: displayItem.callResultId >= 0 &&
@@ -2682,7 +2675,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                   ? _colors[displayItem.callResultId]
                                       .withOpacity(0.4)
                                   : const Color.fromARGB(255, 59, 140, 233)
-                                      .withOpacity(0.4),
+                                      .withOpacity(0.7),
                               width: 1),
                         ),
                         child: Text(
@@ -2695,7 +2688,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                             color: displayItem.callResultId >= 0 &&
                                     displayItem.callResultId < _colors.length
                                 ? _colors[displayItem.callResultId]
-                                : const Color.fromARGB(255, 19, 19, 19),
+                                : const Color.fromARGB(255, 43, 107, 145),
                           ),
                         ),
                       ),
@@ -3555,6 +3548,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                 onTap: () async {
                   Navigator.pop(context);
                   Common.dialPad(item.contactNumber1);
+                  _showCallInitiatedMessage();
                 },
               ),
             ],

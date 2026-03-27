@@ -637,80 +637,243 @@ const MethodChannel _channel = MethodChannel('onreBootInitFunctionChannel');
 
 void logout(BuildContext context) {
   showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          title: const Text('Please Confirm'),
-          content: const Text('Are you sure to Logout?'),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('No')),
-            TextButton(
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  final isWorkStarted =
-                      await Common.getSharedPref("is_work_started");
-                  if (isWorkStarted == "true") {
-                    final now = DateTime.now();
-                    // final response = await HttpService.stopWork(now);
-                    // if (response != null && response.status == true) {
-                    //   await Common.saveSharedPref("is_work_started", "false");
-                    //   debugPrint("Work stopped on logout at $now");
-                    // } else {
-                    //   debugPrint("Failed to stop work during logout");
-                    try {
-                      final position = await Geolocator.getCurrentPosition(
-                        desiredAccuracy: LocationAccuracy.high,
-                      );
+    context: context,
+    barrierDismissible: false, // Prevents dismissing by tapping outside
+    builder: (BuildContext ctx) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon at the top
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.logout_rounded,
+                  size: 48,
+                  color: Colors.blue,
+                ),
+              ),
+              const SizedBox(height: 20),
 
-                      final response = await HttpService.stopWork(
-                        now,
-                        latitude: position.latitude,
-                        longitude: position.longitude,
-                      );
+              // Title
+              Text(
+                'Confirm Logout',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 12),
 
-                      if (response != null && response.status == true) {
-                        await Common.saveSharedPref("is_work_started", "false");
-                        debugPrint("Work stopped on logout at $now");
-                      } else {
-                        debugPrint("Failed to stop work during logout");
-                      }
-                    } catch (e) {
-                      debugPrint("Error getting location or stopping work: $e");
-                    }
-                    // }
-                  }
+              // Content
+              Text(
+                'Are you sure you want to logout?',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
 
-                  // Common.clearSharedPref();
-                  await Common.clearSharedPref(excludeKeys: [
-                    'url',
-                    'callTypes',
-                    'callLogsStartingTime',
-                    'callLogPermission'
-                  ]);
-                  HiveUtil.clearAllCallLogs();
-                  final permission =
-                      await Common.getSharedPref("callLogPermission");
-                  debugPrint("callLogPermission after logout: $permission");
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const Login()),
-                      (Route<dynamic> route) => false);
-                  if (Platform.isAndroid) {
-                    _channel.setMethodCallHandler((call) async {
-                      if (call.method == 'setAsBackgroundService') {
-                        initService();
-                        FlutterBackgroundService().invoke('setAsBackground');
-                      }
-                    });
-                    Workmanager()
-                        .initialize(callbackDispatcher, isInDebugMode: true);
-                  }
-                },
-                child: const Text('Yes')),
-          ],
-        );
-      });
+              // Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(
+                          color: Colors.blue,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        final isWorkStarted =
+                            await Common.getSharedPref("is_work_started");
+                        if (isWorkStarted == "true") {
+                          final now = DateTime.now();
+                          try {
+                            final position =
+                                await Geolocator.getCurrentPosition(
+                              desiredAccuracy: LocationAccuracy.high,
+                            );
+
+                            final response = await HttpService.stopWork(
+                              now,
+                              latitude: position.latitude,
+                              longitude: position.longitude,
+                            );
+
+                            if (response != null && response.status == true) {
+                              await Common.saveSharedPref(
+                                  "is_work_started", "false");
+                              debugPrint("Work stopped on logout at $now");
+                            } else {
+                              debugPrint("Failed to stop work during logout");
+                            }
+                          } catch (e) {
+                            debugPrint(
+                                "Error getting location or stopping work: $e");
+                          }
+                        }
+
+                        await Common.clearSharedPref(excludeKeys: [
+                          'url',
+                          'callTypes',
+                          'callLogsStartingTime',
+                          'callLogPermission'
+                        ]);
+                        HiveUtil.clearAllCallLogs();
+                        final permission =
+                            await Common.getSharedPref("callLogPermission");
+                        debugPrint(
+                            "callLogPermission after logout: $permission");
+
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                              builder: (context) => const Login()),
+                          (Route<dynamic> route) => false,
+                        );
+
+                        if (Platform.isAndroid) {
+                          _channel.setMethodCallHandler((call) async {
+                            if (call.method == 'setAsBackgroundService') {
+                              initService();
+                              FlutterBackgroundService()
+                                  .invoke('setAsBackground');
+                            }
+                          });
+                          Workmanager().initialize(callbackDispatcher,
+                              isInDebugMode: true);
+                        }
+                      },
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Logout'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }
+// void logout(BuildContext context) {
+//   showDialog(
+//       context: context,
+//       builder: (BuildContext ctx) {
+//         return AlertDialog(
+//           title: const Text('Please Confirm'),
+//           content: const Text('Are you sure to Logout?'),
+//           actions: [
+//             TextButton(
+//                 onPressed: () {
+//                   Navigator.of(context).pop();
+//                 },
+//                 child: const Text('No')),
+//             TextButton(
+//                 onPressed: () async {
+//                   Navigator.of(context).pop();
+//                   final isWorkStarted =
+//                       await Common.getSharedPref("is_work_started");
+//                   if (isWorkStarted == "true") {
+//                     final now = DateTime.now();
+//                     // final response = await HttpService.stopWork(now);
+//                     // if (response != null && response.status == true) {
+//                     //   await Common.saveSharedPref("is_work_started", "false");
+//                     //   debugPrint("Work stopped on logout at $now");
+//                     // } else {
+//                     //   debugPrint("Failed to stop work during logout");
+//                     try {
+//                       final position = await Geolocator.getCurrentPosition(
+//                         desiredAccuracy: LocationAccuracy.high,
+//                       );
+
+//                       final response = await HttpService.stopWork(
+//                         now,
+//                         latitude: position.latitude,
+//                         longitude: position.longitude,
+//                       );
+
+//                       if (response != null && response.status == true) {
+//                         await Common.saveSharedPref("is_work_started", "false");
+//                         debugPrint("Work stopped on logout at $now");
+//                       } else {
+//                         debugPrint("Failed to stop work during logout");
+//                       }
+//                     } catch (e) {
+//                       debugPrint("Error getting location or stopping work: $e");
+//                     }
+//                     // }
+//                   }
+
+//                   // Common.clearSharedPref();
+//                   await Common.clearSharedPref(excludeKeys: [
+//                     'url',
+//                     'callTypes',
+//                     'callLogsStartingTime',
+//                     'callLogPermission'
+//                   ]);
+//                   HiveUtil.clearAllCallLogs();
+//                   final permission =
+//                       await Common.getSharedPref("callLogPermission");
+//                   debugPrint("callLogPermission after logout: $permission");
+//                   Navigator.of(context).pushAndRemoveUntil(
+//                       MaterialPageRoute(builder: (context) => const Login()),
+//                       (Route<dynamic> route) => false);
+//                   if (Platform.isAndroid) {
+//                     _channel.setMethodCallHandler((call) async {
+//                       if (call.method == 'setAsBackgroundService') {
+//                         initService();
+//                         FlutterBackgroundService().invoke('setAsBackground');
+//                       }
+//                     });
+//                     Workmanager()
+//                         .initialize(callbackDispatcher, isInDebugMode: true);
+//                   }
+//                 },
+//                 child: const Text('Yes')),
+//           ],
+//         );
+//       });
+// }

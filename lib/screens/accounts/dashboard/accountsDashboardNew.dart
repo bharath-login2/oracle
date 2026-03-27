@@ -225,7 +225,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
         await HttpService.loginCheck(token, firebaseToken!);
     log(firebaseToken.toString());
     if (loginCheck!.data == false) {
-      Common.toastMessaage('Token Expired', Colors.red);
+      Common.premiumToast(context, 'Token Expired', Icons.lock_clock_rounded,
+          color: Colors.red);
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const Login()),

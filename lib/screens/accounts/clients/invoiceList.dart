@@ -954,14 +954,14 @@ class _InvoiceListState extends State<InvoiceList> {
                                                               ),
                                                             ),
                                                             Visibility(
-                                                              visible: filteredInvoices[
-                                                                              index] // Use filteredInvoices
-                                                                          .invType ==
-                                                                      "1" ||
-                                                                  filteredInvoices[
-                                                                              index] // Use filteredInvoices
-                                                                          .invType ==
-                                                                      "2",
+                                                              // visible: filteredInvoices[
+                                                              //                 index] // Use filteredInvoices
+                                                              //             .invType ==
+                                                              //         "1" ||
+                                                              //     filteredInvoices[
+                                                              //                 index] // Use filteredInvoices
+                                                              //             .invType ==
+                                                              //         "2",
                                                               child: Row(
                                                                 children: [
                                                                   const SizedBox(

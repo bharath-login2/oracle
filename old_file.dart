@@ -10,7 +10,6 @@ import 'package:login2/widgets/AddLeadSourceDialog.dart';
 import 'package:login2/widgets/addLeadCateoryPopup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:login2/screens/product_mannagement/add_products.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
@@ -446,7 +445,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
             if (multiBranch == 'true' && roleId == '2') _buildBranchField(),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Customer Details',
+              title: 'Client Info',
               icon: Icons.person_outline,
               children: [
                 const SizedBox(height: 12),
@@ -457,6 +456,33 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 _buildWhatsappField(),
                 const SizedBox(height: 12),
                 _buildEmailField(),
+                const SizedBox(height: 12),
+                _buildProductSelection(),
+                const SizedBox(height: 12),
+                _buildStaffCostRow(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Lead Details',
+              icon: Icons.info_outline,
+              children: [
+                const SizedBox(height: 12),
+                _buildLeadCategoryField(),
+                const SizedBox(height: 12),
+                if (leadSubTypeList?.data?.isNotEmpty ?? false)
+                  _buildSubCategoryField(),
+                const SizedBox(height: 12),
+                _buildLeadSourceField(),
+                const SizedBox(height: 12),
+                _buildPriorityField(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Location Information',
+              icon: Icons.location_on_outlined,
+              children: [
                 const SizedBox(height: 12),
                 _buildAddressField(),
                 const SizedBox(height: 12),
@@ -469,24 +495,13 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
             ),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Lead Information',
-              icon: Icons.info_outline,
+              title: 'Status & Followup',
+              icon: Icons.assignment_outlined,
               children: [
                 const SizedBox(height: 12),
-                _buildStaffField(),
-                const SizedBox(height: 12),
-                _buildLeadCategoryField(),
-                const SizedBox(height: 12),
-                if (leadSubTypeList?.data?.isNotEmpty ?? false)
-                  _buildSubCategoryField(),
-                const SizedBox(height: 12),
-                _buildLeadSourceField(),
-                const SizedBox(height: 12),
-                _buildPriorityField(),
+                _buildRemarksField(),
                 const SizedBox(height: 12),
                 _buildStatusField(),
-                const SizedBox(height: 12),
-                _buildRemarksField(),
                 const SizedBox(height: 12),
                 if (callResultId == '2' ||
                     callResultId == '3' ||
@@ -496,22 +511,11 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 if (callResultId == '2') _buildFollowupRow(),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildSectionCard(
-              title: 'Product Info',
-              icon: Icons.shopping_bag_outlined,
-              children: [
-                const SizedBox(height: 12),
-                _buildProductSelection(),
-                const SizedBox(height: 12),
-                _buildCostField(),
-              ],
-            ),
             if (commonDetails?.data.additionalFields != null &&
                 commonDetails!.data.additionalFields.isNotEmpty) ...[
               const SizedBox(height: 12),
               _buildSectionCard(
-                title: 'Additional Fields',
+                title: 'Additional Info',
                 icon: Icons.more_horiz,
                 children: [
                   const SizedBox(height: 12),
@@ -557,7 +561,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
         Expanded(
           child: TextFormField(
             controller: clientNameCtrl,
-            decoration: _inputDecoration('Client Name *', Icons.person),
+            decoration: _inputDecoration('Customer Name *', Icons.person),
             validator: (v) => v!.isEmpty ? 'Required' : null,
           ),
         ),
@@ -668,23 +672,29 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     );
   }
 
-  Widget _buildCostField() {
-    return TextFormField(
-      controller: costCtrl,
-      keyboardType: TextInputType.number,
-      decoration: _inputDecoration('Cost', Icons.currency_rupee),
-    );
-  }
-
-  Widget _buildStaffField() {
-    return GestureDetector(
-      onTap: () => _showStaffDialog(),
-      child: AbsorbPointer(
-        child: TextFormField(
-          controller: TextEditingController(text: assignStaff),
-          decoration: _inputDecoration('Assign Staff', Icons.person),
+  Widget _buildStaffCostRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextFormField(
+            controller: costCtrl,
+            keyboardType: TextInputType.number,
+            decoration: _inputDecoration('Cost', Icons.currency_rupee),
+          ),
         ),
-      ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => _showStaffDialog(),
+            child: AbsorbPointer(
+              child: TextFormField(
+                controller: TextEditingController(text: assignStaff),
+                decoration: _inputDecoration('Assign Staff', Icons.person),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1074,42 +1084,11 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
         //         color: Colors.black87,
         //         fontSize: 13)),
         const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _productSearchCtrl,
-                onChanged: _onProductSearch,
-                decoration: _inputDecoration('Search Product...', Icons.search,
-                    isDense: true),
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AddProducts(),
-                    )).then((_) {
-                  _initializeData();
-                });
-              },
-              child: Container(
-                height: 42,
-                width: 42,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
+        TextField(
+          controller: _productSearchCtrl,
+          onChanged: _onProductSearch,
+          decoration: _inputDecoration('Search Product...', Icons.search,
+              isDense: true),
         ),
         if (_productSearchResults.isNotEmpty)
           Container(
@@ -1133,7 +1112,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 final p = _productSearchResults[i];
                 return ListTile(
                   title: Text(p.productName ?? ''),
-                  subtitle: Text("â‚¹ ${p.totalAmount}"),
+                  subtitle: Text("Gé¦ ${p.totalAmount}"),
                   onTap: () => _addProduct(p),
                 );
               },
@@ -1256,33 +1235,28 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   const SizedBox(height: 10),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: filtered.length + 1,
-                      itemBuilder: (_, i) {
-                        if (i == 0) {
-                          return ListTile(
-                            title: const Text('Un Assigned'),
-                            onTap: () {
-                              setState(() {
-                                assignStaff = 'Un Assigned';
-                                assignStaffId = '';
-                                assignStaffCtrl.text = assignStaff;
-                              });
-                              Navigator.pop(context);
-                            },
-                          );
-                        }
-                        final staff = filtered[i - 1];
-                        return ListTile(
-                          title: Text(staff.staffName),
-                          onTap: () {
-                            assignStaff = staff.staffName;
-                            assignStaffId = staff.userId;
-                            Navigator.pop(context);
-                            setState(() {});
-                          },
-                        );
-                      },
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) => ListTile(
+                        title: Text(filtered[i].staffName),
+                        onTap: () {
+                          assignStaff = filtered[i].staffName;
+                          assignStaffId = filtered[i].userId;
+                          Navigator.pop(context);
+                          setState(() {});
+                        },
+                      ),
                     ),
+                  ),
+                  ListTile(
+                    title: const Text('Un Assigned'),
+                    onTap: () {
+                      setState(() {
+                        assignStaff = 'Un Assigned';
+                        assignStaffId = '';
+                        assignStaffCtrl.text = assignStaff;
+                      });
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),

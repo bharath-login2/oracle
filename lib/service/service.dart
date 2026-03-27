@@ -121,6 +121,7 @@ import 'package:login2/models/lead_management/stagewiseReportModel.dart';
 import 'package:login2/models/lead_management/stagewiseReportOntap.dart';
 import 'package:login2/models/lead_management/stagewiseTableModel.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
+import 'package:login2/models/lead_management/tagListForFilterModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/unverifiedTransactionModel.dart';
 import 'package:login2/models/lead_management/updatePendingList.dart';
@@ -207,6 +208,8 @@ import 'package:login2/screens/accounts/renewal_mannagement/deletedProformaInvoi
 import 'package:login2/screens/accounts/renewal_mannagement/deletedReceiptListModel.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/getDeletedInvoiceList.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/restoreInvoicesModel.dart';
+import 'package:login2/screens/authentication/googleDriveAccountsModel.dart';
+import 'package:login2/screens/authentication/googleDriveFilesModel.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/commonsettingsModel.dart';
@@ -1606,6 +1609,11 @@ class HttpService {
       pinCode,
       postOffice,
       remark,
+      callResultId,
+      callResponseId,
+      nextFollowupDate,
+      reminder,
+      timeBefore,
       descriptions,
       code,
       leadSource,
@@ -1618,6 +1626,11 @@ class HttpService {
     var formData = FormData.fromMap({
       'token': token,
       'branchId': branchId,
+      'next_followup_date': nextFollowupDate,
+      'call_result_id': callResultId,
+      'call_response_id': callResponseId,
+      'reminder': reminder,
+      'time_before': timeBefore,
       'lead_category_id': leadType,
       'lead_sub_category_id': leadSubTypeId,
       'clientName': clientName,
@@ -6212,9 +6225,10 @@ class HttpService {
       "tax_percent": taxPercent,
       "total_amount": totalAmount,
       "description": description,
-      "product_image": productImage == null
-          ? ""
-          : await MultipartFile.fromFile(productImage.toString())
+      "product_image":
+          (productImage == null || productImage == "null" || productImage == "")
+              ? ""
+              : await MultipartFile.fromFile(productImage.toString())
     });
     try {
       var result = await _dio.post("${await Config.getUrl()}postProduct",
@@ -13511,6 +13525,104 @@ class HttpService {
       }
     } catch (e) {
       log("leaveAvailable error: $e");
+    }
+    return null;
+  }
+
+  static Future<GoogleDriveAccountsModel?> getGoogleDriveAccounts() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getGoogleDriveAccounts error: Token not found");
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        "token": token,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_drive_accounts",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GoogleDriveAccountsModel.fromJson(response.data);
+      }
+
+      log("getGoogleDriveAccounts error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getGoogleDriveAccounts error: $e");
+    }
+    return null;
+  }
+
+  static Future<GoogleDriveFilesResponse?> getGoogleDriveFiles(
+      String callMasterId, String iD) async {
+    print("reached here");
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getGoogleDriveAccounts error: Token not found");
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "reference_id": callMasterId,
+        "reference_function": "Leads",
+        "account_id": iD,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_gdrive_files_list",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GoogleDriveFilesResponse.fromJson(response.data);
+      }
+
+      log("getGoogleDriveAccounts error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getGoogleDriveAccounts error: $e");
+    }
+    return null;
+  }
+
+  static Future<TagListForFilterModel?> getLeadsTagForFilter(
+      String callResultId) async {
+    print("reached here tagggsssss");
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("Taggsgssss error: Token not found");
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "call_result_id": callResultId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getTagLists",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return TagListForFilterModel.fromJson(response.data);
+      }
+
+      log("Taggsgssss error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("Taggsgssss error: $e");
     }
     return null;
   }

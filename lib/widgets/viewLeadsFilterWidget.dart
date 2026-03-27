@@ -4,6 +4,7 @@ import '../models/lead_management/addLeadCommonDataModel.dart';
 import 'package:login2/models/lead_management/leadProductsModel.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/models/lead_management/getActiveStatusModel.dart';
+import 'package:login2/models/lead_management/tagListForFilterModel.dart';
 
 class ViewLeadsFilterWidget extends StatefulWidget {
   final Function(Map<String, dynamic>) onApplyFilters;
@@ -38,11 +39,14 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   Set<String> selectedCategoryIds = {};
   Set<String> selectedPriorityIds = {};
   Set<String> selectedProductIds = {};
+  Set<String> selectedTagIds = {};
 
   final DateFormat _formatter = DateFormat('dd-MM-yyyy');
   final TextEditingController _searchController = TextEditingController();
   GetActiveStatusModel? _activeStatusModel;
   bool _isActiveStatusLoading = false;
+  TagListForFilterModel? _tagListModel;
+  bool _isTagLoading = false;
 
   @override
   void initState() {
@@ -50,6 +54,29 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     _loadInitialFilters();
     if (widget.isActiveLeads == '1') {
       _fetchActiveStatus();
+    }
+    if (selectedStatusIds.isNotEmpty) {
+      _fetchTags(selectedStatusIds.first);
+    }
+  }
+
+  Future<void> _fetchTags(String callResultId) async {
+    setState(() {
+      _isTagLoading = true;
+      _tagListModel = null;
+    });
+    try {
+      final res = await HttpService.getLeadsTagForFilter(callResultId);
+      if (mounted) {
+        setState(() {
+          _tagListModel = res;
+          _isTagLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isTagLoading = false);
+      }
     }
   }
 
@@ -100,6 +127,12 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
       }
       if (filters['productIds'] != null) {
         selectedProductIds = Set<String>.from(filters['productIds']);
+      }
+      if (filters['tagIds'] != null) {
+        selectedTagIds = Set<String>.from(filters['tagIds']);
+      }
+      if (filters['call_result_reason'] != null) {
+        selectedTagIds = Set<String>.from(filters['call_result_reason']);
       }
     }
   }
@@ -170,6 +203,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                   _buildCategoryItem('Leads Date', Icons.calendar_today),
                   if (widget.currentTab != 'New')
                     _buildCategoryItem('Stages', Icons.info_outline),
+                  if (selectedStatusIds.isNotEmpty)
+                    _buildCategoryItem('Tags', Icons.tag_rounded),
                   _buildCategoryItem('Assigned Staff', Icons.people_outline),
                   _buildCategoryItem('Category', Icons.category_outlined),
                   _buildCategoryItem('Priority', Icons.low_priority),
@@ -257,6 +292,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
         return selectedPriorityIds.isNotEmpty;
       case 'Products':
         return selectedProductIds.isNotEmpty;
+      case 'Tags':
+        return selectedTagIds.isNotEmpty;
       default:
         return false;
     }
@@ -276,6 +313,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
         return _buildPriorityOptions();
       case 'Products':
         return _buildProductOptions();
+      case 'Tags':
+        return _buildTagOptions();
       default:
         return const Center(child: Text('Select a category'));
     }
@@ -443,9 +482,13 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
         onToggle: (id) => setState(() {
           if (selectedStatusIds.contains(id)) {
             selectedStatusIds.remove(id);
+            selectedTagIds.clear();
+            _tagListModel = null;
           } else {
             selectedStatusIds.clear();
             selectedStatusIds.add(id);
+            selectedTagIds.clear();
+            _fetchTags(id);
           }
         }),
       );
@@ -463,9 +506,34 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
       onToggle: (id) => setState(() {
         if (selectedStatusIds.contains(id)) {
           selectedStatusIds.remove(id);
+          selectedTagIds.clear();
+          _tagListModel = null;
         } else {
           selectedStatusIds.clear();
           selectedStatusIds.add(id);
+          selectedTagIds.clear();
+          _fetchTags(id);
+        }
+      }),
+    );
+  }
+
+  Widget _buildTagOptions() {
+    if (_isTagLoading) return const Center(child: CircularProgressIndicator());
+    if (_tagListModel == null || (_tagListModel?.data?.isEmpty ?? true)) {
+      return const Center(child: Text('No tags found for this stage'));
+    }
+    final items = _tagListModel!.data!;
+    return _buildSelectionList(
+      items: items
+          .map((e) => {'id': e.id.toString(), 'name': e.reason ?? ''})
+          .toList(),
+      selectedIds: selectedTagIds,
+      onToggle: (id) => setState(() {
+        if (selectedTagIds.contains(id)) {
+          selectedTagIds.remove(id);
+        } else {
+          selectedTagIds.add(id);
         }
       }),
     );
@@ -521,6 +589,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     if (widget.productSectionModel == null)
       return const Center(child: Text('Loading...'));
     final items = widget.productSectionModel!.data ?? [];
+    if (items.isEmpty) return const Center(child: Text('No products added'));
     return _buildSelectionList(
       items: items
           .map((e) => {'id': e.id.toString(), 'name': e.productName ?? ''})
@@ -614,6 +683,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                 selectedCategoryIds.clear();
                 selectedPriorityIds.clear();
                 selectedProductIds.clear();
+                selectedTagIds.clear();
+                _tagListModel = null;
                 fromDate = null;
                 toDate = null;
                 isDateFiltered = false;
@@ -642,6 +713,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                 'categoryIds': selectedCategoryIds.toList(),
                 'priorityIds': selectedPriorityIds.toList(),
                 'productIds': selectedProductIds.toList(),
+                'tagIds': selectedTagIds.toList(),
+                'call_result_reason': selectedTagIds.toList(),
               });
               Navigator.pop(context);
             },

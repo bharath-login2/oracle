@@ -319,9 +319,7 @@ class _ActiveLeadsState extends State<ActiveLeads>
     }
   }
 
-  void _showFollowupSuccessMessage() {
-    Common.toastMessaage("Followup initiated", followupBlue);
-  }
+
 
   void _showCallInitiatedMessage() {
     Common.toastMessaage("Call initiated", callGreen);
@@ -951,10 +949,11 @@ class _ActiveLeadsState extends State<ActiveLeads>
       } else {
         if (widget.cloudCall == true) {
           await chooseCallDialog(context, index);
-          return true;
+          return false;
         } else {
           Common.dialPad(displayItem.contactNumber1);
-          return true;
+          _showCallInitiatedMessage();
+          return false;
         }
       }
     } catch (e) {
@@ -1043,13 +1042,7 @@ class _ActiveLeadsState extends State<ActiveLeads>
                                         return false;
                                       },
                                       onDismissed: (direction) {
-                                        if (direction ==
-                                            DismissDirection.endToStart) {
-                                          _showFollowupSuccessMessage();
-                                        } else if (direction ==
-                                            DismissDirection.startToEnd) {
-                                          _showCallInitiatedMessage();
-                                        }
+                                        // Items are no longer dismissed on swipe
                                       },
                                       child: InkWell(
                                         onLongPress: () =>
@@ -3370,6 +3363,7 @@ class _ActiveLeadsState extends State<ActiveLeads>
                 onTap: () async {
                   Navigator.pop(context);
                   Common.dialPad(item.contactNumber1);
+                  _showCallInitiatedMessage();
                 },
               ),
             ],

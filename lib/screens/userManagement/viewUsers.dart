@@ -1,5 +1,4 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:intl/intl.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/homePage.dart';
@@ -7,6 +6,7 @@ import 'package:login2/screens/leadManagement/StaffCalendarPage.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/screens/staff_reports/staffDashboardNew.dart';
 
 import 'package:login2/screens/staff_reports/staff_dashboard.dart';
 import 'package:login2/screens/userManagement/branches.dart';
@@ -23,6 +23,7 @@ import '../../screens/userManagement/designationList.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../authentication/login.dart';
 
 // ignore: must_be_immutable
 class ViewUsers extends StatefulWidget {
@@ -62,6 +63,7 @@ class _ViewUsersState extends State<ViewUsers> {
   String multiBranch = '';
   String userId = '';
   List<StaffList> filteredStaffs = [];
+
   @override
   void initState() {
     super.initState();
@@ -104,16 +106,7 @@ class _ViewUsersState extends State<ViewUsers> {
         await Common.getSharedPref("NewleadDashboardPermission");
     viewAttendanceSection = await Common.getSharedPref("viewAttendanceSection");
     final connectivityResult = await (Connectivity().checkConnectivity());
-    // if (connectivityResult == ConnectivityResult.mobile ||
-    //     connectivityResult == ConnectivityResult.wifi) {
-    //   setState(() {
-    //     result = true;
-    //   });
-    // } else {
-    //   setState(() {
-    //     result = false;
-    //   });
-    // }
+
     if (connectivityResult is List<ConnectivityResult>) {
       if (connectivityResult.contains(ConnectivityResult.mobile) ||
           connectivityResult.contains(ConnectivityResult.wifi)) {
@@ -252,16 +245,6 @@ class _ViewUsersState extends State<ViewUsers> {
                                 ],
                               ),
                             ),
-                            // Padding(
-                            //   padding: const EdgeInsets.only(right: 8.0),
-                            //   child: InkWell(
-                            //     onTap: () {
-                            //       _scaffoldKey.currentState!.openEndDrawer();
-                            //     },
-                            //     child: Image.asset("assets/icons/menu.png",
-                            //         width: 20),
-                            //   ),
-                            // ),
                           ],
                         ),
                       ],
@@ -270,856 +253,17 @@ class _ViewUsersState extends State<ViewUsers> {
                 ),
               ),
               body: viewStaff != null && configure != null
-                  ? SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 20.0, horizontal: 10.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width * .8,
-                                  child: TextField(
-                                    autocorrect: false,
-                                    keyboardType: TextInputType.visiblePassword,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        filteredStaffs = viewStaff!
-                                            .data.staffList
-                                            .where((item) => item.name
-                                                .toLowerCase()
-                                                .contains(value.toLowerCase()))
-                                            .toList();
-                                      });
-                                    },
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.all(8),
-                                      hintStyle:
-                                          const TextStyle(color: Colors.grey),
-                                      hintText: 'Search',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        borderSide: BorderSide
-                                            .none, // Set the border color to none
-                                      ),
-                                      prefixIcon: const Icon(
-                                        Icons.search,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                configure!.data!.isExpired == false
-                                    ? PopupMenuButton(
-                                        // add icon, by default "3 dot" icon
-                                        child: Container(
-                                          width: 35,
-                                          height: 35,
-                                          decoration: BoxDecoration(
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  blurRadius: 3,
-                                                  color: Colors.grey.shade800,
-                                                )
-                                              ],
-                                              shape: BoxShape.circle,
-                                              color: Colors.white),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Image.asset(
-                                              "assets/icons/settings.png",
-                                            ),
-                                          ),
-                                        ),
-                                        itemBuilder: (context) {
-                                          return [
-                                            const PopupMenuItem<int>(
-                                                value: 1,
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.add,
-                                                      color: Colors.green,
-                                                    ),
-                                                    SizedBox(
-                                                      width: 10,
-                                                    ),
-                                                    Text('Add Designation'),
-                                                  ],
-                                                )),
-                                            const PopupMenuItem<int>(
-                                                value: 2,
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.list,
-                                                      color: Colors.purple,
-                                                    ),
-                                                    SizedBox(
-                                                      width: 10,
-                                                    ),
-                                                    Text('List Designation'),
-                                                  ],
-                                                )),
-                                            const PopupMenuItem<int>(
-                                                value: 3,
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.person_add,
-                                                      color: Colors.blue,
-                                                    ),
-                                                    SizedBox(
-                                                      width: 10,
-                                                    ),
-                                                    Text('Add Staff'),
-                                                  ],
-                                                )),
-                                            if (multiBranch == 'true' &&
-                                                roleId == "2")
-                                              const PopupMenuItem<int>(
-                                                  value: 4,
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons.groups,
-                                                        color: Colors.green,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 10,
-                                                      ),
-                                                      Text('Branches'),
-                                                    ],
-                                                  ))
-                                          ];
-                                        },
-                                        onSelected: (value) {
-                                          if (value == 1) {
-                                            createStaffDesignationPermission ==
-                                                    'true'
-                                                ? Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            AddDesignationPage(
-                                                                widget.token!)),
-                                                  )
-                                                : _permissionDialogue(context,
-                                                    'Create Designation');
-                                          } else if (value == 2) {
-                                            viewStaffDesignationPermission ==
-                                                    'true'
-                                                ? Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            DesignationList(
-                                                                widget.token!)),
-                                                  )
-                                                : _permissionDialogue(context,
-                                                    'Designation List');
-                                          } else if (value == 3) {
-                                            createStaffPermission == 'true'
-                                                ? Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            AddUser(
-                                                                widget.token!)),
-                                                  ).then((r) {
-                                                    getData();
-                                                  })
-                                                : _permissionDialogue(
-                                                    context, 'Add User');
-                                          } else if (value == 4) {
-                                            Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) =>
-                                                            const Branches()))
-                                                .then((r) {
-                                              getData();
-                                            });
-                                          }
-                                        })
-                                    : const SizedBox()
-                              ],
-                            ),
-                          ),
-                          configure!.data!.isExpired == false
-                              ? MediaQuery.removePadding(
-                                  context: context,
-                                  removeTop: true,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        bottom: 30, left: 12.0, right: 12.0),
-                                    child: filteredStaffs.isNotEmpty
-                                        ? ListView.builder(
-                                            // gridDelegate:
-                                            //     const SliverGridDelegateWithFixedCrossAxisCount(
-                                            //         crossAxisCount: 2,
-                                            //         crossAxisSpacing: 12,
-                                            //         mainAxisSpacing: 12,
-                                            //         childAspectRatio: 1.15),
-                                            itemCount: filteredStaffs.length,
-                                            shrinkWrap: true,
-                                            physics:
-                                                const NeverScrollableScrollPhysics(),
-                                            itemBuilder: (context, i) {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 12),
-                                                child: InkWell(
-                                                    onTap: () {
-                                                      viewStaffReportPermission ==
-                                                              'true'
-                                                          ? Navigator.of(context).push(MaterialPageRoute(
-                                                              builder: (context) =>
-                                                                  StaffReportDashboard(
-                                                                      id: filteredStaffs[
-                                                                              i]
-                                                                          .staffId
-                                                                          .toString())))
-                                                          : _permissionDialogue(
-                                                              context,
-                                                              'Staff Report');
-                                                    },
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        boxShadow: const [
-                                                          BoxShadow(
-                                                            color: Colors.grey,
-                                                            offset: Offset(
-                                                                2.0, 2.0),
-                                                          )
-                                                        ],
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10),
-                                                      ),
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                          left: 8.0,
-                                                          right: 8.0,
-                                                          bottom: 10.0,
-                                                          top: 10.0,
-                                                        ),
-                                                        child: Column(
-                                                          children: [
-                                                            Row(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              children: [
-                                                                Container(
-                                                                  height: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .height *
-                                                                      .175,
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    color: Colors
-                                                                        .grey
-                                                                        .shade100,
-                                                                    borderRadius:
-                                                                        BorderRadius.circular(
-                                                                            12),
-                                                                  ),
-                                                                  width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width *
-                                                                      .42,
-                                                                  child: Column(
-                                                                    children: [
-                                                                      Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            top:
-                                                                                10.0,
-                                                                            left:
-                                                                                10.0,
-                                                                            right:
-                                                                                10.0),
-                                                                        child:
-                                                                            Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          crossAxisAlignment:
-                                                                              CrossAxisAlignment.start,
-                                                                          children: [
-                                                                            Container(
-                                                                              constraints: const BoxConstraints(
-                                                                                maxHeight: 60,
-                                                                              ),
-                                                                              child: Container(
-                                                                                constraints: const BoxConstraints(
-                                                                                  minHeight: 20,
-                                                                                  minWidth: 20,
-                                                                                  maxHeight: 40,
-                                                                                  maxWidth: 40,
-                                                                                ),
-                                                                                decoration: BoxDecoration(
-                                                                                  border: Border.all(color: Colors.white, width: 0),
-                                                                                  boxShadow: const [
-                                                                                    BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
-                                                                                  ],
-                                                                                  color: Colors.white,
-                                                                                  shape: BoxShape.circle,
-                                                                                  image: DecorationImage(fit: BoxFit.cover, image: NetworkImage(filteredStaffs[i].imageUrl.toString())),
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                            Column(
-                                                                              mainAxisAlignment: MainAxisAlignment.start,
-                                                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                                                              children: [
-                                                                                Container(
-                                                                                  decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(5)),
-                                                                                  child: Padding(
-                                                                                    padding: const EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
-                                                                                    child: SizedBox(
-                                                                                        width: 65,
-                                                                                        child: Center(
-                                                                                          child: Text(
-                                                                                            filteredStaffs[i].designation.toString(),
-                                                                                            style: const TextStyle(
-                                                                                              fontSize: 8,
-                                                                                              color: Colors.black,
-                                                                                              fontWeight: FontWeight.w500,
-                                                                                            ),
-                                                                                            maxLines: 1,
-                                                                                            overflow: TextOverflow.ellipsis,
-                                                                                          ),
-                                                                                        )),
-                                                                                  ),
-                                                                                ),
-                                                                                Padding(
-                                                                                  padding: const EdgeInsets.only(left: 10),
-                                                                                  child: Column(
-                                                                                    mainAxisAlignment: MainAxisAlignment.start,
-                                                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                                                    children: [
-                                                                                      SizedBox(
-                                                                                        width: MediaQuery.of(context).size.width * .22,
-                                                                                        child: Text(
-                                                                                          filteredStaffs[i].name.toString(),
-                                                                                          style: const TextStyle(fontSize: 13, color: Colors.black, fontWeight: FontWeight.w500),
-                                                                                          maxLines: 1,
-                                                                                          overflow: TextOverflow.ellipsis,
-                                                                                        ),
-                                                                                      ),
-                                                                                      SizedBox(
-                                                                                        width: MediaQuery.of(context).size.width * .22,
-                                                                                        child: Text(
-                                                                                          filteredStaffs[i].phoneNo.toString(),
-                                                                                          style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                        ),
-                                                                                      ),
-                                                                                      filteredStaffs[i].branchName != ''
-                                                                                          ? SizedBox(
-                                                                                              width: MediaQuery.of(context).size.width * .22,
-                                                                                              child: Text(
-                                                                                                'Branch:${filteredStaffs[i].branchName}',
-                                                                                                style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                                maxLines: 1,
-                                                                                                overflow: TextOverflow.ellipsis,
-                                                                                              ),
-                                                                                            )
-                                                                                          : const SizedBox(),
-                                                                                    ],
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                      Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            top:
-                                                                                6.0,
-                                                                            bottom:
-                                                                                8.0),
-                                                                        child:
-                                                                            Container(
-                                                                          width:
-                                                                              MediaQuery.of(context).size.width * .37,
-                                                                          decoration:
-                                                                              BoxDecoration(
-                                                                            color:
-                                                                                Colors.white,
-                                                                            borderRadius:
-                                                                                BorderRadius.circular(10),
-                                                                          ),
-                                                                          child:
-                                                                              Padding(
-                                                                            padding:
-                                                                                const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8),
-                                                                            child:
-                                                                                Column(
-                                                                              children: [
-                                                                                Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                                                  children: [
-                                                                                    Container(
-                                                                                      decoration: BoxDecoration(color: const Color(0xFFCDD6FE), borderRadius: BorderRadius.circular(5)),
-                                                                                      child: const Padding(
-                                                                                        padding: EdgeInsets.only(left: 5, right: 5, top: 2, bottom: 2),
-                                                                                        child: Center(
-                                                                                          child: Text(
-                                                                                            "Leads",
-                                                                                            style: TextStyle(
-                                                                                              fontSize: 12,
-                                                                                              color: Colors.black,
-                                                                                              fontWeight: FontWeight.w500,
-                                                                                            ),
-                                                                                            maxLines: 1,
-                                                                                            overflow: TextOverflow.ellipsis,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                    ),
-                                                                                    Text(
-                                                                                      filteredStaffs[i].totalLeadsCount,
-                                                                                      style: const TextStyle(fontSize: 16, color: Colors.black54, fontWeight: FontWeight.bold),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                                const SizedBox(
-                                                                                  height: 5,
-                                                                                ),
-                                                                                Text(
-                                                                                  "This month, ${DateFormat('MMM yyyy').format(DateTime.now()).toString()}",
-                                                                                  style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
-                                                                                ),
-                                                                              ],
-                                                                            ),
-                                                                          ),
-                                                                        ),
-                                                                      )
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                                SizedBox(
-                                                                  height: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .height *
-                                                                      .175,
-                                                                  child: Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .start,
-                                                                    children: [
-                                                                      Padding(
-                                                                        padding: const EdgeInsets
-                                                                            .only(
-                                                                            right:
-                                                                                19.0),
-                                                                        child:
-                                                                            Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          crossAxisAlignment:
-                                                                              CrossAxisAlignment.start,
-                                                                          children: [
-                                                                            Container(
-                                                                              width: MediaQuery.of(context).size.width * .40,
-                                                                              decoration: BoxDecoration(
-                                                                                color: const Color(0xFFCDD6FE),
-                                                                                borderRadius: BorderRadius.circular(8),
-                                                                              ),
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                                                child: Row(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                  children: [
-                                                                                    Column(
-                                                                                      children: [
-                                                                                        const Text(
-                                                                                          "Phone Call",
-                                                                                          style: TextStyle(
-                                                                                            fontSize: 11,
-                                                                                            color: Colors.black54,
-                                                                                            fontWeight: FontWeight.w500,
-                                                                                          ),
-                                                                                        ),
-                                                                                        Text(
-                                                                                          filteredStaffs[i].totalCallDuration,
-                                                                                          style: const TextStyle(
-                                                                                            fontSize: 12,
-                                                                                            color: Colors.black,
-                                                                                            fontWeight: FontWeight.w500,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ],
-                                                                                    ),
-                                                                                    Container(
-                                                                                      width: 1,
-                                                                                      height: 40,
-                                                                                      color: Colors.grey,
-                                                                                    ),
-                                                                                    Column(
-                                                                                      children: [
-                                                                                        const Text(
-                                                                                          "Cloud Call",
-                                                                                          style: TextStyle(
-                                                                                            fontSize: 11,
-                                                                                            color: Colors.black54,
-                                                                                            fontWeight: FontWeight.w500,
-                                                                                          ),
-                                                                                        ),
-                                                                                        Text(
-                                                                                          filteredStaffs[i].totalCloudCallDuration,
-                                                                                          style: const TextStyle(
-                                                                                            fontSize: 12,
-                                                                                            color: Colors.black,
-                                                                                            fontWeight: FontWeight.w500,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ],
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-
-                                                                            /// 3-dot menu icon
-                                                                            PopupMenuButton<String>(
-                                                                              icon: const Icon(Icons.more_vert, size: 20),
-                                                                              onSelected: (value) {
-                                                                                if (value == 'disable') {
-                                                                                  // Handle disable action
-                                                                                  showDialog(
-                                                                                    context: context,
-                                                                                    builder: (BuildContext context) {
-                                                                                      return AlertDialog(
-                                                                                        title: const Text('Disable Staff'),
-                                                                                        content: const Text('Are you sure you want to disable this staff member?'),
-                                                                                        actions: [
-                                                                                          TextButton(
-                                                                                            onPressed: () {
-                                                                                              Navigator.of(context).pop();
-                                                                                            },
-                                                                                            child: const Text('Cancel'),
-                                                                                          ),
-                                                                                          TextButton(
-                                                                                            onPressed: () async {
-                                                                                              Navigator.of(context).pop();
-                                                                                              final disableStaff = await HttpService.addStaffDisable(
-                                                                                                staffId: filteredStaffs[i].staffId,
-                                                                                              );
-
-                                                                                              if (disableStaff != null && disableStaff.data == true) {
-                                                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                  const SnackBar(
-                                                                                                    content: Text("Staff disabled successfully"),
-                                                                                                    backgroundColor: Colors.green,
-                                                                                                    behavior: SnackBarBehavior.floating,
-                                                                                                    margin: EdgeInsets.only(bottom: 10.0, left: 16.0, right: 16.0),
-                                                                                                    duration: Duration(seconds: 3),
-                                                                                                  ),
-                                                                                                );
-                                                                                                getData();
-                                                                                              } else {
-                                                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                                                  const SnackBar(
-                                                                                                    content: Text("Failed to disable staff"),
-                                                                                                    backgroundColor: Colors.red,
-                                                                                                    behavior: SnackBarBehavior.floating,
-                                                                                                    margin: EdgeInsets.only(bottom: 80.0, left: 16.0, right: 16.0),
-                                                                                                  ),
-                                                                                                );
-                                                                                              }
-                                                                                            },
-                                                                                            child: const Text('Disable'),
-                                                                                          ),
-                                                                                        ],
-                                                                                      );
-                                                                                    },
-                                                                                  );
-                                                                                }
-
-                                                                                if (value == 'attendance') {
-                                                                                  Navigator.push(
-                                                                                    context,
-                                                                                    MaterialPageRoute(
-                                                                                      builder: (context) => StaffCalendarPage(
-                                                                                        staffId: filteredStaffs[i].staffId,
-                                                                                        selectedDate: DateTime.now(),
-                                                                                        staffName: filteredStaffs[i].name,
-                                                                                      ),
-                                                                                    ),
-                                                                                  );
-                                                                                }
-                                                                              },
-                                                                              itemBuilder: (context) => [
-                                                                                const PopupMenuItem(
-                                                                                  value: 'disable',
-                                                                                  child: Text('Disable'),
-                                                                                ),
-                                                                                if (viewAttendanceSection.toString() == "true")
-                                                                                  const PopupMenuItem(
-                                                                                    value: 'attendance',
-                                                                                    child: Text('Attendance'),
-                                                                                  ),
-                                                                              ],
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            10,
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width: MediaQuery.of(context).size.width *
-                                                                            .46,
-                                                                        child:
-                                                                            Row(
-                                                                          mainAxisAlignment:
-                                                                              MainAxisAlignment.spaceBetween,
-                                                                          children: [
-                                                                            // Container(
-                                                                            //   width: MediaQuery.of(context).size.width * .22,
-                                                                            //   decoration: BoxDecoration(
-                                                                            //     color: Colors.grey.shade100,
-                                                                            //     borderRadius: BorderRadius.circular(8),
-                                                                            //   ),
-                                                                            //   child: Padding(
-                                                                            //     padding: const EdgeInsets.all(8.0),
-                                                                            //     child: Column(
-                                                                            //       children: [
-                                                                            //         const Text(
-                                                                            //           "Cost",
-                                                                            //           style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                            //         ),
-                                                                            //         Text(
-                                                                            //           "₹ ${filteredStaffs[i].totalClosedLeadCost}",
-                                                                            //           style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                            //         ),
-                                                                            //       ],
-                                                                            //     ),
-                                                                            //   ),
-                                                                            // ),
-                                                                            Container(
-                                                                              width: MediaQuery.of(context).size.width * .28,
-                                                                              decoration: BoxDecoration(
-                                                                                color: Colors.grey.shade100,
-                                                                                borderRadius: BorderRadius.circular(8),
-                                                                              ),
-                                                                              child: Padding(
-                                                                                padding: const EdgeInsets.all(8.0),
-                                                                                child: Column(
-                                                                                  children: [
-                                                                                    const Text(
-                                                                                      "Closed",
-                                                                                      style: TextStyle(fontSize: 12, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                                    ),
-                                                                                    Text(
-                                                                                      filteredStaffs[i].totalClosedLeadCount,
-                                                                                      style: const TextStyle(fontSize: 11, color: Colors.black, fontWeight: FontWeight.bold),
-                                                                                    ),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ],
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 5,
-                                                            ),
-                                                            Column(
-                                                              children: [
-                                                                Row(
-                                                                  mainAxisAlignment:
-                                                                      MainAxisAlignment
-                                                                          .spaceBetween,
-                                                                  children: [
-                                                                    Text(
-                                                                        "Achieved : ₹ ${filteredStaffs[i].targetAmountAchieved}",
-                                                                        style: const TextStyle(
-                                                                            color:
-                                                                                Colors.black,
-                                                                            fontWeight: FontWeight.w600,
-                                                                            fontSize: 11)),
-                                                                    Text(
-                                                                        "Target : ₹ ${filteredStaffs[i].targetAmount}",
-                                                                        style: const TextStyle(
-                                                                            color:
-                                                                                Colors.black,
-                                                                            fontWeight: FontWeight.w600,
-                                                                            fontSize: 11)),
-                                                                  ],
-                                                                ),
-                                                                const SizedBox(
-                                                                  height: 3,
-                                                                ),
-                                                                LinearProgressIndicator(
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              8),
-                                                                  backgroundColor:
-                                                                      Colors
-                                                                          .grey
-                                                                          .shade400,
-                                                                  value: double.parse(
-                                                                          filteredStaffs[i]
-                                                                              .targetPercentage) /
-                                                                      100,
-                                                                  valueColor: AlwaysStoppedAnimation<
-                                                                          Color>(
-                                                                      Colors
-                                                                          .green
-                                                                          .shade400),
-                                                                  minHeight: 7,
-                                                                ),
-                                                              ],
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    )),
-                                              );
-                                            },
-                                          )
-                                        : noResultWidget(
-                                            context, "No search reults..!"),
-                                  ),
-                                )
-                              : Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          color: Colors.grey,
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(0.1),
-                                          child: Card(
-                                            // Set the shape of the card using a rounded rectangle border with a 8 pixel radius
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            // Set the clip behavior of the card
-                                            clipBehavior:
-                                                Clip.antiAliasWithSaveLayer,
-                                            // Define the child widgets of the card
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: <Widget>[
-                                                // Display an image at the top of the card that fills the width of the card and has a height of 160 pixels
-                                                Image.asset(
-                                                  'assets/main/packageimage.png',
-                                                  height: 160,
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                                // Add a container with padding that contains the card's title, text, and buttons
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.fromLTRB(
-                                                          15, 15, 15, 0),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: <Widget>[
-                                                      const Text(
-                                                        'Package Expired..',
-                                                        style: TextStyle(
-                                                          fontSize: 18,
-                                                          color: Colors.red,
-                                                        ),
-                                                      ),
-
-                                                      // Add a row with two buttons spaced apart and aligned to the right side of the card
-                                                      Row(
-                                                        children: <Widget>[
-                                                          // Add a spacer to push the buttons to the right side of the card
-                                                          const Spacer(),
-                                                          // Add a text button labeled "SHARE" with transparent foreground color and an accent color for the text
-
-                                                          // Add a text button labeled "EXPLORE" with transparent foreground color and an accent color for the text
-                                                          TextButton(
-                                                            child: const Text(
-                                                              "UPGRADE",
-                                                            ),
-                                                            onPressed: () {
-                                                              _upgrade(context);
-                                                            },
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                // Add a small space between the card and the next widget
-                                                Container(height: 5),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                        ],
-                      ),
-                    )
+                  ? _buildModernBody(size)
                   : Center(
                       child: Lottie.asset('assets/main/loading.json',
-                          fit: BoxFit.fill),
+                          width: 150, height: 150, fit: BoxFit.fill),
                     ),
               endDrawer: DraweScreen(widget.token!),
               floatingActionButtonLocation:
                   FloatingActionButtonLocation.centerDocked,
               floatingActionButton: FloatingActionButton(
                 backgroundColor: Colors.black,
-                // onPressed: () {
-                //   Navigator.push(
-                //     context,
-                //     MaterialPageRoute(
-                //         builder: (context) => Dashboard(widget.token)),
-                //   );
-                // },
                 onPressed: () {
-                  // ProjectDashboardPermission == "true"
-                  //     ? Navigator.push(
-                  //         context,
-                  //         MaterialPageRoute(
-                  //             builder: (context) => ProjectDashboard()),
-                  //       )
-                  //     : Navigator.push(
-                  //         context,
-                  //         MaterialPageRoute(
-                  //             builder: (context) => Dashboard(widget.token)),
-                  //       );
                   ProjectDashboardPermission == "true"
                       ? Navigator.pushReplacement(
                           context,
@@ -1202,7 +346,7 @@ class _ViewUsersState extends State<ViewUsers> {
                     ),
                     InkWell(
                       onTap: () {
-                        //getData();
+                        getData();
                       },
                       child: SizedBox(
                         width: 120,
@@ -1233,48 +377,878 @@ class _ViewUsersState extends State<ViewUsers> {
     );
   }
 
-  void _permissionDialogue(BuildContext context, title) {
-    showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Alert !!!'),
-            content: const Text(
-                'You have no permission to access the feature please contact the support team'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Close')),
+  Widget _buildModernBody(Size size) {
+    if (configure?.data?.isExpired == true) {
+      return _buildExpiredBody();
+    }
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        children: [
+          _buildSearchAndSettingsHeader(),
+          Padding(
+            padding:
+                const EdgeInsets.only(bottom: 100), // Space for FAB/BottomNav
+            child: filteredStaffs.isNotEmpty
+                ? ListView.builder(
+                    itemCount: filteredStaffs.length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemBuilder: (context, i) =>
+                        _buildModernStaffCard(filteredStaffs[i], i),
+                  )
+                : _buildNoResults(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchAndSettingsHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 55,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                autocorrect: false,
+                onChanged: (value) {
+                  setState(() {
+                    filteredStaffs = viewStaff!.data.staffList
+                        .where((item) => item.name
+                            .toLowerCase()
+                            .contains(value.toLowerCase()))
+                        .toList();
+                  });
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search staff by name...',
+                  hintStyle:
+                      TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                  prefixIcon:
+                      Icon(Icons.search_rounded, color: Colors.grey.shade400),
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                ),
+              ),
+            ),
+          ),
+          // const SizedBox(width: 12),
+          // _buildSettingsButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsButton() {
+    return PopupMenuButton<int>(
+      offset: const Offset(0, 65),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      elevation: 8,
+      color: Colors.white,
+      shadowColor: Colors.black.withOpacity(0.2),
+      child: Container(
+        height: 52,
+        width: 52,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color.fromARGB(255, 47, 131, 180),
+              Color.fromARGB(255, 47, 131, 180),
+              Color.fromARGB(255, 47, 131, 180)
             ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF667eea).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: Colors.white.withOpacity(0.15),
+            ),
+            child: const Icon(
+              Icons.add_chart_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+          ),
+        ),
+      ),
+      itemBuilder: (context) => [
+        _buildModernMenuItem(
+          1,
+          Icons.add_circle_outline,
+          'Add Designation',
+          const Color(0xFF43e97b),
+          'Create new designation for staff members',
+        ),
+        _buildModernMenuItem(
+          2,
+          Icons.format_list_bulleted_rounded,
+          'List Designation',
+          const Color(0xFF667eea),
+          'View all existing designations',
+        ),
+        _buildModernMenuItem(
+          3,
+          Icons.person_add_alt_1_rounded,
+          'Add Staff',
+          const Color(0xFFf093fb),
+          'Add new staff member to the system',
+        ),
+        if (multiBranch == 'true' && roleId == "2")
+          _buildModernMenuItem(
+            4,
+            Icons.business_center_rounded,
+            'Branches',
+            const Color(0xFFfa709a),
+            'Manage branch locations',
+          ),
+      ],
+      onSelected: (value) {
+        if (value == 1) {
+          createStaffDesignationPermission == 'true'
+              ? Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => AddDesignationPage(widget.token!)))
+              : _permissionDialogue(context, 'Create Designation');
+        } else if (value == 2) {
+          viewStaffDesignationPermission == 'true'
+              ? Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => DesignationList(widget.token!)))
+              : _permissionDialogue(context, 'Designation List');
+        } else if (value == 3) {
+          createStaffPermission == 'true'
+              ? Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => AddUser(widget.token!)))
+                  .then((r) => getData())
+              : _permissionDialogue(context, 'Add User');
+        } else if (value == 4) {
+          Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const Branches()))
+              .then((r) => getData());
+        }
+      },
+    );
+  }
+
+  PopupMenuItem<int> _buildModernMenuItem(
+    int value,
+    IconData icon,
+    String title,
+    Color iconColor,
+    String subtitle,
+  ) {
+    return PopupMenuItem<int>(
+      value: value,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  iconColor.withOpacity(0.2),
+                  iconColor.withOpacity(0.1)
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            size: 20,
+            color: Colors.grey.shade400,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernStaffCard(StaffList staff, int index) {
+    final double targetPercent = double.tryParse(staff.targetPercentage) ?? 0.0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              viewStaffReportPermission == 'true'
+                  ? Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => StaffReportDashboardNew(
+                          id: staff.staffId.toString())))
+                  : _permissionDialogue(context, 'Staff Report');
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: Colors.blue.shade50, width: 2),
+                          image: DecorationImage(
+                            fit: BoxFit.cover,
+                            image: NetworkImage(staff.imageUrl.toString()),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              staff.name.toString(),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2a86c9).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                staff.designation.toString(),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF2a86c9),
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildStaffCardMenu(staff),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStaffDetailsRow(staff),
+                  const SizedBox(height: 20),
+                  _buildStatsGrid(staff),
+                  const SizedBox(height: 20),
+                  _buildTargetProgress(staff, targetPercent),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStaffDetailsRow(StaffList staff) {
+    return Row(
+      children: [
+        _buildIconInfo(Icons.phone_iphone_rounded, staff.phoneNo.toString()),
+        if (staff.branchName != '') ...[
+          const SizedBox(width: 16),
+          _buildIconInfo(Icons.location_on_rounded, staff.branchName),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildIconInfo(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: Colors.grey.shade400),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsGrid(StaffList staff) {
+    return Row(
+      children: [
+        Expanded(
+            child: _buildStatItem(
+                "Leads", staff.totalLeadsCount, const Color(0xFF6366F1))),
+        const SizedBox(width: 12),
+        Expanded(
+            child: _buildStatItem(
+                "Closed", staff.totalClosedLeadCount, const Color(0xFF10B981))),
+        const SizedBox(width: 12),
+        Expanded(child: _buildCallStatItem(staff)),
+      ],
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+                fontSize: 10,
+                color: color.withOpacity(0.6),
+                fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+                fontSize: 16, color: color, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCallStatItem(StaffList staff) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            "Calls (Ph/Cl)",
+            style: TextStyle(
+                fontSize: 10,
+                color: Colors.orange,
+                fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            child: Text(
+              "${staff.totalCallDuration} / ${staff.totalCloudCallDuration}",
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.orange,
+                  fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTargetProgress(StaffList staff, double percent) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Achieved: ₹ ${staff.targetAmountAchieved}",
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF475569)),
+            ),
+            Text(
+              "Target: ₹ ${staff.targetAmount}",
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF94A3B8)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Stack(
+          children: [
+            Container(
+              height: 10,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 800),
+              height: 10,
+              width: (percent / 100) * (MediaQuery.of(context).size.width - 64),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.green.shade300, Colors.green.shade600],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            "${percent.toStringAsFixed(1)}%",
+            style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.green.shade700),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStaffCardMenu(StaffList staff) {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_horiz_rounded, color: Colors.grey.shade400),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      onSelected: (value) async {
+        if (value == 'disable') {
+          _showDisableDialog(staff);
+        } else if (value == 'attendance') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StaffCalendarPage(
+                staffId: staff.staffId,
+                selectedDate: DateTime.now(),
+                staffName: staff.name,
+              ),
+            ),
           );
-        });
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'disable',
+          child: Row(
+            children: [
+              Icon(Icons.person_off_rounded, color: Colors.red, size: 20),
+              SizedBox(width: 12),
+              Text('Disable Staff'),
+            ],
+          ),
+        ),
+        if (viewAttendanceSection.toString() == "true")
+          const PopupMenuItem(
+            value: 'attendance',
+            child: Row(
+              children: [
+                Icon(Icons.calendar_today_rounded,
+                    color: Colors.blue, size: 20),
+                SizedBox(width: 12),
+                Text('Attendance'),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showDisableDialog(StaffList staff) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Disable Staff'),
+        content: Text('Are you sure you want to disable ${staff.name}?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final disableStaff =
+                  await HttpService.addStaffDisable(staffId: staff.staffId);
+              if (disableStaff != null && disableStaff.data == true) {
+                Common.premiumToast(
+                    context, "Staff disabled successfully", Icons.check_circle,
+                    color: Colors.green);
+                getData();
+              } else {
+                Common.premiumToast(
+                    context, "Failed to disable staff", Icons.error,
+                    color: Colors.red);
+              }
+            },
+            child: const Text('Disable', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoResults() {
+    return Center(
+      child: Column(
+        children: [
+          const SizedBox(height: 100),
+          Lottie.asset('assets/main/empty_state.json', width: 200, height: 200),
+          const Text(
+            "No staff found",
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpiredBody() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(30)),
+                child: Image.asset(
+                  'assets/main/packageimage.png',
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Package Expired',
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Please contact our support team to upgrade your plan and continue using the staff management features.',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => _upgrade(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                        ),
+                        child: const Text('UPGRADE NOW',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget noResultWidget(BuildContext context, String message) {
+    return Center(
+      child: Column(
+        children: [
+          const SizedBox(height: 50),
+          Icon(Icons.search_off_rounded, size: 80, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          Text(message,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  void logout(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext ctx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    size: 48,
+                    color: Colors.blue,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Confirm Logout',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Are you sure you want to logout?',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: const BorderSide(color: Colors.blue),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Common.saveSharedPref("isLogin", "false");
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const Login()),
+                            (route) => false,
+                          );
+                        },
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Logout'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _permissionDialogue(BuildContext context, String title) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.lock_outline_rounded, color: Colors.orange),
+            const SizedBox(width: 10),
+            Text('Access Denied',
+                style: TextStyle(color: Colors.grey.shade800)),
+          ],
+        ),
+        content: Text(
+            'You do not have permission to $title. Please contact your administrator for access.',
+            style: TextStyle(color: Colors.grey.shade600)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Understood',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _upgrade(BuildContext context) {
     showDialog(
-        context: context,
-        builder: (BuildContext ctx) {
-          return AlertDialog(
-            title: const Text('Upgrade Package !!!'),
-            content: const Text(
-                'Please contact the support team to upgrade your current plan'),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Close')),
-              TextButton(
-                  onPressed: () async {
-                    String url = 'tel:${configure!.data!.supportTeamNumber}';
-                    await launch(url);
-                  },
-                  child: const Text('Call'))
-            ],
-          );
-        });
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Upgrade Required'),
+        content: const Text(
+            'This feature requires a premium plan. Please contact our support team to upgrade.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close')),
+          TextButton(
+            onPressed: () async {
+              String url = 'tel:${configure!.data!.supportTeamNumber}';
+              if (await canLaunchUrl(Uri.parse(url))) {
+                await launchUrl(Uri.parse(url));
+              }
+            },
+            child: const Text('Call Support',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          )
+        ],
+      ),
+    );
   }
 }
 

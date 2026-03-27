@@ -76,6 +76,7 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
   bool updateLeadPermission1 = false;
   bool deleteLeadPermission1 = false;
   bool cloudCallPermission1 = false;
+  bool viewLeadCategoryPermission1 = false;
 
   @override
   void initState() {
@@ -114,6 +115,8 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
         prefs.getString('deleteLeadPermission') ?? 'false';
     final cloudCallPermission =
         prefs.getString('cloudCallPermission') ?? 'false';
+    final viewLeadCategoryPermission =
+        prefs.getString('viewLeadCategoryPermission') ?? 'false';
 
     // Convert string to boolean
     accessCallRecordingPermission1 = accessCallRecordingPermission == 'true';
@@ -123,6 +126,7 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
     updateLeadPermission1 = updateLeadPermission == 'true';
     deleteLeadPermission1 = deleteLeadPermission == 'true';
     cloudCallPermission1 = cloudCallPermission == 'true';
+    viewLeadCategoryPermission1 = viewLeadCategoryPermission == 'true';
 
     if (mounted) {
       setState(() {});
@@ -335,14 +339,15 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
           _handleMenuItemTap(context, 9);
         },
       ),
-      _buildMenuItem(
-        iconImage: "assets/icons/leadCategory.png",
-        title: 'Lead Category',
-        onTap: () {
-          Navigator.pop(context);
-          _handleMenuItemTap(context, 2);
-        },
-      ),
+      if (viewLeadCategoryPermission1)
+        _buildMenuItem(
+          iconImage: "assets/icons/leadCategory.png",
+          title: 'Lead Category',
+          onTap: () {
+            Navigator.pop(context);
+            _handleMenuItemTap(context, 2);
+          },
+        ),
       _buildMenuItem(
         iconImage: "assets/icons/callHistory.png",
         title: 'Call History',

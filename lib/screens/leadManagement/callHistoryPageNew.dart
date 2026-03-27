@@ -10,6 +10,12 @@ import '../../screens/leadManagement/dashboard.dart';
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:login2/screens/leadManagement/lead_details_popup.dart';
+import 'package:login2/models/lead_management/leadDetailsModel.dart';
+import 'package:login2/models/lead_management/leadDetailsModelAdd.dart';
+import 'package:login2/models/lead_management/leadMileStoneListModel.dart';
+import 'package:login2/models/lead_management/leadFollowupAdd.dart' as af;
+import 'package:login2/models/lead_management/listFolderName.dart';
 
 // Custom Colors
 class AppColors {
@@ -554,7 +560,9 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // Navigate to call details
+            if (call.callMasterId != null) {
+              _openLeadDetails(call.callMasterId!);
+            }
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -706,113 +714,190 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
       itemCount: callHistory!.data!.followupHistory!.length,
       itemBuilder: (context, index) {
         final followup = callHistory!.data!.followupHistory![index];
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.secondary.withOpacity(0.1),
-                      child: Text(
-                        followup.clientName![0].toUpperCase(),
-                        style: const TextStyle(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            followup.clientName!,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            followup.contactNumber1!,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(followup.callResult)
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        followup.callResult ?? 'Pending',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: _getStatusColor(followup.callResult),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildInfoChip(
-                      icon: Icons.person_outline,
-                      label: followup.staffName ?? '',
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: followup.scheduledDate ?? '',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (followup.remarks != null && followup.remarks!.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      followup.remarks!,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+        return GestureDetector(
+            onTap: () {
+              if (followup.callMasterId != null) {
+                _openLeadDetails(followup.callMasterId!);
+              }
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-              ],
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: AppColors.secondary.withOpacity(0.1),
+                          child: Text(
+                            followup.clientName![0].toUpperCase(),
+                            style: const TextStyle(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                followup.clientName!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                followup.contactNumber1!,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(followup.callResult)
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            followup.callResult ?? 'Pending',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _getStatusColor(followup.callResult),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.person_outline,
+                          label: followup.staffName ?? '',
+                        ),
+                        const SizedBox(width: 8),
+                        _buildInfoChip(
+                          icon: Icons.calendar_today,
+                          label: followup.scheduledDate ?? '',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (followup.remarks != null &&
+                        followup.remarks!.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          followup.remarks!,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ));
+      },
+    );
+  }
+
+  Future<void> _openLeadDetails(String cmId) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: CircularProgressIndicator(
+              color: AppColors.primary,
+              strokeWidth: 3,
             ),
           ),
         );
       },
     );
+
+    try {
+      final results = await Future.wait([
+        HttpService.leadDetails(widget.token, cmId),
+        HttpService.listAddonDet(widget.token, cmId),
+        HttpService.listFolderAndFiles(widget.token, cmId, ''),
+        HttpService.leadMileStone(widget.token, cmId),
+        HttpService.leadFollowupData(widget.token, cmId),
+      ]);
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+
+      final leadDetails = results[0] as LeadDeatailsModel?;
+      if (leadDetails == null) {
+        Common.toastMessaage("Failed to load lead details", Colors.red);
+        return;
+      }
+
+      final leadDetailsAdditional = results[1] as LeadDeatailsModelAdd?;
+      final listFolder = results[2] as ListFolderNameModel?;
+      final mileStone = results[3] as LeadMileStoneListModel?;
+      final leadDetailsFollowup = results[4] as af.LeadFollowupData?;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => LeadDetailsPopup(
+          token: widget.token,
+          editLead: updateLeadPermission1,
+          deleteLead: deleteLeadPermission1,
+          cloudCall: cloudCallPermission1,
+          callMasterId: cmId,
+          leadDetails: leadDetails,
+          leadDetailsAdditional: leadDetailsAdditional,
+          listFolder: listFolder,
+          mileStone: mileStone,
+          leadDetailsFollowup: leadDetailsFollowup,
+          pageName: 'callHistory',
+          onDataChanged: () {
+            _loadData();
+          },
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      Common.toastMessaage("Error loading lead details", Colors.red);
+    }
   }
 
   Widget _buildCallLogList() {

@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
+import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -25,7 +26,6 @@ import 'package:workmanager/workmanager.dart';
 import '../../core/common.dart';
 import '../../models/loginModel.dart';
 import '../../models/updateModel.dart';
-import '../../screens/leadManagement/dashboard.dart';
 import '../../service/service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../widgets/size_config.dart';
@@ -51,7 +51,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
 
   static const Color primaryBlue = Color(0xFF1E88E5);
   static const Color lightBlue = Color(0xFF90CAF9);
-  static const Color extraLightBlue = Color(0xFFE3F2FD);
   static const Color gradientStart = Color(0xFF2196F3);
   static const Color gradientEnd = Color(0xFF1976D2);
 
@@ -373,17 +372,30 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
       if (connectivityResult.contains(ConnectivityResult.mobile) ||
           connectivityResult.contains(ConnectivityResult.wifi)) {
         if (username.text.isEmpty) {
-          Common.toastMessaage('Username cannot be empty', Colors.red);
+          Common.premiumToast(
+            context,
+            'Username cannot be empty',
+            Icons.person_outline_rounded,
+            color: Colors.orange,
+          );
         } else if (password.text.isEmpty) {
-          Common.toastMessaage('Password cannot be empty', Colors.red);
+          Common.premiumToast(
+            context,
+            'Password cannot be empty',
+            Icons.lock_outline_rounded,
+            color: Colors.orange,
+          );
         } else if (serverChoose == false) {
-          Common.toastMessaage('Choose a Server', Colors.red);
-          openPopupMenu();
+          Common.premiumToast(
+            context,
+            updatedata!.data!.server!.length > 1
+                ? 'Please select a server'
+                : 'Server configuration error',
+            Icons.dns_outlined,
+            color: Colors.red,
+          );
           if (updatedata!.data!.server!.length > 1) {
-            Common.toastMessaage('Choose a Server', Colors.red);
             openPopupMenu();
-          } else {
-            Common.toastMessaage('Server configuration error', Colors.red);
           }
         } else {
           setState(() {
@@ -625,7 +637,12 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
           } else {
             setState(() {
               _loading = false;
-              Common.toastMessaage(object.message, Colors.red);
+              Common.premiumToast(
+                context,
+                object.message ?? 'Login Failed',
+                Icons.error_outline_rounded,
+                color: Colors.red,
+              );
             });
           }
         }
@@ -768,24 +785,15 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                         Positioned(
                           bottom: -40,
                           left: -40,
-                          child: TweenAnimationBuilder(
-                            tween: Tween<double>(begin: 0, end: 1),
-                            duration: const Duration(seconds: 4),
-                            curve: Curves.easeInOut,
-                            builder: (context, double value, child) {
-                              return Transform.translate(
-                                offset: Offset(cos(value * pi * 2) * 15, 0),
-                                child: Container(
-                                  width: 250,
-                                  height: 250,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: extraLightBlue.withOpacity(0.2),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                          child:
+                              Container(), // Placeholder or removed animation
+                        ),
+
+                        Positioned(
+                          bottom: -40,
+                          left: -40,
+                          child:
+                              Container(), // Placeholder or removed animation
                         ),
 
                         SingleChildScrollView(
@@ -1329,6 +1337,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
     }
   }
 }
+
 
 // Custom painter for blue wave background
 class BlueWavePainter extends CustomPainter {

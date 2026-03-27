@@ -7027,6 +7027,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     _getReportItemColor(st.callResponse,
                                         s.statuses.indexOf(st)),
                                     _getColWidth(st.callResponse), onTap: () {
+                                  final fromDateLocal = callStatusFromDate;
+                                  final toDateLocal = callStatusToDate;
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -7036,14 +7038,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                         deleteLeadPermission1,
                                         cloudCallPermission1,
                                         pageName: st.callResponse,
-                                        fromDate: callStatusFromDate != null
+                                        fromDate: fromDateLocal != null
                                             ? DateFormat('yyyy-MM-dd')
-                                                .format(callStatusFromDate!)
+                                                .format(fromDateLocal)
                                             : DateFormat('yyyy-MM-dd')
                                                 .format(DateTime.now()),
-                                        toDate: callStatusToDate != null
+                                        toDate: toDateLocal != null
                                             ? DateFormat('yyyy-MM-dd')
-                                                .format(callStatusToDate!)
+                                                .format(toDateLocal)
                                             : DateFormat('yyyy-MM-dd')
                                                 .format(DateTime.now()),
                                         staffId: s.userId,
@@ -7597,6 +7599,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       alignment: Alignment.centerLeft,
                       child: _buildMatrixStaffCell(staff.staffName, 134,
                           total: staff.totalCount, onTap: () {
+                        final fromDateLocal = leadSourceFromDate;
+                        final toDateLocal = leadSourceToDate;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -7606,16 +7610,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               deleteLeadPermission1,
                               cloudCallPermission1,
                               pageName: 'Leads for ${staff.staffName}',
-                              fromDate: leadSourceFromDate != null
+                              fromDate: fromDateLocal != null
                                   ? DateFormat('yyyy-MM-dd')
-                                      .format(leadSourceFromDate!)
+                                      .format(fromDateLocal)
                                   : DateFormat('yyyy-MM-dd').format(DateTime(
                                       DateTime.now().year,
                                       DateTime.now().month,
                                       1)),
-                              toDate: leadSourceToDate != null
-                                  ? DateFormat('yyyy-MM-dd')
-                                      .format(leadSourceToDate!)
+                              toDate: toDateLocal != null
+                                  ? DateFormat('yyyy-MM-dd').format(toDateLocal)
                                   : DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now()),
                               staffId: staff.userId,
@@ -7691,6 +7694,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     _getReportItemColor(
                                         st.leadSource, s.statuses.indexOf(st)),
                                     _getColWidth(st.leadSource), onTap: () {
+                                  final fromDateLocal = leadSourceFromDate;
+                                  final toDateLocal = leadSourceToDate;
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -7700,15 +7705,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                         deleteLeadPermission1,
                                         cloudCallPermission1,
                                         pageName: st.leadSource,
-                                        fromDate: leadSourceFromDate != null
+                                        fromDate: fromDateLocal != null
                                             ? DateFormat('yyyy-MM-dd')
-                                                .format(leadSourceFromDate!)
+                                                .format(fromDateLocal)
                                             : DateFormat('yyyy-MM-dd').format(
                                                 DateTime(DateTime.now().year,
                                                     DateTime.now().month, 1)),
-                                        toDate: leadSourceToDate != null
+                                        toDate: toDateLocal != null
                                             ? DateFormat('yyyy-MM-dd')
-                                                .format(leadSourceToDate!)
+                                                .format(toDateLocal)
                                             : DateFormat('yyyy-MM-dd')
                                                 .format(DateTime.now()),
                                         staffId: s.userId,
@@ -7939,6 +7944,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       alignment: Alignment.centerLeft,
                       child: _buildMatrixStaffCell(s.staffName ?? 'N/A', 134,
                           total: s.totalCount, onTap: () {
+                        final fromDateLocal = categoryFromDate;
+                        final toDateLocal = categoryToDate;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -7948,17 +7955,18 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               deleteLeadPermission1,
                               cloudCallPermission1,
                               pageName: 'Leads for ${s.staffName}',
-                              fromDate: categoryFromDate != null
+                              fromDate: fromDateLocal != null
                                   ? DateFormat('yyyy-MM-dd')
-                                      .format(categoryFromDate!)
+                                      .format(fromDateLocal)
                                   : DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now()),
-                              toDate: categoryToDate != null
-                                  ? DateFormat('yyyy-MM-dd')
-                                      .format(categoryToDate!)
+                              toDate: toDateLocal != null
+                                  ? DateFormat('yyyy-MM-dd').format(toDateLocal)
                                   : DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now()),
                               staffId: s.userId,
+                              staff: s.userId,
+                              staffName: s.staffName,
                               isLeadCategory: "1",
                             ),
                           ),
@@ -8027,9 +8035,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                 _buildMatrixCountCell(
                                     st.total?.toString() ?? '0',
                                     _getReportItemColor(st.leadCategory ?? '',
-                                        s.statuses!.indexOf(st)),
+                                        (s.statuses ?? []).indexOf(st)),
                                     _getColWidth(st.leadCategory ?? ''),
                                     onTap: () {
+                                  final fromDateLocal = categoryFromDate;
+                                  final toDateLocal = categoryToDate;
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -8038,20 +8048,42 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                         updateLeadPermission1,
                                         deleteLeadPermission1,
                                         cloudCallPermission1,
-                                        pageName: st.leadCategory ?? 'Leads',
-                                        fromDate: categoryFromDate != null
+                                        pageName: 'Leads for ${s.staffName}',
+                                        fromDate: fromDateLocal != null
                                             ? DateFormat('yyyy-MM-dd')
-                                                .format(categoryFromDate!)
+                                                .format(fromDateLocal)
                                             : DateFormat('yyyy-MM-dd')
                                                 .format(DateTime.now()),
-                                        toDate: categoryToDate != null
+                                        toDate: toDateLocal != null
                                             ? DateFormat('yyyy-MM-dd')
-                                                .format(categoryToDate!)
+                                                .format(toDateLocal)
                                             : DateFormat('yyyy-MM-dd')
                                                 .format(DateTime.now()),
                                         staffId: s.userId,
+                                        staff: s.userId,
+                                        staffName: s.staffName,
                                         category: st.leadCategoryId?.toString(),
+                                        categoryName: st.leadCategory,
                                         isLeadCategory: "1",
+
+                                        // widget.token,
+                                        // updateLeadPermission1,
+                                        // deleteLeadPermission1,
+                                        // cloudCallPermission1,
+                                        // pageName: st.leadCategory ?? 'Leads',
+                                        // fromDate: fromDateLocal != null
+                                        //     ? DateFormat('yyyy-MM-dd')
+                                        //         .format(fromDateLocal)
+                                        //     : DateFormat('yyyy-MM-dd')
+                                        //         .format(DateTime.now()),
+                                        // toDate: toDateLocal != null
+                                        //     ? DateFormat('yyyy-MM-dd')
+                                        //         .format(toDateLocal)
+                                        //     : DateFormat('yyyy-MM-dd')
+                                        //         .format(DateTime.now()),
+                                        // staffId: s.userId,
+                                        // category: st.leadCategoryId?.toString(),
+                                        // isLeadCategory: "1",
                                       ),
                                     ),
                                   );
@@ -11460,6 +11492,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   _listTabSelectedPriorityIds.clear();
                   _isListTabFilterApplied = false;
                 }
+                _listTabCurrentStatus = status;
+                _listTabCurrentLeadType = leadType ?? "";
+                _listTabCurrentCallStatus = callStatus ?? "";
+                _listTabCurrentIsCalled = isCalled;
               });
               if (_isGraphViewActive) {
                 _fetchProgressBarLeads(label);
@@ -11649,6 +11685,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     _listTabSelectedPriorityIds.clear();
                     _isListTabFilterApplied = false;
                   }
+                  _listTabCurrentStatus = status;
+                  _listTabCurrentLeadType = leadType ?? "";
+                  _listTabCurrentCallStatus = callStatus ?? "";
+                  _listTabCurrentIsCalled = isCalled;
                 });
                 if (_isGraphViewActive) {
                   _fetchProgressBarLeads(label);

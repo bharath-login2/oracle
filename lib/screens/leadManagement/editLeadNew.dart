@@ -10,6 +10,7 @@ import 'package:login2/widgets/AddLeadSourceDialog.dart';
 import 'package:login2/widgets/addLeadCateoryPopup.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
@@ -62,6 +63,11 @@ class _EditLeadNewState extends State<EditLeadNew> {
   String leadSource = 'Lead Source', leadSourceId = '';
   String priority = 'Priority', priorityId = '';
   String callResult = 'New', callResultId = '1';
+  String callResponse = 'Call Response', callResponseId = '';
+  final TextEditingController nextFollowupCtrl = TextEditingController();
+  final TextEditingController timeBeforeCtrl =
+      TextEditingController(text: '10');
+  final TextEditingController callResponseCtrl = TextEditingController();
 
   final TextEditingController leadTypeCtrl =
       TextEditingController(text: 'Lead Category');
@@ -148,6 +154,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
     stateDetails = await HttpService.getState();
     productSectionModel = await HttpService.leadProductSection();
     configure = await HttpService.configure(widget.token);
+    commonDetails = await HttpService.addLeadCommonData(widget.token);
     leadDetails =
         await HttpService.leadDetails(widget.token, widget.callMasterId);
     if (leadDetails?.data != null) {
@@ -183,6 +190,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       leadSourceId = data.leadSourceId?.toString() ?? '';
       callResult = data.callResult ?? 'New';
       callResultId = data.callResultId?.toString() ?? '1';
+      nextFollowupCtrl.text = data.nextFollowupDate ?? "";
       if (leadTypeId.isNotEmpty) {
         leadSubTypeList = await HttpService.leadSubType(leadTypeId);
       }
@@ -322,7 +330,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
             if (multiBranch == 'true' && roleId == '2') _buildBranchField(),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Client Info',
+              title: 'Customer Details',
               icon: Icons.person_outline,
               children: [
                 const SizedBox(height: 12),
@@ -333,33 +341,6 @@ class _EditLeadNewState extends State<EditLeadNew> {
                 _buildWhatsappField(),
                 const SizedBox(height: 12),
                 _buildEmailField(),
-                const SizedBox(height: 12),
-                _buildProductSelection(),
-                const SizedBox(height: 12),
-                _buildStaffCostRow(),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildSectionCard(
-              title: 'Lead Details',
-              icon: Icons.info_outline,
-              children: [
-                const SizedBox(height: 12),
-                _buildLeadCategoryField(),
-                const SizedBox(height: 12),
-                if (leadSubTypeList?.data?.isNotEmpty ?? false)
-                  _buildSubCategoryField(),
-                const SizedBox(height: 12),
-                _buildLeadSourceField(),
-                const SizedBox(height: 12),
-                _buildPriorityField(),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildSectionCard(
-              title: 'Location Info',
-              icon: Icons.location_on_outlined,
-              children: [
                 const SizedBox(height: 12),
                 _buildAddressField(),
                 const SizedBox(height: 12),
@@ -372,17 +353,51 @@ class _EditLeadNewState extends State<EditLeadNew> {
             ),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Remarks',
-              icon: Icons.list,
+              title: 'Lead Information',
+              icon: Icons.info_outline,
               children: [
                 const SizedBox(height: 12),
+                _buildStaffField(),
+                const SizedBox(height: 12),
+                _buildLeadCategoryField(),
+                const SizedBox(height: 12),
+                if (leadSubTypeList?.data?.isNotEmpty ?? false)
+                  _buildSubCategoryField(),
+                const SizedBox(height: 12),
+
+                _buildLeadSourceField(),
+                const SizedBox(height: 12),
+                _buildPriorityField(),
+                const SizedBox(height: 12),
+                // _buildStaffField(),
+                // const SizedBox(height: 12),
+                _buildStatusField(),
+                const SizedBox(height: 12),
+                if (callResultId == '2' ||
+                    callResultId == '3' ||
+                    callResultId == '4')
+                  _buildCallResponseField(),
+                const SizedBox(height: 12),
+                if (callResultId == '2') _buildFollowupRow(),
+                const SizedBox(height: 12),
                 _buildRemarksField(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
+              title: 'Product Info',
+              icon: Icons.shopping_bag_outlined,
+              children: [
+                const SizedBox(height: 12),
+                _buildProductSelection(),
+                const SizedBox(height: 12),
+                _buildCostField(),
               ],
             ),
             if (commonDetails!.data.additionalFields.isNotEmpty) ...[
               const SizedBox(height: 12),
               _buildSectionCard(
-                title: 'Additional Info',
+                title: 'Additional Fields',
                 icon: Icons.more_horiz,
                 children: [
                   const SizedBox(height: 12),
@@ -541,23 +556,220 @@ class _EditLeadNewState extends State<EditLeadNew> {
         });
   }
 
-  Widget _buildStaffCostRow() {
-    return Row(children: [
-      Expanded(
+  Widget _buildCostField() {
+    return TextFormField(
+        controller: costCtrl,
+        keyboardType: TextInputType.number,
+        decoration: _inputDecoration('Cost', Icons.currency_rupee));
+  }
+
+  Widget _buildStaffField() {
+    return GestureDetector(
+        onTap: () => _showStaffDialog(),
+        child: AbsorbPointer(
+            child: TextFormField(
+                controller: assignStaffCtrl,
+                decoration: _inputDecoration('Assign Staff', Icons.person))));
+  }
+
+  Widget _buildStatusField() {
+    return GestureDetector(
+      onTap: () => _showCallResultDialog(),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: TextEditingController(text: callResult),
+          decoration:
+              _inputDecoration('Stages', Icons.arrow_drop_down_circle_outlined),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCallResponseField() {
+    return GestureDetector(
+      onTap: () => _showCallResponseDialog(),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: callResponseCtrl,
+          decoration: _inputDecoration('Call Response', Icons.add_call),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFollowupRow() {
+    return Row(
+      children: [
+        Expanded(
+          flex: checked ? 3 : 4,
           child: TextFormField(
-              controller: costCtrl,
-              keyboardType: TextInputType.number,
-              decoration: _inputDecoration('Cost', Icons.currency_rupee))),
-      const SizedBox(width: 12),
-      Expanded(
-          child: GestureDetector(
-              onTap: () => _showStaffDialog(),
-              child: AbsorbPointer(
+            controller: nextFollowupCtrl,
+            readOnly: true,
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2100),
+              );
+              if (date != null) {
+                final time = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (time != null) {
+                  nextFollowupCtrl.text =
+                      "${_formatDate(date.toString().split(' ')[0])} ${time.format(context)}";
+                }
+              }
+            },
+            decoration:
+                _inputDecoration('Next Followup Date', Icons.calendar_month),
+          ),
+        ),
+        if (checked)
+          Expanded(
+            child: Row(
+              children: [
+                const SizedBox(width: 8),
+                Expanded(
                   child: TextFormField(
-                      controller: assignStaffCtrl,
-                      decoration:
-                          _inputDecoration('Assign Staff', Icons.person))))),
-    ]);
+                    controller: timeBeforeCtrl,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                Column(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        int val = int.parse(timeBeforeCtrl.text);
+                        timeBeforeCtrl.text = (val + 1).toString();
+                      },
+                      child: const Icon(Icons.arrow_drop_up, size: 20),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        int val = int.parse(timeBeforeCtrl.text);
+                        timeBeforeCtrl.text =
+                            (val > 0 ? val - 1 : 0).toString();
+                      },
+                      child: const Icon(Icons.arrow_drop_down, size: 20),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(width: 8),
+        InkWell(
+          onTap: () => setState(() => checked = !checked),
+          child: Icon(
+            Icons.notifications,
+            color: checked ? Colors.green : Colors.red,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showCallResultDialog() async {
+    if (commonDetails?.data == null) {
+      Common.toastMessaage("Common details not loaded", Colors.orange);
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Stage'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: commonDetails!.data.callResult.length,
+            itemBuilder: (context, i) => ListTile(
+              title: Text(commonDetails!.data.callResult[i].callResult),
+              onTap: () {
+                setState(() {
+                  callResult = commonDetails!.data.callResult[i].callResult;
+                  callResultId =
+                      commonDetails!.data.callResult[i].callResultId.toString();
+                  callResponse = 'Call Response';
+                  callResponseId = '';
+                  callResponseCtrl.clear();
+                });
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showCallResponseDialog() async {
+    if (commonDetails?.data == null) {
+      Common.toastMessaage("Common details not loaded", Colors.orange);
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Call Response'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(
+                  hintText: 'Search...',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (v) {
+                  // Implement filtering if needed, similar to add_leads_new
+                },
+              ),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: commonDetails!.data.callResponseStatus.length,
+                  itemBuilder: (context, i) => ListTile(
+                    title: Text(commonDetails!
+                        .data.callResponseStatus[i].callResponse
+                        .toString()),
+                    onTap: () {
+                      setState(() {
+                        callResponse = commonDetails!
+                            .data.callResponseStatus[i].callResponse
+                            .toString();
+                        callResponseId = commonDetails!
+                            .data.callResponseStatus[i].callResponseId
+                            .toString();
+                        callResponseCtrl.text = callResponse;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(String date) {
+    if (date.isEmpty) return "";
+    final parts = date.split('-');
+    return "${parts[2]}-${parts[1]}-${parts[0]}";
   }
 
   Widget _buildLeadCategoryField() =>
@@ -822,18 +1034,34 @@ class _EditLeadNewState extends State<EditLeadNew> {
                                   .toList())),
                           Expanded(
                               child: ListView.builder(
-                                  itemCount: list.length,
-                                  itemBuilder: (c, i) => ListTile(
-                                      title: Text(list[i].staffName!),
-                                      onTap: () {
-                                        setState(() {
-                                          assignStaff = list[i].staffName!;
-                                          assignStaffCtrl.text = assignStaff;
-                                          assignStaffId =
-                                              list[i].userId.toString();
+                                  itemCount: list.length + 1,
+                                  itemBuilder: (c, i) {
+                                    if (i == 0) {
+                                      return ListTile(
+                                          title: const Text('Un Assigned'),
+                                          onTap: () {
+                                            setState(() {
+                                              assignStaff = 'Un Assigned';
+                                              assignStaffCtrl.text =
+                                                  assignStaff;
+                                              assignStaffId = '';
+                                            });
+                                            Navigator.pop(context);
+                                          });
+                                    }
+                                    final staff = list[i - 1];
+                                    return ListTile(
+                                        title: Text(staff.staffName!),
+                                        onTap: () {
+                                          setState(() {
+                                            assignStaff = staff.staffName!;
+                                            assignStaffCtrl.text = assignStaff;
+                                            assignStaffId =
+                                                staff.userId.toString();
+                                          });
+                                          Navigator.pop(context);
                                         });
-                                        Navigator.pop(context);
-                                      })))
+                                  }))
                         ])),
                   ));
         });
@@ -1032,7 +1260,38 @@ class _EditLeadNewState extends State<EditLeadNew> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(
-              title: const Text("Select Products"),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Select Products"),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddProducts(),
+                          )).then((_) {
+                        _initializeData();
+                      });
+                    },
+                    child: Container(
+                      height: 30,
+                      width: 30,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                            colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  )
+                ],
+              ),
               content: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.8,
                 height: 400,
@@ -1142,38 +1401,77 @@ class _EditLeadNewState extends State<EditLeadNew> {
   Future<void> _selectContact() async {
     if (await FlutterContacts.requestPermission()) {
       final contact = await FlutterContacts.openExternalPick();
-      if (contact != null) {
-        final fullContact = await FlutterContacts.getContact(contact.id);
-        if (fullContact != null && fullContact.phones.isNotEmpty) {
-          setState(() {
-            clientNameCtrl.text = fullContact.displayName;
-            contactNoCtrl.text = _trimPlus91(fullContact.phones.first.number);
-            whatsappNoCtrl.text = _trimPlus91(fullContact.phones.first.number);
-          });
-        }
+      if (contact != null && contact.phones.isNotEmpty) {
+        String number =
+            contact.phones.first.number.replaceAll(RegExp(r'[^\d+]'), '');
+        if (number.startsWith('+'))
+          number = number.substring(number.length - 10);
+        else if (number.length > 10)
+          number = number.substring(number.length - 10);
+        setState(() {
+          contactNoCtrl.text = number;
+          whatsappNoCtrl.text = number;
+          clientNameCtrl.text = contact.displayName;
+        });
       }
+    } else {
+      Common.toastMessaage('Permission denied', Colors.red);
     }
   }
 
-  String _trimPlus91(String m) {
-    var s = m.replaceAll(' ', '').replaceAll('-', '');
-    if (s.startsWith('+91')) return s.substring(3);
-    if (s.startsWith('91') && s.length > 10) return s.substring(2);
-    return s;
-  }
-
-  void _showPermissionDialog() => showDialog(
+  void _showPermissionDialog() {
+    showDialog(
       context: context,
-      builder: (_) =>
-          AlertDialog(
-              title: const Text('Permission Required'),
-              content:
-                  const Text('Please enable contact permission in settings'),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'))
-              ]));
+      builder: (_) => Material(
+        type: MaterialType.transparency,
+        child: Center(
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Permission',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 15),
+                const Text(
+                  'Access contacts to manage them efficiently',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Deny',
+                          style: TextStyle(color: Colors.red)),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Common.saveSharedPref('getContactPermission', 'true');
+                        contactPermission = 'true';
+                        _selectContact();
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green),
+                      child: const Text('Allow'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _submitLead() async {
     if (!_formKey.currentState!.validate()) {
@@ -1207,6 +1505,11 @@ class _EditLeadNewState extends State<EditLeadNew> {
       pinCodeCtrl.text,
       selectedPostOffice?.name ?? "",
       remarkCtrl.text,
+      callResultId,
+      callResponseId,
+      nextFollowupCtrl.text,
+      checked ? "1" : "0",
+      timeBeforeCtrl.text,
       _additionalValues,
       code,
       leadSourceId,
