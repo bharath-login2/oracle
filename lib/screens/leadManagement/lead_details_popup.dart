@@ -258,6 +258,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   bool isDriveAccountsLoading = false;
   List<GoogleDriveFile> googleDriveFiles = [];
   bool isDriveFilesLoading = false;
+  String? selectedFolderId;
+  String? currentFolderName;
+  List<Map<String, String>> driveBreadcrumbs = [
+    {'id': 'root', 'name': 'Drive'}
+  ];
+  bool isUploading = false;
 
   static const Color appBarStart = Color(0xFF2a86c9);
   static const Color textPrimary = Color(0xFF2C3E50);
@@ -330,7 +336,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   List<String> _getTabLabels() {
-    List<String> labels = ['Followup', 'Activities', 'Details', 'Documents'];
+    List<String> labels = ['Followup', 'Activities', 'Details', 'File Manager'];
     if (widget.leadDetails.data?.callHistoryPermission == true) {
       labels.insert(1, 'Call History');
     }
@@ -557,14 +563,16 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       if (mounted && response != null && response.status) {
         setState(() {
           googleDriveAccounts = response.data;
-          // Set default account (isActive == "1")
           try {
-            selectedDriveAccount = googleDriveAccounts.firstWhere(
+            final defaultAccount = googleDriveAccounts.firstWhere(
               (account) => account.isActive == "1",
             );
+            selectedDriveAccount = defaultAccount;
+            drivePath = '@root';
+            _fetchGoogleDriveFiles(defaultAccount.id);
           } catch (e) {
             if (googleDriveAccounts.isNotEmpty) {
-              selectedDriveAccount = null; // No default found
+              selectedDriveAccount = null;
             }
           }
           isDriveAccountsLoading = false;
@@ -578,28 +586,210 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     }
   }
 
-  Future<void> _fetchGoogleDriveFiles(String accountId) async {
+  Future<void> _fetchGoogleDriveFiles(String accountId,
+      {String parentId = ""}) async {
     if (!mounted) return;
     setState(() {
       isDriveFilesLoading = true;
       googleDriveFiles = [];
     });
     try {
-      final response =
-          await HttpService.getGoogleDriveFiles(widget.callMasterId, accountId);
+      final response = await HttpService.getGoogleDriveFiles(
+          widget.callMasterId, accountId, parentId);
       if (mounted && response != null && response.status) {
         setState(() {
           googleDriveFiles = response.data;
           isDriveFilesLoading = false;
         });
       } else {
-        if (mounted) setState(() => isDriveFilesLoading = false);
+        if (mounted) {
+          setState(() {
+            isDriveFilesLoading = false;
+          });
+          Common.toastMessaage(
+              response?.message ?? "Failed to load Files", Colors.red);
+        }
       }
     } catch (e) {
       log("Error fetching drive files: $e");
       if (mounted) setState(() => isDriveFilesLoading = false);
     }
   }
+
+  void _updateBreadcrumbs(String id, String name) {
+    setState(() => driveBreadcrumbs.add({'id': id, 'name': name}));
+  }
+
+  void _popBreadcrumb() {
+    if (driveBreadcrumbs.length > 1) {
+      setState(() => driveBreadcrumbs.removeLast());
+      final parent = driveBreadcrumbs.last;
+      setState(() {
+        selectedFolderId = parent['id'] == 'root' ? null : parent['id'];
+        currentFolderName = parent['id'] == 'root' ? null : parent['name'];
+      });
+      _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+          parentId: selectedFolderId ?? "");
+    } else {
+      setState(() {
+        selectedDriveAccount = null;
+        selectedDocumentType = 'none';
+      });
+    }
+  }
+
+  void _viewGoogleDriveFile(GoogleDriveFile file) async {
+    String extension = file.fileName.split('.').last.toLowerCase();
+    String url = file.webContentLink;
+
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic']
+        .contains(extension)) {
+      // Use direct view link for Google Drive images to avoid auth prompts in WebView
+      url =
+          "https://drive.google.com/uc?export=view&id=${file.fileId ?? file.id}";
+    }
+
+    if (['m4a', 'wav', 'mp3'].contains(extension)) {
+      _showAudioPlayerSimple(file.fileName, url);
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DocumentViewerScreen(
+            documentUrl: url,
+            title: file.fileName,
+            extension: extension,
+            fileSize: 'N/A',
+            createdDate: file.uploadedAt,
+            createdBy: 'Google Drive',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showAudioPlayerSimple(String name, String url) {
+    final player = AudioPlayer();
+    Duration duration = Duration.zero;
+    Duration position = Duration.zero;
+    bool isPlaying = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          player.onDurationChanged.listen((d) {
+            if (ctx.mounted) setSheetState(() => duration = d);
+          });
+          player.onPositionChanged.listen((p) {
+            if (ctx.mounted) setSheetState(() => position = p);
+          });
+          player.onPlayerStateChanged.listen((s) {
+            if (ctx.mounted)
+              setSheetState(() => isPlaying = s == PlayerState.playing);
+          });
+
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 24),
+                Text(name,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 32),
+                Slider(
+                  min: 0,
+                  max: duration.inSeconds.toDouble() > 0
+                      ? duration.inSeconds.toDouble()
+                      : 1,
+                  value: position.inSeconds.toDouble().clamp(
+                      0,
+                      duration.inSeconds.toDouble() > 0
+                          ? duration.inSeconds.toDouble()
+                          : 1),
+                  activeColor: const Color(0xFF2a86c9),
+                  onChanged: (v) => player.seek(Duration(seconds: v.toInt())),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(_formatDuration(position),
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600)),
+                      Text(_formatDuration(duration),
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _audioActionIcon(
+                        Icons.replay_10_rounded,
+                        () => player
+                            .seek(position - const Duration(seconds: 10))),
+                    const SizedBox(width: 32),
+                    GestureDetector(
+                      onTap: () => isPlaying
+                          ? player.pause()
+                          : player.play(UrlSource(url)),
+                      child: Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: const BoxDecoration(
+                            color: Color(0xFF2a86c9), shape: BoxShape.circle),
+                        child: Icon(
+                            isPlaying
+                                ? Icons.pause_rounded
+                                : Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 40),
+                      ),
+                    ),
+                    const SizedBox(width: 32),
+                    _audioActionIcon(
+                        Icons.forward_10_rounded,
+                        () => player
+                            .seek(position + const Duration(seconds: 10))),
+                  ],
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
+          );
+        },
+      ),
+    ).then((_) => player.dispose());
+  }
+
+  String _formatDuration(Duration d) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return "${two(d.inMinutes)}:${two(d.inSeconds.remainder(60))}";
+  }
+
+  Widget _audioActionIcon(IconData icon, VoidCallback onTap) => IconButton(
+      onPressed: onTap,
+      icon: Icon(icon, color: Colors.grey.shade700, size: 32));
 
   @override
   void dispose() {
@@ -4923,15 +5113,109 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       ],
                     )
                   else
-                    const Column(
+                    // const Column(
+                    //   children: [
+                    //     Icon(Icons.mic, size: 48, color: Color(0xFF2a86c9)),
+                    //     SizedBox(height: 12),
+                    //     Text('Voice Record',
+                    //         style: TextStyle(
+                    //             fontSize: 18, fontWeight: FontWeight.bold)),
+                    //     SizedBox(height: 8),
+                    //     Text("Do you want to record voice?"),
+                    //   ],
+                    // ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.mic, size: 48, color: Color(0xFF2a86c9)),
-                        SizedBox(height: 12),
-                        Text('Voice Record',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 8),
-                        Text("Do you want to record voice?"),
+                        // const Text('Voice Record',
+                        //     style: TextStyle(
+                        //         fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF2a86c9),
+                                    Color(0xFF406dbe)
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF2a86c9)
+                                        .withOpacity(0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: const Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.mic,
+                                    size: 48,
+                                    color: Colors.white,
+                                  ),
+                                  Text('Record',
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            Positioned(
+                              bottom: -5,
+                              right: -5,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(
+                                  Icons.fiber_manual_record,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Record',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2a86c9),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        // const SizedBox(height: 8),
+                        // const Text(
+                        //   'Voice Record',
+                        //   style: TextStyle(
+                        //     fontSize: 16,
+                        //     fontWeight: FontWeight.w500,
+                        //     color: Colors.black87,
+                        //   ),
+                        // ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Do you want to record voice?",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                   const SizedBox(height: 24),
@@ -6058,6 +6342,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 label: 'Google Drive',
                 colors: [const Color(0xFF4285F4), const Color(0xFF34A853)],
                 onTap: () => setState(() => selectedDocumentType = 'drive'),
+                isSelected: selectedDocumentType == 'drive',
               ),
               const SizedBox(width: 40),
               _buildStorageOption(
@@ -6065,6 +6350,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 label: 'S3 Bucket',
                 colors: [const Color(0xFF2a86c9), const Color(0xFF406dbe)],
                 onTap: () => setState(() => selectedDocumentType = 's3'),
+                isSelected: selectedDocumentType == 's3',
               ),
             ],
           ),
@@ -6078,263 +6364,282 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     required String label,
     required List<Color> colors,
     required VoidCallback onTap,
+    bool isSelected = false,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 140,
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade100),
-          boxShadow: [
-            BoxShadow(
-              color: colors.first.withOpacity(0.12),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.first.withOpacity(0.1),
-                    colors.last.withOpacity(0.05),
-                  ],
+      child: Stack(
+        children: [
+          Container(
+            width: 140,
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: isSelected ? colors.first : Colors.grey.shade100,
+                  width: isSelected ? 2 : 1),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.first.withOpacity(0.12),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
                 ),
-                shape: BoxShape.circle,
-              ),
-              child: Image.asset(
-                assetPath,
-                width: 45,
-                height: 45,
-                fit: BoxFit.contain,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colors.first.withOpacity(0.1),
+                        colors.last.withOpacity(0.05),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Image.asset(
+                    assetPath,
+                    width: 45,
+                    height: 45,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: colors.first,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isSelected)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 12),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: colors.first,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildDriveDocuments() {
+    if (selectedDriveAccount == null) {
+      return Column(
+        children: [
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Select Drive Account",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2a86c9),
+                  ),
+                ),
+                if (isDriveAccountsLoading)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: isDriveAccountsLoading
+                ? const Center(child: CircularProgressIndicator())
+                : googleDriveAccounts.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_off_rounded,
+                                size: 48, color: Colors.grey.shade400),
+                            const SizedBox(height: 16),
+                            Text("No Drive Accounts Linked",
+                                style: TextStyle(color: Colors.grey.shade600)),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: googleDriveAccounts.length,
+                        itemBuilder: (ctx, idx) =>
+                            _buildDriveEmailCard(googleDriveAccounts[idx]),
+                      ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       children: [
         const SizedBox(height: 15),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    if (drivePath.isEmpty) {
-                      selectedDocumentType = 'none';
-                    } else if (drivePath == '@root') {
-                      drivePath = '';
-                    } else {
-                      drivePath = '@root';
-                    }
-                  });
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: _popBreadcrumb,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    ],
+                      child: Row(
+                        children: [
+                          const Icon(Icons.arrow_back,
+                              size: 16, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Text(
+                            driveBreadcrumbs.length == 1 ? 'Exit' : 'Back',
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Row(
+                  Row(
                     children: [
-                      const Icon(Icons.arrow_back,
-                          size: 16, color: Colors.blue),
+                      _driveActionIcon(Icons.mic_none_rounded, Colors.red,
+                          _showVoiceUploadDialog),
                       const SizedBox(width: 8),
-                      Text(
-                        drivePath.isEmpty ? 'Exit Drive' : 'Back',
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue),
-                      ),
+                      _driveActionIcon(Icons.image_outlined, Colors.green,
+                          _showImageUploadDialog),
+                      const SizedBox(width: 8),
+                      _driveActionIcon(Icons.file_upload_outlined, Colors.blue,
+                          _showFileUploadDialog),
+                      const SizedBox(width: 8),
+                      _driveActionIcon(Icons.create_new_folder_outlined,
+                          Colors.orange, _showCreateFolderDialogDrive),
                     ],
                   ),
-                ),
+                ],
               ),
-              if (drivePath.isNotEmpty)
-                Expanded(
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 8),
-                      if (drivePath == '@root')
-                        InkWell(
-                          onTap: () => _showCreateFolderDialogDrive(),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2a86c9).withOpacity(0.05),
-                              border:
-                                  Border.all(color: const Color(0xFF2a86c9)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.folder_open_rounded,
-                                    color: Color(0xFF2a86c9), size: 14),
-                                SizedBox(width: 6),
-                                Text('Add Folder',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF2a86c9),
-                                    )),
-                              ],
-                            ),
-                          ),
-                        ),
-                      const Spacer(),
-                      // Voice Record Icon
-                      InkWell(
-                        onTap: () => _showVoiceUploadDialog(),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.mic_none_rounded,
-                              color: Colors.red, size: 20),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Image Upload Icon
-                      InkWell(
-                        onTap: () => _showImageUploadDialog(),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade50,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.image_outlined,
-                              color: Colors.green, size: 20),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // File Upload Icon
-                      InkWell(
-                        onTap: () => _showFileUploadDialog(),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.file_copy_outlined,
-                              color: Colors.orange, size: 18),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                const Text(
-                  "Drive / Accounts",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: Colors.blue),
-                ),
+              const SizedBox(height: 12),
+              _buildDriveBreadcrumbs(),
             ],
           ),
         ),
-        const SizedBox(height: 15),
-        if (drivePath.isEmpty) ...[
-          Expanded(
-            child: isDriveAccountsLoading
-                ? const Center(child: CircularProgressIndicator())
-                : googleDriveAccounts.isEmpty
-                    ? const Center(child: Text("No Drive Accounts Connected"))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        itemCount: googleDriveAccounts.length,
-                        itemBuilder: (context, index) {
-                          final account = googleDriveAccounts[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: _buildDriveEmailCard(account),
-                          );
-                        },
+        const SizedBox(height: 10),
+        Expanded(
+          child: isDriveFilesLoading
+              ? const Center(child: CircularProgressIndicator())
+              : googleDriveFiles.isEmpty
+                  ? const Center(child: Text("No Files or Folders Found"))
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.85,
                       ),
-          ),
-        ] else if (drivePath == '@root') ...[
-          Expanded(
-            child: isDriveFilesLoading
-                ? const Center(child: CircularProgressIndicator())
-                : GridView(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.85,
+                      itemCount: googleDriveFiles.length,
+                      itemBuilder: (context, index) =>
+                          _buildGoogleDriveFileItem(googleDriveFiles[index]),
                     ),
-                    children: [
-                      _buildDummyFolder('Shared Files', 1),
-                      _buildDummyFolder('Invoices', 2),
-                      _buildDummyFolder('Reports', 3),
-                      ...googleDriveFiles
-                          .map((file) => _buildGoogleDriveFileItem(file))
-                          .toList(),
-                    ],
-                  ),
-          ),
-        ] else ...[
-          // Inside Folder Content: Dummy file
-          const Spacer(),
-          _buildDummyFile(drivePath),
-          const Spacer(),
-        ],
+        ),
       ],
     );
   }
 
+  Widget _driveActionIcon(IconData icon, Color color, VoidCallback onTap) =>
+      InkWell(
+          onTap: onTap,
+          child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                  color: color.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 20)));
+
+  Widget _buildDriveBreadcrumbs() {
+    return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+            children: driveBreadcrumbs.asMap().entries.map((e) {
+          bool isLast = e.key == driveBreadcrumbs.length - 1;
+          return Row(children: [
+            GestureDetector(
+              onTap: isLast
+                  ? null
+                  : () {
+                      final target = e.value;
+                      int index = driveBreadcrumbs.indexWhere(
+                          (element) => element['id'] == target['id']);
+                      if (index != -1) {
+                        setState(() {
+                          driveBreadcrumbs =
+                              driveBreadcrumbs.sublist(0, index + 1);
+                          selectedFolderId =
+                              target['id'] == 'root' ? null : target['id'];
+                          currentFolderName =
+                              target['id'] == 'root' ? null : target['name'];
+                        });
+                        _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+                            parentId: selectedFolderId ?? "");
+                      }
+                    },
+              child: Text(e.value['name']!,
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: isLast ? Colors.blue : Colors.grey.shade600,
+                      fontWeight:
+                          isLast ? FontWeight.bold : FontWeight.normal)),
+            ),
+            if (!isLast)
+              Icon(Icons.chevron_right, size: 14, color: Colors.grey.shade400)
+          ]);
+        }).toList()));
+  }
+
   Widget _buildDriveEmailCard(DriveAccount account) {
     bool isDefault = account.isActive == "1";
+    bool isSelected = selectedDriveAccount?.id == account.id;
+
     return InkWell(
       onTap: () {
         setState(() {
           selectedDriveAccount = account;
-          drivePath = '@root';
+          driveBreadcrumbs = [
+            {'id': 'root', 'name': 'Drive'}
+          ];
+          selectedFolderId = null;
         });
         _fetchGoogleDriveFiles(account.id);
       },
@@ -6347,12 +6652,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isDefault ? const Color(0xFF4285F4) : Colors.grey.shade100,
-              width: isDefault ? 2 : 1,
+              color:
+                  isSelected ? const Color(0xFF4285F4) : Colors.grey.shade100,
+              width: isSelected ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: isDefault
+                color: isSelected
                     ? const Color(0xFF4285F4).withOpacity(0.12)
                     : Colors.black.withOpacity(0.03),
                 blurRadius: 15,
@@ -6360,152 +6666,148 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               ),
             ],
           ),
-          child: Row(
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF4285F4).withOpacity(0.1),
-                      const Color(0xFF34A853).withOpacity(0.1),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+              Row(
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF4285F4).withOpacity(0.1),
+                          const Color(0xFF34A853).withOpacity(0.1),
+                        ],
+                      ),
                       shape: BoxShape.circle,
                     ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/icons/email.jpeg',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.alternate_email_rounded,
-                                color: Color(0xFF4285F4)),
+                    child: Center(
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/icons/email.jpeg',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.alternate_email_rounded,
+                                    color: Color(0xFF4285F4)),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: Text(
-                            account.accountEmail,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDefault
-                                  ? const Color(0xFF4285F4)
-                                  : Colors.black87,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (isDefault)
-                          Container(
-                            margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF34A853), Color(0xFF43A047)],
-                              ),
-                              borderRadius: BorderRadius.circular(6),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      const Color(0xFF34A853).withOpacity(0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                account.accountEmail,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSelected
+                                      ? const Color(0xFF4285F4)
+                                      : Colors.black87,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
-                            child: const Text(
-                              'DEFAULT',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.8,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          ),
+                            if (isDefault)
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF34A853),
+                                      Color(0xFF43A047)
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'DEFAULT',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              isSelected
+                                  ? Icons.verified_user_rounded
+                                  : Icons.account_circle_outlined,
+                              size: 12,
+                              color: isSelected
+                                  ? const Color(0xFF34A853)
+                                  : Colors.grey.shade400,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isSelected
+                                  ? 'Selected Account'
+                                  : (isDefault
+                                      ? 'Primary Drive'
+                                      : 'Connected Account'),
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          isDefault
-                              ? Icons.verified_user_rounded
-                              : Icons.account_circle_outlined,
-                          size: 12,
-                          color: isDefault
-                              ? const Color(0xFF34A853)
-                              : Colors.grey.shade400,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isDefault
-                              ? 'Primary Drive Account'
-                              : 'Connected Account',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.chevron_right_rounded,
+                      color: isSelected
+                          ? const Color(0xFF4285F4)
+                          : Colors.grey.shade300,
+                      size: 24),
+                ],
               ),
-              const SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded,
-                  color: isDefault
-                      ? const Color(0xFF4285F4)
-                      : Colors.grey.shade300,
-                  size: 24),
+              if (isSelected)
+                Positioned(
+                  top: -5,
+                  right: -5,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF34A853),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        const Icon(Icons.check, color: Colors.white, size: 10),
+                  ),
+                ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  void _viewGoogleDriveFile(GoogleDriveFile file) async {
-    if (file.thumbnailLink != null && file.thumbnailLink!.isNotEmpty) {
-      Get.to(() => DocumentViewerScreen(
-            documentUrl: file.thumbnailLink,
-            title: file.fileName,
-            extension: file.fileName.split('.').last.toLowerCase(),
-            fileSize: 'N/A',
-            createdDate: file.uploadedAt,
-            createdBy: 'Google Drive',
-          ));
-    } else {
-      final url = Uri.parse(file.webViewLink);
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        Common.toastMessaage("Could not open file", Colors.red);
-      }
-    }
   }
 
   Widget _buildGoogleDriveFileItem(GoogleDriveFile file) {
@@ -6540,7 +6842,20 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     }
 
     return InkWell(
-      onTap: () => _viewGoogleDriveFile(file),
+      onTap: () {
+        if (file.isFolder == 'Y') {
+          log("Entering folder: ${file.fileName} (${file.fileId ?? file.id})");
+          _updateBreadcrumbs(file.fileId ?? file.id, file.fileName);
+          setState(() {
+            selectedFolderId = file.fileId ?? file.id;
+            currentFolderName = file.fileName;
+          });
+          _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+              parentId: file.fileId ?? file.id);
+        } else {
+          _viewGoogleDriveFile(file);
+        }
+      },
       borderRadius: BorderRadius.circular(12),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -6549,10 +6864,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: file.isFolder == 'Y'
+                  ? Colors.blue.withOpacity(0.1)
+                  : iconColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 30),
+            child: Icon(file.isFolder == 'Y' ? Icons.folder_rounded : icon,
+                color: file.isFolder == 'Y' ? Colors.blue : iconColor,
+                size: 30),
           ),
           const SizedBox(height: 8),
           Padding(
@@ -6574,48 +6893,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  Widget _buildDummyFile(String folderName) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: () => _viewDocument(null), // Dummy view document
-          child: Column(
-            children: [
-              const Icon(Icons.insert_drive_file_rounded,
-                  size: 80, color: Colors.orange),
-              const SizedBox(height: 16),
-              const Text(
-                'Dummy_Report.pdf',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text('1.2 MB | PDF File',
-                  style: TextStyle(color: Colors.grey, fontSize: 12)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 40),
-        ElevatedButton.icon(
-          onPressed: () => _showFileUploadDialog(),
-          icon: const Icon(Icons.file_upload_outlined, color: Colors.white),
-          label: const Text('New File', style: TextStyle(color: Colors.white)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2a86c9),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
-      ],
-    );
-  }
-
   void _showCreateFolderDialogDrive() {
-    final folderName = TextEditingController();
+    final folderNameCtrl = TextEditingController();
     showGeneralDialog(
       barrierLabel: "showGeneralDialogDrive",
       barrierDismissible: true,
@@ -6637,12 +6916,15 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('New Drive Folder',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                      selectedFolderId == null
+                          ? 'New Drive Folder'
+                          : 'New Folder',
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
                   TextFormField(
-                    controller: folderName,
+                    controller: folderNameCtrl,
                     autofocus: true,
                     decoration: InputDecoration(
                       hintText: "Folder Name",
@@ -6670,12 +6952,35 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          onPressed: () {
-                            // Dummy logic: just show message and close
-                            Common.toastMessaage(
-                                'Drive Folder Created Successfully(Mock)',
-                                Colors.green);
-                            Navigator.pop(context);
+                          onPressed: () async {
+                            if (folderNameCtrl.text.isEmpty) {
+                              Common.toastMessaage(
+                                  'Enter folder name', Colors.red);
+                              return;
+                            }
+
+                            final res = await HttpService.createGoogleFolders(
+                              widget.callMasterId,
+                              selectedDriveAccount!.id,
+                              selectedFolderId ?? "",
+                              folderNameCtrl.text,
+                            );
+
+                            if (res != null && res.status) {
+                              Common.toastMessaage(
+                                  'Drive Folder Created Successfully',
+                                  Colors.green);
+
+                              // Optionally auto-enter the new folder (if API returns the new ID)
+                              // For now we refresh the current level and user clicks to enter.
+                              _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+                                  parentId: selectedFolderId ?? "");
+                              Navigator.pop(context);
+                            } else {
+                              Common.toastMessaage(
+                                  res?.message ?? 'Failed to create folder',
+                                  Colors.red);
+                            }
                           },
                           child: const Text('Create',
                               style: TextStyle(color: Colors.white)),
@@ -6692,41 +6997,45 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  Widget _buildDummyFolder(String name, int index) {
-    return InkWell(
-      onTap: () => setState(() => drivePath = name),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.folder_rounded, size: 50, color: Colors.blue),
-            const SizedBox(height: 8),
-            Text(
-              name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
+  Widget _buildS3Breadcrumbs() {
+    final parts = listPath.split('/').where((e) => e.isNotEmpty).toList();
+    return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          const Text("S3 ",
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold)),
+          ...parts.map((p) => Row(children: [
+                const Icon(Icons.chevron_right, size: 14, color: Colors.grey),
+                GestureDetector(
+                  onTap: () {
+                    int pIdx = listPath.indexOf(p);
+                    if (pIdx != -1) {
+                      String newPath = listPath.substring(0, pIdx + p.length);
+                      String newBack = "";
+                      if (newPath.contains('/')) {
+                        newBack =
+                            newPath.substring(0, newPath.lastIndexOf('/'));
+                      }
+                      setState(() {
+                        path = "$newPath/";
+                        listPath = newPath;
+                        backPath = newBack;
+                      });
+                      listFolderList(
+                          widget.token, widget.callMasterId, listPath);
+                    }
+                  },
+                  child: Text(p,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w500)),
+                )
+              ])),
+        ]));
   }
 
   Widget _buildS3Documents() {
@@ -6793,7 +7102,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 )
               else
                 InkWell(
-                  onTap: () => setState(() => selectedDocumentType = 'none'),
+                  onTap: () {
+                    setState(() {
+                      selectedDocumentType = 'none';
+                      listPath = '';
+                      backPath = '';
+                      path = '';
+                    });
+                  },
                   child: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -6811,14 +7127,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.arrow_back, size: 16, color: Colors.grey),
+                        Icon(Icons.arrow_back, size: 16, color: Colors.blue),
                         SizedBox(width: 8),
                         Text(
                           'Exit S3',
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey),
+                              color: Colors.blue),
                         ),
                       ],
                     ),
@@ -6826,130 +7142,46 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 ),
               Expanded(
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    InkWell(
-                      onTap: () {
-                        if (fileManagerPermission?.data?.createFile == true) {
-                          _showCreateFolderDialog();
-                        } else {
-                          _dialogue(context, 'Create Folder');
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2a86c9).withOpacity(0.05),
-                          border: Border.all(color: const Color(0xFF2a86c9)),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.folder_open_rounded,
-                                color: Color(0xFF2a86c9), size: 14),
-                            SizedBox(width: 6),
-                            Text('New Folder',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2a86c9),
-                                )),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _driveActionIcon(Icons.mic_none_rounded, Colors.red,
+                        _showVoiceUploadDialog),
+                    const SizedBox(width: 8),
+                    _driveActionIcon(Icons.image_outlined, Colors.green,
+                        _showImageUploadDialog),
+                    const SizedBox(width: 8),
+                    _driveActionIcon(Icons.file_upload_outlined, Colors.blue,
+                        _showFileUploadDialog),
+                    const SizedBox(width: 8),
+                    _driveActionIcon(
+                        Icons.create_new_folder_outlined, Colors.orange, () {
+                      if (fileManagerPermission?.data?.createFile == true) {
+                        _showCreateFolderDialog();
+                      } else {
+                        _dialogue(context, 'Create Folder');
+                      }
+                    }),
                     if (folderActionEnable) ...[
                       const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () {
-                          if (fileManagerPermission?.data?.renameFile == true) {
-                            _showRenameFolderDialog();
-                          } else {
-                            _dialogue(context, 'Rename Folder');
-                          }
-                        },
-                        child: const Icon(Icons.edit,
-                            color: Color(0xFF2a86c9), size: 20),
-                      ),
+                      _driveActionIcon(Icons.edit_outlined, Colors.blue, () {
+                        _showRenameFolderDialog();
+                      }),
                       const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () {
-                          if (fileManagerPermission?.data?.deleteFile == true) {
-                            _showDeleteConfirmDialog();
-                          } else {
-                            _dialogue(context, 'Delete Folder');
-                          }
-                        },
-                        child: const Icon(Icons.delete_outline,
-                            color: Colors.red, size: 20),
-                      ),
+                      _driveActionIcon(Icons.delete_outline_rounded, Colors.red,
+                          () {
+                        _showDeleteConfirmDialog();
+                      }),
                     ],
-                    const Spacer(),
-                    // Voice Record Icon
-                    InkWell(
-                      onTap: () {
-                        if (fileManagerPermission?.data?.createFile == true) {
-                          _showVoiceUploadDialog();
-                        } else {
-                          _showPermissionDialog('Upload Voice');
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.mic_none_rounded,
-                            color: Colors.red, size: 20),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Image Upload Icon
-                    InkWell(
-                      onTap: () {
-                        if (fileManagerPermission?.data?.createFile == true) {
-                          _showImageUploadDialog();
-                        } else {
-                          _showPermissionDialog('Upload Image');
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.image_outlined,
-                            color: Colors.green, size: 20),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // File Upload Icon
-                    InkWell(
-                      onTap: () {
-                        if (fileManagerPermission?.data?.createFile == true) {
-                          _showFileUploadDialog();
-                        } else {
-                          _showPermissionDialog('Upload Document');
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.file_copy_outlined,
-                            color: Colors.orange, size: 18),
-                      ),
-                    ),
                   ],
                 ),
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildS3Breadcrumbs(),
         ),
         const SizedBox(height: 15),
         Expanded(
@@ -6988,15 +7220,18 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         folderActionEnable = false;
                         rawId = '';
                         selectedRawIndex = '';
-                        if (item.isFolder == 'Y') {
+                      });
+
+                      if (item.isFolder == 'Y') {
+                        setState(() {
                           backPath = '${item.path}';
                           path = '${item.path}/';
                           listPath = '${item.path}';
-                          listFolderList(widget.token, callMasterId, listPath);
-                        } else {
-                          _viewDocument(item);
-                        }
-                      });
+                        });
+                        listFolderList(widget.token, callMasterId, listPath);
+                      } else {
+                        _viewDocument(item);
+                      }
                     } else {
                       _dialogue(context, 'Open Folder');
                     }
@@ -7288,127 +7523,30 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   void _viewDocument(dynamic item) {
-    if (item.extension == 'M4A' || item.extension == 'm4a') {
-      _showAudioPlayer(item);
+    String ext = (item.extension ?? '').toLowerCase();
+    if (['m4a', 'wav', 'mp3'].contains(ext)) {
+      _showAudioPlayerSimple(item.name ?? 'Audio', item.path);
     } else {
-      Get.to(() => DocumentViewerScreen(
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DocumentViewerScreen(
             documentUrl: item.path.toString(),
             title: item.name.toString(),
             extension: item.extension.toString(),
-          ));
+            fileSize: item.fileSize ?? 'N/A',
+            createdDate: item.createdAt ?? '',
+            createdBy: item.createdBy ?? '',
+          ),
+        ),
+      );
     }
-  }
-
-  void _showAudioPlayer(dynamic item) {
-    showGeneralDialog(
-      barrierLabel: "AudioPlayer",
-      barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.6),
-      transitionDuration: const Duration(milliseconds: 400),
-      context: context,
-      pageBuilder: (context, _, __) {
-        return Obx(() {
-          return Align(
-            alignment: Alignment.bottomCenter,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: double.maxFinite,
-                padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24),
-                    topRight: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.name ?? 'Audio',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            audioCreateController.stopTimer();
-                            audioCreateController.audioPlayer.stop();
-                            audioCreateController.resetTimer();
-                            isPlay = false;
-                            Get.back();
-                          },
-                          icon: const Icon(Icons.close_rounded,
-                              color: Colors.redAccent),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      '${audioCreateController.minutes.value.toString().padLeft(2, '0')}:${audioCreateController.seconds.value.toString().padLeft(2, '0')}',
-                      style: const TextStyle(
-                          fontSize: 32, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (!isPlay)
-                          FloatingActionButton(
-                            heroTag: "play",
-                            onPressed: () {
-                              setState(() => isPlay = true);
-                              audioCreateController.playVoice(item.path);
-                            },
-                            backgroundColor: const Color(0xFF2a86c9),
-                            child: const Icon(Icons.play_arrow_rounded,
-                                size: 36, color: Colors.white),
-                          )
-                        else
-                          const SizedBox(),
-                        const SizedBox(width: 24),
-                        FloatingActionButton(
-                          heroTag: "stop",
-                          onPressed: () {
-                            audioCreateController.stopTimer();
-                            audioCreateController.audioPlayer.stop();
-                            audioCreateController.resetTimer();
-                            setState(() => isPlay = false);
-                          },
-                          backgroundColor: Colors.red.shade50,
-                          elevation: 0,
-                          child: const Icon(Icons.stop_rounded,
-                              size: 32, color: Colors.red),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-          );
-        });
-      },
-      transitionBuilder: (_, animation1, __, child) {
-        return SlideTransition(
-          position: Tween(begin: const Offset(0, 1), end: const Offset(0, 0))
-              .animate(animation1),
-          child: child,
-        );
-      },
-    );
   }
 
   void _showVoiceUploadDialog() {
     audioCreateController.audioPath.value = "";
     audioCreateController.resetTimer();
+    fileName.text = '';
     showGeneralDialog(
       barrierLabel: "VoiceUpload",
       barrierDismissible: false,
@@ -7435,13 +7573,93 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       ],
                     )
                   else
-                    const Column(
+                    // const Column(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: [
+                    //     SizedBox(height: 10),
+                    //     Text('Voice Record', style: TextStyle(fontSize: 18)),
+                    //     SizedBox(height: 20),
+                    //     Text("Do you want to record voice?"),
+                    //   ],
+                    // ),
+                    Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: 10),
-                        Text('Voice Record', style: TextStyle(fontSize: 18)),
-                        SizedBox(height: 20),
-                        Text("Do you want to record voice?"),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF2a86c9),
+                                    Color(0xFF406dbe)
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF2a86c9)
+                                        .withOpacity(0.3),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.mic,
+                                size: 48,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: -5,
+                              right: -5,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                  border:
+                                      Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: const Icon(
+                                  Icons.fiber_manual_record,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Record',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2a86c9),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        // const SizedBox(height: 8),
+                        // const Text(
+                        //   'Voice Record',
+                        //   style: TextStyle(
+                        //     fontSize: 16,
+                        //     fontWeight: FontWeight.w500,
+                        //     color: Colors.black87,
+                        //   ),
+                        // ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Do you want to record voice?",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ],
                     ),
                   const SizedBox(height: 20),
@@ -7493,6 +7711,18 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                     ],
                   ),
+                  if (!audioCreateController.isRecording.value &&
+                      audioCreateController.audioPath.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: fileName,
+                      decoration: const InputDecoration(
+                        labelText: 'Voice Name',
+                        hintText: 'Enter name for this recording',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -7509,27 +7739,73 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               if (audioCreateController.audioPath.isNotEmpty &&
                   !audioCreateController.isRecording.value)
                 TextButton(
-                  onPressed: () async {
-                    Common.showProgressDialog(context, "Uploading...");
-                    UploadAudioRecord res = await HttpService.uploadRecord(
-                      widget.token,
-                      widget.callMasterId,
-                      listPath,
-                      audioCreateController.audioPath.value,
-                      "Voice_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.mp3",
-                    );
-                    Navigator.pop(context); // Close progress
-                    if (res.data == true) {
-                      Common.toastMessaage(
-                          res.message ?? "Success", Colors.green);
-                      listFolderList(
-                          widget.token, widget.callMasterId, listPath);
-                      Navigator.pop(context);
-                    } else {
-                      Common.toastMessaage(res.message ?? "Failed", Colors.red);
-                    }
-                  },
-                  child: const Text('Upload'),
+                  onPressed: isUploading
+                      ? null
+                      : () async {
+                          if (fileName.text.isEmpty) {
+                            Common.toastMessaage(
+                                "Please enter a name for the voice record",
+                                Colors.red);
+                            return;
+                          }
+                          setState(() => isUploading = true);
+                          Common.showProgressDialog(context, "Uploading...");
+                          try {
+                            String fileNameStr = "${fileName.text}.mp3";
+
+                            if (selectedDocumentType == 'drive') {
+                              var res = await HttpService.uploadGoogleFiles(
+                                widget.callMasterId,
+                                selectedDriveAccount!.id,
+                                selectedFolderId ?? "",
+                                audioCreateController.audioPath.value,
+                                customFileName: fileNameStr,
+                              );
+                              if (context.mounted)
+                                Navigator.pop(context); // Close progress
+                              if (res != null && res.status) {
+                                Common.toastMessaage(res.message, Colors.green);
+                                _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+                                    parentId: selectedFolderId ?? "");
+                                if (context.mounted)
+                                  Navigator.pop(context); // Close Dialog
+                              } else {
+                                Common.toastMessaage(
+                                    res?.message ?? "Failed", Colors.red);
+                              }
+                            } else {
+                              UploadAudioRecord res =
+                                  await HttpService.uploadRecord(
+                                widget.token,
+                                widget.callMasterId,
+                                listPath,
+                                audioCreateController.audioPath.value,
+                                fileNameStr,
+                              );
+                              if (context.mounted)
+                                Navigator.pop(context); // Close progress
+                              if (res.data == true) {
+                                Common.toastMessaage(
+                                    res.message ?? "Success", Colors.green);
+                                listFolderList(widget.token,
+                                    widget.callMasterId, listPath);
+                                if (context.mounted)
+                                  Navigator.pop(context); // Close Dialog
+                              } else {
+                                Common.toastMessaage(
+                                    res.message ?? "Failed", Colors.red);
+                              }
+                            }
+                          } finally {
+                            setState(() => isUploading = false);
+                          }
+                        },
+                  child: isUploading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Upload'),
                 ),
             ],
           );
@@ -7629,32 +7905,67 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 )
               else
                 TextButton(
-                  onPressed: () async {
-                    Common.showProgressDialog(context, "Uploading...");
-                    String name = fileName.text.isNotEmpty
-                        ? fileName.text +
-                            p.extension(imageUploadController.file.value)
-                        : p.basename(imageUploadController.file.value);
+                  onPressed: isUploading
+                      ? null
+                      : () async {
+                          setState(() => isUploading = true);
+                          Common.showProgressDialog(context, "Uploading...");
+                          try {
+                            String name = fileName.text.isNotEmpty
+                                ? fileName.text +
+                                    p.extension(
+                                        imageUploadController.file.value)
+                                : p.basename(imageUploadController.file.value);
 
-                    UploadAudioRecord res = await HttpService.uploadRecord(
-                      widget.token,
-                      widget.callMasterId,
-                      listPath,
-                      imageUploadController.file.value,
-                      name,
-                    );
-                    Navigator.pop(context);
-                    if (res.data == true) {
-                      Common.toastMessaage(
-                          res.message ?? "Success", Colors.green);
-                      listFolderList(
-                          widget.token, widget.callMasterId, listPath);
-                      Navigator.pop(context);
-                    } else {
-                      Common.toastMessaage(res.message ?? "Failed", Colors.red);
-                    }
-                  },
-                  child: const Text('Upload'),
+                            if (selectedDocumentType == 'drive') {
+                              var res = await HttpService.uploadGoogleFiles(
+                                widget.callMasterId,
+                                selectedDriveAccount!.id,
+                                selectedFolderId ?? "",
+                                imageUploadController.file.value,
+                                customFileName: name,
+                              );
+                              if (context.mounted) Navigator.pop(context);
+                              if (res != null && res.status) {
+                                Common.toastMessaage(res.message, Colors.green);
+                                _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+                                    parentId: selectedFolderId ?? "");
+                                if (context.mounted) Navigator.pop(context);
+                              } else {
+                                Common.toastMessaage(
+                                    res?.message ?? "Failed", Colors.red);
+                              }
+                            } else {
+                              UploadAudioRecord res =
+                                  await HttpService.uploadRecord(
+                                widget.token,
+                                widget.callMasterId,
+                                listPath,
+                                imageUploadController.file.value,
+                                name,
+                              );
+                              if (context.mounted) Navigator.pop(context);
+                              if (res.data == true) {
+                                Common.toastMessaage(
+                                    res.message ?? "Success", Colors.green);
+                                listFolderList(widget.token,
+                                    widget.callMasterId, listPath);
+                                if (context.mounted) Navigator.pop(context);
+                              } else {
+                                Common.toastMessaage(
+                                    res.message ?? "Failed", Colors.red);
+                              }
+                            }
+                          } finally {
+                            setState(() => isUploading = false);
+                          }
+                        },
+                  child: isUploading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Upload'),
                 ),
             ],
           );
@@ -7724,27 +8035,60 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 )
               else
                 TextButton(
-                  onPressed: () async {
-                    Common.showProgressDialog(context, "Uploading...");
-                    UploadAudioRecord res = await HttpService.uploadRecord(
-                      widget.token,
-                      widget.callMasterId,
-                      listPath,
-                      file!.path!,
-                      file!.name,
-                    );
-                    Navigator.pop(context);
-                    if (res.data == true) {
-                      Common.toastMessaage(
-                          res.message ?? "Success", Colors.green);
-                      listFolderList(
-                          widget.token, widget.callMasterId, listPath);
-                      Navigator.pop(context);
-                    } else {
-                      Common.toastMessaage(res.message ?? "Failed", Colors.red);
-                    }
-                  },
-                  child: const Text('Upload'),
+                  onPressed: isUploading
+                      ? null
+                      : () async {
+                          setState(() => isUploading = true);
+                          Common.showProgressDialog(context, "Uploading...");
+                          try {
+                            if (selectedDocumentType == 'drive') {
+                              var res = await HttpService.uploadGoogleFiles(
+                                widget.callMasterId,
+                                selectedDriveAccount!.id,
+                                selectedFolderId ?? "",
+                                file!.path!,
+                              );
+                              if (context.mounted) Navigator.pop(context);
+                              if (res != null && res.status) {
+                                Common.toastMessaage(res.message, Colors.green);
+                                _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+                                    parentId: selectedFolderId ?? "");
+                                if (context.mounted) Navigator.pop(context);
+                              } else {
+                                Common.toastMessaage(
+                                    res?.message ?? "Failed", Colors.red);
+                              }
+                            } else {
+                              UploadAudioRecord res =
+                                  await HttpService.uploadRecord(
+                                widget.token,
+                                widget.callMasterId,
+                                listPath,
+                                file!.path!,
+                                file!.name,
+                              );
+                              if (context.mounted) Navigator.pop(context);
+                              if (res.data == true) {
+                                Common.toastMessaage(
+                                    res.message ?? "Success", Colors.green);
+                                listFolderList(widget.token,
+                                    widget.callMasterId, listPath);
+                                if (context.mounted) Navigator.pop(context);
+                              } else {
+                                Common.toastMessaage(
+                                    res.message ?? "Failed", Colors.red);
+                              }
+                            }
+                          } finally {
+                            setState(() => isUploading = false);
+                          }
+                        },
+                  child: isUploading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Upload'),
                 ),
             ],
           );
@@ -7755,35 +8099,47 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   Widget _getFileIcon(dynamic item) {
     if (item.isFolder == 'Y') {
-      return const Icon(
-        Icons.folder_rounded,
-        size: 50,
-        color: Colors.blue,
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.folder_rounded, size: 28, color: Colors.blue),
       );
     }
 
-    IconData icon = Icons.insert_drive_file_rounded;
-    Color color = Colors.orange;
-
     String ext = (item.extension ?? '').toLowerCase();
-    if (ext == 'pdf') {
+    IconData icon;
+    Color color;
+
+    if (['jpg', 'jpeg', 'png'].contains(ext)) {
+      icon = Icons.image_rounded;
+      color = Colors.purple;
+    } else if (ext == 'pdf') {
       icon = Icons.picture_as_pdf_rounded;
       color = Colors.red;
-    } else if (ext == 'doc' || ext == 'docx') {
+    } else if (['m4a', 'wav', 'mp3'].contains(ext)) {
+      icon = Icons.audiotrack_rounded;
+      color = Colors.orange;
+    } else if (['doc', 'docx'].contains(ext)) {
       icon = Icons.description_rounded;
       color = Colors.blue;
-    } else if (ext == 'm4a' || ext == 'wav' || ext == 'mp3') {
-      icon = Icons.audiotrack_rounded;
-      color = Colors.purple;
-    } else if (ext == 'png' || ext == 'jpg' || ext == 'jpeg') {
-      icon = Icons.image_rounded;
+    } else if (['xls', 'xlsx'].contains(ext)) {
+      icon = Icons.table_chart_rounded;
       color = Colors.green;
+    } else {
+      icon = Icons.insert_drive_file_rounded;
+      color = Colors.grey;
     }
 
-    return Icon(
-      icon,
-      size: 50,
-      color: color,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 28, color: color),
     );
   }
 
@@ -10242,7 +10598,93 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   //           );
   //         },
   //       );
-  //     },
+  //   );
+  // }
+
+  // void _popBreadcrumb() {
+  //   if (driveBreadcrumbs.length > 1) {
+  //     setState(() {
+  //       driveBreadcrumbs.removeLast();
+  //       final last = driveBreadcrumbs.last;
+  //       selectedFolderId = last['id'] == 'root' ? null : last['id'];
+  //       currentFolderName = last['id'] == 'root' ? null : last['name'];
+  //     });
+  //     _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+  //         parentId: selectedFolderId ?? "");
+  //   } else {
+  //     setState(() {
+  //       selectedDriveAccount = null;
+  //       selectedFolderId = null;
+  //       currentFolderName = null;
+  //       driveBreadcrumbs = [
+  //         {'id': 'root', 'name': 'Drive'}
+  //       ];
+  //     });
+  //   }
+  // }
+
+  // void _updateBreadcrumbs(String id, String name) {
+  //   if (!driveBreadcrumbs.any((element) => element['id'] == id)) {
+  //     setState(() {
+  //       driveBreadcrumbs.add({'id': id, 'name': name});
+  //     });
+  //   }
+  // }
+
+  // Widget _buildS3Breadcrumbs() {
+  //   List<String> parts = path.split('/').where((p) => p.isNotEmpty).toList();
+  //   List<Widget> crumbs = [];
+
+  //   crumbs.add(
+  //     GestureDetector(
+  //       onTap: () {
+  //         setState(() {
+  //           path = '';
+  //           listPath = '';
+  //           backPath = '';
+  //           listFolderList(widget.token, callMasterId, '');
+  //         });
+  //       },
+  //       child: const Text('S3',
+  //           style: TextStyle(
+  //               fontSize: 11,
+  //               color: Colors.grey,
+  //               fontWeight: FontWeight.normal)),
+  //     ),
+  //   );
+
+  //   String currentP = '';
+  //   for (int i = 0; i < parts.length; i++) {
+  //     crumbs.add(
+  //         Icon(Icons.chevron_right, size: 14, color: Colors.grey.shade400));
+  //     currentP += (i == 0 ? parts[i] : '/${parts[i]}');
+  //     final pTarget = currentP;
+  //     bool isLast = i == parts.length - 1;
+
+  //     crumbs.add(
+  //       GestureDetector(
+  //         onTap: isLast
+  //             ? null
+  //             : () {
+  //                 setState(() {
+  //                   path = '$pTarget/';
+  //                   listPath = pTarget;
+  //                   backPath = pTarget;
+  //                   listFolderList(widget.token, callMasterId, listPath);
+  //                 });
+  //               },
+  //         child: Text(parts[i],
+  //             style: TextStyle(
+  //                 fontSize: 11,
+  //                 color: isLast ? Colors.blue : Colors.grey.shade600,
+  //                 fontWeight: isLast ? FontWeight.bold : FontWeight.normal)),
+  //       ),
+  //     );
+  //   }
+
+  //   return SingleChildScrollView(
+  //     scrollDirection: Axis.horizontal,
+  //     child: Row(children: crumbs),
   //   );
   // }
 }

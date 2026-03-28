@@ -9,6 +9,7 @@ import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/roombooking/bookingListPage.dart';
@@ -53,7 +54,7 @@ class _RoomDashboardState extends State<RoomDashboard>
   String? userId;
   String? phoneCallLogPermission;
   final ScrollController _scrollController = ScrollController();
-  
+
   @override
   void initState() {
     super.initState();
@@ -450,7 +451,8 @@ class _RoomDashboardState extends State<RoomDashboard>
                                 : Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => Dashboard(token)),
+                                        builder: (context) =>
+                                            DashboardLeadNewUpdatedTwo(token)),
                                   );
           },
           child: Image.asset("assets/icons/menu.png", width: 25),
@@ -664,6 +666,7 @@ class _RoomDashboardState extends State<RoomDashboard>
       ],
     );
   }
+
   Widget _buildPieChartSection() {
     final totalRooms =
         _pieChartData.values.fold(0.0, (sum, value) => sum + value);

@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_settings/app_settings.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -1386,7 +1387,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                       context,
                                       MaterialPageRoute(
                                           builder: (context) =>
-                                              Dashboard(token)),
+                                              DashboardLeadNewUpdatedTwo(
+                                                  token)),
                                     );
             },
             child: Image.asset("assets/icons/menu.png", width: 25),

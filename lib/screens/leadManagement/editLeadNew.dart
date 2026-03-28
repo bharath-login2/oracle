@@ -9,15 +9,15 @@ import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/widgets/AddLeadSourceDialog.dart';
 import 'package:login2/widgets/addLeadCateoryPopup.dart';
 import 'package:lottie/lottie.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
-import '../../models/lead_management/editLeadModel.dart';
 import '../../service/service.dart';
+import '../../models/lead_management/leadExtraSettings.dart';
+import 'dart:developer';
 
 class EditLeadNew extends StatefulWidget {
   String? token;
@@ -101,7 +101,29 @@ class _EditLeadNewState extends State<EditLeadNew> {
   bool isLoading = true,
       isDistrictLoading = false,
       isPinLoading = false,
+      isLoadingSettings = false,
       checked = false;
+  LeadSettings? leadSettings;
+
+  Future<void> _fetchLeadExtraSettings(String callResultId) async {
+    setState(() => isLoadingSettings = true);
+    try {
+      final response = await HttpService.leadExtraSettings(callResultId);
+      if (mounted) {
+        setState(() {
+          isLoadingSettings = false;
+          if (response != null && response.status == true) {
+            leadSettings = response.data.settings;
+          } else {
+            leadSettings = null;
+          }
+        });
+      }
+    } catch (e) {
+      log("Error fetching lead extra settings: $e");
+      if (mounted) setState(() => isLoadingSettings = false);
+    }
+  }
   String code = '91', whatsappCode = '91', roleId = '', multiBranch = '';
   String? branch;
   String? contactPermission, createLeadCategory, addLeadSource;
@@ -191,6 +213,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       callResult = data.callResult ?? 'New';
       callResultId = data.callResultId?.toString() ?? '1';
       nextFollowupCtrl.text = data.nextFollowupDate ?? "";
+      _fetchLeadExtraSettings(callResultId);
       if (leadTypeId.isNotEmpty) {
         leadSubTypeList = await HttpService.leadSubType(leadTypeId);
       }
@@ -373,12 +396,14 @@ class _EditLeadNewState extends State<EditLeadNew> {
                 // const SizedBox(height: 12),
                 _buildStatusField(),
                 const SizedBox(height: 12),
+                if (callResultId == '2') _buildFollowupRow(),
+                const SizedBox(height: 12),
+
                 if (callResultId == '2' ||
                     callResultId == '3' ||
                     callResultId == '4')
                   _buildCallResponseField(),
-                const SizedBox(height: 12),
-                if (callResultId == '2') _buildFollowupRow(),
+
                 const SizedBox(height: 12),
                 _buildRemarksField(),
               ],
@@ -591,7 +616,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callResponseCtrl,
-          decoration: _inputDecoration('Call Response', Icons.add_call),
+          decoration: _inputDecoration('Call Response ', Icons.add_call),
         ),
       ),
     );
@@ -703,6 +728,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
                   callResponse = 'Call Response';
                   callResponseId = '';
                   callResponseCtrl.clear();
+                  _fetchLeadExtraSettings(callResultId);
                 });
                 Navigator.pop(context);
               },
@@ -1477,6 +1503,18 @@ class _EditLeadNewState extends State<EditLeadNew> {
     if (!_formKey.currentState!.validate()) {
       _scrollController.animateTo(0,
           duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+      return;
+    }
+
+    if (callResponseId.isEmpty) {
+      Common.toastMessaage('Select call response', Colors.red);
+      return;
+    }
+
+    bool nextFollowUpRequired =
+        leadSettings?.isFollowupRequiredBool ?? (callResultId == '2');
+    if (nextFollowUpRequired && nextFollowupCtrl.text.isEmpty) {
+      Common.toastMessaage('Select Next Followup Date', Colors.red);
       return;
     }
     Common.showProgressDialog(context, "Updating...");

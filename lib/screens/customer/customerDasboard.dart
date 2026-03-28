@@ -24,6 +24,7 @@ import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/addQuotationPage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/service.dart';
@@ -536,7 +537,8 @@ class _CustomerDashboardState extends State<CustomerDashboard> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          Dashboard(widget.token)),
+                                          DashboardLeadNewUpdatedTwo(
+                                              widget.token)),
                                 );
         },
         child: Image.asset("assets/icons/menu.png", width: 25),

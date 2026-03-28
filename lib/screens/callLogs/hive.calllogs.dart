@@ -4,13 +4,7 @@
 // TODO : DONOT DELETE THIS PAGE : HERE DISPLAYING DATA FROM HIVE LOCAL DB
 // ?    : KEEP IT FOR FUTURE
 
-
 // ! =========================================================
-
-
-
-
-
 
 import 'dart:developer';
 import 'dart:io';
@@ -24,6 +18,7 @@ import 'package:login2/core/config.dart';
 import 'package:login2/hive/call_logs/HiveCaallHistoryModel.dart';
 import 'package:login2/hive/call_logs/call_logs_hive_functions.dart';
 import 'package:login2/screens/leadManagement/add_leads.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:lottie/lottie.dart';
 // import 'package:mobile_number/mobile_number.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -121,229 +116,227 @@ class _CallLogsState extends State<CallLogs> {
       getData();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      askUserNeeds(context,false);
+      askUserNeeds(context, false);
     });
   }
-   List<HiveCaallHistoryModel> allCallLogData = <HiveCaallHistoryModel>[];
+
+  List<HiveCaallHistoryModel> allCallLogData = <HiveCaallHistoryModel>[];
 
   void askUserNeeds(BuildContext context, bool showPopUp) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  List<String> callTypes = prefs.getStringList('callTypes') ?? [];
-  // List<String> simOptions = prefs.getStringList('simOptions') ?? [];
+    List<String> callTypes = prefs.getStringList('callTypes') ?? [];
+    // List<String> simOptions = prefs.getStringList('simOptions') ?? [];
 
+    if (callTypes.isEmpty || showPopUp) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return WillPopScope(
+            onWillPop: () async => false, // Prevent back button dismiss
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return AlertDialog(
+                  title: const Center(child: Text('Permission Required')),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Center(
+                          child: Text(
+                        'Please allow permission to access call logs.',
+                        textAlign: TextAlign.center,
+                      )),
+                      const SizedBox(height: 10),
 
-  if (callTypes.isEmpty ||  showPopUp) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return WillPopScope(
-          onWillPop: () async => false, // Prevent back button dismiss
-          child: StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: const Center(child: Text('Permission Required')),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Center(
-                        child: Text(
-                      'Please allow permission to access call logs.',
-                      textAlign: TextAlign.center,
-                    )),
-                    const SizedBox(height: 10),
-
-                    //! Call Type Selection
-                    const Text('Select Call Type'),
-                    const SizedBox(height: 5),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (callTypes.contains('Incoming')) {
-                                callTypes.remove('Incoming');
-                              } else {
-                                callTypes.add('Incoming');
-                              }
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 15),
-                            decoration: BoxDecoration(
-                              color: callTypes.contains('Incoming')
-                                  ? Colors.green
-                                  : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.call_received,
-                                    color: Colors.red),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Incoming',
-                                  style: TextStyle(
-                                    color: callTypes.contains('Incoming')
-                                        ? Colors.white
-                                        : Colors.black,
+                      //! Call Type Selection
+                      const Text('Select Call Type'),
+                      const SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (callTypes.contains('Incoming')) {
+                                  callTypes.remove('Incoming');
+                                } else {
+                                  callTypes.add('Incoming');
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 15),
+                              decoration: BoxDecoration(
+                                color: callTypes.contains('Incoming')
+                                    ? Colors.green
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.call_received,
+                                      color: Colors.red),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'Incoming',
+                                    style: TextStyle(
+                                      color: callTypes.contains('Incoming')
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if (callTypes.contains('Outgoing')) {
-                                callTypes.remove('Outgoing');
-                              } else {
-                                callTypes.add('Outgoing');
-                              }
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 15),
-                            decoration: BoxDecoration(
-                              color: callTypes.contains('Outgoing')
-                                  ? Colors.green
-                                  : Colors.grey[300],
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.call_made,
-                                    color: Colors.blue),
-                                const SizedBox(width: 5),
-                                Text(
-                                  'Outgoing',
-                                  style: TextStyle(
-                                    color: callTypes.contains('Outgoing')
-                                        ? Colors.white
-                                        : Colors.black,
+                          const SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (callTypes.contains('Outgoing')) {
+                                  callTypes.remove('Outgoing');
+                                } else {
+                                  callTypes.add('Outgoing');
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 15),
+                              decoration: BoxDecoration(
+                                color: callTypes.contains('Outgoing')
+                                    ? Colors.green
+                                    : Colors.grey[300],
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.call_made,
+                                      color: Colors.blue),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    'Outgoing',
+                                    style: TextStyle(
+                                      color: callTypes.contains('Outgoing')
+                                          ? Colors.white
+                                          : Colors.black,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-
-                   
-                
-                  ],
-                ),
-                actions: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (callTypes.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Please select at least one Call Type'),
-                            ),
-                          );
-                          return;
-                        }
-
-                        await prefs.setStringList('callTypes', callTypes);
-                        // await prefs.setStringList('simOptions', simOptions);
-                        await prefs.setString('callLogsStartingTime',  DateTime.now().toString());
-
-                            // getData();
-
-                            //!
-                            List<String> callTypesQ = prefs.getStringList('callTypes') ?? [];
-                            log('callTypes : $callTypesQ');
-
-                        Navigator.of(context).pop();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        ],
                       ),
-                      child: const Text(
-                        'Submit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                      const SizedBox(height: 15),
+                    ],
                   ),
-                ],
-              );
-            },
-          ),
-        );
-      },
-    );
+                  actions: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (callTypes.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Please select at least one Call Type'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          await prefs.setStringList('callTypes', callTypes);
+                          // await prefs.setStringList('simOptions', simOptions);
+                          await prefs.setString('callLogsStartingTime',
+                              DateTime.now().toString());
+
+                          // getData();
+
+                          //!
+                          List<String> callTypesQ =
+                              prefs.getStringList('callTypes') ?? [];
+                          log('callTypes : $callTypesQ');
+
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        child: const Text(
+                          'Submit',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
+      );
+    }
   }
-}
 
-
- Future<void> uploadMissingLogsToServer(List<HiveCaallHistoryModel> callLogData) async {
-
-     List<Map<String, dynamic>> missingLogs = callLogData.map((log) => {
-          "name": log.name,
-          "phone_number": log.phoneNumber,
-          "callTypes": log.callType 
+  Future<void> uploadMissingLogsToServer(
+      List<HiveCaallHistoryModel> callLogData) async {
+    List<Map<String, dynamic>> missingLogs = callLogData
+        .map((log) => {
+              "name": log.name,
+              "phone_number": log.phoneNumber,
+              "callTypes": log.callType
                   .toString()
                   .substring(log.callType.toString().indexOf('.') + 1),
-          "time": DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp)).toString(), // log.timestamp,
-          "duration": log.duration,
-          "simName": log.simSlot ?? "NIL",
-          "timeStamp": log.timeStamp,
-        }).toList();
+              "time":
+                  DateTime.fromMillisecondsSinceEpoch(int.parse(log.timeStamp))
+                      .toString(), // log.timestamp,
+              "duration": log.duration,
+              "simName": log.simSlot ?? "NIL",
+              "timeStamp": log.timeStamp,
+            })
+        .toList();
 
-        log("⚠️ Found ${missingLogs.length} missing logs.");
+    log("⚠️ Found ${missingLogs.length} missing logs.");
 
-         if (missingLogs.isNotEmpty) {
+    if (missingLogs.isNotEmpty) {
       // Step 5: Upload missing logs to the server
       // List<Map<String, dynamic>> historyCallPending = [];
       // await uploadLogsToServer(missingLogs);
 
-       log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
-                log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
+      log('~~ OUTGOING CALL missingLogs : $missingLogs ~~~');
+      log('~~ OUTGOING CALL length : ${missingLogs.length} ~~~');
 
-       Map<String, dynamic> body = {
-                  "token": await Common.getSharedPref("token"),
-                  'log': missingLogs,
-                };
-                log('~~ OUTGOING CALL BODY : $body ~~~');
+      Map<String, dynamic> body = {
+        "token": await Common.getSharedPref("token"),
+        'log': missingLogs,
+      };
+      log('~~ OUTGOING CALL BODY : $body ~~~');
 
-
-
-      CallLogUploadModel object1 =
-                    await HttpService.callLogUpload(body);
-                log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
+      CallLogUploadModel object1 = await HttpService.callLogUpload(body);
+      log('~~ OUTGOING CALL missingLogs object : ${object1.data} ~~~');
       // await HiveUtil.saveCallLog(missingLogs.last);
       if (object1.data == true) {
-                  log('~~ OUTGOING CALL success ~~~');
-                  log('success');
-                } else {
-                  log('~~ OUTGOING CALL failure ~~~');
-                  log('failure');
-                }
+        log('~~ OUTGOING CALL success ~~~');
+        log('success');
+      } else {
+        log('~~ OUTGOING CALL failure ~~~');
+        log('failure');
+      }
     }
- }
+  }
 
-
-List<HiveCaallHistoryModel> fullHiveData =[];
+  List<HiveCaallHistoryModel> fullHiveData = [];
   getSharedData() async {
     try {
       refresh = true;
@@ -370,17 +363,18 @@ List<HiveCaallHistoryModel> fullHiveData =[];
           );
           // getSimDetails();
           // todo : get data from hive
-          // todo : store in a list 
+          // todo : store in a list
           // todo : on displaying create a bool variable , which is perform based on its time matching
           //!
           // List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
-          final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
+          final List<HiveCaallHistoryModel> hiveData =
+              await HiveUtil.getAllCallLogs();
           log('hiveData 1: $hiveData');
           log('hiveData 0: ${hiveData.length}');
-          
+
           //!
           setState(() {
-            fullHiveData=hiveData;
+            fullHiveData = hiveData;
             _callLogEntries = result;
             refresh = false;
           });
@@ -391,267 +385,275 @@ List<HiveCaallHistoryModel> fullHiveData =[];
     }
   }
 
-bool showStaffSearchResult = false;
-bool isCurrentUserSearchResult =false;
- 
+  bool showStaffSearchResult = false;
+  bool isCurrentUserSearchResult = false;
 
- // todo : upload data to server when gets new data from device log
+  // todo : upload data to server when gets new data from device log
   getData() async {
     allCallLogData.clear();
-     history.clear();
+    history.clear();
     //! staff api
-     commonDetails = await HttpService.addLeadCommonData(widget.token);
-     log('commonDetails: ${commonDetails?.data.staff.length}');
-     log('commonDetails: ${commonDetails?.data.staff.first.staffName}');
-     log('commonDetails: ${commonDetails?.data.staff.first.userId}');
+    commonDetails = await HttpService.addLeadCommonData(widget.token);
+    log('commonDetails: ${commonDetails?.data.staff.length}');
+    log('commonDetails: ${commonDetails?.data.staff.first.staffName}');
+    log('commonDetails: ${commonDetails?.data.staff.first.userId}');
     if (commonDetails != null) {
       setState(() {});
-    }                                                                                          
+    }
     //! search result
-completedLoading=false; 
-isCurrentUserSearchResult=false;
-// widget.userId.toString()!=assignStaffId  || 
-    if ( search) {
+    completedLoading = false;
+    isCurrentUserSearchResult = false;
+// widget.userId.toString()!=assignStaffId  ||
+    if (search) {
       log('This is search Result');
-       logHistory = await HttpService.callLogHistory(  widget.token, fromdate, todate, assignStaffId);
-       log('logHistory: ${logHistory?.data}');
-          if (logHistory != null) {
-          setState(() {
-            isCurrentUserSearchResult=true;
-            search=false;
-            completedLoading=true;
-            if (logHistory!.data!.lists!.isNotEmpty) {
-                showStaffSearchResult=true;
-            }else{
-              showStaffSearchResult=false;
-            }
-          
-            if (isSearch == false) {
-              Navigator.of(context).pop();
-            }
-          });
-        }
+      logHistory = await HttpService.callLogHistory(
+          widget.token, fromdate, todate, assignStaffId);
+      log('logHistory: ${logHistory?.data}');
+      if (logHistory != null) {
+        setState(() {
+          isCurrentUserSearchResult = true;
+          search = false;
+          completedLoading = true;
+          if (logHistory!.data!.lists!.isNotEmpty) {
+            showStaffSearchResult = true;
+          } else {
+            showStaffSearchResult = false;
+          }
+
+          if (isSearch == false) {
+            Navigator.of(context).pop();
+          }
+        });
+      }
       return;
     } else {
-      isCurrentUserSearchResult=false;
-      search=false;
-       showStaffSearchResult=false;
-   List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
+      isCurrentUserSearchResult = false;
+      search = false;
+      showStaffSearchResult = false;
+      List<HiveCaallHistoryModel> callLogData = <HiveCaallHistoryModel>[];
 
-    log('>>> GET DATA FUNCTION CALLED <<<');
-    //! GET HIVE DATA DETAILS
-    final int callLogCount = await HiveUtil.getCallLogCount();
-    log('hive data count: $callLogCount');
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+      log('>>> GET DATA FUNCTION CALLED <<<');
+      //! GET HIVE DATA DETAILS
+      final int callLogCount = await HiveUtil.getCallLogCount();
+      log('hive data count: $callLogCount');
+      SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    if (callLogCount==0) {
-      log( 'No call logs found in Hive.');
-      //! get start time from prefs
-      //! based on start time get device call logs
-      //! add HiveCaallHistoryModel to a list
-      //! display device call logs
+      if (callLogCount == 0) {
+        log('No call logs found in Hive.');
+        //! get start time from prefs
+        //! based on start time get device call logs
+        //! add HiveCaallHistoryModel to a list
+        //! display device call logs
 
-      final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
-      final DateTime startingTime = DateTime.parse(dateTimeFrom);
+        final String dateTimeFrom =
+            prefs.getString('callLogsStartingTime').toString();
+        final DateTime startingTime = DateTime.parse(dateTimeFrom);
 
-      List<CallLogEntry> callLogsFromDevice = await getFilteredCallLogs(startingTime);  // filterd based on Incoming /out going
-      log('Call logs from device : $callLogsFromDevice');
-      log('Call logs from length : ${callLogsFromDevice.length}');
-      callLogData.clear();
-      if (callLogsFromDevice.isNotEmpty) {
-        for (var callLog in callLogsFromDevice) {
-          HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-            id: callLog.timestamp.toString(),
-            name: callLog.name.toString(),
-            phoneNumber: callLog.number.toString(),
-            callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
-            duration: callLog.duration.toString(),
-            timeStamp:  callLog.timestamp!.toString(), //'${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
-            simSlot: callLog.simDisplayName??"NIL",
-            callRecordFilePath: "",
-            isUploaded: false,
-            isDeleted:false,
-            isEnabled: true,
-          );
-          await HiveUtil.addCallLog(hiveCallLog);
-          callLogData.add(hiveCallLog);
-          allCallLogData= callLogData;
-          // todo : add logs to server
-          if (callLogData.isNotEmpty) {
-          uploadMissingLogsToServer(callLogData);            
+        List<CallLogEntry> callLogsFromDevice = await getFilteredCallLogs(
+            startingTime); // filterd based on Incoming /out going
+        log('Call logs from device : $callLogsFromDevice');
+        log('Call logs from length : ${callLogsFromDevice.length}');
+        callLogData.clear();
+        if (callLogsFromDevice.isNotEmpty) {
+          for (var callLog in callLogsFromDevice) {
+            HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+              id: callLog.timestamp.toString(),
+              name: callLog.name.toString(),
+              phoneNumber: callLog.number.toString(),
+              callType: callLog.callType
+                  .toString()
+                  .substring(callLog.callType.toString().indexOf('.') + 1),
+              duration: callLog.duration.toString(),
+              timeStamp: callLog.timestamp!
+                  .toString(), //'${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+              simSlot: callLog.simDisplayName ?? "NIL",
+              callRecordFilePath: "",
+              isUploaded: false,
+              isDeleted: false,
+              isEnabled: true,
+            );
+            await HiveUtil.addCallLog(hiveCallLog);
+            callLogData.add(hiveCallLog);
+            allCallLogData = callLogData;
+            // todo : add logs to server
+            if (callLogData.isNotEmpty) {
+              uploadMissingLogsToServer(callLogData);
+            }
           }
+        } else {
+          log('No Call Logs found in device.');
+          // todo : check this case
         }
       } else {
-        log('No Call Logs found in device.');
-        // todo : check this case
-      }
+        log('call logs found in Hive.');
 
-    } else {
-      log( 'call logs found in Hive.');
+        //! get list of hive data
+        //! get latest data from HIVE
+        //! check latest hive and device data is same
+        //! if same add that to a list
+        //! not same get all call logs after latest hive data
+        //! add that to a list
 
-      //! get list of hive data
-      //! get latest data from HIVE
-      //! check latest hive and device data is same
-      //! if same add that to a list
-      //! not same get all call logs after latest hive data
-      //! add that to a list 
+        callLogData.clear();
 
-      
-      
-      callLogData.clear();
-      
-      final String dateTimeFrom = prefs.getString('callLogsStartingTime').toString();
-      final DateTime startingTime = DateTime.parse(dateTimeFrom);
+        final String dateTimeFrom =
+            prefs.getString('callLogsStartingTime').toString();
+        final DateTime startingTime = DateTime.parse(dateTimeFrom);
 
-      List<CallLogEntry> callLogsFromDevice = await getFilteredCallLogs(startingTime);  // filterd based on Incoming /out going
-      log('Call logs from device : $callLogsFromDevice');
-      log('Call logs from length : ${callLogsFromDevice.length}');
-      if(callLogsFromDevice.isEmpty){
-        log('no call logs in device');
-        final List<HiveCaallHistoryModel> hiveDataMain = await HiveUtil.getAllCallLogs();
-        //! 
+        List<CallLogEntry> callLogsFromDevice = await getFilteredCallLogs(
+            startingTime); // filterd based on Incoming /out going
+        log('Call logs from device : $callLogsFromDevice');
+        log('Call logs from length : ${callLogsFromDevice.length}');
+        if (callLogsFromDevice.isEmpty) {
+          log('no call logs in device');
+          final List<HiveCaallHistoryModel> hiveDataMain =
+              await HiveUtil.getAllCallLogs();
+          //!
           callLogData.addAll(hiveDataMain);
-         setState(() {
-      refresh = false;
-      completedLoading=true;
-      allCallLogData= callLogData;
-    });
-        return ;
-      }
-      final deviceLatestCallLogTime = parseCallLogTime(callLogsFromDevice.first.timestamp.toString()); 
+          setState(() {
+            refresh = false;
+            completedLoading = true;
+            allCallLogData = callLogData;
+          });
+          return;
+        }
+        final deviceLatestCallLogTime =
+            parseCallLogTime(callLogsFromDevice.first.timestamp.toString());
 
-       final List<HiveCaallHistoryModel> hiveData = await HiveUtil.getAllCallLogs();
-    // log('hive data count: ${hiveData[0].name} || ${hiveData[0].isUploaded}');
-    // log('hive data count: ${hiveData[1].name} || ${hiveData[1].isUploaded}');
+        final List<HiveCaallHistoryModel> hiveData =
+            await HiveUtil.getAllCallLogs();
+        // log('hive data count: ${hiveData[0].name} || ${hiveData[0].isUploaded}');
+        // log('hive data count: ${hiveData[1].name} || ${hiveData[1].isUploaded}');
 
-      //  final HiveCaallHistoryModel latestHiveCallLog2 = hiveData.last;
-       final HiveCaallHistoryModel latestHiveCallLog2 = await HiveUtil.getLatestCallLogByTime() ?? hiveData.first ;
+        //  final HiveCaallHistoryModel latestHiveCallLog2 = hiveData.last;
+        final HiveCaallHistoryModel latestHiveCallLog2 =
+            await HiveUtil.getLatestCallLogByTime() ?? hiveData.first;
         log('latestHiveCallLog2 : ${latestHiveCallLog2.name} || ${latestHiveCallLog2.phoneNumber} || ${latestHiveCallLog2.isUploaded}');
-       
-       final hiveLatestDateTime = parseCallLogTime(latestHiveCallLog2.timeStamp); 
-      //  final readableDateTime3 = DateFormat('MMM d, yyyy – h:mm a').format(dateTime);
-      // todo : filter here based on time
 
-       log('Latest Hive Call Log name         2 : ${latestHiveCallLog2.name}');
-       log('Latest Hive Call Log phoneNumber  2 : ${latestHiveCallLog2.phoneNumber}');
-       log('Latest Hive Call Log phoneNumber  2 : ${latestHiveCallLog2.isUploaded}');
-       log('Latest Hive Call Log phoneNumber  2 : $hiveLatestDateTime');
-       log('Latest Hive Call Log phoneNumber  2 : $deviceLatestCallLogTime');
-       log('Latest Hive Call Log phoneNumber  2 : ${callLogsFromDevice.first.name}');
-       log('Latest Hive Call Log phoneNumber  2 : ${callLogsFromDevice.first.number}');
+        final hiveLatestDateTime =
+            parseCallLogTime(latestHiveCallLog2.timeStamp);
+        //  final readableDateTime3 = DateFormat('MMM d, yyyy – h:mm a').format(dateTime);
+        // todo : filter here based on time
 
+        log('Latest Hive Call Log name         2 : ${latestHiveCallLog2.name}');
+        log('Latest Hive Call Log phoneNumber  2 : ${latestHiveCallLog2.phoneNumber}');
+        log('Latest Hive Call Log phoneNumber  2 : ${latestHiveCallLog2.isUploaded}');
+        log('Latest Hive Call Log phoneNumber  2 : $hiveLatestDateTime');
+        log('Latest Hive Call Log phoneNumber  2 : $deviceLatestCallLogTime');
+        log('Latest Hive Call Log phoneNumber  2 : ${callLogsFromDevice.first.name}');
+        log('Latest Hive Call Log phoneNumber  2 : ${callLogsFromDevice.first.number}');
 
-
-       //! checking device call latest log time and hive latest time matching 
-       if (hiveLatestDateTime==deviceLatestCallLogTime) {
-        log('Latest Hive Call Log and Device Call Log are same.');
-        log('first call log : ${latestHiveCallLog2.isUploaded}');
-        // todo 
+        //! checking device call latest log time and hive latest time matching
+        if (hiveLatestDateTime == deviceLatestCallLogTime) {
+          log('Latest Hive Call Log and Device Call Log are same.');
+          log('first call log : ${latestHiveCallLog2.isUploaded}');
+          // todo
           callLogData.addAll(hiveData);
-
-       } else {
-        log('Latest Hive Call Log and Device Call Log are not same.');
-         List<CallLogEntry> allCallLogsAfterHiveLatestData = await getFilteredCallLogs(hiveLatestDateTime);
+        } else {
+          log('Latest Hive Call Log and Device Call Log are not same.');
+          List<CallLogEntry> allCallLogsAfterHiveLatestData =
+              await getFilteredCallLogs(hiveLatestDateTime);
           log('Call logs from device after latest hive data : $allCallLogsAfterHiveLatestData');
           log('Call logs from length after latest hive data : ${allCallLogsAfterHiveLatestData.length}');
-              callLogData.addAll(hiveData);
-              history.clear();
-           if (allCallLogsAfterHiveLatestData.isNotEmpty) {
-              for (var callLog in allCallLogsAfterHiveLatestData) {
-                HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-                  id: callLog.timestamp.toString(),
-                  name: callLog.name.toString(),
-                  phoneNumber: callLog.number.toString(),
-                  callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
-                  duration: callLog.duration.toString(),
-                  timeStamp:   callLog.timestamp!.toString(),// '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
-                  simSlot: callLog.simDisplayName??"NIL",
-                  callRecordFilePath: "",
-                  isUploaded: false,
-                  isDeleted:false,
-                  isEnabled: true,
-                );
-                 await HiveUtil.addCallLog(hiveCallLog); // add to hive
-                callLogData.add(hiveCallLog);
-                // todo : add to DB also this case
-              }
-            } else {
-              log('No NEW Call Logs found in device.');
+          callLogData.addAll(hiveData);
+          history.clear();
+          if (allCallLogsAfterHiveLatestData.isNotEmpty) {
+            for (var callLog in allCallLogsAfterHiveLatestData) {
+              HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                id: callLog.timestamp.toString(),
+                name: callLog.name.toString(),
+                phoneNumber: callLog.number.toString(),
+                callType: callLog.callType
+                    .toString()
+                    .substring(callLog.callType.toString().indexOf('.') + 1),
+                duration: callLog.duration.toString(),
+                timeStamp: callLog.timestamp!
+                    .toString(), // '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+                simSlot: callLog.simDisplayName ?? "NIL",
+                callRecordFilePath: "",
+                isUploaded: false,
+                isDeleted: false,
+                isEnabled: true,
+              );
+              await HiveUtil.addCallLog(hiveCallLog); // add to hive
+              callLogData.add(hiveCallLog);
+              // todo : add to DB also this case
             }
+          } else {
+            log('No NEW Call Logs found in device.');
+          }
+        }
 
-       }
+        log('~~~~~ device and hive get data finished ~~~~  ');
 
-       log('~~~~~ device and hive get data finished ~~~~  ');
-
-       //! log the new list data
+        //! log the new list data
         log('Call logs from device after latest hive data   : $callLogData');
         log('Call logs from length after latest hive length : ${callLogData.length}');
 
+        // todo : add missings to the display list
+        //! get all device call logs after the permission approved after filtering
+        //! filter (incoming/out going)
+        //! add that to a list make same HIve model
+        //! remove duplicates from the list (match with hive list)
+        //! add that to a list
+        //! add that to the display list
 
-      // todo : add missings to the display list
-      //! get all device call logs after the permission approved after filtering
-      //! filter (incoming/out going)
-      //! add that to a list make same HIve model
-      //! remove duplicates from the list (match with hive list)
-      //! add that to a list
-      //! add that to the display list
+        //!  callLogsFromDevice.map(toElement)
 
-      //!  callLogsFromDevice.map(toElement)
+        List<HiveCaallHistoryModel> deviceCallLogDataAll =
+            []; // all device call log
 
-      List<HiveCaallHistoryModel> deviceCallLogDataAll =[]; // all device call log 
+        if (callLogsFromDevice.isNotEmpty) {
+          for (var callLog in callLogsFromDevice) {
+            HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+              id: callLog.timestamp.toString(),
+              name: callLog.name.toString(),
+              phoneNumber: callLog.number.toString(),
+              callType: callLog.callType
+                  .toString()
+                  .substring(callLog.callType.toString().indexOf('.') + 1),
+              duration: callLog.duration.toString(),
+              timeStamp: callLog.timestamp!
+                  .toString(), // '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
+              simSlot: callLog.simDisplayName ?? "NIL",
+              callRecordFilePath: "",
+              isUploaded: false,
+              isDeleted: false,
+              isEnabled: true,
+            );
+            deviceCallLogDataAll.add(hiveCallLog);
+          }
 
+          // here i have 2 list callLogData and deviceCallLogDataAll
+          // fromn this i need to remove the duplicates items from deviceCallLogDataAll ,
+          // and add that to the callLogData list based ob time stamp order
 
-      if (callLogsFromDevice.isNotEmpty) {
-        for (var callLog in callLogsFromDevice) {
-          HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-            id: callLog.timestamp.toString(),
-            name: callLog.name.toString(),
-            phoneNumber: callLog.number.toString(),
-            callType: callLog.callType.toString().substring(callLog.callType.toString().indexOf('.') + 1),
-            duration: callLog.duration.toString(),
-            timeStamp: callLog.timestamp!.toString(), // '${DateTime.fromMillisecondsSinceEpoch(callLog.timestamp!)}',
-            simSlot: callLog.simDisplayName??"NIL",
-            callRecordFilePath: "",
-            isUploaded: false,
-            isDeleted:false,
-            isEnabled: true,
-          );
-          deviceCallLogDataAll.add(hiveCallLog);
-        }
+          Map<String, bool> existingItems = {};
 
-        // here i have 2 list callLogData and deviceCallLogDataAll
-        // fromn this i need to remove the duplicates items from deviceCallLogDataAll ,
-        // and add that to the callLogData list based ob time stamp order
+          for (var item in callLogData) {
+            // Create a unique key using phone number and timestamp
+            String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
+            existingItems[uniqueKey] = true;
+          }
 
-        Map<String, bool> existingItems = {};
-  
-        for (var item in callLogData) {
-          // Create a unique key using phone number and timestamp
-          String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
-          existingItems[uniqueKey] = true;
-        }
+          log('existingItems: $existingItems');
+          log('existingItems length: ${existingItems.length}');
 
-        log('existingItems: $existingItems');
-        log('existingItems length: ${existingItems.length}');
+          List<HiveCaallHistoryModel> nonDuplicates = [];
+          for (var item in deviceCallLogDataAll) {
+            String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
+            if (!existingItems.containsKey(uniqueKey)) {
+              log('Unique item found: ${item.phoneNumber} - ${item.timeStamp}');
+              nonDuplicates.add(item);
+            } else {
+              log('Duplicate item found: ${item.phoneNumber} - ${item.timeStamp}');
+            }
+          }
 
+          log('nonDuplicates: $nonDuplicates');
+          log('nonDuplicates length: ${nonDuplicates.length}');
 
-        List<HiveCaallHistoryModel> nonDuplicates = [];
-        for (var item in deviceCallLogDataAll) {
-        String uniqueKey = "${item.phoneNumber}_${item.timeStamp}";
-        if (!existingItems.containsKey(uniqueKey)) {
-
-          log('Unique item found: ${item.phoneNumber} - ${item.timeStamp}');
-          nonDuplicates.add(item);
-        }else{
-          log('Duplicate item found: ${item.phoneNumber} - ${item.timeStamp}');
-        
-        }
-      }
-
-      log('nonDuplicates: $nonDuplicates');
-      log('nonDuplicates length: ${nonDuplicates.length}');
-
-      callLogData.addAll(nonDuplicates);
+          callLogData.addAll(nonDuplicates);
 
 //       log('Call logs from device after latest hive data  1 : $callLogData');
 //       log('Call logs from length after latest hive length 1: ${callLogData.length}');
@@ -666,49 +668,35 @@ isCurrentUserSearchResult=false;
 //       uploadMissingLogsToServer(notUploadedCallLogs);
 //       }
 
-
- 
 //  setState(() {
 //         refresh = false;
 //         allCallLogData= callLogData;
 //  });
+        } else {
+          log('No Call Logs found in device.');
+        }
+      }
+      log('>>> GET DATA FUNCTION ENDED <<<');
+      callLogData = callLogData.where((log) => log.isDeleted != true).toList();
+      callLogData = callLogData.reversed.toList();
 
+      log('callLogData        : $callLogData');
+      log('callLogData length : ${callLogData.length}');
 
-
-
-
-
-      }else {
-        log('No Call Logs found in device.');
+      List<HiveCaallHistoryModel> notUploadedCallLogs =
+          callLogData.where((log) => log.isUploaded != true).toList();
+      if (notUploadedCallLogs.isNotEmpty) {
+        uploadMissingLogsToServer(notUploadedCallLogs);
       }
 
-    }
-     log('>>> GET DATA FUNCTION ENDED <<<');
-     callLogData = callLogData.where((log) => log.isDeleted != true).toList();
-     callLogData = callLogData.reversed.toList();
-
-    log('callLogData        : $callLogData');
-    log('callLogData length : ${callLogData.length}');
-
-     List<HiveCaallHistoryModel> notUploadedCallLogs = callLogData.where((log) => log.isUploaded != true).toList();
-  if (notUploadedCallLogs.isNotEmpty) {
-      uploadMissingLogsToServer(notUploadedCallLogs);    
-  }
-
-    setState(() {
-      refresh = false;
-      completedLoading=true;
-      allCallLogData= callLogData;
-    });
-
-   
+      setState(() {
+        refresh = false;
+        completedLoading = true;
+        allCallLogData = callLogData;
+      });
     }
 
-setState(() {
-  
-});
-   
-   
+    setState(() {});
   }
 
   // void getSimDetails() async {
@@ -741,8 +729,7 @@ setState(() {
     }
   }
 
-  Iterable<CallLogEntry> _callLogEntries = <CallLogEntry>[];  
- 
+  Iterable<CallLogEntry> _callLogEntries = <CallLogEntry>[];
 
   @override
   Widget build(BuildContext context) {
@@ -888,9 +875,9 @@ setState(() {
                                           }
                                         } else if (value == '4') {
                                           selectSim(context);
-                                        }else if (value == '6'){
+                                        } else if (value == '6') {
                                           // todo : call pop-up
-                                           askUserNeeds(context,true);
+                                          askUserNeeds(context, true);
                                         }
                                       }
                                     });
@@ -1067,39 +1054,62 @@ setState(() {
                                                     _callLogEntries.length,
                                                 physics:
                                                     const NeverScrollableScrollPhysics(),
-                                                itemBuilder:  (context, indexStaff) {
+                                                itemBuilder:
+                                                    (context, indexStaff) {
                                                   //!
-                                                   final entry = _callLogEntries.elementAt(indexStaff);
-                                                  
+                                                  final entry = _callLogEntries
+                                                      .elementAt(indexStaff);
 
-
-                                              final matchingHiveEntry = fullHiveData.firstWhere(
+                                                  final matchingHiveEntry =
+                                                      fullHiveData.firstWhere(
                                                     (hiveEntry) {
-                                                      final hiveDateTime = DateTime.tryParse(hiveEntry.timeStamp);
-                                                      final entryDateTime = entry.timestamp != null
-                                                          ? DateTime.fromMillisecondsSinceEpoch(entry.timestamp!)
+                                                      final hiveDateTime =
+                                                          DateTime.tryParse(
+                                                              hiveEntry
+                                                                  .timeStamp);
+                                                      final entryDateTime = entry
+                                                                  .timestamp !=
+                                                              null
+                                                          ? DateTime
+                                                              .fromMillisecondsSinceEpoch(
+                                                                  entry
+                                                                      .timestamp!)
                                                           : null;
 
-                                                          if (indexStaff==1 || selectedIndex==0) {
-                                                            //  log('test  6 :  ${hiveEntry.name} || ${entry.name}');
-                                                             log('test  6 :  ${hiveEntry.name} || ${entry.name} ~~ $entryDateTime || $hiveDateTime ~~ ${hiveEntry.phoneNumber} || ${entry.number}');
-                                                          //  log('test  7 :  ${hiveEntry.phoneNumber} || ${entry.number}');
-                                                          //  log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-                                                          }
+                                                      if (indexStaff == 1 ||
+                                                          selectedIndex == 0) {
+                                                        //  log('test  6 :  ${hiveEntry.name} || ${entry.name}');
+                                                        log('test  6 :  ${hiveEntry.name} || ${entry.name} ~~ $entryDateTime || $hiveDateTime ~~ ${hiveEntry.phoneNumber} || ${entry.number}');
+                                                        //  log('test  7 :  ${hiveEntry.phoneNumber} || ${entry.number}');
+                                                        //  log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+                                                      }
 
-                                                          
-
-                                                      if (hiveDateTime == null || entryDateTime == null) return false;
+                                                      if (hiveDateTime ==
+                                                              null ||
+                                                          entryDateTime == null)
+                                                        return false;
 
                                                       // Compare year, month, day, hour, and minute only
-                                                      return hiveEntry.phoneNumber == entry.number &&
-                                                          hiveDateTime.year == entryDateTime.year &&
-                                                          hiveDateTime.month == entryDateTime.month &&
-                                                          hiveDateTime.day == entryDateTime.day &&
-                                                          hiveDateTime.hour == entryDateTime.hour &&
-                                                          hiveDateTime.minute == entryDateTime.minute;
+                                                      return hiveEntry.phoneNumber ==
+                                                              entry.number &&
+                                                          hiveDateTime.year ==
+                                                              entryDateTime
+                                                                  .year &&
+                                                          hiveDateTime.month ==
+                                                              entryDateTime
+                                                                  .month &&
+                                                          hiveDateTime.day ==
+                                                              entryDateTime
+                                                                  .day &&
+                                                          hiveDateTime.hour ==
+                                                              entryDateTime
+                                                                  .hour &&
+                                                          hiveDateTime.minute ==
+                                                              entryDateTime
+                                                                  .minute;
                                                     },
-                                                    orElse: () => HiveCaallHistoryModel(
+                                                    orElse: () =>
+                                                        HiveCaallHistoryModel(
                                                       id: '',
                                                       name: '',
                                                       phoneNumber: '',
@@ -1114,7 +1124,9 @@ setState(() {
                                                     ),
                                                   );
 
-                                                  final isUploaded = matchingHiveEntry.isUploaded;
+                                                  final isUploaded =
+                                                      matchingHiveEntry
+                                                          .isUploaded;
                                                   //!
                                                   return Visibility(
                                                     // visible: selectedSimId ==
@@ -1204,7 +1216,7 @@ setState(() {
                                                         if (direction ==
                                                             DismissDirection
                                                                 .startToEnd) {
-                                                              Common.dialPad(
+                                                          Common.dialPad(
                                                               _callLogEntries
                                                                   .elementAt(
                                                                       indexStaff)
@@ -1266,9 +1278,8 @@ setState(() {
                                                                           "duration": _callLogEntries
                                                                               .elementAt(indexStaff)
                                                                               .duration,
-                                                                          "simName": _callLogEntries
-                                                                              .elementAt(indexStaff)
-                                                                              .simDisplayName??"NIL",
+                                                                          "simName":
+                                                                              _callLogEntries.elementAt(indexStaff).simDisplayName ?? "NIL",
                                                                           "timeStamp": _callLogEntries
                                                                               .elementAt(indexStaff)
                                                                               .timestamp,
@@ -1307,9 +1318,10 @@ setState(() {
                                                                           indexStaff)
                                                                       .duration,
                                                                   "simName": _callLogEntries
-                                                                      .elementAt(
-                                                                          indexStaff)
-                                                                      .simDisplayName??"NIL",
+                                                                          .elementAt(
+                                                                              indexStaff)
+                                                                          .simDisplayName ??
+                                                                      "NIL",
                                                                   "timeStamp": _callLogEntries
                                                                       .elementAt(
                                                                           indexStaff)
@@ -1380,9 +1392,10 @@ setState(() {
                                                                           indexStaff)
                                                                       .duration,
                                                                   "simName": _callLogEntries
-                                                                      .elementAt(
-                                                                          indexStaff)
-                                                                      .simDisplayName??"NIL",
+                                                                          .elementAt(
+                                                                              indexStaff)
+                                                                          .simDisplayName ??
+                                                                      "NIL",
                                                                   "timeStamp": _callLogEntries
                                                                       .elementAt(
                                                                           indexStaff)
@@ -1509,7 +1522,7 @@ setState(() {
                                                                                     ],
                                                                                   ),
                                                                                 ),
-                                                                                uploadPermission == "true" && onLongPress != true  && isUploaded ==false
+                                                                                uploadPermission == "true" && onLongPress != true && isUploaded == false
                                                                                     ? InkWell(
                                                                                         onTap: () async {
                                                                                           Common.showProgressDialog(context, "Loading..");
@@ -1519,7 +1532,7 @@ setState(() {
                                                                                             "callTypes": _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
                                                                                             "time": '${DateTime.fromMillisecondsSinceEpoch(_callLogEntries.elementAt(indexStaff).timestamp!)}',
                                                                                             "duration": _callLogEntries.elementAt(indexStaff).duration,
-                                                                                            "simName": _callLogEntries.elementAt(indexStaff).simDisplayName??"NIL",
+                                                                                            "simName": _callLogEntries.elementAt(indexStaff).simDisplayName ?? "NIL",
                                                                                             "timeStamp": _callLogEntries.elementAt(indexStaff).timestamp,
                                                                                           });
                                                                                           historyIndex.add(indexStaff);
@@ -1540,41 +1553,35 @@ setState(() {
                                                                                               Navigator.pop(context);
                                                                                             }
                                                                                           }
-                                                                                          // todo : add to Hive Here 
-                                                                                           bool isThisAlreadyInHiveCallLogDb = await HiveUtil.isCallLogWithIdAndNumberExists(
-                                                                                                      _callLogEntries.elementAt(indexStaff).timestamp.toString(), 
-                                                                                                      _callLogEntries.elementAt(indexStaff).number.toString()
-                                                                                                    );
-                                                                                                    log('isThisAlreadyInHiveCallLogDb : $isThisAlreadyInHiveCallLogDb');
-                                                                                                     if(isThisAlreadyInHiveCallLogDb) {
-                                                                                      log('already in hive');
-                                                                                      // update
-                                                                                     HiveUtil.markCallLogAsUploaded(_callLogEntries.elementAt(indexStaff).timestamp.toString());
-                                                                                      log('updated in hive');
-                                                                                      // todo : reload data
-                                                                                     
-                                                                                    } else {
-                                                                                      log('not in hive');
-                                                                                      // add
-                                                                                      HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-                                                                                          id: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
-                                                                                          name: _callLogEntries.elementAt(indexStaff).name.toString(),
-                                                                                          phoneNumber: _callLogEntries.elementAt(indexStaff).number.toString(),
-                                                                                          callType: _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
-                                                                                          duration: _callLogEntries.elementAt(indexStaff).duration.toString(),
-                                                                                          // timeStamp: '${DateTime.fromMillisecondsSinceEpoch( int.parse(_callLogEntries.elementAt(indexStaff).timestamp))}',
-                                                                                          timeStamp: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
-                                                                                        //   timeStamp: DateTime.fromMillisecondsSinceEpoch(
-                                                                                        //  _callLogEntries.elementAt(indexStaff).timestamp!  ).toIso8601String(),
-                                                                                          simSlot: _callLogEntries.elementAt(indexStaff).simDisplayName??"NIL",
-                                                                                          callRecordFilePath: "",
-                                                                                          isUploaded: true,
-                                                                                          isDeleted:false, isEnabled: true,
-                                                                                        );
-                                                                                        HiveUtil.addCallLog(hiveCallLog);
-                                                                                         
-                                                                                    }
-
+                                                                                          // todo : add to Hive Here
+                                                                                          bool isThisAlreadyInHiveCallLogDb = await HiveUtil.isCallLogWithIdAndNumberExists(_callLogEntries.elementAt(indexStaff).timestamp.toString(), _callLogEntries.elementAt(indexStaff).number.toString());
+                                                                                          log('isThisAlreadyInHiveCallLogDb : $isThisAlreadyInHiveCallLogDb');
+                                                                                          if (isThisAlreadyInHiveCallLogDb) {
+                                                                                            log('already in hive');
+                                                                                            // update
+                                                                                            HiveUtil.markCallLogAsUploaded(_callLogEntries.elementAt(indexStaff).timestamp.toString());
+                                                                                            log('updated in hive');
+                                                                                            // todo : reload data
+                                                                                          } else {
+                                                                                            log('not in hive');
+                                                                                            // add
+                                                                                            HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                                                                                              id: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
+                                                                                              name: _callLogEntries.elementAt(indexStaff).name.toString(),
+                                                                                              phoneNumber: _callLogEntries.elementAt(indexStaff).number.toString(),
+                                                                                              callType: _callLogEntries.elementAt(indexStaff).callType.toString().substring(_callLogEntries.elementAt(indexStaff).callType.toString().indexOf('.') + 1),
+                                                                                              duration: _callLogEntries.elementAt(indexStaff).duration.toString(),
+                                                                                              // timeStamp: '${DateTime.fromMillisecondsSinceEpoch( int.parse(_callLogEntries.elementAt(indexStaff).timestamp))}',
+                                                                                              timeStamp: _callLogEntries.elementAt(indexStaff).timestamp.toString(),
+                                                                                              //   timeStamp: DateTime.fromMillisecondsSinceEpoch(
+                                                                                              //  _callLogEntries.elementAt(indexStaff).timestamp!  ).toIso8601String(),
+                                                                                              simSlot: _callLogEntries.elementAt(indexStaff).simDisplayName ?? "NIL",
+                                                                                              callRecordFilePath: "",
+                                                                                              isUploaded: true,
+                                                                                              isDeleted: false, isEnabled: true,
+                                                                                            );
+                                                                                            HiveUtil.addCallLog(hiveCallLog);
+                                                                                          }
 
                                                                                           setState(() {
                                                                                             history.clear();
@@ -1636,18 +1643,10 @@ setState(() {
                                                                             ),
                                                                             const SizedBox(),
                                                                             Container(
-                                                                              decoration: BoxDecoration(
-                                                                                  color: Colors.grey.shade300,
-                                                                                  borderRadius: BorderRadius.circular(5)),
-                                                                              child:
-                                                                                  Padding(
-                                                                                padding: const EdgeInsets.only(
-                                                                                    left: 10,
-                                                                                    right: 10,
-                                                                                    top: 5,
-                                                                                    bottom: 5),
-                                                                                child:
-                                                                                    Text(
+                                                                              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(5)),
+                                                                              child: Padding(
+                                                                                padding: const EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 5),
+                                                                                child: Text(
                                                                                   '${_callLogEntries.elementAt(indexStaff).simDisplayName}',
                                                                                 ),
                                                                               ),
@@ -1702,1016 +1701,1072 @@ setState(() {
                         : Column(
                             children: [
                               //! new code
-                                 logHistory != null && commonDetails != null || allCallLogData.isNotEmpty?
-
-                                 Column(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  final selctedDatetimetemp =
-                                                      await showDatePicker(
-                                                    context: context,
-                                                    initialDate: DateTime.now(),
-                                                    firstDate: DateTime(2000),
-                                                    lastDate: DateTime.now(),
-                                                  );
-                                                  fromdate = DateFormat(
-                                                          'dd-MM-yyyy')
-                                                      .format(
-                                                          selctedDatetimetemp!);
-                                                  setState(() {});
-                                                },
-                                                child: Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.45,
-                                                  height: 45,
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              5),
-                                                      color: Colors.white),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(left: 10),
-                                                        child: Text(
-                                                          fromdate,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w400,
-                                                            color: Colors.black,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        width: 40,
-                                                        height: 40,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(2),
-                                                          color: Colors.white,
-                                                        ),
-                                                        child: const Icon(
-                                                          Icons.calendar_month,
-                                                          color: Colors.grey,
-                                                        ),
-                                                      )
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              GestureDetector(
-                                                onTap: () async {
-                                                  final toDateSelectTemp =
-                                                      await showDatePicker(
-                                                    context: context,
-                                                    initialDate: DateTime.now(),
-                                                    firstDate: DateTime(2000),
-                                                    lastDate: DateTime(2100),
-                                                  );
-                                                  todate = DateFormat(
-                                                          'dd-MM-yyyy')
-                                                      .format(
-                                                          toDateSelectTemp!);
-                                                  setState(() {});
-                                                },
-                                                child: Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.45,
-                                                  height: 45,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5),
-                                                    color: Colors.white,
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(left: 10),
-                                                        child: Text(
-                                                          todate,
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        width: 40,
-                                                        height: 40,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(5),
-                                                          color: Colors.white,
-                                                        ),
-                                                        child: const Icon(
-                                                          Icons.calendar_month,
-                                                          color: Colors.grey,
-                                                        ),
-                                                      )
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 15,
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10, right: 10),
-                                          child: Row(
-                                            children: [
-                                              SizedBox(
+                              logHistory != null && commonDetails != null ||
+                                      allCallLogData.isNotEmpty
+                                  ? Column(children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 10, right: 10),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () async {
+                                                final selctedDatetimetemp =
+                                                    await showDatePicker(
+                                                  context: context,
+                                                  initialDate: DateTime.now(),
+                                                  firstDate: DateTime(2000),
+                                                  lastDate: DateTime.now(),
+                                                );
+                                                fromdate = DateFormat(
+                                                        'dd-MM-yyyy')
+                                                    .format(
+                                                        selctedDatetimetemp!);
+                                                setState(() {});
+                                              },
+                                              child: Container(
                                                 width: MediaQuery.of(context)
                                                         .size
                                                         .width *
                                                     0.45,
-                                                child: TextFormField(
-                                                    onTap: () {
-                                                      staffDialog(context);
-                                                    },
-                                                    maxLines: 1,
-                                                    readOnly: true,
-                                                    keyboardType:
-                                                        TextInputType.text,
-                                                    decoration: InputDecoration(
-                                                        contentPadding:
-                                                            const EdgeInsets
-                                                                .all(3),
-                                                        filled: true,
-                                                        //<-- SEE HERE
-                                                        fillColor: Colors.white,
-                                                        prefixIcon: const Icon(
-                                                          Icons
-                                                              .arrow_drop_down_circle,
-                                                          color: Colors.grey,
-                                                        ),
-                                                        counterText: "",
-                                                        hintText: assignStaff,
-                                                        isDense: true,
-                                                        border: OutlineInputBorder(
-                                                            borderSide:
-                                                                BorderSide.none,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5)))),
-                                              ),
-                                              const SizedBox(
-                                                width: 12,
-                                              ),
-                                              InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    search = true;
-                                                    isSearch = false;
-                                                    completedLoading=false;
-                                                    Common.showProgressDialog(
-                                                        context, "Loading..");
-                                                    getData();
-                                                  });
-                                                },
-                                                child: Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.45,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black,
+                                                height: 45,
+                                                decoration: BoxDecoration(
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            10),
-                                                  ),
-                                                  child: const Center(
-                                                    child: Text('Search',
+                                                            5),
+                                                    color: Colors.white),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 10),
+                                                      child: Text(
+                                                        fromdate,
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w400,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Container(
+                                                      width: 40,
+                                                      height: 40,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(2),
+                                                        color: Colors.white,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.calendar_month,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    )
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            GestureDetector(
+                                              onTap: () async {
+                                                final toDateSelectTemp =
+                                                    await showDatePicker(
+                                                  context: context,
+                                                  initialDate: DateTime.now(),
+                                                  firstDate: DateTime(2000),
+                                                  lastDate: DateTime(2100),
+                                                );
+                                                todate = DateFormat(
+                                                        'dd-MM-yyyy')
+                                                    .format(toDateSelectTemp!);
+                                                setState(() {});
+                                              },
+                                              child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.45,
+                                                height: 45,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(5),
+                                                  color: Colors.white,
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 10),
+                                                      child: Text(
+                                                        todate,
+                                                      ),
+                                                    ),
+                                                    Container(
+                                                      width: 40,
+                                                      height: 40,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5),
+                                                        color: Colors.white,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.calendar_month,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    )
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 15,
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 10, right: 10),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.45,
+                                              child: TextFormField(
+                                                  onTap: () {
+                                                    staffDialog(context);
+                                                  },
+                                                  maxLines: 1,
+                                                  readOnly: true,
+                                                  keyboardType:
+                                                      TextInputType.text,
+                                                  decoration: InputDecoration(
+                                                      contentPadding:
+                                                          const EdgeInsets.all(
+                                                              3),
+                                                      filled: true,
+                                                      //<-- SEE HERE
+                                                      fillColor: Colors.white,
+                                                      prefixIcon: const Icon(
+                                                        Icons
+                                                            .arrow_drop_down_circle,
+                                                        color: Colors.grey,
+                                                      ),
+                                                      counterText: "",
+                                                      hintText: assignStaff,
+                                                      isDense: true,
+                                                      border:
+                                                          OutlineInputBorder(
+                                                              borderSide:
+                                                                  BorderSide
+                                                                      .none,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5)))),
+                                            ),
+                                            const SizedBox(
+                                              width: 12,
+                                            ),
+                                            InkWell(
+                                              onTap: () {
+                                                setState(() {
+                                                  search = true;
+                                                  isSearch = false;
+                                                  completedLoading = false;
+                                                  Common.showProgressDialog(
+                                                      context, "Loading..");
+                                                  getData();
+                                                });
+                                              },
+                                              child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.45,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black,
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                child: const Center(
+                                                  child: Text('Search',
+                                                      style: TextStyle(
+                                                          fontSize: 14,
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w500)),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 20,
+                                      ),
+                                    ])
+                                  : const Center(
+                                      child: SizedBox(
+                                      height: 100,
+                                    )),
+
+                              //!
+                              //  widget.userId.toString()!=assignStaffId?
+                              isCurrentUserSearchResult
+                                  ? showStaffSearchResult
+                                      ? ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount:
+                                              logHistory!.data!.lists!.length,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemBuilder: (context, index) {
+                                            return Dismissible(
+                                              key: const Key('0'),
+                                              background: Container(
+                                                color: Colors.green,
+                                                child: const Align(
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: <Widget>[
+                                                      SizedBox(
+                                                        width: 20,
+                                                      ),
+                                                      Icon(
+                                                        Icons.call,
+                                                        color: Colors.white,
+                                                      ),
+                                                      Text(
+                                                        " Call",
                                                         style: TextStyle(
-                                                            fontSize: 14,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w500)),
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 20,
-                                        ),
-                                        ]
-                                        )
-                                 
-                                 :const Center(
-                                      child:SizedBox(
-                                        height: 100,
-                                      )
-                                    ),
+                                              secondaryBackground: Container(
+                                                color: Colors.blue,
+                                                child: const Align(
+                                                  alignment:
+                                                      Alignment.centerRight,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: <Widget>[
+                                                      Icon(
+                                                        Icons.add,
+                                                        color: Colors.white,
+                                                      ),
+                                                      Text(
+                                                        "Add Lead",
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 20,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              confirmDismiss:
+                                                  (direction) async {
+                                                if (direction ==
+                                                    DismissDirection
+                                                        .startToEnd) {
+                                                  Common.dialPad(logHistory!
+                                                      .data!
+                                                      .lists![index]
+                                                      .phoneNumber
+                                                      .toString());
+                                                } else {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddLeads(
+                                                          widget.token,
+                                                          clientName:
+                                                              logHistory!
+                                                                  .data!
+                                                                  .lists![index]
+                                                                  .name,
+                                                          phoneNumber:
+                                                              logHistory!
+                                                                  .data!
+                                                                  .lists![index]
+                                                                  .phoneNumber,
+                                                        ),
+                                                      ));
+                                                }
 
-                                    //!
-                                    //  widget.userId.toString()!=assignStaffId?
-                                    isCurrentUserSearchResult?
-                                          showStaffSearchResult
-                                            ? ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount:
-                                                    logHistory!.data!.lists!.length,
-                                                physics:
-                                                    const NeverScrollableScrollPhysics(),
-                                                itemBuilder: (context, index) {
-                                                  return Dismissible(
-                                                    key: const Key('0'),
-                                                    background: Container(
-                                                      color: Colors.green,
-                                                      child: const Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .start,
-                                                          children: <Widget>[
-                                                            SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                            Icon(
-                                                              Icons.call,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                            Text(
-                                                              " Call",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .left,
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    secondaryBackground:
-                                                        Container(
-                                                      color: Colors.blue,
-                                                      child: const Align(
-                                                        alignment: Alignment
-                                                            .centerRight,
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .end,
-                                                          children: <Widget>[
-                                                            Icon(
-                                                              Icons.add,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                            Text(
-                                                              "Add Lead",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .right,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    confirmDismiss:
-                                                        (direction) async {
-                                                      if (direction ==
-                                                          DismissDirection
-                                                              .startToEnd) {
-                                                        Common.dialPad(
-                                                            logHistory!.data!.lists![index]
-                                                                .phoneNumber
+                                                return null;
+                                              },
+                                              child: InkWell(
+                                                  onLongPress: () {
+                                                    setState(() {
+                                                      onLongPressHistory = true;
+                                                      deleteHistoryIds.add(
+                                                          logHistory!.data!
+                                                              .lists![index].id
+                                                              .toString());
+                                                    });
+                                                  },
+                                                  onTap: () {
+                                                    if (onLongPressHistory ==
+                                                        true) {
+                                                      if (deleteHistoryIds
+                                                          .contains(logHistory!
+                                                              .data!
+                                                              .lists![index]
+                                                              .id
+                                                              .toString())) {
+                                                        deleteHistoryIds.remove(
+                                                            logHistory!
+                                                                .data!
+                                                                .lists![index]
+                                                                .id
                                                                 .toString());
                                                       } else {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      AddLeads(
-                                                                widget.token,
-                                                                clientName:
-                                                                    logHistory!.data!.lists![index]
-                                                                        .name,
-                                                                phoneNumber:
-                                                                    logHistory!.data!.lists![index]
-                                                                        .phoneNumber,
-                                                              ),
-                                                            ));
+                                                        deleteHistoryIds.add(
+                                                            logHistory!
+                                                                .data!
+                                                                .lists![index]
+                                                                .id
+                                                                .toString());
                                                       }
-
-                                                      return null;
-                                                    },
-                                                    child: InkWell(
-                                                        onLongPress: () {
-                                                          setState(() {
-                                                            onLongPressHistory =
-                                                                true;
-                                                            deleteHistoryIds
-                                                                .add(logHistory!.data!.lists![index]
+                                                    }
+                                                    setState(() {});
+                                                  },
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 10,
+                                                            right: 10,
+                                                            bottom: 10),
+                                                    child: Container(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              1,
+                                                      decoration: BoxDecoration(
+                                                        color: deleteHistoryIds
+                                                                .contains(logHistory!
+                                                                    .data!
+                                                                    .lists![
+                                                                        index]
                                                                     .id
-                                                                    .toString());
-                                                          });
-                                                        },
-                                                        onTap: () {
-                                                          if (onLongPressHistory ==
-                                                              true) {
-                                                            if (deleteHistoryIds
-                                                                .contains(logHistory!.data!.lists![index]
-                                                                    .id
-                                                                    .toString())) {
-                                                              deleteHistoryIds
-                                                                  .remove(logHistory!.data!.lists![index]
-                                                                      .id
-                                                                      .toString());
-                                                            } else {
-                                                              deleteHistoryIds
-                                                                  .add(logHistory!.data!.lists![index]
-                                                                      .id
-                                                                      .toString());
-                                                            }
-                                                          }
-                                                          setState(() {});
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10,
-                                                                  right: 10,
-                                                                  bottom: 10),
-                                                          child: Container(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                1,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: deleteHistoryIds.contains(
-                                                                      logHistory!.data!.lists![index]
-                                                                          .id
-                                                                          .toString())
-                                                                  ? Colors
-                                                                      .blueGrey
-                                                                      .shade200
-                                                                  : Colors
-                                                                      .white,
-                                                              boxShadow: const [
-                                                                BoxShadow(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  offset:
-                                                                      Offset(
-                                                                          2.0,
-                                                                          2.0),
-                                                                )
-                                                              ],
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                            ),
+                                                                    .toString())
+                                                            ? Colors.blueGrey
+                                                                .shade200
+                                                            : Colors.white,
+                                                        boxShadow: const [
+                                                          BoxShadow(
+                                                            color: Colors.grey,
+                                                            offset: Offset(
+                                                                2.0, 2.0),
+                                                          )
+                                                        ],
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: Column(
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 10,
+                                                                    right: 10,
+                                                                    left: 10),
                                                             child: Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
                                                               children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                          top:
-                                                                              10,
-                                                                          right:
-                                                                              10,
-                                                                          left:
-                                                                              10),
-                                                                  child: Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .start,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
-                                                                    children: [
-                                                                      Row(
-                                                                        children: [
+                                                                Row(
+                                                                  children: [
+                                                                    Container(
+                                                                      constraints:
+                                                                          const BoxConstraints(
+                                                                        maxHeight:
+                                                                            60,
+                                                                      ),
+                                                                      child:
                                                                           Container(
-                                                                            constraints:
-                                                                                const BoxConstraints(
-                                                                              maxHeight: 60,
-                                                                            ),
-                                                                            child:
-                                                                                Container(
-                                                                              constraints: const BoxConstraints(
-                                                                                minHeight: 20,
-                                                                                minWidth: 20,
-                                                                                maxHeight: 50,
-                                                                                maxWidth: 50,
-                                                                              ),
-                                                                              decoration: BoxDecoration(
-                                                                                border: Border.all(color: Colors.white, width: 0),
-                                                                                boxShadow: const [
-                                                                                  BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
-                                                                                ],
-                                                                                color: Colors.white,
-                                                                                shape: BoxShape.circle,
-                                                                                image: const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            width:
-                                                                                20,
-                                                                          ),
-                                                                          Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.center,
-                                                                            crossAxisAlignment:
-                                                                                CrossAxisAlignment.start,
-                                                                            children: [
-                                                                              Text(
-                                                                                logHistory!.data!.lists![index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
-                                                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 3,
-                                                                              ),
-                                                                              Text(
-                                                                                logHistory!.data!.lists![index].phoneNumber.toString(),
-                                                                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
+                                                                        constraints:
+                                                                            const BoxConstraints(
+                                                                          minHeight:
+                                                                              20,
+                                                                          minWidth:
+                                                                              20,
+                                                                          maxHeight:
+                                                                              50,
+                                                                          maxWidth:
+                                                                              50,
+                                                                        ),
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          border: Border.all(
+                                                                              color: Colors.white,
+                                                                              width: 0),
+                                                                          boxShadow: const [
+                                                                            BoxShadow(
+                                                                                color: Colors.grey,
+                                                                                blurRadius: 5,
+                                                                                offset: Offset(1, 1)),
+                                                                          ],
+                                                                          color:
+                                                                              Colors.white,
+                                                                          shape:
+                                                                              BoxShape.circle,
+                                                                          image: const DecorationImage(
+                                                                              fit: BoxFit.cover,
+                                                                              image: AssetImage('assets/main/avatar.png')),
+                                                                        ),
                                                                       ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            10,
-                                                                      ),
-                                                                      Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Row(
-                                                                            children: [
-                                                                              Image.asset("assets/icons/calendar.png", width: 20),
-                                                                              const SizedBox(
-                                                                                width: 15,
-                                                                              ),
-                                                                              Text(
-                                                                                logHistory!.data!.lists![index].dateTime.toString(),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              const Icon(Icons.timer_outlined),
-                                                                              const SizedBox(
-                                                                                width: 10,
-                                                                              ),
-                                                                              Padding(
-                                                                                padding: const EdgeInsets.only(right: 10),
-                                                                                child: Text(
-                                                                                  logHistory!.data!.lists![index].duration.toString().split('.')[0].padLeft(8, '0'),
-                                                                                  style: const TextStyle(fontSize: 15, color: Colors.green),
-                                                                                ),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            5,
-                                                                      ),
-                                                                      Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Text(
-                                                                            'Type  : ${logHistory!.data!.lists![index].callType}',
-                                                                          ),
-                                                                          const SizedBox(),
-                                                                          Container(
-                                                                            decoration: BoxDecoration(
-                                                                                color: Colors.grey.shade300,
-                                                                                borderRadius: BorderRadius.circular(5)),
-                                                                            child:
-                                                                                Padding(
-                                                                              padding: const EdgeInsets.only(
-                                                                                  left: 10,
-                                                                                  right: 10,
-                                                                                  top: 5,
-                                                                                  bottom: 5),
-                                                                              child:
-                                                                                  Text(
-                                                                                "${logHistory!.data!.lists![index].simName}",
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            10,
-                                                                      )
-                                                                      // Text(
-                                                                      //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
-                                                                      //     ),
-                                                                    ],
-                                                                  ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      width: 20,
+                                                                    ),
+                                                                    Column(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .center,
+                                                                      crossAxisAlignment:
+                                                                          CrossAxisAlignment
+                                                                              .start,
+                                                                      children: [
+                                                                        Text(
+                                                                          logHistory!.data!.lists![index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null"
+                                                                              ? "Unknown"
+                                                                              : logHistory!.data!.lists![index].name.toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 16,
+                                                                              fontWeight: FontWeight.w500),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              3,
+                                                                        ),
+                                                                        Text(
+                                                                          logHistory!
+                                                                              .data!
+                                                                              .lists![index]
+                                                                              .phoneNumber
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 15,
+                                                                              fontWeight: FontWeight.w400),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
                                                                 ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        Image.asset(
+                                                                            "assets/icons/calendar.png",
+                                                                            width:
+                                                                                20),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              15,
+                                                                        ),
+                                                                        Text(
+                                                                          logHistory!
+                                                                              .data!
+                                                                              .lists![index]
+                                                                              .dateTime
+                                                                              .toString(),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    Row(
+                                                                      children: [
+                                                                        const Icon(
+                                                                            Icons.timer_outlined),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        Padding(
+                                                                          padding: const EdgeInsets
+                                                                              .only(
+                                                                              right: 10),
+                                                                          child:
+                                                                              Text(
+                                                                            logHistory!.data!.lists![index].duration.toString().split('.')[0].padLeft(8,
+                                                                                '0'),
+                                                                            style:
+                                                                                const TextStyle(fontSize: 15, color: Colors.green),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Text(
+                                                                      'Type  : ${logHistory!.data!.lists![index].callType}',
+                                                                    ),
+                                                                    const SizedBox(),
+                                                                    Container(
+                                                                      decoration: BoxDecoration(
+                                                                          color: Colors
+                                                                              .grey
+                                                                              .shade300,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(5)),
+                                                                      child:
+                                                                          Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            left:
+                                                                                10,
+                                                                            right:
+                                                                                10,
+                                                                            top:
+                                                                                5,
+                                                                            bottom:
+                                                                                5),
+                                                                        child:
+                                                                            Text(
+                                                                          "${logHistory!.data!.lists![index].simName}",
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                )
+                                                                // Text(
+                                                                //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
+                                                                //     ),
                                                               ],
                                                             ),
                                                           ),
-                                                        )),
-                                                  );
-                                                })
-                                            : completedLoading? Center(
-                                                child: Lottie.asset(
-                                                    'assets/main/no_history.json',
-                                                    fit: BoxFit.fill),
-                                              ): Center(
-                                      child: Lottie.asset(
-                                          'assets/main/loading.json',
-                                          fit: BoxFit.fill),
-                                    ):
-                                              //! SHOW HIVE DATA
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  )),
+                                            );
+                                          })
+                                      : completedLoading
+                                          ? Center(
+                                              child: Lottie.asset(
+                                                  'assets/main/no_history.json',
+                                                  fit: BoxFit.fill),
+                                            )
+                                          : Center(
+                                              child: Lottie.asset(
+                                                  'assets/main/loading.json',
+                                                  fit: BoxFit.fill),
+                                            )
+                                  :
+                                  //! SHOW HIVE DATA
 
-                                              allCallLogData.isNotEmpty  
-                                            ? ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount:  allCallLogData.length,
-                                                physics:
-                                                    const NeverScrollableScrollPhysics(),
-                                                itemBuilder: (context, index) {
-                                                  return Dismissible(
-                                                    key: const Key('0'),
-                                                    background: Container(
-                                                      color: Colors.green,
-                                                      child: const Align(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .start,
-                                                          children: <Widget>[
-                                                            SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                            Icon(
-                                                              Icons.call,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                            Text(
-                                                              " Call",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .left,
-                                                            ),
-                                                          ],
-                                                        ),
+                                  allCallLogData.isNotEmpty
+                                      ? ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: allCallLogData.length,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemBuilder: (context, index) {
+                                            return Dismissible(
+                                              key: const Key('0'),
+                                              background: Container(
+                                                color: Colors.green,
+                                                child: const Align(
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: <Widget>[
+                                                      SizedBox(
+                                                        width: 20,
                                                       ),
-                                                    ),
-                                                    secondaryBackground:
-                                                        Container(
-                                                      color: Colors.blue,
-                                                      child: const Align(
-                                                        alignment: Alignment
-                                                            .centerRight,
-                                                        child: Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .end,
-                                                          children: <Widget>[
-                                                            Icon(
-                                                              Icons.add,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                            Text(
-                                                              "Add Lead",
-                                                              style: TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .right,
-                                                            ),
-                                                            SizedBox(
-                                                              width: 20,
-                                                            ),
-                                                          ],
-                                                        ),
+                                                      Icon(
+                                                        Icons.call,
+                                                        color: Colors.white,
                                                       ),
-                                                    ),
-                                                    confirmDismiss:
-                                                        (direction) async {
-                                                      if (direction ==
-                                                          DismissDirection
-                                                              .startToEnd) {
-                                                        Common.dialPad(
-                                                            allCallLogData[index]
-                                                                .phoneNumber
+                                                      Text(
+                                                        " Call",
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              secondaryBackground: Container(
+                                                color: Colors.blue,
+                                                child: const Align(
+                                                  alignment:
+                                                      Alignment.centerRight,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.end,
+                                                    children: <Widget>[
+                                                      Icon(
+                                                        Icons.add,
+                                                        color: Colors.white,
+                                                      ),
+                                                      Text(
+                                                        "Add Lead",
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.right,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 20,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                              confirmDismiss:
+                                                  (direction) async {
+                                                if (direction ==
+                                                    DismissDirection
+                                                        .startToEnd) {
+                                                  Common.dialPad(
+                                                      allCallLogData[index]
+                                                          .phoneNumber
+                                                          .toString());
+                                                } else {
+                                                  Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AddLeads(
+                                                          widget.token,
+                                                          clientName:
+                                                              allCallLogData[
+                                                                      index]
+                                                                  .name,
+                                                          phoneNumber:
+                                                              allCallLogData[
+                                                                      index]
+                                                                  .phoneNumber,
+                                                        ),
+                                                      ));
+                                                }
+
+                                                return null;
+                                              },
+                                              child: InkWell(
+                                                  onLongPress: () {
+                                                    setState(() {
+                                                      onLongPressHistory = true;
+                                                      deleteHistoryIds.add(
+                                                          allCallLogData[index]
+                                                              .id
+                                                              .toString());
+                                                    });
+                                                  },
+                                                  onTap: () {
+                                                    if (onLongPressHistory ==
+                                                        true) {
+                                                      if (deleteHistoryIds
+                                                          .contains(
+                                                              allCallLogData[
+                                                                      index]
+                                                                  .id
+                                                                  .toString())) {
+                                                        deleteHistoryIds.remove(
+                                                            allCallLogData[
+                                                                    index]
+                                                                .id
                                                                 .toString());
                                                       } else {
-                                                        Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(
-                                                              builder:
-                                                                  (context) =>
-                                                                      AddLeads(
-                                                                widget.token,
-                                                                clientName:
-                                                                   allCallLogData[index]
-                                                                        .name,
-                                                                phoneNumber:
-                                                                    allCallLogData[index]
-                                                                        .phoneNumber,
-                                                              ),
-                                                            ));
+                                                        deleteHistoryIds.add(
+                                                            allCallLogData[
+                                                                    index]
+                                                                .id
+                                                                .toString());
                                                       }
-
-                                                      return null;
-                                                    },
-                                                    child: InkWell(
-                                                        onLongPress: () {
-                                                          setState(() {
-                                                            onLongPressHistory =
-                                                                true;
-                                                            deleteHistoryIds
-                                                                .add(allCallLogData[index]
+                                                    }
+                                                    setState(() {});
+                                                  },
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            left: 10,
+                                                            right: 10,
+                                                            bottom: 10),
+                                                    child: Container(
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .width *
+                                                              1,
+                                                      decoration: BoxDecoration(
+                                                        color: deleteHistoryIds.contains(
+                                                                allCallLogData[
+                                                                        index]
                                                                     .id
-                                                                    .toString());
-                                                          });
-                                                        },
-                                                        onTap: () {
-                                                          if (onLongPressHistory ==
-                                                              true) {
-                                                            if (deleteHistoryIds
-                                                                .contains(allCallLogData[index]
-                                                                    .id
-                                                                    .toString())) {
-                                                              deleteHistoryIds
-                                                                  .remove(allCallLogData[index]
-                                                                      .id
-                                                                      .toString());
-                                                            } else {
-                                                              deleteHistoryIds
-                                                                  .add(allCallLogData[index]
-                                                                      .id
-                                                                      .toString());
-                                                            }
-                                                          }
-                                                          setState(() {});
-                                                        },
-                                                        child: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .only(
-                                                                  left: 10,
-                                                                  right: 10,
-                                                                  bottom: 10),
-                                                          child: Container(
-                                                            width: MediaQuery.of(
-                                                                        context)
-                                                                    .size
-                                                                    .width *
-                                                                1,
-                                                            decoration:
-                                                                BoxDecoration(
-                                                              color: deleteHistoryIds.contains(
-                                                                     allCallLogData[index]
-                                                                          .id
-                                                                          .toString())
-                                                                  ? Colors
-                                                                      .blueGrey
-                                                                      .shade200
-                                                                  : Colors
-                                                                      .white,
-                                                              boxShadow: const [
-                                                                BoxShadow(
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  offset:
-                                                                      Offset(
-                                                                          2.0,
-                                                                          2.0),
-                                                                )
-                                                              ],
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          10),
-                                                            ),
+                                                                    .toString())
+                                                            ? Colors.blueGrey
+                                                                .shade200
+                                                            : Colors.white,
+                                                        boxShadow: const [
+                                                          BoxShadow(
+                                                            color: Colors.grey,
+                                                            offset: Offset(
+                                                                2.0, 2.0),
+                                                          )
+                                                        ],
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: Column(
+                                                        children: [
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    top: 10,
+                                                                    right: 10,
+                                                                    left: 10),
                                                             child: Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
                                                               children: [
-                                                                Padding(
-                                                                  padding:
-                                                                      const EdgeInsets
-                                                                          .only(
-                                                                          top:
-                                                                              10,
-                                                                          right:
-                                                                              10,
-                                                                          left:
-                                                                              10),
-                                                                  child: Column(
-                                                                    mainAxisAlignment:
-                                                                        MainAxisAlignment
-                                                                            .start,
-                                                                    crossAxisAlignment:
-                                                                        CrossAxisAlignment
-                                                                            .start,
-                                                                    children: [
-                                                                      Row(
-                                                                        children: [
+                                                                Row(
+                                                                  children: [
+                                                                    Container(
+                                                                      constraints:
+                                                                          const BoxConstraints(
+                                                                        maxHeight:
+                                                                            60,
+                                                                      ),
+                                                                      child:
                                                                           Container(
-                                                                            constraints:
-                                                                                const BoxConstraints(
-                                                                              maxHeight: 60,
-                                                                            ),
-                                                                            child:
-                                                                                Container(
-                                                                              constraints: const BoxConstraints(
-                                                                                minHeight: 20,
-                                                                                minWidth: 20,
-                                                                                maxHeight: 50,
-                                                                                maxWidth: 50,
-                                                                              ),
-                                                                              decoration: BoxDecoration(
-                                                                                border: Border.all(color: Colors.white, width: 0),
-                                                                                boxShadow: const [
-                                                                                  BoxShadow(color: Colors.grey, blurRadius: 5, offset: Offset(1, 1)),
-                                                                                ],
-                                                                                color: Colors.white,
-                                                                                shape: BoxShape.circle,
-                                                                                image: const DecorationImage(fit: BoxFit.cover, image: AssetImage('assets/main/avatar.png')),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          const SizedBox(
-                                                                            width:
-                                                                                20,
-                                                                          ),
-                                                                          Column(
-                                                                            mainAxisAlignment:
-                                                                                MainAxisAlignment.center,
-                                                                            crossAxisAlignment:
-                                                                                CrossAxisAlignment.start,
-                                                                            children: [
-                                                                              Text(
-                                                                              allCallLogData[index].name.toString() == "" ||
-                                                                               allCallLogData[index].name.toString() == "null" ? "Unknown" :
-                                                                                allCallLogData[index].name.toString(),
-                                                                              // allCallLogData[index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
-                                                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                                                              ),
-                                                                              const SizedBox(
-                                                                                height: 3,
-                                                                              ),
-                                                                              Text(
-                                                                                allCallLogData[index].phoneNumber.toString(),
-                                                                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w400),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                          const Spacer(),
-                                                                          allCallLogData[index].isUploaded?
-                                                                          const SizedBox():
-                                                                          IconButton(
-                                                                            onPressed: ()async{
+                                                                        constraints:
+                                                                            const BoxConstraints(
+                                                                          minHeight:
+                                                                              20,
+                                                                          minWidth:
+                                                                              20,
+                                                                          maxHeight:
+                                                                              50,
+                                                                          maxWidth:
+                                                                              50,
+                                                                        ),
+                                                                        decoration:
+                                                                            BoxDecoration(
+                                                                          border: Border.all(
+                                                                              color: Colors.white,
+                                                                              width: 0),
+                                                                          boxShadow: const [
+                                                                            BoxShadow(
+                                                                                color: Colors.grey,
+                                                                                blurRadius: 5,
+                                                                                offset: Offset(1, 1)),
+                                                                          ],
+                                                                          color:
+                                                                              Colors.white,
+                                                                          shape:
+                                                                              BoxShape.circle,
+                                                                          image: const DecorationImage(
+                                                                              fit: BoxFit.cover,
+                                                                              image: AssetImage('assets/main/avatar.png')),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      width: 20,
+                                                                    ),
+                                                                    Column(
+                                                                      mainAxisAlignment:
+                                                                          MainAxisAlignment
+                                                                              .center,
+                                                                      crossAxisAlignment:
+                                                                          CrossAxisAlignment
+                                                                              .start,
+                                                                      children: [
+                                                                        Text(
+                                                                          allCallLogData[index].name.toString() == "" || allCallLogData[index].name.toString() == "null"
+                                                                              ? "Unknown"
+                                                                              : allCallLogData[index].name.toString(),
+                                                                          // allCallLogData[index].name.toString() == "" || logHistory!.data!.lists![index].name.toString() == "null" ? "Unknown" : logHistory!.data!.lists![index].name.toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 16,
+                                                                              fontWeight: FontWeight.w500),
+                                                                        ),
+                                                                        const SizedBox(
+                                                                          height:
+                                                                              3,
+                                                                        ),
+                                                                        Text(
+                                                                          allCallLogData[index]
+                                                                              .phoneNumber
+                                                                              .toString(),
+                                                                          style: const TextStyle(
+                                                                              fontSize: 15,
+                                                                              fontWeight: FontWeight.w400),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    const Spacer(),
+                                                                    allCallLogData[index]
+                                                                            .isUploaded
+                                                                        ? const SizedBox()
+                                                                        : IconButton(
+                                                                            onPressed:
+                                                                                () async {
                                                                               log('upload : ${allCallLogData[index].isUploaded}');
                                                                               log('upload clicked');
                                                                               // todo : upload call log data to server
                                                                               // todo : update in Hive
                                                                               // todo : reload data
 
-                                                                              List<Map<String, dynamic>> historyAddData=[];
+                                                                              List<Map<String, dynamic>> historyAddData = [];
 
-                                                                               historyAddData.add({
-                                                                                    "name":allCallLogData[index].name,
-                                                                                    "phone_number":allCallLogData[index].phoneNumber,
-                                                                                    "callTypes":allCallLogData[index].callType.toString()
-                                                                                        .substring(allCallLogData[index].callType.toString().indexOf('.') + 1),
-                                                                                    // "time": '${DateTime.fromMillisecondsSinceEpoch( int.parse(allCallLogData[index].timeStamp))}',
-                                                                                    "time": allCallLogData[index].timeStamp.toString(), // todo : some issue hhere date and time stamp are same 
-                                                                                    "duration":allCallLogData[index].duration,
-                                                                                    "simName":allCallLogData[index].simSlot ?? "NIL",
-                                                                                    "timeStamp":allCallLogData[index].timeStamp,
-                                                                                  });
+                                                                              historyAddData.add({
+                                                                                "name": allCallLogData[index].name,
+                                                                                "phone_number": allCallLogData[index].phoneNumber,
+                                                                                "callTypes": allCallLogData[index].callType.toString().substring(allCallLogData[index].callType.toString().indexOf('.') + 1),
+                                                                                // "time": '${DateTime.fromMillisecondsSinceEpoch( int.parse(allCallLogData[index].timeStamp))}',
+                                                                                "time": allCallLogData[index].timeStamp.toString(), // todo : some issue hhere date and time stamp are same
+                                                                                "duration": allCallLogData[index].duration,
+                                                                                "simName": allCallLogData[index].simSlot ?? "NIL",
+                                                                                "timeStamp": allCallLogData[index].timeStamp,
+                                                                              });
 
                                                                               Map<String, dynamic> body = {
-                                                                                                  "token": await Common.getSharedPref("token"),
-                                                                                                  'log': historyAddData,
-                                                                                                };
+                                                                                "token": await Common.getSharedPref("token"),
+                                                                                'log': historyAddData,
+                                                                              };
 
-                                                                                                CallLogUploadModel object1 =
-                                                                                              await HttpService.callLogUpload(body);
-                                                                                          if (object1.data == true) {
-                                                                                            log('success');
-                                                                                          } else {
-                                                                                            log('failure');
-                                                                                          }
-                                                                                // ! hive update
-                                                                                // check is it alredy in hive
+                                                                              CallLogUploadModel object1 = await HttpService.callLogUpload(body);
+                                                                              if (object1.data == true) {
+                                                                                log('success');
+                                                                              } else {
+                                                                                log('failure');
+                                                                              }
+                                                                              // ! hive update
+                                                                              // check is it alredy in hive
 
-                                                                               bool isThisAlreadyInHiveCallLogDb = await HiveUtil.isCallLogWithIdAndNumberExists(
-                                                                                                      allCallLogData[index].id.toString(), 
-                                                                                                      allCallLogData[index].phoneNumber.toString()
-                                                                                                    );
-                                                                                log('isThisAlreadyInHiveCallLogDb : $isThisAlreadyInHiveCallLogDb');
+                                                                              bool isThisAlreadyInHiveCallLogDb = await HiveUtil.isCallLogWithIdAndNumberExists(allCallLogData[index].id.toString(), allCallLogData[index].phoneNumber.toString());
+                                                                              log('isThisAlreadyInHiveCallLogDb : $isThisAlreadyInHiveCallLogDb');
 
-
-                                                                                    if(isThisAlreadyInHiveCallLogDb) {
-                                                                                      log('already in hive');
-                                                                                      // update
-                                                                                     HiveUtil.markCallLogAsUploaded(allCallLogData[index].id.toString());
-                                                                                      log('updated in hive');
-                                                                                      // todo : reload data
-                                                                                     
-                                                                                    } else {
-                                                                                      log('not in hive');
-                                                                                      // add
-                                                                                      HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
-                                                                                          id: allCallLogData[index].timeStamp.toString(),
-                                                                                          name: allCallLogData[index].name.toString(),
-                                                                                          phoneNumber: allCallLogData[index].phoneNumber.toString(),
-                                                                                          callType: allCallLogData[index].callType.toString().substring(allCallLogData[index].callType.toString().indexOf('.') + 1),
-                                                                                          duration: allCallLogData[index].duration.toString(),
-                                                                                          // timeStamp: '${DateTime.fromMillisecondsSinceEpoch( int.parse(allCallLogData[index].timeStamp))}',
-                                                                                          timeStamp: allCallLogData[index].timeStamp.toString(),
-                                                                                          simSlot: allCallLogData[index].simSlot??"NIL",
-                                                                                          callRecordFilePath: "",
-                                                                                          isUploaded: true,
-                                                                                          isDeleted:false,
-                                                                                          isEnabled: true,
-                                                                                        );
-                                                                                        HiveUtil.addCallLog(hiveCallLog);
-                                                                                         
-                                                                                    }
-                                                                                 getData();
-
-                                                                              },
-                                                                           icon: const Icon(Icons.upload)
-                                                                          )
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            10,
-                                                                      ),
-                                                                      Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Row(
-                                                                            children: [
-                                                                              Image.asset("assets/icons/calendar.png", width: 20),
-                                                                              const SizedBox(
-                                                                                width: 15,
-                                                                              ),
-                                                                              Text( // todo : make it dateTime
-                                                                                allCallLogData[index].timeStamp.toString(),
-                                                                              ),
-                                                                            ],
-                                                                          ),
-                                                                          Row(
-                                                                            children: [
-                                                                              const Icon(Icons.timer_outlined),
-                                                                              const SizedBox(
-                                                                                width: 10,
-                                                                              ),
-                                                                              Padding(
-                                                                              padding: const EdgeInsets.only(right: 10),
-                                                                              child: Text(
-                                                                                formatDurationFromString(allCallLogData[index].duration.toString()),
-                                                                                style: const TextStyle(fontSize: 15, color: Colors.green),
-                                                                              ),
-                                                                            ),
-                                                                            ],
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            5,
-                                                                      ),
-                                                                      Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          Text(
-                                                                            'Type  : ${allCallLogData[index].callType}',
-                                                                          ),
-                                                                          const SizedBox(),
-                                                                          Container(
-                                                                            decoration: BoxDecoration(
-                                                                                color: Colors.grey.shade300,
-                                                                                borderRadius: BorderRadius.circular(5)),
-                                                                            child:
-                                                                                Padding(
-                                                                              padding: const EdgeInsets.only(
-                                                                                  left: 10,
-                                                                                  right: 10,
-                                                                                  top: 5,
-                                                                                  bottom: 5),
-                                                                              child:
-                                                                                  Text(
-                                                                                allCallLogData[index].simSlot,
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ],
-                                                                      ),
-                                                                      const SizedBox(
-                                                                        height:
-                                                                            10,
-                                                                      )
-                                                                      // Text(
-                                                                      //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
-                                                                      //     ),
-                                                                    ],
-                                                                  ),
+                                                                              if (isThisAlreadyInHiveCallLogDb) {
+                                                                                log('already in hive');
+                                                                                // update
+                                                                                HiveUtil.markCallLogAsUploaded(allCallLogData[index].id.toString());
+                                                                                log('updated in hive');
+                                                                                // todo : reload data
+                                                                              } else {
+                                                                                log('not in hive');
+                                                                                // add
+                                                                                HiveCaallHistoryModel hiveCallLog = HiveCaallHistoryModel(
+                                                                                  id: allCallLogData[index].timeStamp.toString(),
+                                                                                  name: allCallLogData[index].name.toString(),
+                                                                                  phoneNumber: allCallLogData[index].phoneNumber.toString(),
+                                                                                  callType: allCallLogData[index].callType.toString().substring(allCallLogData[index].callType.toString().indexOf('.') + 1),
+                                                                                  duration: allCallLogData[index].duration.toString(),
+                                                                                  // timeStamp: '${DateTime.fromMillisecondsSinceEpoch( int.parse(allCallLogData[index].timeStamp))}',
+                                                                                  timeStamp: allCallLogData[index].timeStamp.toString(),
+                                                                                  simSlot: allCallLogData[index].simSlot ?? "NIL",
+                                                                                  callRecordFilePath: "",
+                                                                                  isUploaded: true,
+                                                                                  isDeleted: false,
+                                                                                  isEnabled: true,
+                                                                                );
+                                                                                HiveUtil.addCallLog(hiveCallLog);
+                                                                              }
+                                                                              getData();
+                                                                            },
+                                                                            icon:
+                                                                                const Icon(Icons.upload))
+                                                                  ],
                                                                 ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Row(
+                                                                      children: [
+                                                                        Image.asset(
+                                                                            "assets/icons/calendar.png",
+                                                                            width:
+                                                                                20),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              15,
+                                                                        ),
+                                                                        Text(
+                                                                          // todo : make it dateTime
+                                                                          allCallLogData[index]
+                                                                              .timeStamp
+                                                                              .toString(),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                    Row(
+                                                                      children: [
+                                                                        const Icon(
+                                                                            Icons.timer_outlined),
+                                                                        const SizedBox(
+                                                                          width:
+                                                                              10,
+                                                                        ),
+                                                                        Padding(
+                                                                          padding: const EdgeInsets
+                                                                              .only(
+                                                                              right: 10),
+                                                                          child:
+                                                                              Text(
+                                                                            formatDurationFromString(allCallLogData[index].duration.toString()),
+                                                                            style:
+                                                                                const TextStyle(fontSize: 15, color: Colors.green),
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                                Row(
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .spaceBetween,
+                                                                  children: [
+                                                                    Text(
+                                                                      'Type  : ${allCallLogData[index].callType}',
+                                                                    ),
+                                                                    const SizedBox(),
+                                                                    Container(
+                                                                      decoration: BoxDecoration(
+                                                                          color: Colors
+                                                                              .grey
+                                                                              .shade300,
+                                                                          borderRadius:
+                                                                              BorderRadius.circular(5)),
+                                                                      child:
+                                                                          Padding(
+                                                                        padding: const EdgeInsets
+                                                                            .only(
+                                                                            left:
+                                                                                10,
+                                                                            right:
+                                                                                10,
+                                                                            top:
+                                                                                5,
+                                                                            bottom:
+                                                                                5),
+                                                                        child:
+                                                                            Text(
+                                                                          allCallLogData[index]
+                                                                              .simSlot,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 10,
+                                                                )
+                                                                // Text(
+                                                                //     'ACCOUNT ID : ${_callLogEntries.elementAt(indexStaff).phoneAccountId}',
+                                                                //     ),
                                                               ],
                                                             ),
                                                           ),
-                                                        )),
-                                                  );
-                                                })
-                                            : completedLoading ?
-                                            Center(
-                                                child: Lottie.asset(
-                                                    'assets/main/no_history.json',
-                                                    fit: BoxFit.fill),
-                                              ): Center(
-                                      child: Lottie.asset(
-                                          'assets/main/loading.json',
-                                          fit: BoxFit.fill),
-                                    ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  )),
+                                            );
+                                          })
+                                      : completedLoading
+                                          ? Center(
+                                              child: Lottie.asset(
+                                                  'assets/main/no_history.json',
+                                                  fit: BoxFit.fill),
+                                            )
+                                          : Center(
+                                              child: Lottie.asset(
+                                                  'assets/main/loading.json',
+                                                  fit: BoxFit.fill),
+                                            ),
 
                               //!
-                              // logHistory != null && commonDetails != null 
+                              // logHistory != null && commonDetails != null
                               //     ? Column(
                               //         children: [
                               //           Padding(
@@ -2935,7 +2990,7 @@ setState(() {
                               //             height: 20,
                               //           ),
                               //           widget.userId.toString()!=assignStaffId?
-                              //           logHistory!.data!.lists!.isNotEmpty 
+                              //           logHistory!.data!.lists!.isNotEmpty
                               //               ? ListView.builder(
                               //                   shrinkWrap: true,
                               //                   itemCount:
@@ -3291,7 +3346,7 @@ setState(() {
                               //                 ):
                               //                 //! SHOW HIVE DATA
 
-                              //                 allCallLogData.isNotEmpty 
+                              //                 allCallLogData.isNotEmpty
                               //               ? ListView.builder(
                               //                   shrinkWrap: true,
                               //                   itemCount:  allCallLogData.length,
@@ -3696,7 +3751,8 @@ setState(() {
                                       context,
                                       MaterialPageRoute(
                                           builder: (context) =>
-                                              Dashboard(widget.token)),
+                                              DashboardLeadNewUpdatedTwo(
+                                                  widget.token)),
                                     );
                                   },
                                   child: Container(
@@ -3916,7 +3972,7 @@ setState(() {
       context: context,
       position: const RelativeRect.fromLTRB(1000.0, 0.0, 1000.0, 0.0),
       items: [
-         PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: '6',
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -4096,15 +4152,14 @@ setState(() {
                 itemBuilder: (context, ind) {
                   return InkWell(
                     onTap: () {
-                      log("Staff ID : ${commonDetails!.data.staff[ind].userId}"); 
+                      log("Staff ID : ${commonDetails!.data.staff[ind].userId}");
                       log("Staff Name : ${commonDetails!.data.staff[ind].staffName}");
-                       Navigator.pop(context, true);
+                      Navigator.pop(context, true);
                       setState(() {
                         assignStaff =
                             commonDetails!.data.staff[ind].staffName.toString();
                         assignStaffId =
                             commonDetails!.data.staff[ind].userId.toString();
-                       
                       });
                     },
                     child: SizedBox(
@@ -4149,7 +4204,7 @@ setState(() {
                       deleteHistoryIds.clear();
                       Common.toastMessaage(delete.message, Colors.green);
                       getData();
-                       Navigator.of(context).pop();
+                      Navigator.of(context).pop();
                     } else {
                       Common.toastMessaage(delete.message, Colors.red);
                       if (context.mounted) {
@@ -4191,8 +4246,4 @@ setState(() {
   }
 
   //!
-
-  
-
 }
-

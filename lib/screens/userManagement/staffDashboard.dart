@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:login2/models/lead_management/leadCategoryStaffWiseModel.dart';
 import 'package:login2/models/lead_management/staff_dashboard_model.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
@@ -5887,7 +5888,8 @@ class _StaffDashboardState extends State<StaffDashboard> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => Dashboard(widget.token)),
+                        builder: (context) =>
+                            DashboardLeadNewUpdatedTwo(widget.token)),
                   );
                 },
                 child: Image.asset("assets/icons/menu.png",

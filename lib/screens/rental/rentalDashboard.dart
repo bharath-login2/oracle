@@ -8,6 +8,7 @@ import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.da
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/rental/paymentReportListPage.dart';
@@ -197,7 +198,8 @@ class _RentalDashboardState extends State<RentalDashboard> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          Dashboard(widget.token)),
+                                          DashboardLeadNewUpdatedTwo(
+                                              widget.token)),
                                 );
         },
         child: Image.asset("assets/icons/menu.png", width: 25),

@@ -16,7 +16,13 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../models/lead_management/cloudCallModel.dart';
 import '../../models/lead_management/viewLeadsModel.dart';
-import '../leadManagement/add_followup.dart';
+import '../../models/lead_management/leadDetailsModel.dart';
+import '../../models/lead_management/leadDetailsModelAdd.dart';
+import '../../models/lead_management/leadMileStoneListModel.dart';
+import '../../models/lead_management/listFolderName.dart';
+import '../../models/lead_management/addLeadCommonDataModel.dart';
+import 'package:login2/models/lead_management/leadFollowupAdd.dart' as af;
+import '../leadManagement/lead_details_popup.dart';
 
 class Search extends StatefulWidget {
   String token;
@@ -62,6 +68,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
 
   SearchDataModel? response;
   ViewLeadsModel? viewLeads;
+  AddLeadCommonDataModel? commonDetails;
   bool result = true;
   bool isLoading = false;
   bool custSwitch = true;
@@ -333,31 +340,37 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     return CustomScrollView(
       controller: scrollController,
       slivers: [
-        // SliverAppBar replaced by Scaffold AppBar
-        SliverPadding(
-          padding: const EdgeInsets.all(16),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              _buildSearchBar(),
-              const SizedBox(height: 16),
-              if (isLoading) _buildLoadingIndicator(),
-              if (searchController.text.isEmpty)
-                (viewLeads != null && viewLeads!.data.details.isNotEmpty)
-                    ? _buildViewLeadsResults()
-                    : _buildEmptyState()
-              else if (response != null &&
-                  (response!.data.customers.isNotEmpty ||
-                      response!.data.leadData.isNotEmpty))
-                _buildResults()
-              else if (!isLoading)
-                _buildEmptyState(),
-            ]),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: _buildSearchBar(),
           ),
         ),
+        if (isLoading)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _buildLoadingIndicator(),
+            ),
+          ),
+        if (searchController.text.isEmpty)
+          ..._buildViewLeadsResultsSlivers()
+        else if (response != null &&
+            (response!.data.customers.isNotEmpty ||
+                response!.data.leadData.isNotEmpty))
+          ..._buildResultsSlivers()
+        else if (!isLoading)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildEmptyState(),
+            ),
+          ),
         if (isLoadingMore)
           SliverToBoxAdapter(
             child: _buildShimmerLoading(),
           ),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],
     );
   }
@@ -482,12 +495,13 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildViewLeadsResults() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: Column(
-        children: [
-          _buildSectionHeader(
+  List<Widget> _buildViewLeadsResultsSlivers() {
+    if (viewLeads == null || viewLeads!.data.details.isEmpty) return [];
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildSectionHeader(
             title: 'Leads',
             icon: Icons.leaderboard_rounded,
             color: const Color(0xFF10B981),
@@ -495,25 +509,33 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
             isExpanded: leadSwitch,
             onToggle: () => setState(() => leadSwitch = !leadSwitch),
           ),
-          if (leadSwitch && viewLeads!.data.details.isNotEmpty)
-            ...viewLeads!.data.details
-                .asMap()
-                .entries
-                .map((entry) => _buildLeadCard(entry.value, entry.key))
-                .toList(),
-        ],
+        ),
       ),
-    );
+      if (leadSwitch)
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) =>
+                  _buildLeadCard(viewLeads!.data.details[index], index),
+              childCount: viewLeads!.data.details.length,
+            ),
+          ),
+        ),
+    ];
   }
 
-  Widget _buildResults() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: Column(
-        key: ValueKey(response?.data.customers.length),
-        children: [
-          if (response!.data.customers.isNotEmpty)
-            _buildSectionHeader(
+  List<Widget> _buildResultsSlivers() {
+    if (response == null) return [];
+    List<Widget> slivers = [];
+
+    // Customers Section
+    if (response!.data.customers.isNotEmpty) {
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildSectionHeader(
               title: 'Customers',
               icon: Icons.people_alt_rounded,
               color: const Color(0xFF2a86c9),
@@ -521,13 +543,33 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
               isExpanded: custSwitch,
               onToggle: () => setState(() => custSwitch = !custSwitch),
             ),
-          if (custSwitch && response!.data.customers.isNotEmpty)
-            ...response!.data.customers
-                .map((customer) => _buildCustomerCard(customer))
-                .toList(),
-          const SizedBox(height: 16),
-          if (response!.data.leadData.isNotEmpty)
-            _buildSectionHeader(
+          ),
+        ),
+      );
+      if (custSwitch) {
+        slivers.add(
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) =>
+                    _buildCustomerCard(response!.data.customers[index]),
+                childCount: response!.data.customers.length,
+              ),
+            ),
+          ),
+        );
+      }
+      slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 16)));
+    }
+
+    // Leads Section
+    if (response!.data.leadData.isNotEmpty) {
+      slivers.add(
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _buildSectionHeader(
               title: 'Leads',
               icon: Icons.leaderboard_rounded,
               color: const Color(0xFF10B981),
@@ -535,15 +577,26 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
               isExpanded: leadSwitch,
               onToggle: () => setState(() => leadSwitch = !leadSwitch),
             ),
-          if (leadSwitch && response!.data.leadData.isNotEmpty)
-            ...response!.data.leadData
-                .asMap()
-                .entries
-                .map((entry) => _buildLeadCard(entry.value, entry.key))
-                .toList(),
-        ],
-      ),
-    );
+          ),
+        ),
+      );
+      if (leadSwitch) {
+        slivers.add(
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) =>
+                    _buildLeadCard(response!.data.leadData[index], index),
+                childCount: response!.data.leadData.length,
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return slivers;
   }
 
   Widget _buildSectionHeader({
@@ -758,34 +811,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.endToStart) {
           if (lead.callResult != "Confirmed") {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AddFollowup(
-                  widget.token,
-                  widget.editLead,
-                  widget.deleteLead,
-                  widget.cloudCall,
-                  lead.callMasterId.toString(),
-                  pageName: widget.pageName,
-                  status: widget.status,
-                  staff: widget.staff,
-                  isCalled: widget.isCalled,
-                  fromDate: widget.fromDate?.toIso8601String(),
-                  toDate: widget.toDate?.toIso8601String(),
-                  category: widget.category,
-                  leadType: lead.leadCategory,
-                  leadTypeId: lead.leadCategoryId,
-                  leadSubType: lead.leadSubCategory,
-                  leadSubTypeId: lead.leadSubCategoryId,
-                  priorityId: lead.priority,
-                  priority: lead.priorityName,
-                  cost: lead.cost,
-                  address: lead.address,
-                  leadType1: widget.leadType,
-                ),
-              ),
-            );
+            _showLeadDetailsPopup(lead, index, autoExpandFollowup: true);
           } else {
             _showToast("Cannot follow up on confirmed leads");
           }
@@ -1512,5 +1538,88 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
         margin: const EdgeInsets.all(16),
       ),
     );
+  }
+
+  Future<void> _showLeadDetailsPopup(dynamic lead, int index,
+      {bool autoExpandFollowup = false}) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: CircularProgressIndicator(
+              color: Color(0xFF2a86c9),
+              strokeWidth: 3,
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      final results = await Future.wait([
+        HttpService.leadDetails(widget.token, lead.callMasterId.toString()),
+        HttpService.listAddonDet(widget.token, lead.callMasterId.toString()),
+        HttpService.listFolderAndFiles(
+            widget.token, lead.callMasterId.toString(), ''),
+        HttpService.leadMileStone(widget.token, lead.callMasterId.toString()),
+        HttpService.leadFollowupData(
+            widget.token, lead.callMasterId.toString()),
+        if (commonDetails == null) HttpService.addLeadCommonData(widget.token),
+      ]);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      final leadDetails = results[0] as LeadDeatailsModel?;
+      if (leadDetails == null) {
+        Common.toastMessaage("Failed to load lead details", Colors.red);
+        return;
+      }
+
+      final leadDetailsAdditional = results[1] as LeadDeatailsModelAdd?;
+      final listFolder = results[2] as ListFolderNameModel?;
+      final mileStone = results[3] as LeadMileStoneListModel?;
+      final leadDetailsFollowup = results[4] as af.LeadFollowupData?;
+      if (commonDetails == null && results.length > 5) {
+        commonDetails = results[5] as AddLeadCommonDataModel?;
+      }
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => LeadDetailsPopup(
+          token: widget.token,
+          editLead: widget.editLead,
+          deleteLead: widget.deleteLead,
+          cloudCall: widget.cloudCall,
+          callMasterId: lead.callMasterId.toString(),
+          leadDetails: leadDetails,
+          leadDetailsAdditional: leadDetailsAdditional,
+          listFolder: listFolder,
+          mileStone: mileStone,
+          leadDetailsFollowup: leadDetailsFollowup,
+          commonDetails: commonDetails,
+          pageName: widget.pageName ?? 'Search',
+          status: widget.status,
+          staff: widget.staff,
+          isCalled: widget.isCalled,
+          fromDate: widget.fromDate?.toIso8601String(),
+          toDate: widget.toDate?.toIso8601String(),
+          category: widget.category,
+          leadType: widget.leadType,
+          onDataChanged: () => getList(),
+          autoExpandFollowup: autoExpandFollowup,
+        ),
+      );
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      log('Error showing lead details: $e');
+      Common.toastMessaage("Error loading detailsV2", Colors.red);
+    }
   }
 }

@@ -36,6 +36,7 @@ import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/allReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/leadManagement/attendanceCalendar.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
@@ -1971,7 +1972,8 @@ class _DashboardState extends State<Dashboard> {
                                               context,
                                               MaterialPageRoute(
                                                   builder: (context) =>
-                                                      Dashboard(widget.token)),
+                                                      DashboardLeadNewUpdatedTwo(
+                                                          widget.token)),
                                             );
                     },
                     child: Image.asset("assets/icons/menu.png", width: 25),

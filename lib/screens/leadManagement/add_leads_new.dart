@@ -16,6 +16,8 @@ import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import '../../service/service.dart';
+import '../../models/lead_management/leadExtraSettings.dart';
+import 'dart:developer';
 
 class AddLeadsNew extends StatefulWidget {
   final String? token;
@@ -152,11 +154,32 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   TextEditingController _productSearchCtrl = TextEditingController();
   List<LeadProduct> _productSearchResults = [];
 
-  // State
   bool isLoading = true,
       isDistrictLoading = false,
       isPinLoading = false,
+      isLoadingSettings = false,
       checked = false;
+  LeadSettings? leadSettings;
+
+  Future<void> _fetchLeadExtraSettings(String callResultId) async {
+    setState(() => isLoadingSettings = true);
+    try {
+      final response = await HttpService.leadExtraSettings(callResultId);
+      if (mounted) {
+        setState(() {
+          isLoadingSettings = false;
+          if (response != null && response.status == true) {
+            leadSettings = response.data.settings;
+          } else {
+            leadSettings = null;
+          }
+        });
+      }
+    } catch (e) {
+      log("Error fetching lead extra settings: $e");
+      if (mounted) setState(() => isLoadingSettings = false);
+    }
+  }
   String code = '91', whatsappCode = '91', roleId = '', multiBranch = '';
   String? branch;
   String? contactPermission, createLeadCategory, addLeadSource;
@@ -486,14 +509,14 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 const SizedBox(height: 12),
                 _buildStatusField(),
                 const SizedBox(height: 12),
+                if (callResultId == '2') _buildFollowupRow(),
+                if (callResultId == '2') const SizedBox(height: 12),
                 _buildRemarksField(),
                 const SizedBox(height: 12),
                 if (callResultId == '2' ||
                     callResultId == '3' ||
                     callResultId == '4')
                   _buildCallResponseField(),
-                const SizedBox(height: 12),
-                if (callResultId == '2') _buildFollowupRow(),
               ],
             ),
             const SizedBox(height: 12),
@@ -1514,6 +1537,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                       callResultCtrl.text = callResult;
                       callResultId = cr.callResultId.toString();
                       if (callResultId != '2') nextFollowupCtrl.clear();
+                      _fetchLeadExtraSettings(callResultId);
                     });
                     Navigator.pop(context);
                   },
@@ -1871,8 +1895,15 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       return;
     }
 
-    if (callResultId == '2' && nextFollowupCtrl.text.isEmpty) {
+    bool nextFollowUpRequired =
+        leadSettings?.isFollowupRequiredBool ?? (callResultId == '2');
+    if (nextFollowUpRequired && nextFollowupCtrl.text.isEmpty) {
       Common.toastMessaage('Select followup date', Colors.red);
+      return;
+    }
+
+    if (callResponseId.isEmpty) {
+      Common.toastMessaage('Select call response', Colors.red);
       return;
     }
 

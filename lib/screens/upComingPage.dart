@@ -1,4 +1,5 @@
 import 'package:login2/screens/drawerScreen.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../core/common.dart';
@@ -191,7 +192,7 @@ class _UpComingPageState extends State<UpComingPage> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
+              MaterialPageRoute(builder: (context) => DashboardLeadNewUpdatedTwo(widget.token)),
             );
           },
           child: Image.asset("assets/icons/menu.png",

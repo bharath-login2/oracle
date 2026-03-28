@@ -16,6 +16,7 @@ import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/addQuotationPage.dart';
 import 'package:login2/screens/leadManagement/add_quotation_request_sheet.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
@@ -557,7 +558,8 @@ class _QuotationDashboardState extends State<QuotationDashboard>
                                 : Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => Dashboard(token)),
+                                        builder: (context) =>
+                                            DashboardLeadNewUpdatedTwo(token)),
                                   );
           },
           child: Image.asset("assets/icons/menu.png", width: 25),

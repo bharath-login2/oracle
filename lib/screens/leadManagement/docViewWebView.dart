@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/common.dart';
 
@@ -44,119 +45,112 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (String url) {
-            setState(() {
-              isLoading = false;
-            });
+            if (mounted) setState(() => isLoading = false);
           },
         ),
-      )
-      ..loadRequest(Uri.parse(
-        widget.extension == 'pdf' ||
-                widget.extension == 'doc' ||
-                widget.extension == 'docx' ||
-                widget.extension == 'ppt' ||
-                widget.extension == 'pptx' ||
-                widget.extension == 'pptm' ||
-                widget.extension == 'csv' ||
-                widget.extension == 'xls' ||
-                widget.extension == 'xlsx'
-            ? 'https://docs.google.com/viewer?url=${widget.documentUrl}'
-            : widget.documentUrl!,
-      ));
+      );
+
+    _loadContent();
+  }
+
+  void _loadContent() {
+    bool isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic']
+        .contains(widget.extension?.toLowerCase());
+    if (!isImage) {
+      String url = (widget.extension == 'pdf' ||
+              widget.extension == 'doc' ||
+              widget.extension == 'docx')
+          ? 'https://docs.google.com/viewer?url=${widget.documentUrl}'
+          : widget.documentUrl!;
+
+      _webViewController.loadRequest(Uri.parse(url));
+    } else {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   Future<void> downloadFile(String url, String fileName) async {
     var status = await Permission.storage.request();
     if (status.isGranted) {
       if (mounted) {
-        Common.showProgressDialog(context as BuildContext, "Downloading...");
+        Common.showProgressDialog(context, "Downloading...");
       }
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final filePath = '/storage/emulated/0/Download/$fileName';
-        File file = File(filePath);
-        await file.writeAsBytes(response.bodyBytes);
-        Common.toastMessaage('Download Successfully', Colors.green);
-        Navigator.pop(context as BuildContext);
-      } else {
-        Common.toastMessaage('Download Failed', Colors.red);
-        Navigator.pop(context as BuildContext);
+      try {
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          final filePath = '/storage/emulated/0/Download/$fileName';
+          File file = File(filePath);
+          await file.writeAsBytes(response.bodyBytes);
+          Common.toastMessaage('Download Successfully', Colors.green);
+        } else {
+          Common.toastMessaage('Download Failed', Colors.red);
+        }
+      } catch (e) {
+        Common.toastMessaage('Error: $e', Colors.red);
+      } finally {
+        if (mounted) Navigator.pop(context);
       }
     }
   }
-
-  // Future<void> _fileFromImageUrl() async {
-  //   final response = await http.get(Uri.parse(widget.documentUrl!));
-  //   final documentDirectory = await getApplicationDocumentsDirectory();
-  //   final file = File(join(documentDirectory.path, widget.title.toString()));
-  //   file.writeAsBytesSync(response.bodyBytes);
-  //   await Share.shareFiles([file.path]);
-  // }
 
   Future<void> _fileFromImageUrl() async {
-  try {
-    final response = await http.get(Uri.parse(widget.documentUrl!));
-
-    if (response.statusCode == 200) {
-      final documentDirectory = await getApplicationDocumentsDirectory();
-      final file = File(join(documentDirectory.path, widget.title.toString()));
-
-      await file.writeAsBytes(response.bodyBytes);
-
-      // ✅ Use shareXFiles instead of shareFiles
-      XFile xfile = XFile(file.path);
-      await Share.shareXFiles([xfile]);
-    } else {
-      print("Failed to load file: ${response.statusCode}");
+    try {
+      final response = await http.get(Uri.parse(widget.documentUrl!));
+      if (response.statusCode == 200) {
+        final documentDirectory = await getApplicationDocumentsDirectory();
+        final file =
+            File(p.join(documentDirectory.path, widget.title.toString()));
+        await file.writeAsBytes(response.bodyBytes);
+        XFile xfile = XFile(file.path);
+        await Share.shareXFiles([xfile]);
+      } else {
+        Common.toastMessaage("Failed to load file for sharing", Colors.red);
+      }
+    } catch (e) {
+      print("Error: $e");
     }
-  } catch (e) {
-    print("Error: $e");
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
         child: Container(
           padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
           decoration: const BoxDecoration(
-            gradient: LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+            gradient:
+                LinearGradient(colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
           ),
           child: Padding(
-            padding: const EdgeInsets.only(left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     InkWell(
-                      onTap: () {
-                        Navigator.of(context).pop();
-                      },
+                      onTap: () => Navigator.of(context).pop(),
                       child: Container(
                         height: 25,
                         width: 25,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_outlined,
-                          color: Colors.white,
-                          size: 16,
-                        ),
+                            border: Border.all(color: Colors.white),
+                            shape: BoxShape.circle),
+                        child: const Icon(Icons.arrow_back_ios_outlined,
+                            color: Colors.white, size: 16),
                       ),
                     ),
                     const SizedBox(width: 25),
                     SizedBox(
                       width: 150,
                       child: Text(
-                        widget.title.toString(),
-                        style: const TextStyle(color: Colors.white, fontSize: 18, overflow: TextOverflow.ellipsis),
+                        widget.title ?? "Viewer",
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            overflow: TextOverflow.ellipsis),
                       ),
                     ),
                   ],
@@ -164,164 +158,19 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                 Row(
                   children: [
                     InkWell(
-                      onTap: () {
-                        showGeneralDialog(
-                          barrierLabel: "showGeneralDialog",
-                          barrierDismissible: true,
-                          barrierColor: Colors.black.withOpacity(0.6),
-                          transitionDuration: const Duration(milliseconds: 400),
-                          context: context,
-                          pageBuilder: (context, _, __) {
-                            return StatefulBuilder(builder: (context, setState) {
-                              return Align(
-                                alignment: Alignment.center,
-                                child: IntrinsicHeight(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 10, right: 10),
-                                    child: Container(
-                                      width: double.maxFinite,
-                                      clipBehavior: Clip.antiAlias,
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(10),
-                                          topRight: Radius.circular(10),
-                                          bottomRight: Radius.circular(10),
-                                          bottomLeft: Radius.circular(10),
-                                        ),
-                                      ),
-                                      child: Material(
-                                        child: Column(
-                                          children: [
-                                            Align(
-                                              alignment: Alignment.topRight,
-                                              child: IconButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                                icon: const Icon(Icons.close_rounded),
-                                                color: Colors.redAccent,
-                                              ),
-                                            ),
-                                            const Text(
-                                              'File Information',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 20),
-                                            Padding(
-                                              padding: const EdgeInsets.only(left: 20),
-                                              child: Column(
-                                                mainAxisAlignment: MainAxisAlignment.start,
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      const SizedBox(
-                                                        width: 100,
-                                                        child: Text('File Name :'),
-                                                      ),
-                                                      const SizedBox(width: 10),
-                                                      SizedBox(
-                                                        width: 170,
-                                                        child: Text(
-                                                          widget.title!,
-                                                          style: const TextStyle(overflow: TextOverflow.ellipsis),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  Row(
-                                                    children: [
-                                                      const SizedBox(
-                                                        width: 100,
-                                                        child: Text('File Size :'),
-                                                      ),
-                                                      const SizedBox(width: 10),
-                                                      SizedBox(
-                                                        width: 170,
-                                                        child: Text(
-                                                          widget.fileSize!,
-                                                          style: const TextStyle(overflow: TextOverflow.ellipsis),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  Row(
-                                                    children: [
-                                                      const SizedBox(
-                                                        width: 100,
-                                                        child: Text('Created Date :'),
-                                                      ),
-                                                      const SizedBox(width: 10),
-                                                      SizedBox(
-                                                        width: 170,
-                                                        child: Text(
-                                                          widget.createdDate!,
-                                                          style: const TextStyle(overflow: TextOverflow.ellipsis),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  Row(
-                                                    children: [
-                                                      const SizedBox(
-                                                        width: 100,
-                                                        child: Text('Created By :'),
-                                                      ),
-                                                      const SizedBox(width: 10),
-                                                      SizedBox(
-                                                        width: 170,
-                                                        child: Text(
-                                                          widget.createdBy!,
-                                                          style: const TextStyle(overflow: TextOverflow.ellipsis),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            });
-                          },
-                          transitionBuilder: (_, animation1, __, child) {
-                            return SlideTransition(
-                              position: Tween(
-                                begin: const Offset(0, 1),
-                                end: const Offset(0, 0),
-                              ).animate(animation1),
-                              child: child,
-                            );
-                          },
-                        );
-                      },
-                      child: const Icon(Icons.info_outline, color: Colors.white),
+                      onTap: () => _showInfoDialog(),
+                      child:
+                          const Icon(Icons.info_outline, color: Colors.white),
                     ),
                     const SizedBox(width: 12),
                     InkWell(
-                      onTap: () {
-                        downloadFile(widget.documentUrl.toString(), widget.title.toString());
-                      },
+                      onTap: () => downloadFile(widget.documentUrl.toString(),
+                          widget.title.toString()),
                       child: const Icon(Icons.download, color: Colors.white),
                     ),
                     const SizedBox(width: 12),
                     InkWell(
-                      onTap: () {
-                        _fileFromImageUrl();
-                      },
+                      onTap: () => _fileFromImageUrl(),
                       child: const Icon(Icons.share, color: Colors.white),
                     ),
                   ],
@@ -333,17 +182,92 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: _webViewController),
-          isLoading
-              ? Center(
-                  child: Lottie.asset(
-                    'assets/main/loading.json',
-                    fit: BoxFit.fill,
-                  ),
-                )
-              : const Stack(),
+          _buildViewer(),
+          if (isLoading)
+            Center(
+                child: Lottie.asset('assets/main/loading.json',
+                    fit: BoxFit.fill, width: 150)),
         ],
       ),
+    );
+  }
+
+  Widget _buildViewer() {
+    bool isImage = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'heic']
+        .contains(widget.extension?.toLowerCase());
+    if (isImage) {
+      return Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Image.network(
+            widget.documentUrl!,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(child: CircularProgressIndicator());
+            },
+            errorBuilder: (context, error, stackTrace) => const Center(
+                child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),
+          ),
+        ),
+      );
+    } else {
+      return WebViewWidget(controller: _webViewController);
+    }
+  }
+
+  void _showInfoDialog() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Info",
+      pageBuilder: (ctx, _, __) => Center(
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(15)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("File Information",
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      IconButton(
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          onPressed: () => Navigator.pop(ctx)),
+                    ]),
+                const Divider(),
+                _infoRow("File Name", widget.title),
+                _infoRow("File Size", widget.fileSize),
+                _infoRow("Created Date", widget.createdDate),
+                _infoRow("Created By", widget.createdBy),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(children: [
+        SizedBox(
+            width: 100,
+            child: Text("$label :",
+                style: const TextStyle(fontWeight: FontWeight.w500))),
+        Expanded(
+            child: Text(value ?? "N/A",
+                style: const TextStyle(color: Colors.black54))),
+      ]),
     );
   }
 }

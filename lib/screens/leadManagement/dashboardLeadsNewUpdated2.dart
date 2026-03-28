@@ -4144,8 +4144,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   },
                                   onApplyFilters: (filters) {
                                     setState(() {
-                                      fromDate = filters['fromDate'];
-                                      toDate = filters['toDate'];
+                                      fromDate = filters['fromDate'] ?? fromDate;
+                                      toDate = filters['toDate'] ?? toDate;
                                       _listTabSelectedStatusIds =
                                           List<String>.from(
                                               filters['statusIds']);

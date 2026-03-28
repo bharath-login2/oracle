@@ -899,7 +899,8 @@ class _ViewLeadsState extends State<ViewLeads>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => Dashboard(widget.token)),
+                        builder: (context) =>
+                            DashboardLeadNewUpdatedTwo(widget.token)),
                   );
                 },
                 child: Image.asset("assets/icons/menu.png", width: 25),

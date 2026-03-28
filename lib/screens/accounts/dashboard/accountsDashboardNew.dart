@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:app_settings/app_settings.dart';
 import 'package:login2/screens/accounts/reports/customer_payment_report_screen.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
@@ -1558,7 +1559,7 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
             floatingActionButtonLocation:
                 FloatingActionButtonLocation.centerDocked,
             floatingActionButton: FloatingActionButton(
-              backgroundColor: Colors.black,
+              backgroundColor: const Color.fromARGB(255, 40, 120, 156),
               onPressed: () {
                 ProjectDashboardPermission == "true"
                     ? Navigator.pushReplacement(
@@ -1589,7 +1590,8 @@ class _AccountsDashboardNewState extends State<AccountsDashboardNew> {
                                 : Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => Dashboard(token)),
+                                        builder: (context) =>
+                                            DashboardLeadNewUpdatedTwo(token)),
                                   );
               },
               child: Image.asset("assets/icons/menu.png", width: 25),

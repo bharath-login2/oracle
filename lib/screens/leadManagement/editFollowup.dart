@@ -13,7 +13,8 @@ import '../../models/lead_management/leadSubTypeModel.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
 import '../../service/service.dart';
-import '../../widgets/inputTextFeildWidget.dart';
+import '../../models/lead_management/leadExtraSettings.dart';
+import 'dart:developer';
 
 // ignore: must_be_immutable
 class EditFollowup extends StatefulWidget {
@@ -79,6 +80,28 @@ class _EditFollowupState extends State<EditFollowup> {
   final TextEditingController callReasonVal = TextEditingController();
   final TextEditingController whatsappLead = TextEditingController();
   final TextEditingController emailLead = TextEditingController();
+  LeadSettings? leadSettings;
+  bool isLoadingSettings = false;
+
+  Future<void> _fetchLeadExtraSettings(String callResultId) async {
+    setState(() => isLoadingSettings = true);
+    try {
+      final response = await HttpService.leadExtraSettings(callResultId);
+      if (mounted) {
+        setState(() {
+          isLoadingSettings = false;
+          if (response != null && response.status == true) {
+            leadSettings = response.data.settings;
+          } else {
+            leadSettings = null;
+          }
+        });
+      }
+    } catch (e) {
+      log("Error fetching lead extra settings: $e");
+      if (mounted) setState(() => isLoadingSettings = false);
+    }
+  }
 
   FollowupDetailsModel? followupDetails;
   LeadProductSectionModel? productSectionModel;
@@ -185,6 +208,7 @@ class _EditFollowupState extends State<EditFollowup> {
       callReasonVal.text = followupDetails!.data!.reason.toString();
 
       callResultReasonList();
+      _fetchLeadExtraSettings(callResultId);
 
       if (leadDetails != null && leadDetails!.data != null) {
         whatsappLead.text = leadDetails!.data!.whatsaAppNumber ?? '';
@@ -219,41 +243,57 @@ class _EditFollowupState extends State<EditFollowup> {
 
     if (callResultId == '') {
       Common.toastMessaage('Choose any Status', Colors.red);
-    } else if (callResultId == '2' && nextFollowupDate1.text == '') {
-      Common.toastMessaage('Choose next followup date', Colors.red);
-    } else {
+      return;
+    }
+
+    if (callResponseId.isEmpty) {
+      Common.toastMessaage('Select Call Response', Colors.red);
+      return;
+    }
+
+    bool nextFollowUpRequired =
+        leadSettings?.isFollowupRequiredBool ?? (callResultId == '2');
+    if (nextFollowUpRequired && nextFollowupDate1.text.isEmpty) {
+      Common.toastMessaage('Select Next Followup Date', Colors.red);
+      return;
+    }
+
+    bool reasonRequired = leadSettings?.isReasonRequiredBool ?? false;
+    if (reasonRequired && callResultReasonId.isEmpty) {
+      Common.toastMessaage('Select Tag', Colors.red);
+      return;
+    }
+
+    if (context.mounted) {
+      Common.showProgressDialog(context, "Loading..");
+    }
+
+    EditLeadFollowupModel object1 = await HttpService.editLeadsFollowupUpdated(
+        widget.token,
+        widget.callFollowupId,
+        callResultId,
+        nextFollowupDate1.text,
+        cost.text,
+        leadTypeId,
+        leadSubTypeId,
+        remarks.text,
+        calledDate1.text,
+        widget.callMasterId,
+        callResponseId,
+        callResultReasonId,
+        whatsappLead: whatsappLead.text,
+        emailLead: emailLead.text,
+        products: _selectedProducts.map((p) => p.id).join(','));
+
+    if (context.mounted) Navigator.pop(context);
+
+    if (object1.status == true) {
+      Common.toastMessaage(object1.message, Colors.green);
       if (context.mounted) {
-        Common.showProgressDialog(context, "Loading..");
+        Navigator.pop(context);
       }
-
-      EditLeadFollowupModel object1 =
-          await HttpService.editLeadsFollowupUpdated(
-              widget.token,
-              widget.callFollowupId,
-              callResultId,
-              nextFollowupDate1.text,
-              cost.text,
-              leadTypeId,
-              leadSubTypeId,
-              remarks.text,
-              calledDate1.text,
-              widget.callMasterId,
-              callResponseId,
-              callResultReasonId,
-              whatsappLead: whatsappLead.text,
-              emailLead: emailLead.text,
-              products: _selectedProducts.map((p) => p.id).join(','));
-
-      if (context.mounted) Navigator.pop(context);
-
-      if (object1.status == true) {
-        Common.toastMessaage(object1.message, Colors.green);
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
-      } else {
-        Common.toastMessaage(object1.message, Colors.red);
-      }
+    } else {
+      Common.toastMessaage(object1.message, Colors.red);
     }
   }
 
@@ -631,6 +671,7 @@ class _EditFollowupState extends State<EditFollowup> {
             if (callResultId != '2') {
               nextFollowupDate1.clear();
             }
+            _fetchLeadExtraSettings(callResultId);
           });
         },
       ),

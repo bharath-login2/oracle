@@ -65,6 +65,7 @@ import 'package:login2/models/lead_management/categoryReportTableModel.dart';
 import 'package:login2/models/lead_management/categoryWiseLeadBarModel.dart';
 import 'package:login2/models/lead_management/cloudCallReportModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
+import 'package:login2/models/lead_management/createGoogleFoldersModel.dart';
 import 'package:login2/models/lead_management/customerDetailsModel.dart';
 import 'package:login2/models/lead_management/customerModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
@@ -125,6 +126,7 @@ import 'package:login2/models/lead_management/tagListForFilterModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/unverifiedTransactionModel.dart';
 import 'package:login2/models/lead_management/updatePendingList.dart';
+import 'package:login2/models/lead_management/uploadGoogleFilesModel.dart';
 import 'package:login2/models/lead_management/uploadedQuotationModel.dart';
 import 'package:login2/models/lead_management/workCountModel.dart';
 import 'package:login2/models/lead_management/workMessageModel.dart';
@@ -13560,7 +13562,7 @@ class HttpService {
   }
 
   static Future<GoogleDriveFilesResponse?> getGoogleDriveFiles(
-      String callMasterId, String iD) async {
+      String callMasterId, String iD, String parentId, {String refFunction = "Leads"}) async {
     print("reached here");
     try {
       final token = await Common.getSharedPref("token");
@@ -13572,8 +13574,9 @@ class HttpService {
       final formData = FormData.fromMap({
         "token": token,
         "reference_id": callMasterId,
-        "reference_function": "Leads",
+        "reference_function": refFunction,
         "account_id": iD,
+        "parent_id": parentId,
       });
 
       final response = await _dio.post(
@@ -13623,6 +13626,84 @@ class HttpService {
       log("Taggsgssss error: ${response.data?['message'] ?? 'Unknown error'}");
     } catch (e) {
       log("Taggsgssss error: $e");
+    }
+    return null;
+  }
+
+  static Future<CreateGoogleFoldersResponse?> createGoogleFolders(
+      String callMasterId,
+      String iD,
+      String parentId,
+      String folderName, {String refFunction = "Leads"}) async {
+    print("reached here");
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getGoogleDriveAccounts error: Token not found");
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "reference_id": callMasterId,
+        "reference_function": refFunction,
+        "account_id": iD,
+        "parent_id": parentId,
+        "folder_name": folderName,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}create_gdrive_folder_api",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return CreateGoogleFoldersResponse.fromJson(response.data);
+      }
+
+      log("getGoogleDriveAccounts error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getGoogleDriveAccounts error: $e");
+    }
+    return null;
+  }
+
+  static Future<UploadGoogleFilesResponse?> uploadGoogleFiles(
+      String callMasterId, String iD, String parentId, String File, 
+      {String refFunction = "Leads", String? customFileName}) async {
+    print("reached here");
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getGoogleDriveAccounts error: Token not found");
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "call_master_id": callMasterId,
+        "ref_function": refFunction,
+        "g_account": iD,
+        "parent_id": parentId,
+        "userfile": await MultipartFile.fromFile(File, filename: customFileName),
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}upload_gdrive_file_api",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return UploadGoogleFilesResponse.fromJson(response.data);
+      }
+
+      log("getGoogleDriveAccounts error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getGoogleDriveAccounts error: $e");
     }
     return null;
   }

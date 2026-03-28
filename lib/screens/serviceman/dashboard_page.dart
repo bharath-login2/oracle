@@ -11,6 +11,7 @@ import 'package:login2/screens/authentication/login.dart';
 import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/serviceman/bottomNavBar.dart';
@@ -967,7 +968,8 @@ class _DashboardPageState extends State<DashboardPage> {
                               : Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => Dashboard(token)),
+                                      builder: (context) =>
+                                          DashboardLeadNewUpdatedTwo(token)),
                                 );
         },
         child: Image.asset("assets/icons/menu.png", width: 25),

@@ -33,6 +33,7 @@ import 'package:login2/screens/bottom_navigation_bar.dart';
 import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/sidebarscreens/accountsSidebarScreen.dart';
@@ -1614,7 +1615,8 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                 : Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => Dashboard(token)),
+                                        builder: (context) =>
+                                            DashboardLeadNewUpdatedTwo(token)),
                                   );
               },
               child: Image.asset("assets/icons/menu.png", width: 25),
