@@ -1451,7 +1451,10 @@ class HttpService {
       collectedStaff,
       isDiff,
       renProducts,
-      targetGroup) async {
+      targetGroup,
+      {String? callResultId,
+      String? callResponseId,
+      String? nextFollowupDate}) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
       "invoice_remarks": invoiceRemarks,
@@ -1475,7 +1478,10 @@ class HttpService {
       "collected_staff": collectedStaff,
       "next_cost_diff": isDiff,
       "next_renewal_product": jsonEncode(renProducts),
-      "target_group": jsonEncode(targetGroup)
+      "target_group": jsonEncode(targetGroup),
+      "next_followup_date": nextFollowupDate ?? '',
+      "call_result_id": callResultId ?? '',
+      "call_response_id": callResponseId ?? '',
     });
     try {
       var result = await _dio.post(
@@ -1547,6 +1553,8 @@ class HttpService {
       callMasterId,
       callResponseId,
       reasonId,
+      bool checked,
+      String? timeBefore,
       {String? whatsappLead,
       String? emailLead,
       String? products}) async {
@@ -1563,6 +1571,8 @@ class HttpService {
       'call_master_id': callMasterId,
       'call_response_id': callResponseId,
       'reason_id': reasonId,
+      "is_reminder": checked ? "1" : "0",
+      "reminder_time": timeBefore ?? "",
       "whatsapp_number_lead": whatsappLead ?? '',
       "email_lead": emailLead ?? '',
       "products_lead": products ?? '',
@@ -13562,7 +13572,8 @@ class HttpService {
   }
 
   static Future<GoogleDriveFilesResponse?> getGoogleDriveFiles(
-      String callMasterId, String iD, String parentId, {String refFunction = "Leads"}) async {
+      String callMasterId, String iD, String parentId,
+      {String refFunction = "Leads"}) async {
     print("reached here");
     try {
       final token = await Common.getSharedPref("token");
@@ -13631,10 +13642,8 @@ class HttpService {
   }
 
   static Future<CreateGoogleFoldersResponse?> createGoogleFolders(
-      String callMasterId,
-      String iD,
-      String parentId,
-      String folderName, {String refFunction = "Leads"}) async {
+      String callMasterId, String iD, String parentId, String folderName,
+      {String refFunction = "Leads"}) async {
     print("reached here");
     try {
       final token = await Common.getSharedPref("token");
@@ -13671,7 +13680,7 @@ class HttpService {
   }
 
   static Future<UploadGoogleFilesResponse?> uploadGoogleFiles(
-      String callMasterId, String iD, String parentId, String File, 
+      String callMasterId, String iD, String parentId, String File,
       {String refFunction = "Leads", String? customFileName}) async {
     print("reached here");
     try {
@@ -13687,7 +13696,8 @@ class HttpService {
         "ref_function": refFunction,
         "g_account": iD,
         "parent_id": parentId,
-        "userfile": await MultipartFile.fromFile(File, filename: customFileName),
+        "userfile":
+            await MultipartFile.fromFile(File, filename: customFileName),
       });
 
       final response = await _dio.post(

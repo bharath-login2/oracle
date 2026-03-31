@@ -461,6 +461,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
       itemCount: staffDetails!.data.userTarget.length,
       itemBuilder: (context, index) {
         final target = staffDetails!.data.userTarget[index];
+        final progressValue = double.parse(target.progressPercentage) / 100;
+
         return GestureDetector(
           onTap: () {
             Navigator.push(
@@ -478,77 +480,135 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF667eea).withOpacity(0.9),
-                  const Color(0xFF764ba2).withOpacity(0.9),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Group Name
+                Text(
+                  target.groupName,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Target and Achieved values on left and right
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        target.groupName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                    // Target on Left
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "TARGET",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "₹${target.targetAmount}",
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
                     ),
+
+                    // Achieved on Right
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          "Target: ₹${target.targetAmount}",
-                          style: const TextStyle(
-                            color: Colors.white70,
+                        const Text(
+                          "ACHIEVED",
+                          style: TextStyle(
+                            color: Colors.grey,
                             fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
-                          "Achieved: ₹${target.achieved}",
+                          "₹${target.achieved}",
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: Colors.green,
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 18,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Stack(
+
+                const SizedBox(height: 20),
+
+                // Progress Bar
+                Column(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: LinearProgressIndicator(
-                        value: double.parse(target.progressPercentage) / 100,
-                        backgroundColor: Colors.white.withOpacity(0.3),
-                        valueColor:
-                            const AlwaysStoppedAnimation<Color>(Colors.white),
-                        minHeight: 24,
-                      ),
+                    Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: progressValue,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              progressValue >= 1 ? Colors.green : Colors.blue,
+                            ),
+                            minHeight: 12,
+                          ),
+                        ),
+                      ],
                     ),
-                    Positioned.fill(
-                      child: Center(
-                        child: Text(
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "0%",
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 10,
+                          ),
+                        ),
+                        Text(
                           "${target.progressPercentage}%",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          style: TextStyle(
+                            color:
+                                progressValue >= 1 ? Colors.green : Colors.blue,
+                            fontWeight: FontWeight.w600,
                             fontSize: 12,
                           ),
                         ),
-                      ),
+                        Text(
+                          "100%",
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -559,6 +619,116 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
       },
     );
   }
+
+  // Widget _buildTargetList() {
+  //   if (staffDetails!.data.userTarget.isEmpty) {
+  //     return _buildEmptyState("No target data available");
+  //   }
+
+  //   return ListView.builder(
+  //     shrinkWrap: true,
+  //     physics: const NeverScrollableScrollPhysics(),
+  //     itemCount: staffDetails!.data.userTarget.length,
+  //     itemBuilder: (context, index) {
+  //       final target = staffDetails!.data.userTarget[index];
+  //       return GestureDetector(
+  //         onTap: () {
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (context) => AchievementDetailsPage(
+  //                 targetData: target,
+  //                 targetFromDate: DateTime.tryParse(targetFromDate),
+  //                 targetToDate: DateTime.tryParse(targetToDate),
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //         child: Container(
+  //           margin: const EdgeInsets.only(bottom: 16),
+  //           padding: const EdgeInsets.all(16),
+  //           decoration: BoxDecoration(
+  //             gradient: LinearGradient(
+  //               begin: Alignment.topLeft,
+  //               end: Alignment.bottomRight,
+  //               colors: [
+  //                 const Color(0xFF667eea).withOpacity(0.9),
+  //                 const Color(0xFF764ba2).withOpacity(0.9),
+  //               ],
+  //             ),
+  //             borderRadius: BorderRadius.circular(16),
+  //           ),
+  //           child: Column(
+  //             children: [
+  //               Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   Expanded(
+  //                     child: Text(
+  //                       target.groupName,
+  //                       style: const TextStyle(
+  //                         color: Colors.white,
+  //                         fontWeight: FontWeight.bold,
+  //                         fontSize: 16,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.end,
+  //                     children: [
+  //                       Text(
+  //                         "Target: ₹${target.targetAmount}",
+  //                         style: const TextStyle(
+  //                           color: Colors.white70,
+  //                           fontSize: 12,
+  //                         ),
+  //                       ),
+  //                       Text(
+  //                         "Achieved: ₹${target.achieved}",
+  //                         style: const TextStyle(
+  //                           color: Colors.white,
+  //                           fontWeight: FontWeight.bold,
+  //                           fontSize: 14,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ],
+  //               ),
+  //               const SizedBox(height: 12),
+  //               Stack(
+  //                 children: [
+  //                   ClipRRect(
+  //                     borderRadius: BorderRadius.circular(12),
+  //                     child: LinearProgressIndicator(
+  //                       value: double.parse(target.progressPercentage) / 100,
+  //                       backgroundColor: Colors.white.withOpacity(0.3),
+  //                       valueColor:
+  //                           const AlwaysStoppedAnimation<Color>(Colors.white),
+  //                       minHeight: 24,
+  //                     ),
+  //                   ),
+  //                   Positioned.fill(
+  //                     child: Center(
+  //                       child: Text(
+  //                         "${target.progressPercentage}%",
+  //                         style: const TextStyle(
+  //                           color: Colors.white,
+  //                           fontWeight: FontWeight.bold,
+  //                           fontSize: 12,
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildCallTargetList() {
     if (staffDetails!.data.staffCallTarget.isEmpty) {

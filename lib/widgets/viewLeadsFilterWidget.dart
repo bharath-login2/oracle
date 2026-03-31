@@ -461,7 +461,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   }
 
   Widget _buildStatusOptions() {
-    if (widget.isActiveLeads == 'Y') {
+    if (widget.isActiveLeads == '1') {
       if (_isActiveStatusLoading) {
         return const Center(child: CircularProgressIndicator());
       }

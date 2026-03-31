@@ -396,12 +396,12 @@ class _EditLeadNewState extends State<EditLeadNew> {
                 // const SizedBox(height: 12),
                 _buildStatusField(),
                 const SizedBox(height: 12),
-                if (callResultId == '2') _buildFollowupRow(),
+                if (leadSettings != null ? leadSettings!.isFollowupRequiredBool : (callResultId == '2')) _buildFollowupRow(),
                 const SizedBox(height: 12),
 
-                if (callResultId == '2' ||
+                if (leadSettings != null ? leadSettings!.isFollowupRequiredBool || callResultId == '2' || callResultId == '3' || callResultId == '4' : (callResultId == '2' ||
                     callResultId == '3' ||
-                    callResultId == '4')
+                    callResultId == '4'))
                   _buildCallResponseField(),
 
                 const SizedBox(height: 12),
@@ -616,7 +616,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callResponseCtrl,
-          decoration: _inputDecoration('Call Response ', Icons.add_call),
+          decoration: _inputDecoration('Call Response *', Icons.add_call),
         ),
       ),
     );
@@ -643,8 +643,24 @@ class _EditLeadNewState extends State<EditLeadNew> {
                   initialTime: TimeOfDay.now(),
                 );
                 if (time != null) {
-                  nextFollowupCtrl.text =
-                      "${_formatDate(date.toString().split(' ')[0])} ${time.format(context)}";
+                  final now = DateTime.now();
+                  final selectedDateTime = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    time.hour,
+                    time.minute,
+                  );
+
+                  if (selectedDateTime.isAfter(now)) {
+                    nextFollowupCtrl.text =
+                        "${_formatDate(date.toString().split(' ')[0])} ${time.format(context)}";
+                  } else {
+                    Common.toastMessaage(
+                      'You cannot choose a past time for the follow-up date',
+                      Colors.red,
+                    );
+                  }
                 }
               }
             },
@@ -1506,7 +1522,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       return;
     }
 
-    if (callResponseId.isEmpty) {
+    if (callResultId != '1' && callResponseId.isEmpty) {
       Common.toastMessaage('Select call response', Colors.red);
       return;
     }

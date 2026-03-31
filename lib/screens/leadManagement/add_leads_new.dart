@@ -180,6 +180,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       if (mounted) setState(() => isLoadingSettings = false);
     }
   }
+
   String code = '91', whatsappCode = '91', roleId = '', multiBranch = '';
   String? branch;
   String? contactPermission, createLeadCategory, addLeadSource;
@@ -507,15 +508,27 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 const SizedBox(height: 12),
                 _buildPriorityField(),
                 const SizedBox(height: 12),
+                const SizedBox(height: 12),
                 _buildStatusField(),
                 const SizedBox(height: 12),
-                if (callResultId == '2') _buildFollowupRow(),
-                if (callResultId == '2') const SizedBox(height: 12),
+                if (leadSettings != null
+                    ? leadSettings!.isFollowupRequiredBool
+                    : (callResultId == '2'))
+                  _buildFollowupRow(),
+                if (leadSettings != null
+                    ? leadSettings!.isFollowupRequiredBool
+                    : (callResultId == '2'))
+                  const SizedBox(height: 12),
                 _buildRemarksField(),
                 const SizedBox(height: 12),
-                if (callResultId == '2' ||
-                    callResultId == '3' ||
-                    callResultId == '4')
+                if (leadSettings != null
+                    ? leadSettings!.isFollowupRequiredBool ||
+                        callResultId == '2' ||
+                        callResultId == '3' ||
+                        callResultId == '4'
+                    : (callResultId == '2' ||
+                        callResultId == '3' ||
+                        callResultId == '4'))
                   _buildCallResponseField(),
               ],
             ),
@@ -609,7 +622,15 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       controller: contactNoCtrl,
       keyboardType: TextInputType.phone,
       decoration: InputDecoration(
-        labelText: 'Contact Number *',
+        label: RichText(
+          text: const TextSpan(
+            text: 'Contact Number ',
+            style: TextStyle(color: Colors.grey),
+            children: [
+              TextSpan(text: '*', style: TextStyle(color: Colors.red))
+            ],
+          ),
+        ),
         prefix: GestureDetector(
           onTap: () => showCountryPicker(
             context: context,
@@ -909,10 +930,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: TextEditingController(text: callResult),
-          decoration: _inputDecoration(
-              // 'Lead Status', Icons.arrow_drop_down_circle_outlined),
-              'Stages',
-              Icons.arrow_drop_down_circle_outlined),
+          decoration:
+              _inputDecoration('Stages', Icons.arrow_drop_down_circle_outlined),
         ),
       ),
     );
@@ -924,7 +943,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callResponseCtrl,
-          decoration: _inputDecoration('Call Response', Icons.add_call),
+          decoration: _inputDecoration('Call Response *', Icons.add_call),
         ),
       ),
     );
@@ -951,8 +970,24 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   initialTime: TimeOfDay.now(),
                 );
                 if (time != null) {
-                  nextFollowupCtrl.text =
-                      "${_formatDate(date.toString().split(' ')[0])} ${time.format(context)}";
+                  final now = DateTime.now();
+                  final selectedDateTime = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    time.hour,
+                    time.minute,
+                  );
+
+                  if (selectedDateTime.isAfter(now)) {
+                    nextFollowupCtrl.text =
+                        "${_formatDate(date.toString().split(' ')[0])} ${time.format(context)}";
+                  } else {
+                    Common.toastMessaage(
+                      'You cannot choose a past time for the follow-up date',
+                      Colors.red,
+                    );
+                  }
                 }
               }
             },
@@ -1091,11 +1126,6 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // const Text("Product Selection",
-        //     style: TextStyle(
-        //         fontWeight: FontWeight.w600,
-        //         color: Colors.black87,
-        //         fontSize: 13)),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -1218,16 +1248,29 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     costCtrl.text = total.toStringAsFixed(2);
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon,
+  InputDecoration _inputDecoration(String? label, IconData icon,
       {bool isDense = false}) {
     return InputDecoration(
-      labelText: label,
-      prefixIcon: Icon(icon, color: Colors.grey, size: 20),
       isDense: isDense,
+      label: RichText(
+        text: TextSpan(
+          text: (label ?? "").replaceAll(' *', ''),
+          style: const TextStyle(color: Colors.grey, fontSize: 14),
+          children: [
+            if (label?.contains('*') == true)
+              const TextSpan(
+                text: ' *',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+          ],
+        ),
+      ),
+      prefixIcon: Icon(icon, color: Colors.grey, size: 20),
       filled: true,
       fillColor: Colors.grey.shade50,
       contentPadding:
-          EdgeInsets.symmetric(horizontal: 10, vertical: isDense ? 8 : 12),
+          EdgeInsets.symmetric(horizontal: 12, vertical: isDense ? 8 : 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -1238,8 +1281,9 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.blue, width: 1),
+        borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 1),
       ),
+      labelStyle: const TextStyle(color: Colors.grey),
     );
   }
 
@@ -1902,7 +1946,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       return;
     }
 
-    if (callResponseId.isEmpty) {
+    if (callResultId != '1' && callResponseId.isEmpty) {
       Common.toastMessaage('Select call response', Colors.red);
       return;
     }

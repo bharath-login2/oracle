@@ -221,9 +221,22 @@ class _AddFollowupState extends State<AddFollowup> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          RichText(
+            text: TextSpan(
+              text: label.replaceAll(' *', ''),
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black),
+              children: [
+                if (label.contains('*'))
+                  const TextSpan(
+                    text: ' *',
+                    style: TextStyle(
+                        color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(width: 10),
           SizedBox(
@@ -509,6 +522,12 @@ class _AddFollowupState extends State<AddFollowup> {
                                                       .callResultIdNew
                                                       .toString();
                                                   callResultReasonList();
+
+                                                  // Clear tags when status changes
+                                                  callResultReasonName = 'Reason';
+                                                  callResultReasonId = '';
+                                                  callReasonVal.text = 'Reason';
+
                                                   if (callResultId != '2') {
                                                     nextFollowupDate = '';
                                                     checked = false;
@@ -541,7 +560,7 @@ class _AddFollowupState extends State<AddFollowup> {
                             decoration: const InputDecoration(
                                 contentPadding: EdgeInsets.only(
                                     left: 10, top: 2, bottom: 2),
-                                labelText: 'Call Result',
+                                labelText: 'Status *',
                                 fillColor: Colors.white,
                                 filled: true,
                                 prefixIcon: Icon(

@@ -65,7 +65,6 @@ import '../../models/lead_management/leadProgressBarStatusWise.dart' as lpbsw;
 import '../../models/lead_management/leadCategoryStaffWiseModel.dart';
 import '../../models/lead_management/projectList_model.dart';
 import '../../models/lead_management/workstatus_model.dart';
-import '../../models/loginCheckModel.dart';
 import '../../models/renewal/renewal_dashboard_model.dart';
 import '../../models/lead_management/callStatusReportModel.dart' as csr;
 import '../../models/lead_management/callStatusReportTableModel.dart' as csrt;
@@ -91,7 +90,7 @@ import '../search/search.dart';
 import '../leadManagement/notification_page.dart';
 import '../leadManagement/lead_details_popup.dart';
 
-import '../leadManagement/callHistoryPage.dart';
+// import '../leadManagement/callHistoryPage.dart';
 import '../leadManagement/projectDashboard.dart';
 import '../leadManagement/minimalDashboard.dart';
 import '../accounts/renewal_mannagement/renewal_dashboard.dart';
@@ -272,6 +271,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   List<String> _listTabSelectedCategoryIds = [];
   List<String> _listTabSelectedPriorityIds = [];
   List<String> _listTabSelectedProductIds = [];
+  List<String> _listTabSelectedTagIds = [];
   bool _isListTabFilterApplied = false;
   bool _isListTabDateFiltered = false;
   bool _isGlobalDateFiltered = false;
@@ -513,7 +513,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     }
     productSectionModel = await HttpService.leadProductSection();
     await getData(widget.token, fromDate, toDate, isDateFiltered: false);
-
     _loadWorkStatus();
     _checkDashboardPermission();
     _updateTabController();
@@ -548,7 +547,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         await Common.getSharedPref("RenewalDashboardPermission");
     NewleadDashboardPermission =
         await Common.getSharedPref("NewleadDashboardPermission");
-
     setState(() {});
   }
 
@@ -590,32 +588,27 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       final tDate = DateFormat('dd-MM-yyyy').format(toDate);
       final targetFDate = DateFormat('dd-MM-yyyy').format(targetFromDate);
       final targetTDate = DateFormat('dd-MM-yyyy').format(targetToDate);
-
       final countsData = await HttpService.dashboardLeadsCounts(
           fromDate: fDate,
           toDate: tDate,
           userId: staffId ?? targetStaffId ?? userId,
           targetFromDate: targetFDate,
           targetToDate: targetTDate);
-
       final staffResponse = await HttpService.getStaffsTelecaller();
       if (staffResponse != null && staffResponse.status) {
         staffList = staffResponse.data;
       }
-
       if (countsData != null && countsData.status == true) {
         setState(() {
           dashboardCounts = countsData;
         });
       }
-
       final mainCounts = await HttpService.dashboardCountsMain();
       if (mainCounts != null) {
         setState(() {
           dashboardMainCounts = mainCounts;
         });
       }
-
       await Future.wait([
         getAccountDash(),
         getRenewalDashboard(),
@@ -640,12 +633,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (isDateFiltered != null) {
       _isGlobalDateFiltered = isDateFiltered;
     }
-
     setState(() {
-      if (!isRefresh) isLoading = true;
+      if (!isRefresh) {
+        isLoading = true;
+      } else {
+        _isListTabLoading = true;
+      }
       timeOut = false;
     });
-
     if (isRefresh) {
       _isTab0Loaded = false;
       _isTab1Loaded = false;
@@ -653,13 +648,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         _isTab2Loaded = false;
       }
     }
-
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
       if (!connectivityResult.contains(ConnectivityResult.mobile) &&
           !connectivityResult.contains(ConnectivityResult.wifi)) {
         setState(() {
           isLoading = false;
+          _isListTabLoading = false;
           timeOut = true;
         });
         return;
@@ -667,46 +662,56 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       await _loadUserPermissions();
       _updateTabController();
       firebaseToken = await FirebaseMessaging.instance.getToken();
-      LoginCheckModel? loginCheck =
-          await HttpService.loginCheck(token, firebaseToken!);
-      if (loginCheck == null || loginCheck.data == false) {
-        if (mounted) {
-          Common.toastMessaage('Session Expired', Colors.red);
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const Login()),
-            (route) => false,
-          );
+      if (firebaseToken != null) {
+        var loginCheck = await HttpService.loginCheck(token, firebaseToken!);
+        if (loginCheck == null || loginCheck.data == false) {
+          if (mounted) {
+            Common.toastMessaage('Session Expired', Colors.red);
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const Login()),
+              (route) => false,
+            );
+          }
+          return;
         }
-        return;
       }
-      configure = await HttpService.configure(token);
+      await _checkLoginPrompt();
+      final results = await Future.wait([
+        HttpService.configure(token),
+        HttpService.mainDashboard(widget.token),
+        HttpService.getLoginorNot(widget.token),
+        HttpService.addLeadCommonData(token),
+        HttpService.leadDashboard(
+            token, fromDate, toDate, fromDate1.toString(), toDate1.toString()),
+        _fetchDataForTab(_tabController.index),
+      ]);
+      configure = results[0] as CommonConfigureModel?;
       if (configure != null) {
         isExpired = configure!.data!.isExpired!;
       }
-      userDashboard = await HttpService.mainDashboard(widget.token);
-      loginOrNot = await HttpService.getLoginorNot(widget.token);
+      userDashboard = results[1] as DashboardModel?;
+      loginOrNot = results[2] as CommonResponse?;
+      commonDetails = results[3] as AddLeadCommonDataModel?;
+      leadDashboard = results[4] as ld.LeadDashboardModel?;
       if (userDashboard != null) {
         await Common.saveSharedPref(
             "profile_pic", userDashboard!.data.profilePic);
         await Common.saveSharedPref(
             "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
       }
-      leadDashboard = await HttpService.leadDashboard(
-          token, fromDate, toDate, fromDate1.toString(), toDate1.toString());
       if (leadDashboard != null) {
         notificationCount =
             leadDashboard?.data.unreadNotification.toString() ?? '0';
       }
-      commonDetails = await HttpService.addLeadCommonData(token);
-      await _checkLoginPrompt();
-      await _fetchDataForTab(_tabController.index);
       setState(() {
         isLoading = false;
+        _isListTabLoading = false;
       });
     } catch (e) {
       log("Error loading data: $e");
       setState(() {
         isLoading = false;
+        _isListTabLoading = false;
         timeOut = true;
       });
     }
@@ -4144,26 +4149,63 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   },
                                   onApplyFilters: (filters) {
                                     setState(() {
-                                      fromDate = filters['fromDate'] ?? fromDate;
-                                      toDate = filters['toDate'] ?? toDate;
+                                      _isListTabLoading = true;
+                                      listTabLeads =
+                                          []; // Immediate visual reset
+
+                                      // Reset dates to original state if null in filters
+                                      if (filters['fromDate'] == null &&
+                                          filters['isDateFiltered'] == false) {
+                                        fromDate = DateTime.now();
+                                      } else {
+                                        fromDate =
+                                            filters['fromDate'] ?? fromDate;
+                                      }
+
+                                      if (filters['toDate'] == null &&
+                                          filters['isDateFiltered'] == false) {
+                                        toDate = DateTime.now();
+                                      } else {
+                                        toDate = filters['toDate'] ?? toDate;
+                                      }
+
                                       _listTabSelectedStatusIds =
                                           List<String>.from(
-                                              filters['statusIds']);
+                                              filters['statusIds'] ?? []);
                                       _listTabSelectedStaffIds =
                                           List<String>.from(
-                                              filters['staffIds']);
+                                              filters['staffIds'] ?? []);
                                       _listTabSelectedCategoryIds =
                                           List<String>.from(
-                                              filters['categoryIds']);
+                                              filters['categoryIds'] ?? []);
                                       _listTabSelectedPriorityIds =
                                           List<String>.from(
-                                              filters['priorityIds']);
+                                              filters['priorityIds'] ?? []);
                                       _listTabSelectedProductIds =
                                           List<String>.from(
-                                              filters['productIds']);
-                                      _isListTabFilterApplied = true;
+                                              filters['productIds'] ?? []);
+                                      _listTabSelectedTagIds =
+                                          List<String>.from(
+                                              filters['tagIds'] ?? []);
+
                                       _isListTabDateFiltered =
-                                          filters['isDateFiltered'];
+                                          filters['isDateFiltered'] ?? false;
+                                      _isListTabFilterApplied =
+                                          _listTabSelectedStatusIds
+                                                  .isNotEmpty ||
+                                              _listTabSelectedStaffIds
+                                                  .isNotEmpty ||
+                                              _listTabSelectedCategoryIds
+                                                  .isNotEmpty ||
+                                              _listTabSelectedPriorityIds
+                                                  .isNotEmpty ||
+                                              _listTabSelectedProductIds
+                                                  .isNotEmpty ||
+                                              _listTabSelectedTagIds
+                                                  .isNotEmpty ||
+                                              _isListTabDateFiltered;
+
+                                      _listTabPage = 1;
                                     });
                                     getData(widget.token, fromDate, toDate,
                                         isRefresh: true);
@@ -4518,8 +4560,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "leadSubcategoryId": [],
       "callResponseId": _listTabSelectedStatusIds,
       "callStatus": _listTabCurrentCallStatus ?? "",
-      "staffId":
-          (_listTabSelectedStaffIds.isNotEmpty) ? _listTabSelectedStaffIds : "",
+      "staffId": _listTabSelectedStaffIds,
       "isCalled": _listTabCurrentIsCalled ?? true,
       "productId": _listTabSelectedProductIds,
       "sort": _listTabSortOrder,
@@ -4527,6 +4568,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "pageSize": 10,
       "isFirst": !isLoadMore,
       "leadType": _listTabCurrentLeadType ?? "",
+      "call_result_reason": _listTabSelectedTagIds,
     };
 
     bool shouldSendDates = _isListTabFilterApplied ||
@@ -4611,6 +4653,29 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   foregroundColor: Colors.white,
                   icon: Icons.add_comment_rounded,
                   label: 'Followup',
+                ),
+                SlidableAction(
+                  onPressed: (context) => Common.dialPad(lead.contactNumber1),
+                  backgroundColor: callGreen,
+                  foregroundColor: Colors.white,
+                  icon: Icons.phone_rounded,
+                  label: 'Call',
+                ),
+                SlidableAction(
+                  onPressed: (context) =>
+                      Common.openWhatsApp(lead.contactNumber1),
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                  icon: FontAwesomeIcons.whatsapp,
+                  label: 'WhatsApp',
+                ),
+                SlidableAction(
+                  onPressed: (context) =>
+                      getData(widget.token, fromDate, toDate, isRefresh: true),
+                  backgroundColor: Colors.blueGrey,
+                  foregroundColor: Colors.white,
+                  icon: Icons.refresh_rounded,
+                  label: 'Reload',
                 ),
               ],
             ),
@@ -4832,20 +4897,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                         }
                                       },
                                     ),
-                                    // const SizedBox(width: 12),
-                                    // _buildMiniActionButton(
-                                    //   icon: Icons.inventory_2_rounded,
-                                    //   color: Colors.blue,
-                                    //   onTap: () {
-                                    //     showModalBottomSheet(
-                                    //       context: context,
-                                    //       isScrollControlled: true,
-                                    //       backgroundColor: Colors.transparent,
-                                    //       builder: (context) =>
-                                    //           const ProductDetailsPopup(),
-                                    //     );
-                                    //   },
-                                    // ),
                                   ],
                                 ),
                               ],
@@ -4865,396 +4916,293 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () {
-          if (selectedIUsers.isNotEmpty) {
-            _handleLongPress(index);
-          } else {
-            _showLeadDetailsPopup(index);
-          }
-        },
-        onLongPress: () => _handleLongPress(index),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-                spreadRadius: 1,
-              ),
-            ],
-            border: Border.all(
-                color: lead.isSelected ? appBarStart : borderLight,
-                width: lead.isSelected ? 2 : 1.5),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: borderLight, width: 1.5),
-                  ),
+      child: Slidable(
+        key: ValueKey('expanded_${lead.callMasterId}'),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          children: [
+            SlidableAction(
+              onPressed: (context) =>
+                  _showLeadDetailsPopup(index, autoExpandFollowup: true),
+              backgroundColor: followupBlue,
+              foregroundColor: Colors.white,
+              icon: Icons.add_comment_rounded,
+              label: 'Followup',
+            ),
+            SlidableAction(
+              onPressed: (context) => Common.dialPad(lead.contactNumber1),
+              backgroundColor: callGreen,
+              foregroundColor: Colors.white,
+              icon: Icons.phone_rounded,
+              label: 'Call',
+            ),
+            SlidableAction(
+              onPressed: (context) => Common.openWhatsApp(lead.contactNumber1),
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              icon: FontAwesomeIcons.whatsapp,
+              label: 'WhatsApp',
+            ),
+            SlidableAction(
+              onPressed: (context) =>
+                  getData(widget.token, fromDate, toDate, isRefresh: true),
+              backgroundColor: Colors.blueGrey,
+              foregroundColor: Colors.white,
+              icon: Icons.refresh_rounded,
+              label: 'Reload',
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: () {
+            if (selectedIUsers.isNotEmpty) {
+              _handleLongPress(index);
+            } else {
+              _showLeadDetailsPopup(index);
+            }
+          },
+          onLongPress: () => _handleLongPress(index),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 1,
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: lead.priority == '1'
-                            ? Colors.grey
-                            : lead.priority == '2'
-                                ? callGreen
-                                : lead.priority == '3'
-                                    ? accentRed
-                                    : lead.priority == '4'
-                                        ? textSecondary
-                                        : Colors.grey,
-                      ),
+              ],
+              border: Border.all(
+                  color: lead.isSelected ? appBarStart : borderLight,
+                  width: lead.isSelected ? 2 : 1.5),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: borderLight, width: 1.5),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        lead.clientName,
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          decoration: lead.priority == '4'
-                              ? TextDecoration.lineThrough
-                              : null,
-                          decorationColor: accentRed,
-                          color: lead.isCustomer ? callGreen : textPrimary,
-                          letterSpacing: -0.5,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: lead.priority == '1'
+                              ? Colors.grey
+                              : lead.priority == '2'
+                                  ? callGreen
+                                  : lead.priority == '3'
+                                      ? accentRed
+                                      : lead.priority == '4'
+                                          ? textSecondary
+                                          : Colors.grey,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.pink.shade50,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        lead.leadCategory,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: accentRed,
-                          fontWeight: FontWeight.w700,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          lead.clientName,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            decoration: lead.priority == '4'
+                                ? TextDecoration.lineThrough
+                                : null,
+                            decorationColor: accentRed,
+                            color: lead.isCustomer ? callGreen : textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    if (int.parse(lead.categoryCount) > 1)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: IgnorePointer(
-                          ignoring: selectedIUsers.isNotEmpty,
-                          child: InkWell(
-                            onTap: () => _showCategoryPopup(lead),
-                            child: Container(
-                              height: 18,
-                              width: 18,
-                              decoration: const BoxDecoration(
-                                color: accentOrange,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  lead.categoryCount,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.pink.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          lead.leadCategory,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: accentRed,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (int.parse(lead.categoryCount) > 1)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: IgnorePointer(
+                            ignoring: selectedIUsers.isNotEmpty,
+                            child: InkWell(
+                              onTap: () => _showCategoryPopup(lead),
+                              child: Container(
+                                height: 18,
+                                width: 18,
+                                decoration: const BoxDecoration(
+                                  color: accentOrange,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    lead.categoryCount,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
                         ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            String id = lead.callMasterId;
+                            if (_expandedLeadIds.contains(id)) {
+                              _expandedLeadIds.remove(id);
+                            } else {
+                              _expandedLeadIds.add(id);
+                            }
+                          });
+                        },
+                        child: Icon(Icons.keyboard_arrow_up_rounded,
+                            color: textSecondary, size: 22),
                       ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          String id = lead.callMasterId;
-                          if (_expandedLeadIds.contains(id)) {
-                            _expandedLeadIds.remove(id);
-                          } else {
-                            _expandedLeadIds.add(id);
-                          }
-                        });
-                      },
-                      child: Icon(Icons.keyboard_arrow_up_rounded,
-                          color: textSecondary, size: 22),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    if (lead.callResultId == 1)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 6),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: backgroundLight,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            Image.asset("assets/icons/calendar.png",
-                                width: 14, color: appBarStart),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Created: ',
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.phone_rounded,
+                                  size: 16,
+                                  color: primaryBlue.withOpacity(0.8)),
+                              const SizedBox(width: 6),
+                              Text(
+                                lead.contactNumber1,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary.withOpacity(0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Icon(Icons.person_outline_rounded,
+                                  size: 16,
+                                  color: primaryBlue.withOpacity(0.8)),
+                              const SizedBox(width: 6),
+                              Text(
+                                lead.staffName,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: textPrimary.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: lead.callResultId >= 0 &&
+                                      lead.callResultId < _colors.length
+                                  ? _colors[lead.callResultId].withOpacity(0.15)
+                                  : accentOrange.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                  color: lead.callResultId >= 0 &&
+                                          lead.callResultId < _colors.length
+                                      ? _colors[lead.callResultId]
+                                          .withOpacity(0.4)
+                                      : accentOrange.withOpacity(0.4),
+                                  width: 1),
+                            ),
+                            child: Text(
+                              lead.callResult.isEmpty
+                                  ? "Pending"
+                                  : lead.callResult,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              lead.createdDate.isEmpty
-                                  ? "--"
-                                  : lead.createdDate,
-                              style: const TextStyle(
-                                fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: backgroundLight,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                      color: borderLight.withOpacity(0.5)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Image.asset("assets/icons/calendar.png",
-                                        width: 14, color: appBarStart),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Called: ',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: textSecondary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        lead.isCalled == false
-                                            ? '--'
-                                            : (lead.calledDate.isEmpty
-                                                ? "--"
-                                                : lead.calledDate),
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: textPrimary,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: backgroundLight,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                      color: borderLight.withOpacity(0.5)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Image.asset("assets/icons/calendar.png",
-                                        width: 14, color: appBarStart),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Next: ',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: textSecondary,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        lead.scheduledDate.isEmpty
-                                            ? "--"
-                                            : lead.scheduledDate,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: textPrimary,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.phone_rounded,
-                                size: 16, color: primaryBlue.withOpacity(0.8)),
-                            const SizedBox(width: 6),
-                            Text(
-                              lead.contactNumber1,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: textPrimary.withOpacity(0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.person_outline_rounded,
-                                size: 16, color: primaryBlue.withOpacity(0.8)),
-                            const SizedBox(width: 6),
-                            Text(
-                              lead.staffName,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: textPrimary.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: lead.callResultId >= 0 &&
-                                    lead.callResultId < _colors.length
-                                ? _colors[lead.callResultId].withOpacity(0.15)
-                                : accentOrange.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
                                 color: lead.callResultId >= 0 &&
                                         lead.callResultId < _colors.length
                                     ? _colors[lead.callResultId]
-                                        .withOpacity(0.4)
-                                    : accentOrange.withOpacity(0.4),
-                                width: 1),
-                          ),
-                          child: Text(
-                            lead.callResult.isEmpty
-                                ? "Pending"
-                                : lead.callResult,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: lead.callResultId >= 0 &&
-                                      lead.callResultId < _colors.length
-                                  ? _colors[lead.callResultId]
-                                  : accentOrange,
+                                    : accentOrange,
+                              ),
                             ),
                           ),
-                        ),
-                        Row(
-                          children: [
-                            _buildMiniActionButton(
-                              icon: Icons.call,
-                              color: callGreen,
-                              isEnabled: selectedIUsers.isEmpty,
-                              onTap: () {
-                                if (_listTabCallPermission == false) {
-                                  _showCallPermissionDialog(index);
-                                } else {
-                                  if (cloudCallPermission1) {
-                                    chooseCallDialog(context, index);
+                          Row(
+                            children: [
+                              _buildMiniActionButton(
+                                icon: Icons.call,
+                                color: callGreen,
+                                isEnabled: selectedIUsers.isEmpty,
+                                onTap: () {
+                                  if (_listTabCallPermission == false) {
+                                    _showCallPermissionDialog(index);
                                   } else {
-                                    Common.dialPad(lead.contactNumber1);
+                                    if (cloudCallPermission1) {
+                                      chooseCallDialog(context, index);
+                                    } else {
+                                      Common.dialPad(lead.contactNumber1);
+                                    }
                                   }
-                                }
-                              },
-                            ),
-                            const SizedBox(width: 10),
-                            _buildMiniActionButton(
-                              icon: FontAwesomeIcons.whatsapp,
-                              color: const Color(0xFF25D366),
-                              isEnabled: selectedIUsers.isEmpty,
-                              onTap: () {
-                                if (lead.contactNumber1.isNotEmpty) {
-                                  Common.openWhatsApp(lead.contactNumber1);
-                                }
-                              },
-                            ),
-                            // const SizedBox(width: 10),
-                            // _buildMiniActionButton(
-                            //   icon: Icons.inventory_2_rounded,
-                            //   color: Colors.blue,
-                            //   onTap: () {
-                            //     showModalBottomSheet(
-                            //       context: context,
-                            //       isScrollControlled: true,
-                            //       backgroundColor: Colors.transparent,
-                            //       builder: (context) =>
-                            //           const ProductDetailsPopup(),
-                            //     );
-                            //   },
-                            // ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+                                },
+                              ),
+                              const SizedBox(width: 10),
+                              _buildMiniActionButton(
+                                icon: FontAwesomeIcons.whatsapp,
+                                color: const Color(0xFF25D366),
+                                isEnabled: selectedIUsers.isEmpty,
+                                onTap: () {
+                                  if (lead.contactNumber1.isNotEmpty) {
+                                    Common.openWhatsApp(lead.contactNumber1);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

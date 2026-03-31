@@ -23,6 +23,7 @@ class Data {
   String? callResultId;
   String? calledDate;
   String? createdDate;
+  String? createdStaff;
   String? nextFollowupDate;
   String? remarks;
   String? leadMethod;
@@ -59,6 +60,8 @@ class Data {
   String? state;
   String? district;
   String? whatsappNumberCountryCode;
+  List<CallHandledUsers>? callHandledUsers;
+
   Data({
     this.callMasterId,
     this.leadCategoryId,
@@ -70,6 +73,7 @@ class Data {
     this.callResultId,
     this.calledDate,
     this.createdDate,
+    this.createdStaff,
     this.nextFollowupDate,
     this.remarks,
     this.leadMethod,
@@ -105,6 +109,7 @@ class Data {
     this.state,
     this.district,
     this.whatsappNumberCountryCode,
+    this.callHandledUsers,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -118,6 +123,7 @@ class Data {
     callResultId =
         (json['call_result_id'] ?? json['call_response_id'] ?? "").toString();
     calledDate = json['called_date'] ?? "";
+    createdStaff = json['created_staff'] ?? "";
     createdDate = json['created_date'] ?? "";
     nextFollowupDate = json['next_followup_date'] ?? "";
     remarks = json['remarks'] ?? "";
@@ -143,6 +149,13 @@ class Data {
       calleddata = <Calleddata>[];
       json['calleddata'].forEach((v) {
         calleddata!.add(Calleddata.fromJson(v));
+      });
+    }
+
+    if (json['call_handled_users'] != null) {
+      callHandledUsers = <CallHandledUsers>[];
+      json['call_handled_users'].forEach((v) {
+        callHandledUsers!.add(CallHandledUsers.fromJson(v));
       });
     }
 
@@ -236,5 +249,32 @@ class Calleddata {
     companyName = json['company_name'] ?? "";
     proPic = json['pro_pic'] ?? "";
     formattedDuration = json['formatted_duration'] ?? "";
+  }
+}
+
+class CallHandledUsers {
+  String? userId;
+  String? staffName;
+  String? proPicThumb;
+  String? phoneNo;
+  String? email;
+  String? callCount;
+
+  CallHandledUsers({
+    this.userId,
+    this.staffName,
+    this.proPicThumb,
+    this.phoneNo,
+    this.email,
+    this.callCount,
+  });
+
+  CallHandledUsers.fromJson(Map<String, dynamic> json) {
+    userId = json['user_id'] ?? "";
+    staffName = json['staff_name'] ?? "";
+    proPicThumb = json['pro_pic_thumb'] ?? "";
+    phoneNo = json['phone_no'] ?? "";
+    email = json['email'] ?? "";
+    callCount = json['call_count'] ?? "";
   }
 }

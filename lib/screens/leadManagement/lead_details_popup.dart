@@ -338,7 +338,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   List<String> _getTabLabels() {
     List<String> labels = ['Followup', 'Activities', 'Details', 'File Manager'];
     if (widget.leadDetails.data?.callHistoryPermission == true) {
-      labels.insert(1, 'Call History');
+      labels.insert(1, 'Call Logs');
     }
     if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
       labels.add('Milestones');
@@ -1995,92 +1995,119 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
     if (createOrder == true && products.isEmpty) {
       Common.toastMessaage('Choose at least one product', Colors.red);
+      return;
+    } else if (createOrder == true && paymentStatus == null) {
+      Common.toastMessaage('Select payment status', Colors.red);
+      return;
+    } else if (createOrder == true &&
+        paymentStatus != 'unpaid' &&
+        (paymentMethod == null || paymentMethod!.isEmpty)) {
+      Common.toastMessaage('Select payment method', Colors.red);
+      return;
     } else if (createOrder == true && staffId == "") {
       Common.toastMessaage(
           'Collected Staff is required to add invoice', Colors.red);
+      return;
+    } else if (createOrder == true && targetGroups.isEmpty) {
+      Common.toastMessaage('Select at least one Target Group', Colors.red);
+      return;
     } else if (createRenewal == true &&
         commonDetails!.data.isRenewal &&
         startDate.text == "") {
       Common.toastMessaage('Start date is required to add renewal', Colors.red);
+      return;
     } else if (createRenewal == true &&
         commonDetails!.data.isRenewal &&
         endDate.text == "") {
       Common.toastMessaage('End date is required to add renewal', Colors.red);
-    } else {
-      setState(() {
-        isSavingFollowup = true;
-      });
+      return;
+    } else if (createOrder == true && paymentStatus != 'unpaid') {
+      // Additional validation for Paid/Partial status
+      double pAmount = double.tryParse(paidAmount.text) ?? 0;
+      if (pAmount <= 0) {
+        Common.toastMessaage('Paid Amount must be greater than 0', Colors.red);
+        return;
+      }
+      if (paymentStatus == 'paid' && pAmount < allTotal) {
+        Common.toastMessaage(
+            'Paid Amount cannot be less than Grand Total for Paid status',
+            Colors.red);
+        return;
+      }
+    }
+    setState(() {
+      isSavingFollowup = true;
+    });
 
-      Common.showProgressDialog(context, "Saving Followup...");
+    Common.showProgressDialog(context, "Saving Followup...");
 
-      try {
-        String productIds = _selectedProducts.map((p) => p.id).join(',');
+    try {
+      String productIds = _selectedProducts.map((p) => p.id).join(',');
 
-        final result = await HttpService.addLeadsFollowupUpdated(
-            widget.token,
-            callResultId,
-            nextFollowupDate1.text,
-            cost.text,
-            address.text,
-            leadTypeId,
-            leadSubTypeId,
-            remarks.text,
-            widget.callMasterId,
-            calledDate1.text,
-            '', // callHistoryId
-            priorityId,
-            checked,
-            timeBefore.text,
-            callResponseId,
-            callResultReasonId,
-            createOrder,
-            createRenewal ? "renewal" : "invoice",
-            detailsResponse?.data.checkId ?? '',
-            invoiceDate,
-            products,
-            reminderTemplate.text,
-            allTotal,
-            startDate.text,
-            endDate.text,
-            paymentStatus,
-            subTotal,
-            totalTaxAmount,
-            discount.text,
-            shippingCharge.text,
-            paymentMethod,
-            paidAmount.text,
-            staffId,
-            isDifrent,
-            renProducts,
-            targetGroups,
-            products: productIds,
-            createCustomer: createCustomer,
-            whatsappLead: whatsappLead.text,
-            emailLead: emailLead.text);
+      final result = await HttpService.addLeadsFollowupUpdated(
+          widget.token,
+          callResultId,
+          nextFollowupDate1.text,
+          cost.text,
+          address.text,
+          leadTypeId,
+          leadSubTypeId,
+          remarks.text,
+          widget.callMasterId,
+          calledDate1.text,
+          '', // callHistoryId
+          priorityId,
+          checked,
+          timeBefore.text,
+          callResponseId,
+          callResultReasonId,
+          createOrder,
+          createRenewal ? "renewal" : "invoice",
+          detailsResponse?.data.checkId ?? '',
+          invoiceDate,
+          products,
+          reminderTemplate.text,
+          allTotal,
+          startDate.text,
+          endDate.text,
+          paymentStatus,
+          subTotal,
+          totalTaxAmount,
+          discount.text,
+          shippingCharge.text,
+          paymentMethod,
+          paidAmount.text,
+          staffId,
+          isDifrent,
+          renProducts,
+          targetGroups,
+          products: productIds,
+          createCustomer: createCustomer,
+          whatsappLead: whatsappLead.text,
+          emailLead: emailLead.text);
 
-        if (context.mounted) {
-          Navigator.pop(context); // Close progress dialog
+      if (context.mounted) {
+        Navigator.pop(context); // Close progress dialog
 
-          if (result.status == true) {
-            Common.toastMessaage(result.message, Colors.green);
-            widget.onDataChanged();
-            Navigator.pop(context); // Close popup
-          } else {
-            Common.toastMessaage(result.message, Colors.red);
-          }
+        if (result.status == true) {
+          Common.toastMessaage(result.message, Colors.green);
+          widget.onDataChanged();
+          Navigator.pop(context); // Close popup
+        } else {
+          Common.toastMessaage(result.message, Colors.red);
         }
-      } catch (e) {
-        log("Error saving followup: $e");
-        if (context.mounted) {
-          Navigator.pop(context); // Close progress dialog
-          Common.toastMessaage("Error saving followup: $e", Colors.red);
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            isSavingFollowup = false;
-          });
-        }
+      }
+    } catch (e) {
+      log("Error saving followup: $e");
+      if (context.mounted) {
+        Navigator.pop(context); // Close progress dialog
+        Common.toastMessaage("Error saving followup: $e", Colors.red);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSavingFollowup = false;
+        });
       }
     }
   }
@@ -2352,9 +2379,167 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ),
                   ),
                   const SizedBox(height: 12),
+                  _buildDropdown(
+                    label: 'Call Result',
+                    isMandatory: true,
+                    value: callResponseId.isEmpty ? null : callResponseId,
+                    items: commonDetails!.data.callResponseStatus.map((item) {
+                      return DropdownMenuItem(
+                        value: item.callResponseId.toString(),
+                        child: Text(item.callResponse),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        callResponseId = value!;
+                        callResponse = commonDetails!.data.callResponseStatus
+                            .firstWhere((element) =>
+                                element.callResponseId.toString() == value)
+                            .callResponse;
+                      });
+                    },
+                  ),
+                  // const SizedBox(height: 12),
+
+                  // Product Selection (Moved from More Details)
+                  const Text(
+                    'Products',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _productSearchCtrl,
+                    onChanged: _onFollowupProductSearch,
+                    decoration: InputDecoration(
+                      hintText: 'Search Product...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                    ),
+                  ),
+                  if (_productSearchResults.isNotEmpty)
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 200),
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _productSearchResults.length,
+                        itemBuilder: (ctx, i) {
+                          final p = _productSearchResults[i];
+                          return ListTile(
+                            title: Text(p.productName ?? ''),
+                            subtitle: Text("₹ ${p.totalAmount}"),
+                            onTap: () => _addFollowupProduct(p),
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: _selectedProducts
+                        .map((p) => Chip(
+                              label: Text(p.productName ?? ''),
+                              onDeleted: () => _removeFollowupProduct(p),
+                              backgroundColor: Colors.blue.shade50,
+                              deleteIconColor: Colors.red,
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: cost,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Cost',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.all(12),
+                            prefixIcon: Icon(Icons.currency_rupee, size: 18),
+                          ),
+                        ),
+                      ),
+                      // const SizedBox(width: 12),
+                      // Expanded(
+                      //   child: TextField(
+                      //     controller: address,
+                      //     decoration: const InputDecoration(
+                      //       labelText: 'Address',
+                      //       border: OutlineInputBorder(),
+                      //       contentPadding: EdgeInsets.all(12),
+                      //       prefixIcon: Icon(Icons.home, size: 18),
+                      //     ),
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   // Status Dropdown
                   _buildDropdown(
-                    label: 'Stages *',
+                    label: 'Category',
+                    value: leadTypeId.isEmpty ? null : leadTypeId,
+                    items: commonDetails!.data.leadCategory.map((item) {
+                      return DropdownMenuItem(
+                        value: item.leadCategoryId.toString(),
+                        child: Text(item.leadCategory),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        leadTypeId = value!;
+                        leadType = commonDetails!.data.leadCategory
+                            .firstWhere((element) =>
+                                element.leadCategoryId.toString() == value)
+                            .leadCategory;
+                        _fetchLeadSubType();
+                      });
+                    },
+                  ),
+                  //  const SizedBox(height: 12),
+
+                  // Sub Category
+                  _buildDropdown(
+                    label: 'Sub Category',
+                    value: leadSubTypeId.isEmpty ? null : leadSubTypeId,
+                    items: (leadSubTypeList?.data ?? []).map((item) {
+                      return DropdownMenuItem(
+                        value: item.leadSubCategoryId.toString(),
+                        child: Text(item.leadSubCategory ?? ''),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        leadSubTypeId = value!;
+                        leadSubType = leadSubTypeList!.data!
+                            .firstWhere((element) =>
+                                element.leadSubCategoryId.toString() == value)
+                            .leadSubCategory!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDropdown(
+                    label: 'Stages',
+                    isMandatory: true,
                     value: callResultId.isEmpty ? null : callResultId,
                     items: commonDetails!.data.callResult.map((item) {
                       return DropdownMenuItem(
@@ -2400,10 +2585,20 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Next Followup Date *',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w500),
+                        RichText(
+                          text: const TextSpan(
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black),
+                            children: [
+                              TextSpan(text: 'Next Followup Date '),
+                              TextSpan(
+                                text: '*',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 4),
                         InkWell(
@@ -2618,25 +2813,25 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ),
 
                   // Call Result Description Dropdown
-                  _buildDropdown(
-                    label: 'Call Result *',
-                    value: callResponseId.isEmpty ? null : callResponseId,
-                    items: commonDetails!.data.callResponseStatus.map((item) {
-                      return DropdownMenuItem(
-                        value: item.callResponseId.toString(),
-                        child: Text(item.callResponse),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        callResponseId = value!;
-                        callResponse = commonDetails!.data.callResponseStatus
-                            .firstWhere((element) =>
-                                element.callResponseId.toString() == value)
-                            .callResponse;
-                      });
-                    },
-                  ),
+                  // _buildDropdown(
+                  //   label: 'Call Result *',
+                  //   value: callResponseId.isEmpty ? null : callResponseId,
+                  //   items: commonDetails!.data.callResponseStatus.map((item) {
+                  //     return DropdownMenuItem(
+                  //       value: item.callResponseId.toString(),
+                  //       child: Text(item.callResponse),
+                  //     );
+                  //   }).toList(),
+                  //   onChanged: (value) {
+                  //     setState(() {
+                  //       callResponseId = value!;
+                  //       callResponse = commonDetails!.data.callResponseStatus
+                  //           .firstWhere((element) =>
+                  //               element.callResponseId.toString() == value)
+                  //           .callResponse;
+                  //     });
+                  //   },
+                  // ),
 
                   // Call Result Reason (if available)
                   if (callResultReason != null &&
@@ -2746,50 +2941,50 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         const SizedBox(height: 12),
 
                         // Category
-                        _buildDropdown(
-                          label: 'Category',
-                          value: leadTypeId.isEmpty ? null : leadTypeId,
-                          items: commonDetails!.data.leadCategory.map((item) {
-                            return DropdownMenuItem(
-                              value: item.leadCategoryId.toString(),
-                              child: Text(item.leadCategory),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              leadTypeId = value!;
-                              leadType = commonDetails!.data.leadCategory
-                                  .firstWhere((element) =>
-                                      element.leadCategoryId.toString() ==
-                                      value)
-                                  .leadCategory;
-                              _fetchLeadSubType();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 12),
+                        // _buildDropdown(
+                        //   label: 'Category',
+                        //   value: leadTypeId.isEmpty ? null : leadTypeId,
+                        //   items: commonDetails!.data.leadCategory.map((item) {
+                        //     return DropdownMenuItem(
+                        //       value: item.leadCategoryId.toString(),
+                        //       child: Text(item.leadCategory),
+                        //     );
+                        //   }).toList(),
+                        //   onChanged: (value) {
+                        //     setState(() {
+                        //       leadTypeId = value!;
+                        //       leadType = commonDetails!.data.leadCategory
+                        //           .firstWhere((element) =>
+                        //               element.leadCategoryId.toString() ==
+                        //               value)
+                        //           .leadCategory;
+                        //       _fetchLeadSubType();
+                        //     });
+                        //   },
+                        // ),
+                        // const SizedBox(height: 12),
 
-                        // Sub Category
-                        _buildDropdown(
-                          label: 'Sub Category',
-                          value: leadSubTypeId.isEmpty ? null : leadSubTypeId,
-                          items: (leadSubTypeList?.data ?? []).map((item) {
-                            return DropdownMenuItem(
-                              value: item.leadSubCategoryId.toString(),
-                              child: Text(item.leadSubCategory ?? ''),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              leadSubTypeId = value!;
-                              leadSubType = leadSubTypeList!.data!
-                                  .firstWhere((element) =>
-                                      element.leadSubCategoryId.toString() ==
-                                      value)
-                                  .leadSubCategory!;
-                            });
-                          },
-                        ),
+                        // // Sub Category
+                        // _buildDropdown(
+                        //   label: 'Sub Category',
+                        //   value: leadSubTypeId.isEmpty ? null : leadSubTypeId,
+                        //   items: (leadSubTypeList?.data ?? []).map((item) {
+                        //     return DropdownMenuItem(
+                        //       value: item.leadSubCategoryId.toString(),
+                        //       child: Text(item.leadSubCategory ?? ''),
+                        //     );
+                        //   }).toList(),
+                        //   onChanged: (value) {
+                        //     setState(() {
+                        //       leadSubTypeId = value!;
+                        //       leadSubType = leadSubTypeList!.data!
+                        //           .firstWhere((element) =>
+                        //               element.leadSubCategoryId.toString() ==
+                        //               value)
+                        //           .leadSubCategory!;
+                        //     });
+                        //   },
+                        // ),
                         const SizedBox(height: 12),
 
                         // WhatsApp Number
@@ -2842,102 +3037,102 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        // const SizedBox(height: 12),
 
-                        // Product Selection (Moved from More Details)
-                        const Text(
-                          'Products',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _productSearchCtrl,
-                          onChanged: _onFollowupProductSearch,
-                          decoration: InputDecoration(
-                            hintText: 'Search Product...',
-                            prefixIcon: const Icon(Icons.search, size: 20),
-                            isDense: true,
-                            filled: true,
-                            fillColor: Colors.grey.shade50,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                        ),
-                        if (_productSearchResults.isNotEmpty)
-                          Container(
-                            constraints: const BoxConstraints(maxHeight: 200),
-                            margin: const EdgeInsets.only(top: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                )
-                              ],
-                            ),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: _productSearchResults.length,
-                              itemBuilder: (ctx, i) {
-                                final p = _productSearchResults[i];
-                                return ListTile(
-                                  title: Text(p.productName ?? ''),
-                                  subtitle: Text("₹ ${p.totalAmount}"),
-                                  onTap: () => _addFollowupProduct(p),
-                                );
-                              },
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          children: _selectedProducts
-                              .map((p) => Chip(
-                                    label: Text(p.productName ?? ''),
-                                    onDeleted: () => _removeFollowupProduct(p),
-                                    backgroundColor: Colors.blue.shade50,
-                                    deleteIconColor: Colors.red,
-                                  ))
-                              .toList(),
-                        ),
-                        const SizedBox(height: 12),
+                        // // Product Selection (Moved from More Details)
+                        // const Text(
+                        //   'Products',
+                        //   style: TextStyle(
+                        //       fontSize: 13, fontWeight: FontWeight.w500),
+                        // ),
+                        // const SizedBox(height: 8),
+                        // TextField(
+                        //   controller: _productSearchCtrl,
+                        //   onChanged: _onFollowupProductSearch,
+                        //   decoration: InputDecoration(
+                        //     hintText: 'Search Product...',
+                        //     prefixIcon: const Icon(Icons.search, size: 20),
+                        //     isDense: true,
+                        //     filled: true,
+                        //     fillColor: Colors.grey.shade50,
+                        //     border: OutlineInputBorder(
+                        //       borderRadius: BorderRadius.circular(8),
+                        //       borderSide:
+                        //           BorderSide(color: Colors.grey.shade300),
+                        //     ),
+                        //   ),
+                        // ),
+                        // if (_productSearchResults.isNotEmpty)
+                        //   Container(
+                        //     constraints: const BoxConstraints(maxHeight: 200),
+                        //     margin: const EdgeInsets.only(top: 4),
+                        //     decoration: BoxDecoration(
+                        //       color: Colors.white,
+                        //       borderRadius: BorderRadius.circular(8),
+                        //       boxShadow: [
+                        //         BoxShadow(
+                        //           color: Colors.black.withOpacity(0.1),
+                        //           blurRadius: 4,
+                        //           offset: const Offset(0, 2),
+                        //         )
+                        //       ],
+                        //     ),
+                        //     child: ListView.builder(
+                        //       shrinkWrap: true,
+                        //       itemCount: _productSearchResults.length,
+                        //       itemBuilder: (ctx, i) {
+                        //         final p = _productSearchResults[i];
+                        //         return ListTile(
+                        //           title: Text(p.productName ?? ''),
+                        //           subtitle: Text("₹ ${p.totalAmount}"),
+                        //           onTap: () => _addFollowupProduct(p),
+                        //         );
+                        //       },
+                        //     ),
+                        //   ),
+                        // const SizedBox(height: 8),
+                        // Wrap(
+                        //   spacing: 8,
+                        //   children: _selectedProducts
+                        //       .map((p) => Chip(
+                        //             label: Text(p.productName ?? ''),
+                        //             onDeleted: () => _removeFollowupProduct(p),
+                        //             backgroundColor: Colors.blue.shade50,
+                        //             deleteIconColor: Colors.red,
+                        //           ))
+                        //       .toList(),
+                        // ),
+                        // const SizedBox(height: 12),
 
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: cost,
-                                keyboardType: TextInputType.number,
-                                decoration: const InputDecoration(
-                                  labelText: 'Cost',
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.all(12),
-                                  prefixIcon:
-                                      Icon(Icons.currency_rupee, size: 18),
-                                ),
-                              ),
-                            ),
-                            // const SizedBox(width: 12),
-                            // Expanded(
-                            //   child: TextField(
-                            //     controller: address,
-                            //     decoration: const InputDecoration(
-                            //       labelText: 'Address',
-                            //       border: OutlineInputBorder(),
-                            //       contentPadding: EdgeInsets.all(12),
-                            //       prefixIcon: Icon(Icons.home, size: 18),
-                            //     ),
-                            //   ),
-                            // ),
-                          ],
-                        ),
+                        // Row(
+                        //   children: [
+                        //     Expanded(
+                        //       child: TextField(
+                        //         controller: cost,
+                        //         keyboardType: TextInputType.number,
+                        //         decoration: const InputDecoration(
+                        //           labelText: 'Cost',
+                        //           border: OutlineInputBorder(),
+                        //           contentPadding: EdgeInsets.all(12),
+                        //           prefixIcon:
+                        //               Icon(Icons.currency_rupee, size: 18),
+                        //         ),
+                        //       ),
+                        //     ),
+                        //     // const SizedBox(width: 12),
+                        //     // Expanded(
+                        //     //   child: TextField(
+                        //     //     controller: address,
+                        //     //     decoration: const InputDecoration(
+                        //     //       labelText: 'Address',
+                        //     //       border: OutlineInputBorder(),
+                        //     //       contentPadding: EdgeInsets.all(12),
+                        //     //       prefixIcon: Icon(Icons.home, size: 18),
+                        //     //     ),
+                        //     //   ),
+                        //     // ),
+                        //   ],
+                        // ),
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -3157,7 +3352,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               ),
                             )
                           : const Text(
-                              'Save Followup',
+                              'Submit',
                               style: TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.bold),
                             ),
@@ -3189,9 +3384,42 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       return;
     }
 
-    if (staffId.isEmpty) {
+    if (staffId == "") {
       Common.toastMessaage('Please select account head', Colors.red);
       return;
+    }
+
+    if (targetGroups.isEmpty) {
+      Common.toastMessaage(
+          'Please select at least one target group', Colors.red);
+      return;
+    }
+
+    // Followup validation
+    if (callResponseId.isEmpty) {
+      Common.toastMessaage('Please select call response', Colors.red);
+      return;
+    }
+
+    bool isFollowup =
+        leadSettings?.isFollowupRequiredBool ?? (callResultId == '2');
+    if (isFollowup && nextFollowupDate1.text.isEmpty) {
+      Common.toastMessaage('Please select next followup date', Colors.red);
+      return;
+    }
+
+    if (paymentStatus != 'unpaid') {
+      double pAmount = double.tryParse(paidAmount.text) ?? 0;
+      if (pAmount <= 0) {
+        Common.toastMessaage('Paid Amount must be greater than 0', Colors.red);
+        return;
+      }
+      if (paymentStatus == 'paid' && pAmount < allTotal) {
+        Common.toastMessaage(
+            'Paid Amount cannot be less than Grand Total for Paid status',
+            Colors.red);
+        return;
+      }
     }
 
     setState(() => isSavingFollowup = true);
@@ -3220,6 +3448,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         isDifrent,
         renProducts,
         targetGroups,
+        callResultId: callResultId,
+        callResponseId: callResponseId,
+        nextFollowupDate: nextFollowupDate1.text,
       );
 
       if (response != null && response.status == true) {
@@ -3329,7 +3560,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
         // Payment Details
         _buildDropdown(
-          label: 'Payment Status *',
+          label: 'Payment Status',
+          isMandatory: true,
           value: paymentStatus,
           items: [
             const DropdownMenuItem(value: 'paid', child: Text('Paid')),
@@ -3356,9 +3588,17 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 controller: paidAmount,
                 keyboardType: TextInputType.number,
                 readOnly: paymentStatus == 'paid',
-                decoration: const InputDecoration(
-                  labelText: 'Paid Amount *',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  label: RichText(
+                    text: const TextSpan(
+                      text: 'Total Paid Amount ',
+                      style: TextStyle(color: Colors.grey),
+                      children: [
+                        TextSpan(text: '*', style: TextStyle(color: Colors.red))
+                      ],
+                    ),
+                  ),
+                  border: const OutlineInputBorder(),
                   prefixText: '₹ ',
                 ),
                 onChanged: (val) {
@@ -3367,7 +3607,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               ),
               const SizedBox(height: 12),
               _buildDropdown(
-                label: 'Payment Method *',
+                label: 'Payment Details',
+                isMandatory: true,
                 value: paymentMethod,
                 items: detailsResponse?.data.paymentMethods.map((m) {
                       return DropdownMenuItem(
@@ -3386,8 +3627,19 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           ),
 
         const SizedBox(height: 12),
-        const Text('Account Head *',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black),
+            children: [
+              TextSpan(text: 'Collected staff '),
+              TextSpan(
+                text: '*',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 4),
         InkWell(
           onTap: () => collectedStaffDialog(context),
@@ -3408,8 +3660,19 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         ),
 
         const SizedBox(height: 12),
-        const Text('Target Group',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black),
+            children: [
+              TextSpan(text: 'Target Group'),
+              TextSpan(
+                text: '*',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
         const SizedBox(height: 4),
         InkWell(
           onTap: () => targetGroupDialog(context),
@@ -3435,6 +3698,143 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             ),
           ),
         ),
+
+        const SizedBox(height: 16),
+        const Text(
+          'Followup Details',
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2a86c9)),
+        ),
+        const Divider(),
+        const SizedBox(height: 8),
+
+        // Stage Dropdown
+        _buildDropdown(
+          label: 'Stage',
+          value: callResultId.isEmpty ? null : callResultId,
+          isMandatory: true,
+          items: commonDetails!.data.callResult.map((item) {
+            return DropdownMenuItem(
+              value: item.callResultId.toString(),
+              child: Text(item.callResult),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              callResultId = value!;
+              callResult = commonDetails!.data.callResult
+                  .firstWhere(
+                      (element) => element.callResultId.toString() == value)
+                  .callResult;
+              _fetchCallResultReason();
+              _fetchLeadExtraSettings(callResultId);
+            });
+          },
+        ),
+
+        // Call Response Dropdown
+        _buildDropdown(
+          label: 'Call Response',
+          value: callResponseId.isEmpty ? null : callResponseId,
+          isMandatory: true,
+          items: commonDetails!.data.callResponseStatus.map((item) {
+            return DropdownMenuItem(
+              value: item.callResponseId.toString(),
+              child: Text(item.callResponse),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              callResponseId = value!;
+              callResponse = commonDetails!.data.callResponseStatus
+                  .firstWhere(
+                      (element) => element.callResponseId.toString() == value)
+                  .callResponse;
+            });
+          },
+        ),
+
+        // Next Followup Date (Conditional)
+        if (leadSettings != null
+            ? leadSettings!.isFollowupRequiredBool
+            : callResultId == '2')
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black),
+                  children: [
+                    TextSpan(text: 'Next Followup Date '),
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              InkWell(
+                onTap: () async {
+                  DateTime now = DateTime.now();
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: now,
+                    firstDate: now,
+                    lastDate: DateTime(2101),
+                  );
+                  if (pickedDate != null) {
+                    TimeOfDay? pickedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (pickedTime != null) {
+                      setState(() {
+                        final dt = DateTime(pickedDate.year, pickedDate.month,
+                            pickedDate.day, pickedTime.hour, pickedTime.minute);
+                        nextFollowupDate1.text =
+                            DateFormat('dd-MM-yyyy HH:mm').format(dt);
+                      });
+                    }
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        nextFollowupDate1.text.isEmpty
+                            ? 'Select Date & Time'
+                            : nextFollowupDate1.text,
+                      ),
+                      const Icon(Icons.calendar_month, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: remarks,
+          maxLines: 2,
+          decoration: const InputDecoration(
+            labelText: 'Remarks',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.all(12),
+          ),
+        ),
       ],
     );
   }
@@ -3449,9 +3849,21 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Start Date *',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black),
+                      children: [
+                        TextSpan(text: 'Start Date '),
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   InkWell(
                     onTap: () async {
@@ -3498,9 +3910,21 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('End Date *',
-                      style:
-                          TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black),
+                      children: [
+                        TextSpan(text: 'End Date '),
+                        TextSpan(
+                          text: '*',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   InkWell(
                     onTap: () async {
@@ -3578,19 +4002,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               Padding(
                 padding: const EdgeInsets.all(1),
                 child: Table(
-                  columnWidths: {
-                    0: FixedColumnWidth(
-                        MediaQuery.of(context).size.width * 0.2), // Using 10%
-                    1: FixedColumnWidth(
-                        MediaQuery.of(context).size.width * 0.16), // Using 30%
-                    2: FixedColumnWidth(
-                        MediaQuery.of(context).size.width * 0.10),
-                    3: FixedColumnWidth(
-                        MediaQuery.of(context).size.width * 0.16), // Using 20%
-                    4: FixedColumnWidth(
-                        MediaQuery.of(context).size.width * 0.20),
-                    5: FixedColumnWidth(
-                        MediaQuery.of(context).size.width * 0.10),
+                  columnWidths: const {
+                    0: FlexColumnWidth(2.0),
+                    1: FlexColumnWidth(1.6),
+                    2: FlexColumnWidth(0.8),
+                    3: FlexColumnWidth(1.6),
+                    4: FlexColumnWidth(2.0),
+                    5: FlexColumnWidth(1.0),
                   },
                   children: [
                     TableRow(
@@ -3656,134 +4074,113 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         style: TextStyle(color: Colors.red),
                       ),
                     )
-                  : SingleChildScrollView(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: renProducts.length,
-                        itemBuilder: (context, index) {
-                          Color color = index % 2 == 0
-                              ? const Color(0xFFF3F3F3)
-                              : const Color(0xFFece9fd);
-                          return Padding(
-                            padding: const EdgeInsets.all(1.0),
-                            child: Table(
-                              columnWidths: {
-                                0: FixedColumnWidth(
-                                    MediaQuery.of(context).size.width *
-                                        0.2), // Using 10%
-                                1: FixedColumnWidth(
-                                    MediaQuery.of(context).size.width *
-                                        0.16), // Using 30%
-                                2: FixedColumnWidth(
-                                    MediaQuery.of(context).size.width * 0.10),
-                                3: FixedColumnWidth(
-                                    MediaQuery.of(context).size.width *
-                                        0.16), // Using 20%
-                                4: FixedColumnWidth(
-                                    MediaQuery.of(context).size.width * 0.20),
-                                5: FixedColumnWidth(
-                                    MediaQuery.of(context).size.width * 0.10),
-                              },
-                              children: [
-                                TableRow(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(1),
-                                    color: color,
-                                  ),
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        renProducts[index]['product_name'],
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 12),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        renProducts[index]['product_rate'],
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 12),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        renProducts[index]['quantity'],
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 12),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        String.fromCharCodes(renProducts[index]
-                                                ['total_tax_amount']
-                                            .runes),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 12),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        renProducts[index]['total_amount'],
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 12),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        changeAmount(
-                                                context,
-                                                renProducts[index]
-                                                    ['product_name'],
-                                                renProducts[index]
-                                                    ['product_rate'],
-                                                renProducts[index]['quantity'],
-                                                renProducts[index]
-                                                    ['total_tax_amount'],
-                                                renProducts[index]
-                                                    ['tax_percent'],
-                                                renProducts[index]
-                                                    ['total_amount'],
-                                                renProducts[index]
-                                                    ['product_id'],
-                                                renProducts[index]
-                                                        ['description'] ??
-                                                    "nil",
-                                                index)
-                                            .then((_) {
-                                          setState(() {});
-                                        });
-                                      },
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: Icon(
-                                          Icons.edit,
-                                          color: Colors.blue,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                  : Column(
+                      children: renProducts.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final product = entry.value;
+                        Color color = index % 2 == 0
+                            ? const Color(0xFFF3F3F3)
+                            : const Color(0xFFece9fd);
+                        return Padding(
+                          padding: const EdgeInsets.all(1.0),
+                          child: Table(
+                            columnWidths: const {
+                              0: FlexColumnWidth(2.0),
+                              1: FlexColumnWidth(1.6),
+                              2: FlexColumnWidth(0.8),
+                              3: FlexColumnWidth(1.6),
+                              4: FlexColumnWidth(2.0),
+                              5: FlexColumnWidth(1.0),
+                            },
+                            children: [
+                              TableRow(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(1),
+                                  color: color,
                                 ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      product['product_name'],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      product['product_rate'],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      product['quantity'],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      product['total_tax_amount'].toString(),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      product['total_amount'].toString(),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      changeAmount(
+                                              context,
+                                              product['product_name'],
+                                              product['product_rate'],
+                                              product['quantity'],
+                                              product['total_tax_amount'],
+                                              product['tax_percent'],
+                                              product['total_amount'],
+                                              product['product_id'],
+                                              product['description'] ?? "nil",
+                                              index)
+                                          .then((_) {
+                                        setState(() {});
+                                      });
+                                    },
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(8.0),
+                                      child: Icon(
+                                        Icons.edit,
+                                        color: Colors.blue,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                     ),
             ],
           ),
@@ -3984,6 +4381,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     required String? value,
     required List<DropdownMenuItem<String>> items,
     required ValueChanged<String?> onChanged,
+    bool isMandatory = false,
   }) {
     // 1. Ensure unique items to avoid duplicate value crash
     final seenValues = <String?>{};
@@ -3997,10 +4395,24 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-        ),
+        isMandatory
+            ? RichText(
+                text: TextSpan(
+                  text: label,
+                  style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black),
+                  children: const [
+                    TextSpan(text: ' *', style: TextStyle(color: Colors.red))
+                  ],
+                ),
+              )
+            : Text(
+                label,
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -6162,41 +6574,81 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildDetailSection('Basic Information', [
+          _buildDetailSection('Client Info', [
             _buildDetailRow('Client Name', data.clientName ?? '-'),
             _buildDetailRow('Phone', data.contactNumber1 ?? '-'),
             _buildDetailRow('WhatsApp Number', data.whatsaAppNumber ?? '-'),
             // _buildDetailRow(
             //     'WhatsApp (', _stripCountryCode(data.whatsaAppNumber)),
-            _buildDetailRow('Country Code', data.countryCode ?? '-'),
+            // _buildDetailRow('Country Code', data.countryCode ?? '-'),
             _buildDetailRow('Email', data.emailId ?? '-'),
             _buildDetailRow('Address', data.address ?? '-'),
             //  _buildDetailRow('Products', data.products ?? '-'),
-            _buildDetailRow('Category', data.leadCategory ?? '-'),
-            _buildDetailRow('Sub Category', data.leadSubCategory ?? '-'),
-            _buildDetailRow('Assigned to', data.staffName ?? '-'),
-            _buildDetailRow('Created date', data.createdDate ?? '-'),
-            _buildDetailRow('Call Result', data.callResult ?? '-'),
-            _buildDetailRow('Cost', data.cost ?? '-'),
-            _buildDetailRow('Source', data.leadSource ?? '-'),
-            _buildDetailRow('Remark', data.remarks ?? '-'),
-          ]),
-          const SizedBox(height: 16),
-          if (_selectedProducts.isNotEmpty) ...[
-            _buildDetailSection(
-                'Selected Products',
-                _selectedProducts
-                    .map((p) => _buildDetailRow(p.productName ?? 'Product',
-                        '₹ ${p.totalAmount ?? '0'}'))
-                    .toList()),
-            const SizedBox(height: 16),
-          ],
-          _buildDetailSection('Location Information', [
             _buildDetailRow('State', data.stateName ?? '-'),
             _buildDetailRow('District', data.districtName ?? '-'),
             _buildDetailRow('PIN Code', data.pinCode ?? '-'),
             _buildDetailRow('Post Office', data.postOffice ?? '-'),
+            // ]),
+            // _buildDetailRow('Category', data.leadCategory ?? '-'),
+            // _buildDetailRow('Sub Category', data.leadSubCategory ?? '-'),
+            // _buildDetailRow('Assigned to', data.staffName ?? '-'),
+            // _buildDetailRow('Created date', data.createdDate ?? '-'),
+            // _buildDetailRow('Call Result', data.callResult ?? '-'),
+            // _buildDetailRow('Cost', data.cost ?? '-'),
+            // _buildDetailRow('Source', data.leadSource ?? '-'),
+            // _buildDetailRow('Remark', data.remarks ?? '-'),
           ]),
+          const SizedBox(height: 16),
+          _buildDetailSection('Lead Info', [
+            // _buildDetailRow('Client Name', data.clientName ?? '-'),
+            // _buildDetailRow('Phone', data.contactNumber1 ?? '-'),
+            // _buildDetailRow('WhatsApp Number', data.whatsaAppNumber ?? '-'),
+            // // _buildDetailRow(
+            // //     'WhatsApp (', _stripCountryCode(data.whatsaAppNumber)),
+            // // _buildDetailRow('Country Code', data.countryCode ?? '-'),
+            // _buildDetailRow('Email', data.emailId ?? '-'),
+            // _buildDetailRow('Address', data.address ?? '-'),
+            // //  _buildDetailRow('Products', data.products ?? '-'),
+            // _buildDetailRow('State', data.stateName ?? '-'),
+            // _buildDetailRow('District', data.districtName ?? '-'),
+            // _buildDetailRow('PIN Code', data.pinCode ?? '-'),
+            // _buildDetailRow('Post Office', data.postOffice ?? '-'),
+            // // ]),
+            _buildDetailRow('Created date', data.createdDate ?? '-'),
+            _buildDetailRow('Created by', data.createdStaff ?? '-'),
+            _buildDetailRow('Lead Source', data.leadSource ?? '-'),
+            _buildDetailRow('Lead Stage', data.callResult ?? '-'),
+            _buildDetailRow('Product', data.products ?? '-'),
+            _buildDetailRow('Cost', '₹ ${data.cost}' ?? '-'),
+            _buildDetailRow('Category', data.leadCategory ?? '-'),
+            _buildDetailRow('Sub Category', data.leadSubCategory ?? '-'),
+            _buildDetailRow('Remark', data.remarks ?? '-'),
+            //  _buildDetailRow('Assigned to', data.staffName ?? '-'),
+
+//            _buildDetailRow('Cost', data.cost ?? '-'),
+
+            // _buildDetailRow('Remark', data.remarks ?? '-'),
+          ]),
+          // const SizedBox(height: 16),
+          // if (_selectedProducts.isNotEmpty) ...[
+          //   _buildDetailSection(
+          //       'Selected Products',
+          //       _selectedProducts
+          //           .map((p) => _buildDetailRow(p.productName ?? 'Product',
+          //               '₹ ${p.totalAmount ?? '0'}'))
+          //           .toList()),
+          //   const SizedBox(height: 16),
+          // ],
+          if (data.callHandledUsers != null &&
+              data.callHandledUsers!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildDetailSection(
+              'Lead Handled Staff',
+              data.callHandledUsers!
+                  .map((staff) => _buildStaffCard(staff))
+                  .toList(),
+            ),
+          ],
           if (leadDetailsAdditional?.data.additionalFields.isNotEmpty ??
               false) ...[
             const SizedBox(height: 16),
@@ -6251,6 +6703,115 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(children: children),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStaffCard(CallHandledUsers staff) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.blue.shade100, width: 2),
+              image: staff.proPicThumb != null && staff.proPicThumb!.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(staff.proPicThumb!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: staff.proPicThumb == null || staff.proPicThumb!.isEmpty
+                ? Icon(Icons.person, color: Colors.blue.shade300, size: 30)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  staff.staffName ?? '-',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF2a86c9),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(Icons.phone_outlined,
+                        size: 14, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text(
+                      staff.phoneNo ?? '-',
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.call_outlined,
+                              size: 12, color: Colors.blue.shade700),
+                          const SizedBox(width: 4),
+                          Text(
+                            "${staff.callCount}",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (staff.email != null && staff.email!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.email_outlined,
+                          size: 14, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Text(
+                        staff.email!,
+                        style: TextStyle(
+                            fontSize: 12, color: Colors.grey.shade700),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ],
       ),
@@ -6902,97 +7463,125 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       transitionDuration: const Duration(milliseconds: 400),
       context: context,
       pageBuilder: (context, _, __) {
-        return Align(
-          alignment: Alignment.center,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                      selectedFolderId == null
-                          ? 'New Drive Folder'
-                          : 'New Folder',
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: folderNameCtrl,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: "Folder Name",
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade200),
+        bool isCreatingFolder = false;
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return Align(
+            alignment: Alignment.center,
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                        selectedFolderId == null
+                            ? 'New Drive Folder'
+                            : 'New Folder',
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: folderNameCtrl,
+                      autofocus: true,
+                      enabled: !isCreatingFolder,
+                      decoration: InputDecoration(
+                        hintText: "Folder Name",
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2a86c9),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: isCreatingFolder
+                                ? null
+                                : () => Navigator.pop(context),
+                            child: const Text('Cancel'),
                           ),
-                          onPressed: () async {
-                            if (folderNameCtrl.text.isEmpty) {
-                              Common.toastMessaage(
-                                  'Enter folder name', Colors.red);
-                              return;
-                            }
-
-                            final res = await HttpService.createGoogleFolders(
-                              widget.callMasterId,
-                              selectedDriveAccount!.id,
-                              selectedFolderId ?? "",
-                              folderNameCtrl.text,
-                            );
-
-                            if (res != null && res.status) {
-                              Common.toastMessaage(
-                                  'Drive Folder Created Successfully',
-                                  Colors.green);
-
-                              // Optionally auto-enter the new folder (if API returns the new ID)
-                              // For now we refresh the current level and user clicks to enter.
-                              _fetchGoogleDriveFiles(selectedDriveAccount!.id,
-                                  parentId: selectedFolderId ?? "");
-                              Navigator.pop(context);
-                            } else {
-                              Common.toastMessaage(
-                                  res?.message ?? 'Failed to create folder',
-                                  Colors.red);
-                            }
-                          },
-                          child: const Text('Create',
-                              style: TextStyle(color: Colors.white)),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2a86c9),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: isCreatingFolder
+                                ? null
+                                : () async {
+                                    if (folderNameCtrl.text.isEmpty) {
+                                      Common.toastMessaage(
+                                          'Enter folder name', Colors.red);
+                                      return;
+                                    }
+
+                                    setDialogState(() {
+                                      isCreatingFolder = true;
+                                    });
+
+                                    final res =
+                                        await HttpService.createGoogleFolders(
+                                      widget.callMasterId,
+                                      selectedDriveAccount!.id,
+                                      selectedFolderId ?? "",
+                                      folderNameCtrl.text,
+                                    );
+
+                                    if (res != null && res.status) {
+                                      Common.toastMessaage(
+                                          'Drive Folder Created Successfully',
+                                          Colors.green);
+
+                                      // Optionally auto-enter the new folder (if API returns the new ID)
+                                      // For now we refresh the current level and user clicks to enter.
+                                      _fetchGoogleDriveFiles(
+                                          selectedDriveAccount!.id,
+                                          parentId: selectedFolderId ?? "");
+                                      if (context.mounted)
+                                        Navigator.pop(context);
+                                    } else {
+                                      setDialogState(() {
+                                        isCreatingFolder = false;
+                                      });
+                                      Common.toastMessaage(
+                                          res?.message ??
+                                              'Failed to create folder',
+                                          Colors.red);
+                                    }
+                                  },
+                            child: isCreatingFolder
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Create',
+                                    style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
   }
@@ -9092,7 +9681,16 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   double.parse(discount.text == ''
                                       ? '0'
                                       : discount.text);
-                              paidAmount.text = allTotal.toString();
+                              if (paymentStatus == 'paid') {
+                                paidAmount.text = allTotal.toStringAsFixed(2);
+                              } else if (paymentStatus == 'unpaid') {
+                                paidAmount.text = '0.00';
+                              } else if (paymentStatus == 'partial') {
+                                // Keep current paidAmount or update it?
+                                // Usually for partial, user enters it manually, but we can set it to 0 if empty
+                                if (paidAmount.text.isEmpty)
+                                  paidAmount.text = '0.00';
+                              }
 
                               productName = "Choose Product";
                               productId = "";
@@ -9320,7 +9918,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       transitionDuration: const Duration(milliseconds: 400),
       context: context,
       pageBuilder: (context, _, __) {
-        return StatefulBuilder(builder: (context, setState) {
+        return StatefulBuilder(builder: (context, setDialogState) {
           return Align(
             alignment: Alignment.center,
             child: SingleChildScrollView(
@@ -9390,7 +9988,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              renProductCalculation();
+                              renProductCalculation(
+                                  dialogState: setDialogState);
                             },
                             controller: renProductRate,
                             keyboardType: TextInputType.number,
@@ -9414,7 +10013,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              renProductCalculation();
+                              renProductCalculation(
+                                  dialogState: setDialogState);
                             },
                             controller: renProductQty,
                             keyboardType: TextInputType.number,
@@ -9442,7 +10042,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           width: 110,
                           child: TextFormField(
                             onChanged: (value) {
-                              renProductCalculation();
+                              renProductCalculation(
+                                  dialogState: setDialogState);
                             },
                             controller: renProductTaxPercent,
                             keyboardType: TextInputType.number,
@@ -9465,6 +10066,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         SizedBox(
                           width: 110,
                           child: TextFormField(
+                            onChanged: (value) {
+                              renProductCalculation(
+                                  dialogState: setDialogState);
+                            },
                             controller: renProductTaxAmount,
                             keyboardType: TextInputType.number,
                             readOnly: true,
@@ -9558,6 +10163,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 "total_tax_amount": renProductTaxAmount.text,
                                 "total_amount": renProductTotalAmount.text,
                               };
+                              _recalculateTotals();
                               Navigator.of(context).pop();
                               this.setState(() {});
                             }
@@ -9765,8 +10371,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     return showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(builder: (context, setState) {
+        return StatefulBuilder(builder: (context, setModalState) {
           return AlertDialog(
+            title: const Text('Select Target Groups'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -9778,7 +10385,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       keyboardType: TextInputType.visiblePassword,
                       onChanged: (value) {
                         if (commonDetails != null) {
-                          setState(() {
+                          setModalState(() {
                             filteredTargetsList = commonDetails!
                                 .data.targetGroups
                                 .where((item) => item.groupName
@@ -9813,12 +10420,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   fontSize: 14),
                             ),
                           ),
-                          value: targetGroups.contains(
-                                  filteredTargetsList[ind].id.toString())
-                              ? true
-                              : false,
+                          value: targetGroups
+                              .contains(filteredTargetsList[ind].id.toString()),
                           onChanged: (bool? value) {
-                            setState(() {
+                            setModalState(() {
                               if (value == true) {
                                 targetGroups.add(
                                     filteredTargetsList[ind].id.toString());
@@ -9847,6 +10452,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 onPressed: () {
                   filteredTargetsList.clear();
                   filteredTargetsList.addAll(commonDetails!.data.targetGroups);
+                  setState(() {}); // Trigger rebuild of main page
                   if (context.mounted) {
                     Navigator.pop(context);
                   }
@@ -9879,7 +10485,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     setState(() {});
   }
 
-  renProductCalculation() {
+  renProductCalculation({void Function(void Function())? dialogState}) {
     renProductTaxAmount.text = ((double.parse(
                     renProductRate.text == "" ? "0" : renProductRate.text) *
                 double.parse(renProductTaxPercent.text == ""
@@ -9896,7 +10502,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             .toString();
     renProductTotalAmount.text =
         double.parse(renProductTotalAmount.text).toStringAsFixed(2);
-    setState(() {});
+    if (dialogState != null) {
+      dialogState(() {});
+    } else {
+      setState(() {});
+    }
   }
 
   Future<dynamic> contactPermissionDialog(BuildContext context) {

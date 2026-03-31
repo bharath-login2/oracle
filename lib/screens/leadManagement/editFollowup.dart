@@ -81,6 +81,8 @@ class _EditFollowupState extends State<EditFollowup> {
   final TextEditingController whatsappLead = TextEditingController();
   final TextEditingController emailLead = TextEditingController();
   LeadSettings? leadSettings;
+  bool checked = false;
+  final TextEditingController timeBefore = TextEditingController(text: '10');
   bool isLoadingSettings = false;
 
   Future<void> _fetchLeadExtraSettings(String callResultId) async {
@@ -130,6 +132,7 @@ class _EditFollowupState extends State<EditFollowup> {
     callReasonVal.dispose();
     whatsappLead.dispose();
     emailLead.dispose();
+    timeBefore.dispose();
     super.dispose();
   }
 
@@ -141,7 +144,6 @@ class _EditFollowupState extends State<EditFollowup> {
 
   getData() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
-
     if (connectivityResult is List<ConnectivityResult>) {
       if (connectivityResult.contains(ConnectivityResult.mobile) ||
           connectivityResult.contains(ConnectivityResult.wifi)) {
@@ -187,8 +189,13 @@ class _EditFollowupState extends State<EditFollowup> {
       callResultId = followupDetails!.data!.callResultId.toString();
       calledDate1.text = DateFormat('dd-MM-yyyy HH:mm')
           .format(DateTime.parse(followupDetails!.data!.calledDate.toString()));
-      nextFollowupDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(
-          DateTime.parse(followupDetails!.data!.followupDate.toString()));
+      if (followupDetails?.data?.followupDate != null &&
+          !followupDetails!.data!.followupDate!.toString().contains("0001")) {
+        nextFollowupDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(
+            DateTime.parse(followupDetails!.data!.followupDate.toString()));
+      } else {
+        nextFollowupDate1.text = "";
+      }
       leadType = followupDetails!.data!.leadCategory.toString();
       leadTypeId = followupDetails!.data!.leadCategoryId.toString();
       cost.text = followupDetails!.data!.cost.toString();
@@ -253,7 +260,9 @@ class _EditFollowupState extends State<EditFollowup> {
 
     bool nextFollowUpRequired =
         leadSettings?.isFollowupRequiredBool ?? (callResultId == '2');
-    if (nextFollowUpRequired && nextFollowupDate1.text.isEmpty) {
+    if (nextFollowUpRequired &&
+        (nextFollowupDate1.text.isEmpty ||
+            nextFollowupDate1.text.contains("0001"))) {
       Common.toastMessaage('Select Next Followup Date', Colors.red);
       return;
     }
@@ -281,6 +290,8 @@ class _EditFollowupState extends State<EditFollowup> {
         widget.callMasterId,
         callResponseId,
         callResultReasonId,
+        checked,
+        timeBefore.text,
         whatsappLead: whatsappLead.text,
         emailLead: emailLead.text,
         products: _selectedProducts.map((p) => p.id).join(','));
@@ -424,6 +435,8 @@ class _EditFollowupState extends State<EditFollowup> {
               children: [
                 const SizedBox(height: 12),
                 _buildCalledDateField(),
+                const SizedBox(height: 12),
+                _buildCallResponseField(),
               ],
             ),
             const SizedBox(height: 12),
@@ -448,24 +461,8 @@ class _EditFollowupState extends State<EditFollowup> {
             ),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Stages',
-              icon: Icons.assignment_outlined,
-              children: [
-                const SizedBox(height: 12),
-                _buildCallResultField(),
-                const SizedBox(height: 12),
-                if (callResultId == '2') _buildNextFollowupField(),
-                const SizedBox(height: 12),
-                if (callResultReason?.data?.isNotEmpty ?? false)
-                  _buildCallReasonField(),
-                const SizedBox(height: 12),
-                _buildCallResponseField(),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildSectionCard(
-              title: 'Lead Details',
-              icon: Icons.info_outline,
+              title: 'Category & Sub Category',
+              icon: Icons.category_outlined,
               children: [
                 const SizedBox(height: 12),
                 _buildLeadCategoryField(),
@@ -476,11 +473,26 @@ class _EditFollowupState extends State<EditFollowup> {
             ),
             const SizedBox(height: 12),
             _buildSectionCard(
+              title: 'Stages',
+              icon: Icons.assignment_outlined,
+              children: [
+                const SizedBox(height: 12),
+                _buildCallResultField(),
+                const SizedBox(height: 12),
+                if (leadSettings != null
+                    ? leadSettings!.isFollowupRequiredBool
+                    : (callResultId == '2'))
+                  _buildNextFollowupField(),
+                const SizedBox(height: 12),
+                if (callResultReason?.data?.isNotEmpty ?? false)
+                  _buildCallReasonField(),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildSectionCard(
               title: 'Additional Information',
               icon: Icons.note_outlined,
               children: [
-                // const SizedBox(height: 12),
-                // _buildCostField(),
                 const SizedBox(height: 12),
                 _buildRemarksField(),
               ],
@@ -660,17 +672,23 @@ class _EditFollowupState extends State<EditFollowup> {
             .map((cr) => cr.callResult.toString())
             .toList(),
         onSelected: (index) {
+          String newCallResultId =
+              commonDetails!.data.callResult[index].callResultId.toString();
           setState(() {
+            if (newCallResultId != callResultId) {
+              nextFollowupDate1.clear();
+            }
             callResultVal.text =
                 commonDetails!.data.callResult[index].callResult.toString();
             callResult =
                 commonDetails!.data.callResult[index].callResult.toString();
-            callResultId =
-                commonDetails!.data.callResult[index].callResultId.toString();
+            callResultId = newCallResultId;
+            // Clear stage-specific tags when stage changes
+            callResultReasonId = '';
+            callResultReasonName = 'Tag';
+            callReasonVal.clear();
+
             callResultReasonList();
-            if (callResultId != '2') {
-              nextFollowupDate1.clear();
-            }
             _fetchLeadExtraSettings(callResultId);
           });
         },
@@ -686,53 +704,161 @@ class _EditFollowupState extends State<EditFollowup> {
   }
 
   Widget _buildNextFollowupField() {
-    return TextFormField(
-      controller: nextFollowupDate1,
-      readOnly: true,
-      onTap: () async {
-        final selectedDate = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime.now(),
-          lastDate: DateTime(2100),
-        );
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              flex: checked ? 3 : 4,
+              child: TextFormField(
+                controller: nextFollowupDate1,
+                readOnly: true,
+                onTap: () async {
+                  DateTime now = DateTime.now();
+                  final selectedDate = await showDatePicker(
+                    context: context,
+                    initialDate: now,
+                    firstDate: now,
+                    lastDate: DateTime(2100),
+                  );
 
-        if (selectedDate != null) {
-          final selectedTime = await showTimePicker(
-            context: context,
-            initialTime: TimeOfDay.now(),
-          );
+                  if (selectedDate != null) {
+                    final selectedTime = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
 
-          if (selectedTime != null) {
-            final now = DateTime.now();
-            final selectedDateTime = DateTime(
-              selectedDate.year,
-              selectedDate.month,
-              selectedDate.day,
-              selectedTime.hour,
-              selectedTime.minute,
-            );
+                    if (selectedTime != null) {
+                      final selectedDateTime = DateTime(
+                        selectedDate.year,
+                        selectedDate.month,
+                        selectedDate.day,
+                        selectedTime.hour,
+                        selectedTime.minute,
+                      );
 
-            if (selectedDateTime.isAfter(now)) {
-              String convertedNewDate = selectedDate.toString().split(' ')[0];
-              nextFollowupDate1.text =
-                  "$convertedNewDate ${selectedTime.format(context)}";
-            } else {
-              Common.toastMessaage(
-                "You cannot choose a past time for the follow-up date",
-                Colors.red,
-              );
-            }
-          }
-        }
-      },
-      validator: (v) {
-        if (callResultId == '2' && v!.isEmpty) {
-          return 'Next followup date is required';
-        }
-        return null;
-      },
-      decoration: _inputDecoration('Next Followup Date', Icons.calendar_month),
+                      if (selectedDateTime.isAfter(now)) {
+                        setState(() {
+                          nextFollowupDate1.text =
+                              DateFormat('dd-MM-yyyy HH:mm')
+                                  .format(selectedDateTime);
+
+                          // Auto-adjust reminder if needed
+                          if (checked && timeBefore.text.isNotEmpty) {
+                            int minutes = int.tryParse(timeBefore.text) ?? 10;
+                            DateTime reminderTime = selectedDateTime
+                                .subtract(Duration(minutes: minutes));
+                            if (reminderTime.isBefore(DateTime.now())) {
+                              int maxMinutes = selectedDateTime
+                                  .difference(DateTime.now())
+                                  .inMinutes;
+                              if (maxMinutes <= 0) {
+                                timeBefore.text = "0";
+                              } else {
+                                timeBefore.text = maxMinutes.toString();
+                              }
+                              Common.toastMessaage(
+                                  'Reminder time adjusted to ${timeBefore.text} mins before',
+                                  Colors.orange);
+                            }
+                          }
+                        });
+                      } else {
+                        Common.toastMessaage(
+                          "You cannot choose a past time for the follow-up date",
+                          Colors.red,
+                        );
+                      }
+                    }
+                  }
+                },
+                decoration: _inputDecoration(
+                    (leadSettings?.isFollowupRequiredBool ??
+                            (callResultId == '2'))
+                        ? 'Next Followup Date *'
+                        : 'Next Followup Date',
+                    Icons.calendar_month),
+              ),
+            ),
+            if (checked)
+              Expanded(
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: timeBefore,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            int val = int.tryParse(timeBefore.text) ?? 0;
+                            timeBefore.text = (val + 1).toString();
+                          },
+                          child: const Icon(Icons.arrow_drop_up, size: 20),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            int val = int.tryParse(timeBefore.text) ?? 0;
+                            timeBefore.text =
+                                (val > 0 ? val - 1 : 0).toString();
+                          },
+                          child: const Icon(Icons.arrow_drop_down, size: 20),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                setState(() {
+                  checked = !checked;
+                  if (checked && nextFollowupDate1.text.isNotEmpty) {
+                    try {
+                      DateTime dt = DateFormat('dd-MM-yyyy HH:mm')
+                          .parse(nextFollowupDate1.text);
+                      int minutes = int.tryParse(timeBefore.text) ?? 10;
+                      DateTime reminderTime =
+                          dt.subtract(Duration(minutes: minutes));
+                      if (reminderTime.isBefore(DateTime.now())) {
+                        int maxMinutes =
+                            dt.difference(DateTime.now()).inMinutes;
+                        if (maxMinutes <= 0) {
+                          timeBefore.text = "0";
+                        } else {
+                          timeBefore.text = maxMinutes.toString();
+                        }
+                        Common.toastMessaage(
+                            'Reminder time adjusted to ${timeBefore.text} mins before',
+                            Colors.orange);
+                      }
+                    } catch (e) {
+                      // ignore
+                    }
+                  }
+                });
+              },
+              child: Icon(
+                Icons.notifications,
+                color: checked ? Colors.green : Colors.red,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -754,7 +880,9 @@ class _EditFollowupState extends State<EditFollowup> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callReasonVal,
-          decoration: _inputDecoration('Tags', Icons.reply_all_sharp),
+          decoration: _inputDecoration(
+              (leadSettings?.isReasonRequiredBool ?? false) ? 'Tags *' : 'Tags',
+              Icons.reply_all_sharp),
         ),
       ),
     );
@@ -784,7 +912,7 @@ class _EditFollowupState extends State<EditFollowup> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callResponseVal,
-          decoration: _inputDecoration('Call Response', Icons.add_call),
+          decoration: _inputDecoration('Call Response *', Icons.add_call),
         ),
       ),
     );
@@ -860,7 +988,20 @@ class _EditFollowupState extends State<EditFollowup> {
 
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
-      labelText: label,
+      label: RichText(
+        text: TextSpan(
+          text: label.replaceAll(' *', ''),
+          style: const TextStyle(color: Colors.grey, fontSize: 14),
+          children: [
+            if (label.contains('*'))
+              const TextSpan(
+                text: ' *',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+          ],
+        ),
+      ),
       prefixIcon: Icon(icon, color: Colors.grey, size: 20),
       filled: true,
       fillColor: Colors.grey.shade50,
