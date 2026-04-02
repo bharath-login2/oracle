@@ -298,6 +298,8 @@ class FollowupHistory {
   String? callResponse;
   String? reasonId;
   String? reason;
+  String? voiceFile;
+  bool? playVoicePermission;
 
   FollowupHistory(
       {this.callMasterId,
@@ -315,7 +317,9 @@ class FollowupHistory {
         this.callResponseId,
         this.callResponse,
         this.reasonId,
-        this.reason});
+        this.reason,
+        this.voiceFile,
+        this.playVoicePermission});
 
   FollowupHistory.fromJson(Map<String, dynamic> json) {
     callMasterId = json['call_master_id'];
@@ -334,6 +338,8 @@ class FollowupHistory {
     callResponse = json['call_response'];
     reasonId = json['reason_id'];
     reason = json['reason'];
+    voiceFile = json['voiceFile'];
+    playVoicePermission = json['playVoicePermission'];
   }
 
   Map<String, dynamic> toJson() {
@@ -354,6 +360,8 @@ class FollowupHistory {
     data['call_response'] = callResponse;
     data['reason_id'] = reasonId;
     data['reason'] = reason;
+    data['voiceFile'] = voiceFile;
+    data['playVoicePermission'] = playVoicePermission;
     return data;
   }
 }

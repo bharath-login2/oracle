@@ -66,7 +66,7 @@ class AudioItemsState extends State<AudioItems> {
   bool audioPlayed = false;
   Duration duration = Duration.zero; // For total duration
   Duration position = Duration.zero; // For the current position
-  int index=0;
+  int index = 0;
 
   @override
   void initState() {
@@ -79,8 +79,7 @@ class AudioItemsState extends State<AudioItems> {
       });
 
       audioPlayer.onPositionChanged.listen((Duration p) {
-        currentPos =
-            p.inMilliseconds; 
+        currentPos = p.inMilliseconds;
 
         //generating the duration label
         int shours = Duration(milliseconds: currentPos).inHours;
@@ -111,12 +110,12 @@ class AudioItemsState extends State<AudioItems> {
     audioPlayer.onPlayerStateChanged.listen((state) {
       if (mounted) {
         setState(() {
-
           isPlaying = state == PlayerState.playing;
         });
       }
     });
   }
+
   @override
   void dispose() {
     audioPlayer.dispose(); // Dispose of a TextEditingController
@@ -125,7 +124,6 @@ class AudioItemsState extends State<AudioItems> {
     //
     // });
   }
-
 
   Future download2(Dio dio, String url, String savePath) async {
     try {
@@ -160,35 +158,34 @@ class AudioItemsState extends State<AudioItems> {
   // }
   @override
   Widget build(BuildContext context) {
-
     return InkWell(
         onTap: () {
           audioPlayer.dispose();
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => LeadDetails(
-                  widget.token!,
-                  widget.editLead!,
-                  widget.deleteLead!,
-                  widget.cloudCall!,
-                  widget.masterId!,
-                  pageName: 'callHistory',
-                  fromDate: widget.fromDate,
-                  toDate: widget.toDate,
-                  name: widget.name,
-                  userId: widget.userId,
-                  recordAccessPermission: widget.accessCallRecord,
-                )),
-          );
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //       builder: (context) => LeadDetails(
+          //         widget.token!,
+          //         widget.editLead!,
+          //         widget.deleteLead!,
+          //         widget.cloudCall!,
+          //         widget.masterId!,
+          //         pageName: 'callHistory',
+          //         fromDate: widget.fromDate,
+          //         toDate: widget.toDate,
+          //         name: widget.name,
+          //         userId: widget.userId,
+          //         recordAccessPermission: widget.accessCallRecord,
+          //       )),
+          // );
         },
         child: Padding(
-          padding: const EdgeInsets.only(
-              left: 10, right: 10, bottom: 10,top: 10),
+          padding:
+              const EdgeInsets.only(left: 10, right: 10, bottom: 10, top: 10),
           child: Container(
             width: MediaQuery.of(context).size.width * 1,
             decoration: BoxDecoration(
-              color:  Colors.white,
+              color: Colors.white,
               boxShadow: const [
                 BoxShadow(
                   color: Colors.grey,
@@ -200,13 +197,10 @@ class AudioItemsState extends State<AudioItems> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(
-                      top: 10, right: 10, left: 10),
+                  padding: const EdgeInsets.only(top: 10, right: 10, left: 10),
                   child: Column(
-                    mainAxisAlignment:
-                    MainAxisAlignment.start,
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
@@ -215,77 +209,76 @@ class AudioItemsState extends State<AudioItems> {
                               maxHeight: 60,
                             ),
                             child: Container(
-
-                              constraints:
-                              const BoxConstraints(
-                                minHeight: 20,
-                                minWidth: 20,
-                                maxHeight: 50,
-                                maxWidth: 50,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: Colors.white,
-                                    width: 0),
-                                boxShadow: const [
-                                  BoxShadow(
-                                      color: Colors.grey,
-                                      blurRadius: 5,
-                                      offset: Offset(1, 1)),
-                                ],
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-
-                              ),
-                              child: Padding(padding: const EdgeInsets.all(9),
-                                child: widget.direction.toString() == 'Incoming Call'
-                                    ? const Icon(Icons.phone_callback_sharp,
-                                    color: Colors.green, size: 25)
-                                    : widget.direction.toString() ==
-                                    'Missed Call'
-                                    ? const Icon(
-                                  Icons.phone_missed,
-                                  color: Colors.red,
-                                  size: 25,
-                                )
-                                    : const Icon(
-                                    Icons.phone_forwarded_sharp,
-                                    color: Colors.blueAccent,
-                                    size: 25),
-
-                              )
-                            ),
+                                constraints: const BoxConstraints(
+                                  minHeight: 20,
+                                  minWidth: 20,
+                                  maxHeight: 50,
+                                  maxWidth: 50,
+                                ),
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.white, width: 0),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                        color: Colors.grey,
+                                        blurRadius: 5,
+                                        offset: Offset(1, 1)),
+                                  ],
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(9),
+                                  child: widget.direction.toString() ==
+                                          'Incoming Call'
+                                      ? const Icon(Icons.phone_callback_sharp,
+                                          color: Colors.green, size: 25)
+                                      : widget.direction.toString() ==
+                                              'Missed Call'
+                                          ? const Icon(
+                                              Icons.phone_missed,
+                                              color: Colors.red,
+                                              size: 25,
+                                            )
+                                          : const Icon(
+                                              Icons.phone_forwarded_sharp,
+                                              color: Colors.blueAccent,
+                                              size: 25),
+                                )),
                           ),
                           const SizedBox(
                             width: 20,
                           ),
                           Column(
-                            mainAxisAlignment:
-                            MainAxisAlignment.start,
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
                                 padding: const EdgeInsets.only(right: 10),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     SizedBox(
-                                      width: MediaQuery.of(context).size.width * 0.38,
+                                      width: MediaQuery.of(context).size.width *
+                                          0.38,
                                       child: Text(
                                         widget.direction.toString(),
                                         style: const TextStyle(
                                             fontWeight: FontWeight.bold),
                                       ),
                                     ),
-
                                     Container(
                                       decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(5)),
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
                                       child: Padding(
                                         padding: const EdgeInsets.only(
-                                            left: 5, right: 5, top: 2, bottom: 2),
+                                            left: 5,
+                                            right: 5,
+                                            top: 2,
+                                            bottom: 2),
                                         child: SizedBox(
                                             width: 76,
                                             child: Center(
@@ -293,8 +286,9 @@ class AudioItemsState extends State<AudioItems> {
                                                 widget.status,
                                                 style: TextStyle(
                                                   fontSize: 13,
-                                                  color: widget.status.toString() ==
-                                                      'ANSWERED'
+                                                  color: widget.status
+                                                              .toString() ==
+                                                          'ANSWERED'
                                                       ? Colors.green
                                                       : Colors.red,
                                                   fontWeight: FontWeight.w500,
@@ -311,11 +305,10 @@ class AudioItemsState extends State<AudioItems> {
                               const SizedBox(
                                 height: 3,
                               ),
-                              Text(widget.clientName,
+                              Text(
+                                widget.clientName,
                                 style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight:
-                                    FontWeight.w400),
+                                    fontSize: 15, fontWeight: FontWeight.w400),
                               ),
                             ],
                           ),
@@ -325,8 +318,7 @@ class AudioItemsState extends State<AudioItems> {
                         height: 10,
                       ),
                       Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           SizedBox(
                             width: MediaQuery.of(context).size.width * 0.45,
@@ -342,7 +334,6 @@ class AudioItemsState extends State<AudioItems> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-
                         ],
                       ),
                       const SizedBox(
@@ -350,82 +341,75 @@ class AudioItemsState extends State<AudioItems> {
                       ),
                       Row(
                         children: [
-                          const Icon(
-                              Icons.timer_outlined),
+                          const Icon(Icons.timer_outlined),
                           const SizedBox(
                             width: 5,
                           ),
                           Padding(
-                            padding:
-                            const EdgeInsets.only(
-                                right: 10),
+                            padding: const EdgeInsets.only(right: 10),
                             child: Text(
                               widget.time.toString(),
                               style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.green),
+                                  fontSize: 13, color: Colors.green),
                             ),
                           ),
                         ],
                       ),
                       widget.isAttend == true && widget.accessCallRecord
                           ? Column(
-                        children: [
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () async {
-                                  isPlaying == false
-                                      ? audioPlayer.play(
-                                      UrlSource(widget.resourceUrl))
-                                      : await audioPlayer.pause();
-                                  setState(() {
-
-                                  });
-                                },
-                                child: CircleAvatar(
-                                  backgroundColor: Colors.green,
-                                  radius: 15,
-                                  child: Icon(
-                                    isPlaying
-                                        ? Icons.pause
-                                        : Icons.play_arrow,
-                                    color: Colors.white,
-                                  ),
+                              children: [
+                                const SizedBox(
+                                  height: 10,
                                 ),
-                              ),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Text(
-                                '$currentPostLabel/${widget.duration}',
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              SizedBox(
-                                height: 25,
-                                width: 150,
-                                child: Slider(
-                                  min: 0,
-                                  value: position.inMilliseconds.toDouble(),
-                                  max: duration.inMilliseconds.toDouble(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      position = Duration(
-                                          milliseconds: value.toInt());
-                                    });
-                                    audioPlayer.seek(position);
-                                  },
+                                Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () async {
+                                        isPlaying == false
+                                            ? audioPlayer.play(
+                                                UrlSource(widget.resourceUrl))
+                                            : await audioPlayer.pause();
+                                        setState(() {});
+                                      },
+                                      child: CircleAvatar(
+                                        backgroundColor: Colors.green,
+                                        radius: 15,
+                                        child: Icon(
+                                          isPlaying
+                                              ? Icons.pause
+                                              : Icons.play_arrow,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 10,
+                                    ),
+                                    Text(
+                                      '$currentPostLabel/${widget.duration}',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                    SizedBox(
+                                      height: 25,
+                                      width: 150,
+                                      child: Slider(
+                                        min: 0,
+                                        value:
+                                            position.inMilliseconds.toDouble(),
+                                        max: duration.inMilliseconds.toDouble(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            position = Duration(
+                                                milliseconds: value.toInt());
+                                          });
+                                          audioPlayer.seek(position);
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-
-                            ],
-                          ),
-
-                        ],
-                      )
+                              ],
+                            )
                           : const SizedBox(),
                       const SizedBox(
                         height: 10,
@@ -441,9 +425,4 @@ class AudioItemsState extends State<AudioItems> {
           ),
         ));
   }
-
-
-
-
-
 }

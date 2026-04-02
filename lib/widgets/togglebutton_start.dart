@@ -189,6 +189,15 @@ class _StartStopToggleState extends State<StartStopToggle> {
       try {
         LocationPermission permission = await Geolocator.checkPermission();
         if (permission == LocationPermission.denied) {
+          final bool allowed = await Common.showLocationDisclosure(context);
+          if (!allowed) {
+            if (Navigator.of(loaderContext).canPop())
+              Navigator.of(loaderContext).pop();
+            showError("Location permission denied by user.");
+            setState(() => isLoading = false);
+            widget.setDashboardLoading(false);
+            return;
+          }
           permission = await Geolocator.requestPermission();
           if (permission == LocationPermission.denied) {
             if (Navigator.of(loaderContext).canPop())

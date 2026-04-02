@@ -1323,22 +1323,9 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   const SizedBox(height: 10),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: filtered.length + 1,
+                      itemCount: filtered.length,
                       itemBuilder: (_, i) {
-                        if (i == 0) {
-                          return ListTile(
-                            title: const Text('Un Assigned'),
-                            onTap: () {
-                              setState(() {
-                                assignStaff = 'Un Assigned';
-                                assignStaffId = '';
-                                assignStaffCtrl.text = assignStaff;
-                              });
-                              Navigator.pop(context);
-                            },
-                          );
-                        }
-                        final staff = filtered[i - 1];
+                        final staff = filtered[i];
                         return ListTile(
                           title: Text(staff.staffName),
                           onTap: () {
@@ -1957,19 +1944,19 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
 
     if (check.data == true) {
       Navigator.pop(context);
-      _showDuplicateDialog();
+      _showDuplicateDialog(check.message ?? 'Number already exists. Continue?');
     } else {
       await _submitLead();
     }
   }
 
-  void _showDuplicateDialog() {
+  void _showDuplicateDialog(String message) {
     FocusScope.of(context).unfocus();
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Alert!'),
-        content: Text('Number already exists. Continue?'),
+        content: Text(message),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),

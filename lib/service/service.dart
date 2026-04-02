@@ -764,6 +764,20 @@ class HttpService {
     }
   }
 
+  static Future viewLeadsforActiveNew(body) async {
+    try {
+      var result = await _dio.post("${await Config.getUrl()}getActiveLeads",
+          options: Options(receiveTimeout: const Duration(seconds: 30)),
+          data: jsonEncode(body));
+      if (result.statusCode == 200) {
+        ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
+        return model;
+      }
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
   static Future leadReport(body) async {
     try {
       var result = await _dio.post("${await Config.getUrl()}leadReport",
@@ -7421,6 +7435,28 @@ class HttpService {
     return null;
   }
 
+  static Future<StaffListModel?> getStaffsSomeof() async {
+    var token = await Common.getSharedPref('token');
+    try {
+      FormData formData = FormData.fromMap({
+        'token': token,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}getAccessibleStaffs",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return StaffListModel.fromJson(response.data);
+      } else {
+        log("getStaffs failed: ${response.data}");
+      }
+    } catch (e) {
+      log("getStaffs error: $e");
+    }
+    return null;
+  }
+
   static Future<CustomerExpenseListModel?> getCustomers() async {
     var token = await Common.getSharedPref('token');
     try {
@@ -13511,7 +13547,7 @@ class HttpService {
     return null;
   }
 
-  static Future<GetActiveStatusModel?> getActiveStatus() async {
+  static Future<GetActiveStatusModel?> getActiveStatus({String? status}) async {
     try {
       final token = await Common.getSharedPref("token");
       if (token == null || token.isEmpty) {
@@ -13523,6 +13559,7 @@ class HttpService {
         "${await Config.getUrl()}getActiveStatus",
         data: FormData.fromMap({
           "token": token,
+          "status": status,
         }),
       );
 

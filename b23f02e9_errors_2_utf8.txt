@@ -1,0 +1,124 @@
+﻿Analyzing dashboardleadsnewupdated2.dart...                     
+
+   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7:8 - unnecessary_import
+warning - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: DashboardLeadNewUpdatedTwo.token - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:103:7 - must_be_immutable
+warning - The value of the field '_isTabControllerInitialized' isn't used - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:151:8 - unused_field
+warning - The value of the local variable 'cloudCallPermission' isn't used - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:453:13 - unused_local_variable
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:465:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:469:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:473:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:477:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:481:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:485:7 - curly_braces_in_flow_control_structures
+   info - The 'if' statement could be replaced by a null-aware assignment - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:779:5 - prefer_conditional_assignment
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:835:30 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:984:7 - avoid_print
+   info - The local variable '_formatter' starts with an underscore - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:1784:22 - no_leading_underscores_for_local_identifiers
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:1801:15 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:1803:15 - curly_braces_in_flow_control_structures
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:2443:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:2457:20 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:2461:32 - use_build_context_synchronously
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:2926:64 - unnecessary_to_list_in_spreads
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:3342:9 - sized_box_for_whitespace
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:3670:22 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:3703:22 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:3738:22 - unnecessary_to_list_in_spreads
+warning - A value for optional parameter 'label' isn't ever given - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:3784:13 - unused_element_parameter
+warning - A value for optional parameter 'label' isn't ever given - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:3832:13 - unused_element_parameter
+warning - A value for optional parameter 'label' isn't ever given - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:3881:13 - unused_element_parameter
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5378:11 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5715:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5717:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5719:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5721:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5742:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5744:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5746:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5748:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5889:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5928:25 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6146:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6187:25 - curly_braces_in_flow_control_structures
+warning - The receiver can't be null, so the null-aware operator '?.' is unnecessary - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6277:47 - invalid_null_aware_operator
+warning - The receiver can't be 'null' because of short-circuiting, so the null-aware operator '?.' can't be used - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6278:19 - invalid_null_aware_operator
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6359:7 - curly_braces_in_flow_control_structures
+warning - The receiver can't be 'null' because of short-circuiting, so the null-aware operator '?.' can't be used - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6370:44 - invalid_null_aware_operator
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6399:25 - curly_braces_in_flow_control_structures
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6455:60 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6611:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6650:25 - curly_braces_in_flow_control_structures
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6713:60 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6869:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6873:7 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7043:22 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7158:24 - unnecessary_to_list_in_spreads
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7201:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7205:7 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7387:22 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7482:24 - unnecessary_to_list_in_spreads
+warning - The receiver can't be null, so the null-aware operator '?.' is unnecessary - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7505:52 - invalid_null_aware_operator
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7525:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7529:7 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7727:22 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7827:24 - unnecessary_to_list_in_spreads
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7870:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7874:7 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:8072:22 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:8193:24 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:8374:22 - unnecessary_to_list_in_spreads
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:8426:36 - sized_box_for_whitespace
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:8506:24 - unnecessary_to_list_in_spreads
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:9424:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:9459:7 - curly_braces_in_flow_control_structures
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:9596:22 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:9718:24 - unnecessary_to_list_in_spreads
+   info - Unnecessary use of 'toList' in a spread - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:9874:14 - unnecessary_to_list_in_spreads
+   info - Use interpolation to compose strings and values - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:10145:16 - prefer_interpolation_to_compose_strings
+warning - The declaration '_buildCompactDateChip' isn't referenced - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:10599:10 - unused_element
+warning - The declaration '_showDatePicker' isn't referenced - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:10912:16 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11706:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11708:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11896:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11898:23 - use_build_context_synchronously
+warning - The '!' will have no effect because the receiver can't be null - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12068:37 - unnecessary_non_null_assertion
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12093:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12095:23 - use_build_context_synchronously
+warning - The '!' will have no effect because the receiver can't be null - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12265:37 - unnecessary_non_null_assertion
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12290:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12292:23 - use_build_context_synchronously
+   info - Unnecessary braces in a string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:14661:50 - unnecessary_brace_in_string_interps
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:14747:51 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:14748:53 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:14749:49 - dead_null_aware_expression
+   info - Unnecessary braces in a string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:15573:50 - unnecessary_brace_in_string_interps
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:15659:51 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:15660:53 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:15661:49 - dead_null_aware_expression
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17059:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17060:36 - use_build_context_synchronously
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17060:45 - unnecessary_string_interpolations
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17063:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17074:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17075:39 - use_build_context_synchronously
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17075:48 - unnecessary_string_interpolations
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17078:42 - use_build_context_synchronously
+warning - The declaration '_handleStageIconTap' isn't referenced - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17082:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17089:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17090:37 - use_build_context_synchronously
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17090:46 - unnecessary_string_interpolations
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17093:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17104:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17105:43 - use_build_context_synchronously
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17105:52 - unnecessary_string_interpolations
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17108:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17119:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17120:45 - use_build_context_synchronously
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17120:54 - unnecessary_string_interpolations
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17123:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17150:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17151:42 - use_build_context_synchronously
+   info - Unnecessary use of string interpolation - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17151:51 - unnecessary_string_interpolations
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17154:42 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17279:7 - curly_braces_in_flow_control_structures
+

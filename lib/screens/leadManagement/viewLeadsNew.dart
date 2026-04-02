@@ -72,6 +72,7 @@ class ViewLeadsNew extends StatefulWidget {
   final String? isLeadCategory;
   final String? isAllLeads;
   final String? notificationLeadId;
+  final String? isFollowup;
   const ViewLeadsNew(
     this.token,
     this.editLead,
@@ -111,6 +112,7 @@ class ViewLeadsNew extends StatefulWidget {
     this.isLeadCategory,
     this.isAllLeads,
     this.notificationLeadId,
+    this.isFollowup,
   });
 
   @override
@@ -198,7 +200,8 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     const Color(0xFF2196F3), // Vibrant Blue (index 0)
     const Color(0xFF2196F3), // Blue at index 1 for "New"
     const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
-    const Color(0xFFFFC107), // Amber/Yellow at index 3 for Followup
+    const Color.fromARGB(
+        255, 255, 7, 7), // Amber/Yellow at index 3 for Followup
     const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
     const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
     const Color(0xFF9C27B0), // Purple 500 (index 6)
@@ -470,6 +473,8 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
         // apiResponse = await HttpService.viewLeads(body);
         if (widget.isCallStatus == "1") {
           apiResponse = await HttpService.leadReportCallStatus(body);
+        } else if (widget.isFollowup == "1") {
+          apiResponse = await HttpService.viewLeadsforActive(body);
         } else if (widget.isActiveReport == "1") {
           apiResponse = await HttpService.leadReportActiveStatus(body);
         } else if (widget.isLeadSource == "1") {
@@ -2510,9 +2515,9 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                     child: Text(
                                       displayItem.isCalled == false
                                           ? '--'
-                                          : (displayItem.calledDate.isEmpty
+                                          : (displayItem.lastCalledDate.isEmpty
                                               ? "--"
-                                              : displayItem.calledDate),
+                                              : displayItem.lastCalledDate),
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
@@ -2552,9 +2557,9 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                                   ),
                                   Expanded(
                                     child: Text(
-                                      displayItem.scheduledDate.isEmpty
+                                      displayItem.nextFollowupDate.isEmpty
                                           ? "--"
-                                          : displayItem.scheduledDate,
+                                          : displayItem.nextFollowupDate,
                                       style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,

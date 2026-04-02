@@ -6,7 +6,7 @@ class CheckLeadPhoneNumberModel {
   CheckLeadPhoneNumberModel({this.status, this.message, this.data});
 
   CheckLeadPhoneNumberModel.fromJson(Map<String, dynamic> json) {
-    status = json['status'];
+    status = json['status'] ?? json['satus'];
     message = json['message'];
     data = json['data'];
   }

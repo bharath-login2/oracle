@@ -38,6 +38,7 @@ import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
 import 'package:login2/models/lead_management/deleteLeadFollowupModel.dart';
+import 'playWidget.dart';
 import '../customer/customerDasboard.dart';
 import 'editFollowup.dart';
 import '../../models/lead_management/fileManagerPermissionModel.dart';
@@ -108,7 +109,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     const Color(0xFF2196F3), // Vibrant Blue (index 0)
     const Color(0xFF2196F3), // Blue at index 1 for "New"
     const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
-    const Color(0xFFFFC107), // Amber/Yellow at index 3 for Followup
+    const Color.fromARGB(
+        255, 255, 36, 7), // Amber/Yellow at index 3 for Followup
     const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
     const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
     const Color(0xFF9C27B0), // Purple 500 (index 6)
@@ -128,6 +130,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String? name;
   String? userId;
   String? phoneCallLogPermission;
+  String? accessCallRecordingPermission;
   String? callMasterId;
   LeadDeatailsModel? leadDetails;
   LeadDeatailsModelAdd? leadDetailsAdditional;
@@ -355,6 +358,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     userId = await Common.getSharedPref("userId");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
+    accessCallRecordingPermission =
+        await Common.getSharedPref("accessCallRecordingPermission");
     createLeadCategory = await Common.getSharedPref("createLeadCategory");
     addLeadSource = await Common.getSharedPref("addLeadSource");
 
@@ -552,6 +557,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     userId = await Common.getSharedPref("userId");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
+    accessCallRecordingPermission =
+        await Common.getSharedPref("accessCallRecordingPermission");
     setState(() {});
   }
 
@@ -4674,7 +4681,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      followup.remarks,
+                      'Remarks: ${followup.remarks}',
                       style: TextStyle(
                         fontSize: 13,
                         color: isLatest
@@ -4721,7 +4728,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ],
 
                     // Voice Recording Section
-                    if (followup.playVoicePermission == true &&
+                    if ((followup.playVoicePermission == true ||
+                            accessCallRecordingPermission == 'true') &&
                         followup.voiceFile.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Row(
@@ -6475,8 +6483,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Widget _buildCallHistoryItem(CallHistoryData call) {
-    bool hasRecord = call.resourceUrl.isNotEmpty &&
-        (leadDetailsAdditional?.data.voiceListerningPermission ?? false);
+    bool hasRecord = call.resourceUrl.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -6557,7 +6564,31 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           ),
           if (hasRecord) ...[
             const SizedBox(height: 10),
-            CallHistoryAudioPlayer(call: call),
+            AudioItems(
+              call.direction,
+              call.time,
+              true,
+              call.startTime,
+              call.status,
+              call.resourceUrl,
+              call.callDurationHr,
+              (leadDetailsAdditional?.data.voiceListerningPermission ??
+                      false) ||
+                  accessCallRecordingPermission == 'true',
+              leadDetails?.data?.clientName ?? "",
+              leadDetails?.data?.leadCategory ?? "",
+              leadDetails?.data?.callResult ?? "",
+              call.callHistoryImage,
+              widget.fromDate ?? "",
+              widget.toDate ?? "",
+              widget.editLead,
+              widget.deleteLead,
+              widget.cloudCall,
+              widget.callMasterId,
+              widget.token,
+              name,
+              userId,
+            ),
           ],
         ],
       ),
@@ -8832,7 +8863,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       case '2':
         return const Color(0xFFFFC107); // Yellow/Amber for Followup
       case '3':
-        return const Color(0xFFFFC107);
+        return const Color.fromARGB(255, 255, 7, 7);
       case '4':
         return const Color(0xFF4CAF50); // Red
       case '5':
@@ -11318,126 +11349,5 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
     return oldDelegate.child != child;
-  }
-}
-
-class CallHistoryAudioPlayer extends StatefulWidget {
-  final CallHistoryData call;
-
-  const CallHistoryAudioPlayer({
-    super.key,
-    required this.call,
-  });
-
-  @override
-  State<CallHistoryAudioPlayer> createState() => _CallHistoryAudioPlayerState();
-}
-
-class _CallHistoryAudioPlayerState extends State<CallHistoryAudioPlayer> {
-  final audioPlayer = AudioPlayer();
-  bool isPlaying = false;
-  Duration duration = Duration.zero;
-  Duration position = Duration.zero;
-  String currentPostLabel = "00:00";
-
-  @override
-  void initState() {
-    super.initState();
-    audioPlayer.onDurationChanged.listen((newDuration) {
-      if (mounted) setState(() => duration = newDuration);
-    });
-    audioPlayer.onPositionChanged.listen((newPosition) {
-      if (mounted) {
-        setState(() {
-          position = newPosition;
-          int shours = position.inHours;
-          int sminutes = position.inMinutes;
-          int sseconds = position.inSeconds;
-          int rminutes = sminutes - (shours * 60);
-          int rseconds = sseconds - (sminutes * 60 + shours * 60 * 60);
-          currentPostLabel =
-              "${rminutes.toString().padLeft(2, '0')}:${rseconds.toString().padLeft(2, '0')}";
-        });
-      }
-    });
-    audioPlayer.onPlayerStateChanged.listen((state) {
-      if (mounted) setState(() => isPlaying = state == PlayerState.playing);
-    });
-  }
-
-  @override
-  void dispose() {
-    audioPlayer.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () async {
-              if (isPlaying) {
-                await audioPlayer.pause();
-              } else {
-                await audioPlayer.play(UrlSource(widget.call.resourceUrl));
-              }
-            },
-            child: CircleAvatar(
-              backgroundColor: const Color(0xFF2a86c9),
-              radius: 14,
-              child: Icon(
-                isPlaying ? Icons.pause : Icons.play_arrow,
-                color: Colors.white,
-                size: 18,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$currentPostLabel / ${widget.call.callDurationHr}',
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade700),
-          ),
-          Expanded(
-            child: SizedBox(
-              height: 20,
-              child: SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 2,
-                  thumbShape:
-                      const RoundSliderThumbShape(enabledThumbRadius: 6),
-                  overlayShape:
-                      const RoundSliderOverlayShape(overlayRadius: 12),
-                  activeTrackColor: const Color(0xFF2a86c9),
-                  inactiveTrackColor: Colors.grey.shade300,
-                  thumbColor: const Color(0xFF2a86c9),
-                ),
-                child: Slider(
-                  min: 0,
-                  max: duration.inMilliseconds.toDouble() > 0
-                      ? duration.inMilliseconds.toDouble()
-                      : 1,
-                  value: position.inMilliseconds.toDouble().clamp(
-                      0,
-                      duration.inMilliseconds.toDouble() > 0
-                          ? duration.inMilliseconds.toDouble()
-                          : 1),
-                  onChanged: (value) {
-                    audioPlayer.seek(Duration(milliseconds: value.toInt()));
-                  },
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

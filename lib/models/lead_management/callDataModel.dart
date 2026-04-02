@@ -103,7 +103,7 @@ class CallHistoryData {
         time: json["time"] ?? "",
         callDuration: json["CallDuration"] ?? 0,
         callDurationHr: json["CallDurationHr"] ?? "",
-        resourceUrl: json["ResourceURL"] ?? "",
+        resourceUrl: json["ResourceURL"] ?? json["resourceURL"] ?? json["resourceUrl"] ?? "",
         status: json["Status"] ?? "",
         isAttended: json["isAttended"] ?? false,
         direction: json["Direction"] ?? "",

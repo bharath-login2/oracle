@@ -124,6 +124,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       if (mounted) setState(() => isLoadingSettings = false);
     }
   }
+
   String code = '91', whatsappCode = '91', roleId = '', multiBranch = '';
   String? branch;
   String? contactPermission, createLeadCategory, addLeadSource;
@@ -396,12 +397,20 @@ class _EditLeadNewState extends State<EditLeadNew> {
                 // const SizedBox(height: 12),
                 _buildStatusField(),
                 const SizedBox(height: 12),
-                if (leadSettings != null ? leadSettings!.isFollowupRequiredBool : (callResultId == '2')) _buildFollowupRow(),
+                if (leadSettings != null
+                    ? leadSettings!.isFollowupRequiredBool
+                    : (callResultId == '2'))
+                  _buildFollowupRow(),
                 const SizedBox(height: 12),
 
-                if (leadSettings != null ? leadSettings!.isFollowupRequiredBool || callResultId == '2' || callResultId == '3' || callResultId == '4' : (callResultId == '2' ||
-                    callResultId == '3' ||
-                    callResultId == '4'))
+                if (leadSettings != null
+                    ? leadSettings!.isFollowupRequiredBool ||
+                        callResultId == '2' ||
+                        callResultId == '3' ||
+                        callResultId == '4'
+                    : (callResultId == '2' ||
+                        callResultId == '3' ||
+                        callResultId == '4'))
                   _buildCallResponseField(),
 
                 const SizedBox(height: 12),
@@ -1075,35 +1084,24 @@ class _EditLeadNewState extends State<EditLeadNew> {
                                       .contains(v.toLowerCase()))
                                   .toList())),
                           Expanded(
-                              child: ListView.builder(
-                                  itemCount: list.length + 1,
-                                  itemBuilder: (c, i) {
-                                    if (i == 0) {
-                                      return ListTile(
-                                          title: const Text('Un Assigned'),
-                                          onTap: () {
-                                            setState(() {
-                                              assignStaff = 'Un Assigned';
-                                              assignStaffCtrl.text =
-                                                  assignStaff;
-                                              assignStaffId = '';
-                                            });
-                                            Navigator.pop(context);
-                                          });
-                                    }
-                                    final staff = list[i - 1];
-                                    return ListTile(
-                                        title: Text(staff.staffName!),
-                                        onTap: () {
-                                          setState(() {
-                                            assignStaff = staff.staffName!;
-                                            assignStaffCtrl.text = assignStaff;
-                                            assignStaffId =
-                                                staff.userId.toString();
-                                          });
-                                          Navigator.pop(context);
-                                        });
-                                  }))
+                            child: ListView.builder(
+                              itemCount: list.length,
+                              itemBuilder: (c, i) {
+                                final staff = list[i];
+                                return ListTile(
+                                  title: Text(staff.staffName!),
+                                  onTap: () {
+                                    setState(() {
+                                      assignStaff = staff.staffName!;
+                                      assignStaffCtrl.text = assignStaff;
+                                      assignStaffId = staff.userId.toString();
+                                    });
+                                    Navigator.pop(context);
+                                  },
+                                );
+                              },
+                            ),
+                          )
                         ])),
                   ));
         });

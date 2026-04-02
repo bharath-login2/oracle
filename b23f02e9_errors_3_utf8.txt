@@ -1,0 +1,54 @@
+﻿Analyzing dashboardleadsnewupdated2.dart...                     
+
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:838:30 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:987:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:2452:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:2466:20 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:2470:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5383:11 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5722:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5724:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5726:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5749:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5751:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:5753:17 - curly_braces_in_flow_control_structures
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6293:15 - dead_null_aware_expression
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6466:60 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:6726:60 - use_build_context_synchronously
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:7522:67 - dead_null_aware_expression
+warning - The declaration '_buildCompactDateChip' isn't referenced - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:10622:10 - unused_element
+warning - The declaration '_showDatePicker' isn't referenced - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:10935:16 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11729:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11731:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11919:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:11921:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12116:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12118:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12313:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:12315:23 - use_build_context_synchronously
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:14770:51 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:14771:53 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:14772:49 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:15682:51 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:15683:53 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:15684:49 - dead_null_aware_expression
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17082:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17083:36 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17086:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17097:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17098:39 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17101:42 - use_build_context_synchronously
+warning - The declaration '_handleStageIconTap' isn't referenced - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17105:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17112:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17113:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17116:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17127:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17128:43 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17131:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17142:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17143:45 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17146:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17173:23 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17174:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\leadmanagement\dashboardleadsnewupdated2.dart:17177:42 - use_build_context_synchronously
+

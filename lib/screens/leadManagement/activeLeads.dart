@@ -319,8 +319,6 @@ class _ActiveLeadsState extends State<ActiveLeads>
     }
   }
 
-
-
   void _showCallInitiatedMessage() {
     Common.toastMessaage("Call initiated", callGreen);
   }
@@ -451,7 +449,7 @@ class _ActiveLeadsState extends State<ActiveLeads>
         Map<String, dynamic> body =
             _buildRequestBody(status1, sort, currentPage, isFirst);
         log("API Request Body: $body");
-        apiResponse = await HttpService.viewLeadsforActive(body);
+        apiResponse = await HttpService.viewLeadsforActiveNew(body);
       }
 
       if (apiResponse != null) {

@@ -146,6 +146,74 @@ class Common {
           mode: LaunchMode.externalApplication);
     }
   }
+
+  static Future<bool> showLocationDisclosure(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.blue),
+                SizedBox(width: 8),
+                Text("Location Access Disclosure",
+                    style: TextStyle(fontSize: 18)),
+              ],
+            ),
+            content: const SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "We collect your location data only when you use the app to:",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                      "• Verify your presence within the permitted work location during attendance"),
+                  Text(
+                      "• Record your location at the time of login and logout"),
+                  Text(
+                      "• Identify the location from where work-related data is updated"),
+                  SizedBox(height: 12),
+                  Text(
+                    "This data is used by the organization/admin to monitor attendance and work activity.",
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    "Your location is collected only while using the app and is not tracked in the background.",
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.blue,
+                        fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Deny", style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child:
+                    const Text("Allow", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
 }
 
 RegExp regex = RegExp(PatterStrings.email);

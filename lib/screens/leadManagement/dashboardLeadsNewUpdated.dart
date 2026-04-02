@@ -11119,7 +11119,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                     leadProgressbarDialog(
                       context,
                       label,
-                      "\$label Insights",
+                      "\$label List",
                       status,
                       leadType ?? "",
                       callStatus: callStatus,
@@ -11308,7 +11308,7 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                     leadProgressbarDialog(
                       context,
                       label,
-                      "$label Insights",
+                      "$label List",
                       status,
                       leadType ?? "",
                       callStatus: callStatus,

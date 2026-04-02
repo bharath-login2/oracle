@@ -4,7 +4,6 @@ import 'dart:developer';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_auto_orientation/flutter_auto_orientation.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -101,10 +100,10 @@ import '../drawerScreen.dart';
 import '../../models/lead_management/BulkTransferLeadModel.dart';
 
 class DashboardLeadNewUpdatedTwo extends StatefulWidget {
-  String? token;
+  final String? token;
   final GlobalKey<_DashboardLeadNewUpdatedTwoState>? dashboardKey;
 
-  DashboardLeadNewUpdatedTwo(this.token, {super.key, this.dashboardKey});
+  const DashboardLeadNewUpdatedTwo(this.token, {super.key, this.dashboardKey});
 
   @override
   State<DashboardLeadNewUpdatedTwo> createState() =>
@@ -148,7 +147,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   String _activeGraphCategory = "New";
   bool isVisible = true;
   bool toggle = false;
-  bool _isTabControllerInitialized = false;
   static const String keyCallStatusReport = "cache_call_status_report_v2";
   static const String keyCallStatusLastUpdated = "cache_call_status_updated_v2";
   static const String keyStageWiseReport = "cache_stage_wise_report_v2";
@@ -299,7 +297,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     const Color(0xFF2196F3), // Vibrant Blue (index 0)
     const Color(0xFF2196F3), // Blue at index 1 for "New"
     const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
-    const Color(0xFFFFC107), // Amber/Yellow at index 3 for Followup
+    const Color.fromARGB(
+        255, 255, 7, 7), // Amber/Yellow at index 3 for Followup
     const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
     const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
     const Color(0xFF9C27B0), // Purple 500 (index 6)
@@ -397,7 +396,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       vsync: this,
     );
     _tabController.addListener(_handleTabSelection);
-    _isTabControllerInitialized = true;
     _loadReportStates().then((_) {
       _loadReportsFromCache();
     });
@@ -450,10 +448,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     String? lsFrom = await Common.getSharedPref("leadSourceFromDate");
     String? lsTo = await Common.getSharedPref("leadSourceToDate");
-    String? cloudCallPermission =
-        await Common.getSharedPref("cloudCallPermission");
-    if (lsFrom != null) leadSourceFromDate = DateTime.parse(lsFrom);
-    if (lsTo != null) leadSourceToDate = DateTime.parse(lsTo);
+    if (lsFrom != null) {
+      leadSourceFromDate = DateTime.parse(lsFrom);
+    }
+    if (lsTo != null) {
+      leadSourceToDate = DateTime.parse(lsTo);
+    }
 
     String? catFrom = await Common.getSharedPref("categoryFromDate");
     String? catTo = await Common.getSharedPref("categoryToDate");
@@ -461,28 +461,34 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (catTo != null) categoryToDate = DateTime.parse(catTo);
 
     String? csStaffs = await Common.getSharedPref("callStatusStaffIdStr");
-    if (csStaffs != null && csStaffs.isNotEmpty)
+    if (csStaffs != null && csStaffs.isNotEmpty) {
       callStatusStaffs = csStaffs.split(",");
+    }
 
     String? swStaffs = await Common.getSharedPref("stageWiseStaffIdStr");
-    if (swStaffs != null && swStaffs.isNotEmpty)
+    if (swStaffs != null && swStaffs.isNotEmpty) {
       stageWiseStaffs = swStaffs.split(",");
+    }
 
     String? lsStaffs = await Common.getSharedPref("leadSourceStaffIdStr");
-    if (lsStaffs != null && lsStaffs.isNotEmpty)
+    if (lsStaffs != null && lsStaffs.isNotEmpty) {
       leadSourceStaffs = lsStaffs.split(",");
+    }
 
     String? lsProds = await Common.getSharedPref("leadSourceProductIdStr");
-    if (lsProds != null && lsProds.isNotEmpty)
+    if (lsProds != null && lsProds.isNotEmpty) {
       leadSourceProducts = lsProds.split(",");
+    }
 
     String? lsCats = await Common.getSharedPref("leadSourceCategoryIdStr");
-    if (lsCats != null && lsCats.isNotEmpty)
+    if (lsCats != null && lsCats.isNotEmpty) {
       leadSourceCategories = lsCats.split(",");
+    }
 
     String? catStaffs = await Common.getSharedPref("categoryStaffIdStr");
-    if (catStaffs != null && catStaffs.isNotEmpty)
+    if (catStaffs != null && catStaffs.isNotEmpty) {
       categoryStaffs = catStaffs.split(",");
+    }
 
     setState(() {});
   }
@@ -564,7 +570,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         if (_isGraphViewActive) {
           await _fetchProgressBarLeads(_listTabFilter);
         } else {
-          await _fetchTabLeads();
+          _listTabFilter == "Followup"
+              ? await _fetchTabLeadsActive()
+              : await _fetchTabLeads();
         }
         await _fetchDashboardTabContent();
       }
@@ -594,7 +602,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           userId: staffId ?? targetStaffId ?? userId,
           targetFromDate: targetFDate,
           targetToDate: targetTDate);
-      final staffResponse = await HttpService.getStaffsTelecaller();
+      final staffResponse = await HttpService.getStaffsSomeof();
       if (staffResponse != null && staffResponse.status) {
         staffList = staffResponse.data;
       }
@@ -776,9 +784,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     accPermission = await Common.getSharedPref("accPermission") ?? "";
     String tog = await Common.getSharedPref("acc_toggle") ?? "";
     toggle = tog == "true";
-    if (targetStaffId == null) {
-      targetStaffId = userId;
-    }
+    targetStaffId ??= userId;
   }
 
   Future<void> _checkLoginPrompt() async {
@@ -793,7 +799,25 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             _showLoginPrompt(context);
           }
         });
+      } else {
+        _handleLocationCheckOnly();
       }
+    } else if (loginOrNot?.data == true) {
+      _handleLocationCheckOnly();
+    }
+  }
+
+  Future<void> _handleLocationCheckOnly() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (mounted) {
+          final bool allowed = await Common.showLocationDisclosure(context);
+          if (allowed) {
+            await Geolocator.requestPermission();
+          }
+        }
+      });
     }
   }
 
@@ -831,8 +855,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 final prefs = await SharedPreferences.getInstance();
                 final today = DateTime.now().toIso8601String().substring(0, 10);
                 await prefs.setString('loginPromptDismissedDate', today);
-                if (!mounted) return;
-                Navigator.of(dialogContext).pop();
+                if (mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
               },
               child: const Text(
                 "Later",
@@ -934,6 +959,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   Future<Position?> _getLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+      if (mounted) {
+        final bool allowed = await Common.showLocationDisclosure(context);
+        if (!allowed) {
+          _showError("Location permission denied by user.");
+          return null;
+        }
+      }
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         _showError("Location permission required");
@@ -1074,10 +1106,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   Future<void> getLeadProgressBarStaffData({
     required String leadStatus,
     required String selectedType,
+    DateTime? customFromDate,
+    DateTime? customToDate,
   }) async {
     staffProgressData = await HttpService.leadProgressBarStaff(
-      fromDate: fromDate.toString(),
-      toDate: toDate.toString(),
+      fromDate: customFromDate?.toString() ?? fromDate.toString(),
+      toDate: customToDate?.toString() ?? toDate.toString(),
       leadStatus: leadStatus,
       selectedType: selectedType,
     );
@@ -1085,20 +1119,24 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
   Future<void> getLeadProgressBarCategoryData({
     required String leadStatus,
+    DateTime? customFromDate,
+    DateTime? customToDate,
   }) async {
     categoryProgressData = await HttpService.leadProgressBarCategory(
-      fromDate: fromDate.toString(),
-      toDate: toDate.toString(),
+      fromDate: customFromDate?.toString() ?? fromDate.toString(),
+      toDate: customToDate?.toString() ?? toDate.toString(),
       leadStatus: leadStatus,
     );
   }
 
   Future<void> getLeadProgressBarStatusData({
     required String leadStatus,
+    DateTime? customFromDate,
+    DateTime? customToDate,
   }) async {
     statusProgressData = await HttpService.leadProgressBarStatus(
-      fromDate: fromDate.toString(),
-      toDate: toDate.toString(),
+      fromDate: customFromDate?.toString() ?? fromDate.toString(),
+      toDate: customToDate?.toString() ?? toDate.toString(),
       leadStatus: leadStatus,
     );
   }
@@ -1781,7 +1819,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     final categories = commonDetails?.data.leadCategory ?? [];
 
     String selectedCategory = 'Date Range';
-    final DateFormat _formatter = DateFormat('dd-MM-yyyy');
+    final DateFormat formatter = DateFormat('dd-MM-yyyy');
     TextEditingController searchController = TextEditingController();
     TextEditingController searchProductController = TextEditingController();
     TextEditingController searchCategoryController = TextEditingController();
@@ -1795,12 +1833,18 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           Widget buildCategoryItem(String categoryName, IconData icon) {
             final isSelected = selectedCategory == categoryName;
             bool hasFilters = false;
-            if (categoryName == 'Date Range') hasFilters = true;
-            if (categoryName == 'Staff') hasFilters = tempStaffIds.isNotEmpty;
-            if (categoryName == 'Products')
+            if (categoryName == 'Date Range') {
+              hasFilters = true;
+            }
+            if (categoryName == 'Staff') {
+              hasFilters = tempStaffIds.isNotEmpty;
+            }
+            if (categoryName == 'Products') {
               hasFilters = tempProductIds.isNotEmpty;
-            if (categoryName == 'Categories')
+            }
+            if (categoryName == 'Categories') {
               hasFilters = tempCategoryIds.isNotEmpty;
+            }
 
             return GestureDetector(
               onTap: () => setModalState(() => selectedCategory = categoryName),
@@ -1894,7 +1938,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                 fontSize: 10, color: Color(0xFF8F9BB3))),
                         Text(
                             value != null
-                                ? _formatter.format(value)
+                                ? formatter.format(value)
                                 : 'Select Date',
                             style: const TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w500)),
@@ -2826,7 +2870,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   ? closedCount
                   : (dashboardCounts?.data?.leads?.closedLeads ?? 0).toString(),
               color: callGreen,
-              child: _buildBoxIcons('Closed', '4', 'Closed Leads'),
+              child: _buildBoxIcons('Closed', '4', 'Closed Leads',
+                  customFromDate:
+                      isClosedDateFiltered ? fromDateClosed : fromDate,
+                  customToDate: isClosedDateFiltered ? toDateClosed : toDate),
             ),
             _buildDashboardBox(
               title: 'Lost',
@@ -2835,7 +2882,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   : (dashboardCounts?.data?.leads?.rejectedLeads ?? 0)
                       .toString(),
               color: accentRed,
-              child: _buildBoxIcons('Lost', '3', 'Lost Leads'),
+              child: _buildBoxIcons('Lost', '3', 'Lost Leads',
+                  customFromDate: isLostDateFiltered ? fromDateLost : fromDate,
+                  customToDate: isLostDateFiltered ? toDateLost : toDate),
             ),
           ],
         ),
@@ -2923,7 +2972,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             child: Text("No targets available"),
           )
         else
-          ...targets.map((target) => _buildTargetItem(target)).toList(),
+          ...targets.map((target) => _buildTargetItem(target)),
       ],
     );
   }
@@ -3339,7 +3388,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           ),
         ),
         const SizedBox(height: 12),
-        Container(
+        SizedBox(
           height: 90,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -3648,16 +3697,26 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               (double.tryParse(data.totalCount ?? "0") ?? 0)
                           : 0,
                       color: _getStaffColor(entry.key),
-                      onTap: () => _navigateToFilteredLeads(
-                          context: context,
-                          staffName: entry.value.staffName,
-                          staffId: entry.value.staffId,
-                          title: currentTitle,
-                          status: currentStatus,
-                          type: currentType,
-                          callStatus: currentCallStatus),
+                      onTap: () => _activeGraphCategory == "Followup"
+                          ? _navigateToFilteredLeadsActive(
+                              context: context,
+                              staffName: entry.value.staffName,
+                              staffId: entry.value.staffId,
+                              title: currentTitle,
+                              status: currentStatus,
+                              type: currentType,
+                              callStatus: currentCallStatus,
+                              isFollowup: "1")
+                          : _navigateToFilteredLeads(
+                              context: context,
+                              staffName: entry.value.staffName,
+                              staffId: entry.value.staffId,
+                              title: currentTitle,
+                              status: currentStatus,
+                              type: currentType,
+                              callStatus: currentCallStatus),
                     );
-                  }).toList(),
+                  }),
                 ],
                 if (data.categoryLeads != null &&
                     data.categoryLeads!.isNotEmpty) ...[
@@ -3690,7 +3749,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           type: currentType,
                           callStatus: currentCallStatus),
                     );
-                  }).toList(),
+                  }),
                 ],
                 if (data.missedLeads != null &&
                     data.missedLeads!.isNotEmpty) ...[
@@ -3725,7 +3784,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           type: currentType,
                           callStatus: currentCallStatus),
                     );
-                  }).toList(),
+                  }),
                 ],
                 const SizedBox(height: 16),
                 Container(
@@ -3771,7 +3830,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     String? staffId,
     String? categoryName,
     String? categoryId,
-    String? label,
     String? title,
     String? status,
     String? type,
@@ -3819,7 +3877,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     String? staffId,
     String? categoryName,
     String? categoryId,
-    String? label,
     String? title,
     String? status,
     String? type,
@@ -3828,6 +3885,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     String? callResId,
     DateTime? from,
     DateTime? to,
+    String? isFollowup,
     bool isGlobalContext = false,
   }) {
     Navigator.push(
@@ -3858,6 +3916,52 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               callResId: callResId,
               callResName: callResName,
               isActiveReport: "1",
+              isFollowup: isFollowup,
+              callStatus: callStatus)),
+    ).then((r) => getData(widget.token, fromDate, toDate, isRefresh: true));
+  }
+
+  void _navigateToFilteredLeadsActiveActive({
+    required BuildContext context,
+    String? staffName,
+    String? staffId,
+    String? categoryName,
+    String? categoryId,
+    String? title,
+    String? status,
+    String? type,
+    String? callStatus,
+    String? callResName,
+    String? callResId,
+    DateTime? from,
+    DateTime? to,
+    bool isGlobalContext = false,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => ActiveLeads(widget.token, updateLeadPermission1,
+              deleteLeadPermission1, cloudCallPermission1,
+              pageName: title ?? 'Leads',
+              fromDate: from != null
+                  ? from.toString()
+                  : (isGlobalContext
+                      ? (_isGlobalDateFiltered ? fromDate.toString() : null)
+                      : (_isListTabDateFiltered ? fromDate.toString() : null)),
+              toDate: to != null
+                  ? to.toString()
+                  : (isGlobalContext
+                      ? (_isGlobalDateFiltered ? toDate.toString() : null)
+                      : (_isListTabDateFiltered ? toDate.toString() : null)),
+              status: status ?? '0',
+              leadType: type ?? '',
+              staffName: staffName,
+              staff: staffId,
+              categoryName: categoryName,
+              category: categoryId,
+              callResId: callResId,
+              callResName: callResName,
+              //  isActiveReport: "1",
               callStatus: callStatus)),
     ).then((r) => getData(widget.token, fromDate, toDate, isRefresh: true));
   }
@@ -4136,38 +4240,27 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   currentTab: _listTabFilter,
                                   initialFilters: {
                                     'isDateFiltered': _isListTabDateFiltered,
-                                    'fromDate': _isListTabDateFiltered
-                                        ? fromDate
-                                        : null,
-                                    'toDate':
-                                        _isListTabDateFiltered ? toDate : null,
+                                    'fromDate': fromDate,
+                                    'toDate': toDate,
                                     'statusIds': _listTabSelectedStatusIds,
                                     'staffIds': _listTabSelectedStaffIds,
                                     'categoryIds': _listTabSelectedCategoryIds,
                                     'priorityIds': _listTabSelectedPriorityIds,
                                     'productIds': _listTabSelectedProductIds,
                                   },
+                                  isActiveLeads:
+                                      _listTabFilter == "Followup" ? "1" : "",
                                   onApplyFilters: (filters) {
                                     setState(() {
                                       _isListTabLoading = true;
                                       listTabLeads =
                                           []; // Immediate visual reset
 
-                                      // Reset dates to original state if null in filters
-                                      if (filters['fromDate'] == null &&
-                                          filters['isDateFiltered'] == false) {
-                                        fromDate = DateTime.now();
-                                      } else {
-                                        fromDate =
-                                            filters['fromDate'] ?? fromDate;
-                                      }
-
-                                      if (filters['toDate'] == null &&
-                                          filters['isDateFiltered'] == false) {
-                                        toDate = DateTime.now();
-                                      } else {
-                                        toDate = filters['toDate'] ?? toDate;
-                                      }
+                                      // Reset to now if filters are null (cleared from widget)
+                                      fromDate =
+                                          filters['fromDate'] ?? DateTime.now();
+                                      toDate =
+                                          filters['toDate'] ?? DateTime.now();
 
                                       _listTabSelectedStatusIds =
                                           List<String>.from(
@@ -4527,6 +4620,99 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
+  Future<void> _fetchTabLeadsActive({
+    String? status,
+    String? leadType,
+    String? callStatus,
+    bool? isCalled,
+    bool isLoadMore = false,
+  }) async {
+    if (isLoadMore) {
+      if (_isListTabLoadingMore || !_hasMoreListTabLeads) return;
+      setState(() {
+        _isListTabLoadingMore = true;
+      });
+      _listTabPage++;
+    } else {
+      setState(() {
+        _isListTabLoading = true;
+        _listTabPage = 1;
+        _hasMoreListTabLeads = true;
+        if (status != null) _listTabCurrentStatus = status;
+        if (leadType != null) _listTabCurrentLeadType = leadType;
+        if (callStatus != null) _listTabCurrentCallStatus = callStatus;
+        if (isCalled != null) _listTabCurrentIsCalled = isCalled;
+      });
+    }
+
+    Map<String, dynamic> body = {
+      "token": widget.token,
+      "callResultId":
+          _listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? ""),
+      "leadCategoryId": _listTabSelectedCategoryIds,
+      "leadSubcategoryId": [],
+      "callResponseId": _listTabSelectedStatusIds,
+      "callStatus": _listTabCurrentCallStatus ?? "",
+      "staffId": _listTabSelectedStaffIds,
+      "isCalled": _listTabCurrentIsCalled ?? true,
+      "productId": _listTabSelectedProductIds,
+      "sort": _listTabSortOrder,
+      "page": _listTabPage,
+      "pageSize": 10,
+      "isFirst": !isLoadMore,
+      "leadType": _listTabCurrentLeadType ?? "",
+      "priority": _listTabSelectedPriorityIds,
+      "call_result_reason": _listTabSelectedTagIds,
+    };
+
+    bool shouldSendDates = _isListTabDateFiltered ||
+        (_listTabCurrentLeadType == "-1" ||
+            _listTabCurrentLeadType == "1" ||
+            _listTabCurrentLeadType == "2" ||
+            _listTabCurrentStatus == "4");
+    body["filterStatus"] = shouldSendDates ? 1 : 0;
+    body["fromDate"] =
+        shouldSendDates ? DateFormat('yyyy-MM-dd').format(fromDate) : "";
+    body["toDate"] =
+        shouldSendDates ? DateFormat('yyyy-MM-dd').format(toDate) : "";
+
+    try {
+      final response = await HttpService.viewLeadsforActive(body);
+      if (response != null && response.data != null) {
+        final newLeads = response.data.details;
+        setState(() {
+          if (isLoadMore) {
+            listTabLeads.addAll(newLeads);
+          } else {
+            listTabLeads = newLeads;
+          }
+          _listTabCallPermission = response.data.callPermission ?? true;
+          _totalLeads = response.data.totalLeads;
+          _hasMoreListTabLeads = newLeads.length >= 10;
+          _isListTabLoading = false;
+          _isListTabLoadingMore = false;
+        });
+      } else {
+        setState(() {
+          if (!isLoadMore) {
+            listTabLeads = [];
+            _totalLeads = 0;
+          }
+          _hasMoreListTabLeads = false;
+          _isListTabLoading = false;
+          _isListTabLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      log("Error fetching tab leads: $e");
+      setState(() {
+        if (!isLoadMore) listTabLeads = [];
+        _isListTabLoading = false;
+        _isListTabLoadingMore = false;
+      });
+    }
+  }
+
   Future<void> _fetchTabLeads({
     String? status,
     String? leadType,
@@ -4568,10 +4754,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "pageSize": 10,
       "isFirst": !isLoadMore,
       "leadType": _listTabCurrentLeadType ?? "",
+      "priority": _listTabSelectedPriorityIds,
       "call_result_reason": _listTabSelectedTagIds,
     };
 
-    bool shouldSendDates = _isListTabFilterApplied ||
+    bool shouldSendDates = _isListTabDateFiltered ||
         (_listTabCurrentLeadType == "-1" ||
             _listTabCurrentLeadType == "1" ||
             _listTabCurrentLeadType == "2" ||
@@ -5141,14 +5328,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               color: lead.callResultId >= 0 &&
                                       lead.callResultId < _colors.length
                                   ? _colors[lead.callResultId].withOpacity(0.15)
-                                  : accentOrange.withOpacity(0.15),
+                                  : const Color.fromARGB(255, 247, 185, 62)
+                                      .withOpacity(0.17),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                   color: lead.callResultId >= 0 &&
                                           lead.callResultId < _colors.length
                                       ? _colors[lead.callResultId]
                                           .withOpacity(0.4)
-                                      : accentOrange.withOpacity(0.4),
+                                      : const Color.fromARGB(255, 245, 231, 108)
+                                          .withOpacity(0.4),
                                   width: 1),
                             ),
                             child: Text(
@@ -5563,9 +5752,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     } else if (title == "Phone Call Graph") {
       reportContent = _buildPhoneCallGraph();
     } else {
-      if (index == 1)
+      if (index == 1) {
         reportContent = _buildCallStatusReport(isFlipped: isFlipped);
-      else if (index == 2)
+      } else if (index == 2)
         reportContent = _buildStageWiseReport(isFlipped: isFlipped);
       else if (index == 3)
         reportContent = _buildLeadSourceReport(isFlipped: isFlipped);
@@ -5590,9 +5779,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     : (index == 3 ? "reportType3" : "reportType4"));
             Common.saveSharedPref(key, newType);
             setState(() {
-              if (index == 1)
+              if (index == 1) {
                 _reportType1 = newType;
-              else if (index == 2)
+              } else if (index == 2)
                 _reportType2 = newType;
               else if (index == 3)
                 _reportType3 = newType;
@@ -5737,10 +5926,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildCallStatusReport({bool isFlipped = false}) {
-    if (isCallStatusLoading)
+    if (isCallStatusLoading) {
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
+    }
 
     var details = callStatusReport?.data?.details ?? [];
     if (details.isEmpty) return _buildEmptyReport();
@@ -5776,8 +5966,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   onHorizontalDragEnd: (details) {
                     if (details.primaryVelocity! < 0) {
                       setState(() => showCallStatusTable = true);
-                      if (callStatusTableData == null)
+                      if (callStatusTableData == null) {
                         _fetchCallStatusTableReport();
+                      }
                     }
                   },
                   child: Container(
@@ -5994,10 +6185,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildStageWiseReport({bool isFlipped = false}) {
-    if (isStageWiseLoading)
+    if (isStageWiseLoading) {
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
+    }
 
     var details = stagewiseReport?.data.details ?? [];
     int totalCount = stagewiseReport?.data.totalCount ?? 0;
@@ -6035,8 +6227,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   onHorizontalDragEnd: (details) {
                     if (details.primaryVelocity! < 0) {
                       setState(() => showStageWiseTable = true);
-                      if (stageWiseTableData == null)
+                      if (stageWiseTableData == null) {
                         _fetchStageWiseTableReport();
+                      }
                     }
                   },
                   child: Container(
@@ -6126,14 +6319,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
         if (mounted) Navigator.pop(context);
         if (result != null) {
-          final drillDownDetails = result.data?.details
-                  ?.map((s) => {
-                        'name': s.staffName,
-                        'count': s.total.toString(),
-                        'staffId': s.userId,
-                      })
-                  .toList() ??
-              [];
+          final drillDownDetails = result.data.details
+              .map((s) => {
+                    'name': s.staffName,
+                    'count': s.total.toString(),
+                    'staffId': s.userId,
+                  })
+              .toList();
           _showReportDetailsDialog('$title Stage', drillDownDetails, color,
               onStaffTap: (staffItem) {
             Navigator.pop(context);
@@ -6207,10 +6399,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildLeadSourceReport({bool isFlipped = false}) {
-    if (isLeadSourceLoading)
+    if (isLeadSourceLoading) {
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
+    }
 
     String staffNames = "";
     if (leadSourceStaffs.isNotEmpty && staffList.isNotEmpty) {
@@ -6219,7 +6412,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           .map((s) => s.name)
           .join(", ");
     }
-    int totalCount = leadSourceReport?.data?.totalCount ?? 0;
+    int totalCount = leadSourceReport?.data.totalCount ?? 0;
 
     if (leadSourceDetails.isEmpty) {
       return _buildEmptyReport();
@@ -6247,8 +6440,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   onHorizontalDragEnd: (details) {
                     if (details.primaryVelocity! < 0) {
                       setState(() => showLeadSourceTable = true);
-                      if (leadSourceTableData == null)
+                      if (leadSourceTableData == null) {
                         _fetchLeadSourceTableReport();
+                      }
                     }
                   },
                   child: Container(
@@ -6459,10 +6653,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildCategoryReport({bool isFlipped = false}) {
-    if (isCategoryLoading)
+    if (isCategoryLoading) {
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
+    }
 
     String staffNames = "";
     if (categoryStaffs.isNotEmpty && staffList.isNotEmpty) {
@@ -6498,8 +6693,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   onHorizontalDragEnd: (details) {
                     if (details.primaryVelocity! < 0) {
                       setState(() => showCategoryTable = true);
-                      if (categoryTableData == null)
+                      if (categoryTableData == null) {
                         _fetchCategoryTableReport();
+                      }
                     }
                   },
                   child: Container(
@@ -6717,12 +6913,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildCallStatusMatrixTable({bool isFlipped = false}) {
-    if (isCallStatusTableLoading)
+    if (isCallStatusTableLoading) {
       return const Padding(
           padding: EdgeInsets.all(24),
           child: Center(child: CircularProgressIndicator()));
-    if (callStatusTableData == null || callStatusTableData!.data.isEmpty)
+    }
+    if (callStatusTableData == null || callStatusTableData!.data.isEmpty) {
       return _buildEmptyReport();
+    }
 
     final headers = callStatusTableData!.data.first.statuses;
 
@@ -6892,7 +7090,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         );
                       }),
                     );
-                  }).toList(),
+                  }),
                   // Total row in left column
                   if (totalRow != null)
                     Container(
@@ -7007,7 +7205,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                     // Total row in right columns
                     if (totalRow != null)
                       Container(
@@ -7049,12 +7247,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildStageWiseMatrixTable({bool isFlipped = false}) {
-    if (isStageWiseTableLoading)
+    if (isStageWiseTableLoading) {
       return const Padding(
           padding: EdgeInsets.all(24),
           child: Center(child: CircularProgressIndicator()));
-    if (stageWiseTableData == null || stageWiseTableData!.data.isEmpty)
+    }
+    if (stageWiseTableData == null || stageWiseTableData!.data.isEmpty) {
       return _buildEmptyReport();
+    }
 
     final data = List<swrt.StagewiseReportData>.from(stageWiseTableData!.data);
 
@@ -7236,7 +7436,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         );
                       }),
                     );
-                  }).toList(),
+                  }),
                   // Total row in left column
                   if (totalRow != null)
                     Container(
@@ -7331,7 +7531,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                     // Total row in right columns
                     if (totalRow != null)
                       Container(
@@ -7354,7 +7554,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     _getColWidth(st.callResult),
                                     isTotal: true)),
                             _buildMatrixTotalCell(
-                                totalRow.totalCount?.toString() ?? '0', 70,
+                                totalRow.totalCount.toString() ?? '0', 70,
                                 isSubTotal: true),
                             const SizedBox(width: 10),
                           ],
@@ -7373,12 +7573,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildLeadSourceMatrixTable({bool isFlipped = false}) {
-    if (isLeadSourceTableLoading)
+    if (isLeadSourceTableLoading) {
       return const Padding(
           padding: EdgeInsets.all(24),
           child: Center(child: CircularProgressIndicator()));
-    if (leadSourceTableData == null || leadSourceTableData!.data.isEmpty)
+    }
+    if (leadSourceTableData == null || leadSourceTableData!.data.isEmpty) {
       return _buildEmptyReport();
+    }
 
     final data =
         List<lsrt.LeadSourceReportData>.from(leadSourceTableData!.data);
@@ -7576,7 +7778,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         );
                       }),
                     );
-                  }).toList(),
+                  }),
                   // Total row in left column
                   if (totalRow != null)
                     Container(
@@ -7676,7 +7878,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                     // Total row in right columns
                     if (totalRow != null)
                       Container(
@@ -7718,12 +7920,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildCategoryMatrixTable({bool isFlipped = false}) {
-    if (isCategoryTableLoading)
+    if (isCategoryTableLoading) {
       return const Padding(
           padding: EdgeInsets.all(24),
           child: Center(child: CircularProgressIndicator()));
-    if (categoryTableData == null || (categoryTableData!.data?.isEmpty ?? true))
+    }
+    if (categoryTableData == null ||
+        (categoryTableData!.data?.isEmpty ?? true)) {
       return _buildEmptyReport();
+    }
 
     final data =
         List<catrt.StaffCategoryData>.from(categoryTableData!.data ?? []);
@@ -7921,7 +8126,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         );
                       }),
                     );
-                  }).toList(),
+                  }),
                   if (totalRow != null)
                     Container(
                       height: 55,
@@ -8042,7 +8247,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                     if (totalRow != null)
                       Container(
                         height: 55,
@@ -8223,7 +8428,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                 }
                               : null),
                     );
-                  }).toList(),
+                  }),
                   // Total row
                   if (totalRow != null)
                     Container(
@@ -8275,7 +8480,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             final header = entry.value;
                             final color = _getReportItemColor(header, idx);
                             final colWidth = _getColWidth(header);
-                            return Container(
+                            return SizedBox(
                               width: colWidth,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -8355,7 +8560,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                     // Total row
                     if (totalRow != null)
                       Container(
@@ -9272,10 +9477,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildCloudCallReport({bool isFlipped = false}) {
-    if (isCloudCallLoading)
+    if (isCloudCallLoading) {
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
+    }
     if (cloudCallReportData == null ||
         cloudCallReportData!.data == null ||
         cloudCallReportData!.data!.isEmpty) {
@@ -9307,10 +9513,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Widget _buildPhoneCallReport({bool isFlipped = false}) {
-    if (isPhoneCallLoading)
+    if (isPhoneCallLoading) {
       return const Padding(
           padding: EdgeInsets.all(20),
           child: Center(child: CircularProgressIndicator()));
+    }
     if (phoneCallReportData == null ||
         phoneCallReportData!.data == null ||
         phoneCallReportData!.data!.isEmpty) {
@@ -9445,7 +9652,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         },
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -9567,7 +9774,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),
@@ -9723,7 +9930,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 ),
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -9994,7 +10201,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     } else if (dateStr == yesterdayStr) {
       prefix = "Yesterday ";
     } else {
-      prefix = DateFormat('dd MMM').format(lastUpdated) + " ";
+      prefix = "${DateFormat('dd MMM').format(lastUpdated)} ";
     }
 
     return "Updated $prefix${DateFormat('hh:mm a').format(lastUpdated)}";
@@ -10448,47 +10655,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
-  Widget _buildCompactDateChip({
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.calendar_today_rounded, size: 12, color: primaryBlue),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildActionChip({
     required IconData icon,
     required String label,
@@ -10759,37 +10925,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         ),
       ),
     );
-  }
-
-  Future<void> _showDatePicker({required bool isFrom}) async {
-    final DateTime initial = isFrom ? fromDate : toDate;
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryBlue,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        if (isFrom) {
-          fromDate = picked;
-        } else {
-          toDate = picked;
-        }
-      });
-      getData(widget.token, fromDate, toDate);
-    }
   }
 
   void _handleModuleNavigation(String? menuName) {
@@ -11214,7 +11349,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           '1',
                           isCalled: true,
                         ),
-                        _buildListSummaryItemOld(
+                        _buildListSummaryItemOldAcive(
                           'Followup',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts
@@ -11223,7 +11358,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.followupLeads.toString(),
                           Icons.schedule_rounded,
-                          _colors[2], // Standardized Amber
+                          _colors[2],
                           '2',
                           isCalled: false,
                         ),
@@ -11235,7 +11370,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.missedLeads.toString(),
                           Icons.event_busy_rounded,
-                          _colors[5], // Standardized Red
+                          _colors[5],
                           '0',
                           leadType: '1',
                           callStatus: '-1',
@@ -11250,7 +11385,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.totalCalled.toString(),
                           Icons.phone_in_talk_rounded,
-                          _colors[6], // Purple
+                          _colors[6],
                           '0',
                           leadType: '-1',
                           callStatus: '1',
@@ -11266,7 +11401,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : data.transferLeads.toString(),
                           Icons.swap_horiz_rounded,
-                          _colors[8], // Teal
+                          _colors[8],
                           '0',
                           leadType: '2',
                           callStatus: '-2',
@@ -11280,11 +11415,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   .toString()
                               : '0',
                           Icons.check_circle_outline_rounded,
-                          _colors[4], // Standardized Green
+                          _colors[4],
                           '4',
                           isCalled: false,
-                          graphId:
-                              '4', // Or whichever graph ID works for Closed
+                          graphId: '4',
                         ),
                       ],
                     ),
@@ -11303,14 +11437,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.newLeads.toString(),
                             Icons.person_add_rounded,
-                            _colors[1], // Standardized Blue for New
+                            _colors[1],
                             '1',
                             isCalled: true,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: _buildListSummaryItem(
+                          child: _buildListSummaryItemActive(
                             'Followup',
                             dashboardMainCounts != null
                                 ? (dashboardMainCounts
@@ -11319,7 +11453,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.followupLeads.toString(),
                             Icons.schedule_rounded,
-                            _colors[2], // Standardized Amber for Followup
+                            _colors[2],
                             '2',
                             isCalled: false,
                           ),
@@ -11335,7 +11469,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.missedLeads.toString(),
                             Icons.event_busy_rounded,
-                            _colors[5], // Standardized Red for Missed
+                            _colors[5],
                             '0',
                             leadType: '1',
                             callStatus: '-1',
@@ -11358,7 +11492,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     .toString()
                                 : data.totalCalled.toString(),
                             Icons.phone_in_talk_rounded,
-                            _colors[6], // Purple for Called
+                            _colors[6],
                             '0',
                             leadType: '-1',
                             callStatus: '1',
@@ -11404,6 +11538,196 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     ),
                   ],
                 ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListSummaryItemOldAcive(
+    String label,
+    String count,
+    IconData icon,
+    Color color,
+    String status, {
+    String? leadType,
+    String? callStatus,
+    bool? isCalled,
+    String? graphId,
+  }) {
+    bool isSelected = _listTabFilter == label;
+
+    return Container(
+      width: 72,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          InkWell(
+            onTap: () {
+              bool labelChanged = _listTabFilter != label;
+              setState(() {
+                _listTabFilter = label;
+                if (labelChanged) {
+                  _listTabSelectedStatusIds.clear();
+                  _listTabSelectedStaffIds.clear();
+                  _listTabSelectedCategoryIds.clear();
+                  _listTabSelectedPriorityIds.clear();
+                  _isListTabFilterApplied = false;
+                }
+                _listTabCurrentStatus = status;
+                _listTabCurrentLeadType = leadType ?? "";
+                _listTabCurrentCallStatus = callStatus ?? "";
+                _listTabCurrentIsCalled = isCalled;
+              });
+              if (_isGraphViewActive) {
+                _fetchProgressBarLeads(label);
+              } else {
+                _fetchTabLeadsActive(
+                  status: status,
+                  leadType: leadType ?? "",
+                  callStatus: callStatus ?? "",
+                  isCalled: isCalled,
+                );
+              }
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 72,
+              padding: const EdgeInsets.symmetric(horizontal: 1.5, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? color.withOpacity(0.12) : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isSelected ? color.withOpacity(0.4) : borderLight,
+                  width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: color.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                    : [],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 12,
+                        color: isSelected ? color : textSecondary,
+                      ),
+                      const SizedBox(width: 3),
+                      Flexible(
+                        child: Text(
+                          count,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? color : textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? color : textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: -6,
+            right: -6,
+            child: GestureDetector(
+              onTap: () async {
+                Common.showProgressDialog(context, "Loading Analytics..");
+                Common.saveSharedPref("statusWise", 'no');
+                String effectiveGraphStatus = graphId ??
+                    ((status == '0' && callStatus != null)
+                        ? callStatus
+                        : status);
+                label == "New"
+                    ? await getLeadProgressbarNew(
+                        widget.token!, fromDate, toDate, effectiveGraphStatus)
+                    : label == "Followup"
+                        ? await getLeadProgressbarFollowup(widget.token!,
+                            fromDate, toDate, effectiveGraphStatus)
+                        : label == "Missed"
+                            ? await getLeadProgressbarMissed(widget.token!,
+                                fromDate, toDate, effectiveGraphStatus)
+                            : label == "Called"
+                                ? await getLeadProgressbarCalled(widget.token!,
+                                    fromDate, toDate, effectiveGraphStatus)
+                                : label == "Transferred"
+                                    ? await getLeadProgressbarTransferred(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus)
+                                    : await getLeadProgressbar(widget.token!,
+                                        fromDate, toDate, effectiveGraphStatus);
+
+                if (object1!.status == true) {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    leadProgressbarDialog(
+                      context,
+                      label,
+                      "\$label Insights",
+                      status,
+                      leadType ?? "",
+                      callStatus: callStatus,
+                    );
+                  }
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, color.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.bar_chart_rounded,
+                  color: Colors.white,
+                  size: 10,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -11728,7 +12052,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 Common.saveSharedPref("statusWise", 'no');
                 String effectiveGraphStatus = graphId ??
                     ((status == '0' && callStatus != null)
-                        ? callStatus!
+                        ? callStatus
                         : status);
                 label == "New"
                     ? await getLeadProgressbarNew(
@@ -11796,8 +12120,206 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
+  Widget _buildListSummaryItemActive(
+    String label,
+    String count,
+    IconData icon,
+    Color color,
+    String status, {
+    String? leadType,
+    String? callStatus,
+    bool? isCalled,
+    String? graphId,
+  }) {
+    bool isSelected = _listTabFilter == label;
+
+    return SizedBox(
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8, right: 8),
+            child: InkWell(
+              onTap: () {
+                bool labelChanged = _listTabFilter != label;
+                setState(() {
+                  _listTabFilter = label;
+                  if (label == 'Closed') {
+                    fromDate = DateTime.now();
+                    toDate = DateTime.now();
+                  }
+                  if (labelChanged) {
+                    _listTabSelectedStatusIds.clear();
+                    _listTabSelectedStaffIds.clear();
+                    _listTabSelectedCategoryIds.clear();
+                    _listTabSelectedPriorityIds.clear();
+                    _isListTabFilterApplied = false;
+                  }
+                  _listTabCurrentStatus = status;
+                  _listTabCurrentLeadType = leadType ?? "";
+                  _listTabCurrentCallStatus = callStatus ?? "";
+                  _listTabCurrentIsCalled = isCalled;
+                });
+                if (_isGraphViewActive) {
+                  _fetchProgressBarLeads(label);
+                } else {
+                  _fetchTabLeadsActive(
+                    status: status,
+                    leadType: leadType ?? "",
+                    callStatus: callStatus ?? "",
+                    isCalled: isCalled,
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isSelected
+                        ? [color.withOpacity(0.25), color.withOpacity(0.1)]
+                        : [color.withOpacity(0.15), color.withOpacity(0.05)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isSelected
+                        ? color.withOpacity(0.5)
+                        : color.withOpacity(0.2),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: color.withOpacity(0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          )
+                        ]
+                      : [],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: color, size: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      count,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? color : textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    const SizedBox(height: 0),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected ? color : textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () async {
+                Common.showProgressDialog(context, "Loading Analytics..");
+                Common.saveSharedPref("statusWise", 'no');
+                String effectiveGraphStatus = graphId ??
+                    ((status == '0' && callStatus != null)
+                        ? callStatus
+                        : status);
+                label == "New"
+                    ? await getLeadProgressbarNew(
+                        widget.token!, fromDate, toDate, effectiveGraphStatus)
+                    : label == "Followup"
+                        ? await getLeadProgressbarFollowup(widget.token!,
+                            fromDate, toDate, effectiveGraphStatus)
+                        : label == "Missed"
+                            ? await getLeadProgressbarMissed(widget.token!,
+                                fromDate, toDate, effectiveGraphStatus)
+                            : label == "Called"
+                                ? await getLeadProgressbarCalled(widget.token!,
+                                    fromDate, toDate, effectiveGraphStatus)
+                                : label == "Transferred"
+                                    ? await getLeadProgressbarTransferred(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus)
+                                    : await getLeadProgressbar(widget.token!,
+                                        fromDate, toDate, effectiveGraphStatus);
+
+                if (object1!.status == true) {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    leadProgressbarDialogActive(
+                      context,
+                      label,
+                      "$label Insights",
+                      status,
+                      leadType ?? "",
+                      callStatus: callStatus,
+                    );
+                  }
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [color, color.withOpacity(0.8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: const Icon(
+                  Icons.bar_chart_rounded,
+                  color: Colors.white,
+                  size: 10,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<Object?> leadProgressBarStaffDialog(
-      BuildContext context, String title, String status) {
+      BuildContext context, String title, String status,
+      {DateTime? customFrom, DateTime? customTo}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -12020,6 +12542,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   staffId: staff.staffId,
                                   title: title,
                                   status: status,
+                                  from: customFrom,
+                                  to: customTo,
                                   isGlobalContext: true,
                                 );
                               },
@@ -12162,7 +12686,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Future<Object?> leadProgressBarStaffDialogActive(
-      BuildContext context, String title, String status) {
+      BuildContext context, String title, String status,
+      {DateTime? customFrom, DateTime? customTo}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -12379,12 +12904,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
-                                _navigateToFilteredLeadsActive(
+                                _navigateToFilteredLeadsActiveActive(
                                   context: context,
                                   staffName: staff.staffName,
                                   staffId: staff.staffId,
                                   title: title,
                                   status: status,
+                                  from: customFrom,
+                                  to: customTo,
                                   isGlobalContext: true,
                                 );
                               },
@@ -12527,7 +13054,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Future<Object?> leadProgressBarCategoryDialogActive(
-      BuildContext context, String title, String status) {
+      BuildContext context, String title, String status,
+      {DateTime? customFrom, DateTime? customTo}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -12746,12 +13274,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
-                                _navigateToFilteredLeadsActive(
+                                _navigateToFilteredLeadsActiveActive(
                                   context: context,
                                   categoryName: cat.categoryName,
                                   categoryId: cat.categoryId,
                                   title: title,
                                   status: status,
+                                  from: customFrom,
+                                  to: customTo,
                                   isGlobalContext: true,
                                 );
                               },
@@ -12894,7 +13424,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Future<Object?> leadProgressBarCategoryDialog(
-      BuildContext context, String title, String status) {
+      BuildContext context, String title, String status,
+      {DateTime? customFrom, DateTime? customTo}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -13119,6 +13650,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   categoryId: cat.categoryId,
                                   title: title,
                                   status: status,
+                                  from: customFrom,
+                                  to: customTo,
                                   isGlobalContext: true,
                                 );
                               },
@@ -13261,7 +13794,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Future<Object?> leadProgressBarStatusDialogActive(
-      BuildContext context, String title, String status) {
+      BuildContext context, String title, String status,
+      {DateTime? customFrom, DateTime? customTo}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -13479,11 +14013,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             child: GestureDetector(
                               onTap: () {
                                 Navigator.pop(context);
-                                _navigateToFilteredLeadsActive(
+                                _navigateToFilteredLeadsActiveActive(
                                   context: context,
                                   title: title,
                                   status: status,
                                   type: st.statusId,
+                                  from: customFrom,
+                                  to: customTo,
                                   isGlobalContext: true,
                                 );
                               },
@@ -13626,7 +14162,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Future<Object?> leadProgressBarStatusDialog(
-      BuildContext context, String title, String status) {
+      BuildContext context, String title, String status,
+      {DateTime? customFrom, DateTime? customTo}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -13849,6 +14386,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   title: title,
                                   status: status,
                                   type: st.statusId,
+                                  from: customFrom,
+                                  to: customTo,
                                   isGlobalContext: true,
                                 );
                               },
@@ -14124,7 +14663,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Total Generated ${label}',
+                                'Total Generated $label',
                                 style: TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
@@ -14215,6 +14754,919 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                   type: type ?? '',
                                   callStatus: callStatus,
                                   isGlobalContext: true,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                color.withOpacity(0.2),
+                                                color.withOpacity(0.1)
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              (staff.staffName?.isNotEmpty ==
+                                                      true)
+                                                  ? staff.staffName![0]
+                                                      .toUpperCase()
+                                                  : "?",
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                staff.staffName ?? "N/A",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF334155),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Active Performance",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade500,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              staff.staffCount ?? "0",
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Leads",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    LinearPercentIndicator(
+                                      padding: EdgeInsets.zero,
+                                      animation: true,
+                                      lineHeight: 8.0,
+                                      animationDuration: 1200,
+                                      percent: percentage.clamp(0.0, 1.0),
+                                      barRadius: const Radius.circular(4),
+                                      progressColor: color,
+                                      backgroundColor: const Color(0xFFF1F5F9),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 12),
+                                        child: Text(
+                                          "${(percentage * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    if (object1?.data?.categoryLeads?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Category Distribution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          Text(
+                            '${object1!.data!.categoryLeads!.length} Categories',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: object1!.data!.categoryLeads!.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, i) {
+                          final cat = object1!.data!.categoryLeads![i];
+                          double total = double.tryParse(
+                                  object1?.data?.totalCount?.toString() ??
+                                      "0") ??
+                              0;
+                          double count =
+                              double.tryParse(cat.categoryCount ?? "0") ?? 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
+                          final color = _getStaffColor(i + 3);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _navigateToFilteredLeads(
+                                  context: context,
+                                  categoryName: cat.categoryName,
+                                  categoryId: cat.categoryId,
+                                  title: title,
+                                  status: status,
+                                  isGlobalContext: true,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                color.withOpacity(0.2),
+                                                color.withOpacity(0.1)
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              (cat.categoryName?.isNotEmpty ==
+                                                      true)
+                                                  ? cat.categoryName![0]
+                                                      .toUpperCase()
+                                                  : "?",
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                cat.categoryName ?? "N/A",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF334155),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Category Performance",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade500,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              cat.categoryCount ?? "0",
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Leads",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    LinearPercentIndicator(
+                                      padding: EdgeInsets.zero,
+                                      animation: true,
+                                      lineHeight: 8.0,
+                                      animationDuration: 1200,
+                                      percent: percentage.clamp(0.0, 1.0),
+                                      barRadius: const Radius.circular(4),
+                                      progressColor: color,
+                                      backgroundColor: const Color(0xFFF1F5F9),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 12),
+                                        child: Text(
+                                          "${(percentage * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    if (object1?.data?.missedLeads?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Missed Leads Distribution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          Text(
+                            '${object1!.data!.missedLeads!.length} Staffs',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: object1!.data!.missedLeads!.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, i) {
+                          final missed = object1!.data!.missedLeads![i];
+                          double total = double.tryParse(
+                                  object1?.data?.totalCount?.toString() ??
+                                      "0") ??
+                              0;
+                          double count =
+                              double.tryParse(missed.missedstaffCount ?? "0") ??
+                                  0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
+                          final color = _getStaffColor(i + 5);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _navigateToFilteredLeads(
+                                  context: context,
+                                  staffName: missed.missedstaffName,
+                                  staffId: missed.missedstaffId,
+                                  title: title,
+                                  status: status,
+                                  type: type,
+                                  isGlobalContext: true,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                color.withOpacity(0.2),
+                                                color.withOpacity(0.1)
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              (missed.missedstaffName
+                                                          ?.isNotEmpty ==
+                                                      true)
+                                                  ? missed.missedstaffName![0]
+                                                      .toUpperCase()
+                                                  : "?",
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                missed.missedstaffName ?? "N/A",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF334155),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Staff Missed Leads",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade500,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              missed.missedstaffCount ?? "0",
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Leads",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    LinearPercentIndicator(
+                                      padding: EdgeInsets.zero,
+                                      animation: true,
+                                      lineHeight: 8.0,
+                                      animationDuration: 1200,
+                                      percent: percentage.clamp(0.0, 1.0),
+                                      barRadius: const Radius.circular(4),
+                                      progressColor: color,
+                                      backgroundColor: const Color(0xFFF1F5F9),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 12),
+                                        child: Text(
+                                          "${(percentage * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    if (object1?.data?.statusLeads?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Status Distribution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          Text(
+                            '${object1!.data!.statusLeads!.length} Stages',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: object1!.data!.statusLeads!.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, i) {
+                          final statusLead = object1!.data!.statusLeads![i];
+                          double total = double.tryParse(
+                                  object1?.data?.totalCount?.toString() ??
+                                      "0") ??
+                              0;
+                          double count =
+                              double.tryParse(statusLead.statusCount ?? "0") ??
+                                  0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
+                          final color = _getStaffColor(i + 7);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _navigateToFilteredLeads(
+                                  context: context,
+                                  status: statusLead.statusId,
+                                  title: title,
+                                  type: type,
+                                  isGlobalContext: true,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: const Color(0xFFE2E8F0)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                color.withOpacity(0.2),
+                                                color.withOpacity(0.1)
+                                              ],
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              (statusLead.statusName
+                                                          ?.isNotEmpty ==
+                                                      true)
+                                                  ? statusLead.statusName![0]
+                                                      .toUpperCase()
+                                                  : "?",
+                                              style: TextStyle(
+                                                color: color,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                statusLead.statusName ?? "N/A",
+                                                style: const TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF334155),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Status Progress",
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: Colors.grey.shade500,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              statusLead.statusCount ?? "0",
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w900,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                            Text(
+                                              "Leads",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.grey.shade500,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    LinearPercentIndicator(
+                                      padding: EdgeInsets.zero,
+                                      animation: true,
+                                      lineHeight: 8.0,
+                                      animationDuration: 1200,
+                                      percent: percentage.clamp(0.0, 1.0),
+                                      barRadius: const Radius.circular(4),
+                                      progressColor: color,
+                                      backgroundColor: const Color(0xFFF1F5F9),
+                                      trailing: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 12),
+                                        child: Text(
+                                          "${(percentage * 100).toStringAsFixed(1)}%",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<Object?> leadProgressbarDialogActive(BuildContext context,
+      String label, String title, String status, String type,
+      {String? callStatus}) {
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      transitionAnimationController: AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 400),
+      ),
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
+        ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 48,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2.5),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.analytics_rounded,
+                        color: primaryBlue, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        Text(
+                          "Detailed analytics and distribution",
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          size: 18, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [primaryBlue, const Color(0xFF1D4ED8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryBlue.withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -20,
+                            top: -20,
+                            child: Icon(
+                              Icons.trending_up_rounded,
+                              size: 100,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total Generated $label',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    object1?.data?.totalCount?.toString() ??
+                                        "0",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Leads",
+                                    style: TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    if (object1?.data?.staffLeads?.isNotEmpty ?? false) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Staff Contribution',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          Text(
+                            '${object1!.data!.staffLeads!.length} Agents',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: primaryBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: object1!.data!.staffLeads!.length,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemBuilder: (context, i) {
+                          final staff = object1!.data!.staffLeads![i];
+                          double total = double.tryParse(
+                                  object1?.data?.totalCount?.toString() ??
+                                      "0") ??
+                              0;
+                          double count =
+                              double.tryParse(staff.staffCount ?? "0") ?? 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
+                          final color = _getStaffColor(i);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _navigateToFilteredLeadsActive(
+                                  context: context,
+                                  staffName: staff.staffName,
+                                  staffId: staff.staffId,
+                                  title: title ?? 'Leads',
+                                  status: status ?? '0',
+                                  type: type ?? '',
+                                  callStatus: callStatus,
+                                  isGlobalContext: true,
+                                  isFollowup: "1",
                                 );
                               },
                               child: Container(
@@ -15602,76 +17054,96 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     }
   }
 
-  void _handleStaffIconTap(String status, String pageName) async {
+  void _handleStaffIconTap(String status, String pageName,
+      {DateTime? customFromDate, DateTime? customToDate}) async {
     Common.showProgressDialog(context, "Loading Staff Analytics..");
     await getLeadProgressBarStaffData(
       leadStatus: status,
       selectedType: "1",
+      customFromDate: customFromDate,
+      customToDate: customToDate,
     );
     if (staffProgressData?.status == true) {
       if (context.mounted) {
         Navigator.pop(context);
-        leadProgressBarStaffDialog(context, "$pageName", status);
+        leadProgressBarStaffDialog(context, pageName, status,
+            customFrom: customFromDate, customTo: customToDate);
       }
     } else {
       if (context.mounted) Navigator.pop(context);
     }
   }
 
-  void _handleCategoryIconTap(String status, String pageName) async {
+  void _handleCategoryIconTap(String status, String pageName,
+      {DateTime? customFromDate, DateTime? customToDate}) async {
     Common.showProgressDialog(context, "Loading Category Analytics..");
     await getLeadProgressBarCategoryData(
       leadStatus: status,
+      customFromDate: customFromDate,
+      customToDate: customToDate,
     );
     if (categoryProgressData?.status == true) {
       if (context.mounted) {
         Navigator.pop(context);
-        leadProgressBarCategoryDialog(context, "$pageName", status);
+        leadProgressBarCategoryDialog(context, pageName, status,
+            customFrom: customFromDate, customTo: customToDate);
       }
     } else {
       if (context.mounted) Navigator.pop(context);
     }
   }
 
-  void _handleStageIconTap(String status, String pageName) async {
+  void _handleStageIconTap(String status, String pageName,
+      {DateTime? customFromDate, DateTime? customToDate}) async {
     Common.showProgressDialog(context, "Loading Stage Analytics..");
     await getLeadProgressBarStatusData(
       leadStatus: status,
+      customFromDate: customFromDate,
+      customToDate: customToDate,
     );
     if (statusProgressData?.status == true) {
       if (context.mounted) {
         Navigator.pop(context);
-        leadProgressBarStatusDialog(context, "$pageName", status);
+        leadProgressBarStatusDialog(context, pageName, status,
+            customFrom: customFromDate, customTo: customToDate);
       }
     } else {
       if (context.mounted) Navigator.pop(context);
     }
   }
 
-  void _handleStageIconTapActive(String status, String pageName) async {
+  void _handleStageIconTapActive(String status, String pageName,
+      {DateTime? customFromDate, DateTime? customToDate}) async {
     Common.showProgressDialog(context, "Loading Stage Analytics..");
     await getLeadProgressBarStatusData(
       leadStatus: status,
+      customFromDate: customFromDate,
+      customToDate: customToDate,
     );
     if (statusProgressData?.status == true) {
       if (context.mounted) {
         Navigator.pop(context);
-        leadProgressBarStatusDialogActive(context, "$pageName", status);
+        leadProgressBarStatusDialogActive(context, pageName, status,
+            customFrom: customFromDate, customTo: customToDate);
       }
     } else {
       if (context.mounted) Navigator.pop(context);
     }
   }
 
-  void _handleCategoryIconTapActive(String status, String pageName) async {
+  void _handleCategoryIconTapActive(String status, String pageName,
+      {DateTime? customFromDate, DateTime? customToDate}) async {
     Common.showProgressDialog(context, "Loading Category Analytics..");
     await getLeadProgressBarCategoryData(
       leadStatus: status,
+      customFromDate: customFromDate,
+      customToDate: customToDate,
     );
     if (categoryProgressData?.status == true) {
       if (context.mounted) {
         Navigator.pop(context);
-        leadProgressBarCategoryDialogActive(context, "$pageName", status);
+        leadProgressBarCategoryDialogActive(context, pageName, status,
+            customFrom: customFromDate, customTo: customToDate);
       }
     } else {
       if (context.mounted) Navigator.pop(context);
@@ -15693,23 +17165,28 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   //   }
   // }
 
-  void _handleStaffIconTapActive(String status, String pageName) async {
+  void _handleStaffIconTapActive(String status, String pageName,
+      {DateTime? customFromDate, DateTime? customToDate}) async {
     Common.showProgressDialog(context, "Loading Staff Analytics..");
     await getLeadProgressBarStaffData(
       leadStatus: status,
       selectedType: "1",
+      customFromDate: customFromDate,
+      customToDate: customToDate,
     );
     if (staffProgressData?.status == true) {
       if (context.mounted) {
         Navigator.pop(context);
-        leadProgressBarStaffDialogActive(context, "$pageName", status);
+        leadProgressBarStaffDialogActive(context, pageName, status,
+            customFrom: customFromDate, customTo: customToDate);
       }
     } else {
       if (context.mounted) Navigator.pop(context);
     }
   }
 
-  Widget _buildBoxIcons(String boxType, String status, String pageName) {
+  Widget _buildBoxIcons(String boxType, String status, String pageName,
+      {DateTime? customFromDate, DateTime? customToDate}) {
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: Row(
@@ -15718,29 +17195,34 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           if (boxType != 'Active')
             _buildBoxActionIcon(
               icon: Icons.people_outline,
-              onTap: () => _handleStaffIconTap(status, pageName),
+              onTap: () => _handleStaffIconTap(status, pageName,
+                  customFromDate: customFromDate, customToDate: customToDate),
             ),
           if (boxType != 'Active')
             _buildBoxActionIcon(
               icon: Icons.category_outlined,
-              onTap: () => _handleCategoryIconTap(status, pageName),
+              onTap: () => _handleCategoryIconTap(status, pageName,
+                  customFromDate: customFromDate, customToDate: customToDate),
             ),
 
           /////////////////////// Activveeeee boxxxxxxxxxxxxxx
           if (boxType == 'Active')
             _buildBoxActionIcon(
               icon: Icons.people_outline,
-              onTap: () => _handleStaffIconTapActive(status, pageName),
+              onTap: () => _handleStaffIconTapActive(status, pageName,
+                  customFromDate: customFromDate, customToDate: customToDate),
             ),
           if (boxType == 'Active')
             _buildBoxActionIcon(
               icon: Icons.category_outlined,
-              onTap: () => _handleCategoryIconTapActive(status, pageName),
+              onTap: () => _handleCategoryIconTapActive(status, pageName,
+                  customFromDate: customFromDate, customToDate: customToDate),
             ),
           if (boxType == 'Active')
             _buildBoxActionIcon(
               icon: Icons.assignment_outlined,
-              onTap: () => _handleStageIconTapActive(status, pageName),
+              onTap: () => _handleStageIconTapActive(status, pageName,
+                  customFromDate: customFromDate, customToDate: customToDate),
             ),
         ],
       ),
@@ -15829,8 +17311,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (status is csrt.CallStatus) return status.callResponseId;
     if (status is swrt.StageStatus) return status.callResultId;
     if (status is lsrt.LeadSourceStatus) return status.leadSourceId;
-    if (status is catrt.CategoryStatus)
+    if (status is catrt.CategoryStatus) {
       return status.leadCategoryId?.toString();
+    }
     return null;
   }
 

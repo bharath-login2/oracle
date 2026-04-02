@@ -315,8 +315,6 @@ class _AllReportState extends State<AllReport> {
         ),
       ),
       const SizedBox(width: 15),
-
-      // Delete icon
       InkWell(
         onTap: () {
           if (selectedIUsers.isNotEmpty) {

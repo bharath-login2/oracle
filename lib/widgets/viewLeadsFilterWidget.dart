@@ -52,9 +52,18 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   void initState() {
     super.initState();
     _loadInitialFilters();
-    if (widget.isActiveLeads == '1') {
-      _fetchActiveStatus();
-    }
+    //  if (widget.isActiveLeads == '1') {
+    // String? status;
+    // String? statusFew;
+    // if (widget.currentTab == 'Active') {
+    //   statusFew = '2';
+    // } else if (widget.currentTab == 'Called') {
+    //   statusFew = '1';
+    // } else {
+    //   status = selectedStatusIds.isNotEmpty ? selectedStatusIds.first : null;
+    // }
+    _fetchActiveStatus();
+    // }
     if (selectedStatusIds.isNotEmpty) {
       _fetchTags(selectedStatusIds.first);
     }
@@ -82,8 +91,17 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
 
   Future<void> _fetchActiveStatus() async {
     setState(() => _isActiveStatusLoading = true);
+    String? statusFew;
+    if (widget.currentTab == 'Active') {
+      statusFew = '2';
+    } else if (widget.currentTab == 'Called') {
+      statusFew = '1';
+    }
+    if (widget.isActiveLeads == '1') {
+      statusFew = '2';
+    }
     try {
-      final res = await HttpService.getActiveStatus();
+      final res = await HttpService.getActiveStatus(status: statusFew);
       if (mounted) {
         setState(() {
           _activeStatusModel = res;
@@ -324,8 +342,30 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Select Date Range',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Select Date Range',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            // if (isDateFiltered)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  fromDate = null;
+                  toDate = null;
+                  isDateFiltered = false;
+                });
+              },
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(50, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Clear',
+                  style: TextStyle(color: Colors.red, fontSize: 12)),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         _buildDateField('From Date', fromDate, (date) {
           setState(() {
@@ -461,38 +501,36 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   }
 
   Widget _buildStatusOptions() {
-    if (widget.isActiveLeads == '1') {
-      if (_isActiveStatusLoading) {
-        return const Center(child: CircularProgressIndicator());
-      }
-      if (_activeStatusModel == null ||
-          (_activeStatusModel?.data?.isEmpty ?? true)) {
-        return const Center(child: Text('No active statuses found'));
-      }
-      return _buildSelectionList(
-        items: _activeStatusModel?.data
-                ?.map((e) => {
-                      'id': e.callResultId.toString(),
-                      'name': e.callResult ?? ''
-                    })
-                .toList() ??
-            [],
-        selectedIds: selectedStatusIds,
-        isSingleSelect: true,
-        onToggle: (id) => setState(() {
-          if (selectedStatusIds.contains(id)) {
-            selectedStatusIds.remove(id);
-            selectedTagIds.clear();
-            _tagListModel = null;
-          } else {
-            selectedStatusIds.clear();
-            selectedStatusIds.add(id);
-            selectedTagIds.clear();
-            _fetchTags(id);
-          }
-        }),
-      );
+    // if (widget.isActiveLeads == '1') {
+    if (_isActiveStatusLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
+    if (_activeStatusModel == null ||
+        (_activeStatusModel?.data?.isEmpty ?? true)) {
+      return const Center(child: Text('No active statuses found'));
+    }
+    return _buildSelectionList(
+      items: _activeStatusModel?.data
+              ?.map((e) =>
+                  {'id': e.callResultId.toString(), 'name': e.callResult ?? ''})
+              .toList() ??
+          [],
+      selectedIds: selectedStatusIds,
+      isSingleSelect: true,
+      onToggle: (id) => setState(() {
+        if (selectedStatusIds.contains(id)) {
+          selectedStatusIds.remove(id);
+          selectedTagIds.clear();
+          _tagListModel = null;
+        } else {
+          selectedStatusIds.clear();
+          selectedStatusIds.add(id);
+          selectedTagIds.clear();
+          _fetchTags(id);
+        }
+      }),
+    );
+    // }
 
     if (widget.commonDetails == null)
       return const Center(child: Text('Loading...'));

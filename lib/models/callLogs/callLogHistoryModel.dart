@@ -59,6 +59,7 @@ class CallLogData {
   String? userId;
   String? staffName;
   String? isMannual;
+  String? resourceUrl;
 
   CallLogData(
       {this.id,
@@ -70,7 +71,8 @@ class CallLogData {
       this.dateTime,
       this.userId,
       this.staffName,
-      this.isMannual});
+      this.isMannual,
+      this.resourceUrl});
 
   CallLogData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -83,6 +85,7 @@ class CallLogData {
     userId = json['user_id'];
     staffName = json['staff_name'];
     isMannual = json['is_mannual']?.toString();
+    resourceUrl = json['ResourceURL'];
   }
 
   Map<String, dynamic> toJson() {
@@ -97,6 +100,7 @@ class CallLogData {
     data['user_id'] = userId;
     data['staff_name'] = staffName;
     data['is_mannual'] = isMannual;
+    data['ResourceURL'] = resourceUrl;
     return data;
   }
 }

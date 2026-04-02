@@ -1,0 +1,8 @@
+﻿Analyzing viewleadsfilterwidget.dart...                         
+
+   info - Statements in an if should be enclosed in a block - lib\widgets\viewleadsfilterwidget.dart:499:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\viewleadsfilterwidget.dart:545:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\viewleadsfilterwidget.dart:560:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\viewleadsfilterwidget.dart:576:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\viewleadsfilterwidget.dart:591:7 - curly_braces_in_flow_control_structures
+

@@ -6,7 +6,7 @@ import 'package:lottie/lottie.dart';
 import '../../core/common.dart';
 import '../../models/callLogs/callLogHistoryModel.dart';
 import '../../models/lead_management/callHistoryModel.dart';
-import '../../screens/leadManagement/dashboard.dart';
+
 import '../../service/service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -689,6 +689,35 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
                       ),
                     ),
                   ),
+                if (call.resourceURL != null &&
+                    call.resourceURL!.isNotEmpty &&
+                    widget.accessCallRecord)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: AudioItems(
+                      call.direction.toString(),
+                      call.time.toString(),
+                      call.isAttended!,
+                      call.calledTime.toString(),
+                      call.status.toString(),
+                      call.resourceURL.toString(),
+                      call.callDurationHr.toString(),
+                      widget.accessCallRecord,
+                      call.clientName.toString(),
+                      call.leadCategory.toString(),
+                      call.callResult.toString(),
+                      call.callHistoryImage.toString(),
+                      fromdate.toString(),
+                      todate.toString(),
+                      updateLeadPermission1,
+                      deleteLeadPermission1,
+                      cloudCallPermission1,
+                      call.callMasterId.toString(),
+                      widget.token,
+                      widget.name,
+                      widget.userId,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -820,6 +849,35 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
                             fontSize: 13,
                             color: AppColors.textSecondary,
                           ),
+                        ),
+                      ),
+                    if (followup.voiceFile != null &&
+                        followup.voiceFile!.isNotEmpty &&
+                        followup.playVoicePermission == true)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10.0),
+                        child: AudioItems(
+                          "",
+                          followup.calledTime.toString(),
+                          true,
+                          followup.calledTime.toString(),
+                          followup.callResult.toString(),
+                          followup.voiceFile.toString(),
+                          "",
+                          widget.accessCallRecord,
+                          followup.clientName.toString(),
+                          "",
+                          followup.callResult.toString(),
+                          followup.proPicThumb.toString(),
+                          fromdate.toString(),
+                          todate.toString(),
+                          updateLeadPermission1,
+                          deleteLeadPermission1,
+                          cloudCallPermission1,
+                          followup.callMasterId.toString(),
+                          widget.token,
+                          widget.name,
+                          widget.userId,
                         ),
                       ),
                   ],
@@ -1053,6 +1111,35 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
                         ),
                       ],
                     ),
+                    if (log.resourceUrl != null &&
+                        log.resourceUrl!.isNotEmpty &&
+                        widget.accessCallRecord)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10.0),
+                        child: AudioItems(
+                          log.callType.toString(),
+                          log.dateTime.toString(),
+                          true,
+                          log.dateTime.toString(),
+                          log.callType.toString(),
+                          log.resourceUrl.toString(),
+                          log.duration.toString(),
+                          widget.accessCallRecord,
+                          log.name.toString(),
+                          "",
+                          "",
+                          "",
+                          fromdate.toString(),
+                          todate.toString(),
+                          updateLeadPermission1,
+                          deleteLeadPermission1,
+                          cloudCallPermission1,
+                          "",
+                          widget.token,
+                          widget.name,
+                          widget.userId,
+                        ),
+                      ),
                   ],
                 ),
               ),
