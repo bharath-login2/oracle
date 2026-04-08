@@ -328,8 +328,6 @@ class _NewLeadsState extends State<NewLeads>
     }
   }
 
-
-
   void _showCallInitiatedMessage() {
     Common.toastMessaage("Call initiated", callGreen);
   }
@@ -1663,11 +1661,9 @@ class _NewLeadsState extends State<NewLeads>
         ? _expandedLeadIds.contains(displayItem.callMasterId.toString())
         : !_expandedLeadIds.contains(displayItem.callMasterId.toString());
 
-    // Check if the lead was created today
     bool isCreatedToday = false;
     try {
       if (displayItem.createdDate.isNotEmpty) {
-        // Handle formats like dd-MM-yyyy or yyyy-MM-dd
         String dateStr = displayItem.createdDate.split(' ')[0];
         String today = DateFormat('dd-MM-yyyy').format(DateTime.now());
         String todayAlt = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -1684,9 +1680,7 @@ class _NewLeadsState extends State<NewLeads>
           decoration: BoxDecoration(
             color: displayItem.isSelected
                 ? appBarStart.withOpacity(0.08)
-                : (isCreatedToday
-                    ? const Color(0xFFE8F5E9) // Light green for today
-                    : backgroundLight),
+                : (isCreatedToday ? const Color(0xFFE8F5E9) : backgroundLight),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -1704,10 +1698,9 @@ class _NewLeadsState extends State<NewLeads>
             borderRadius: BorderRadius.circular(16),
             child: Row(
               children: [
-                // Left Priority Indicator Bar
                 Container(
                   width: 5,
-                  height: 75, // Approximate height for compact view
+                  height: 75,
                   color: displayItem.priority == '1'
                       ? Colors.grey.shade300
                       : displayItem.priority == '2'
@@ -3050,50 +3043,53 @@ class _NewLeadsState extends State<NewLeads>
 
                         const SizedBox(height: 24),
 
-                        // Transfer as Fresh Data Toggle
-                        InkWell(
-                          onTap: () {
-                            setDialogState(() {
-                              transferFresh = transferFresh == 0 ? 1 : 0;
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 8),
-                            child: Row(
-                              children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 22,
-                                  height: 22,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: transferFresh == 1
-                                        ? appBarStart
-                                        : Colors.white,
-                                    border: Border.all(
+                        // Transfer as Fresh Data Toggle - Hidden as per request
+                        Visibility(
+                          visible: false,
+                          child: InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                transferFresh = transferFresh == 0 ? 1 : 0;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 8),
+                              child: Row(
+                                children: [
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
                                       color: transferFresh == 1
                                           ? appBarStart
-                                          : Colors.grey.shade400,
-                                      width: 2,
+                                          : Colors.white,
+                                      border: Border.all(
+                                        color: transferFresh == 1
+                                            ? appBarStart
+                                            : Colors.grey.shade400,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: transferFresh == 1
+                                        ? const Icon(Icons.check,
+                                            size: 14, color: Colors.white)
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Transfer as Fresh Data',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: textPrimary,
                                     ),
                                   ),
-                                  child: transferFresh == 1
-                                      ? const Icon(Icons.check,
-                                          size: 14, color: Colors.white)
-                                      : null,
-                                ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Transfer as Fresh Data',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),

@@ -209,7 +209,6 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Left Side: Categories
           Container(
             width: 120,
             decoration: const BoxDecoration(
@@ -219,9 +218,16 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
               child: Column(
                 children: [
                   _buildCategoryItem('Leads Date', Icons.calendar_today),
-                  if (widget.currentTab != 'New')
+                  if (widget.currentTab != 'New' &&
+                      widget.currentTab != 'Closed Leads' &&
+                      widget.currentTab != 'Lost Leads' &&
+                      widget.currentTab != 'New Leads')
                     _buildCategoryItem('Stages', Icons.info_outline),
-                  if (selectedStatusIds.isNotEmpty)
+                  if (selectedStatusIds.isNotEmpty &&
+                      (widget.currentTab != 'New' &&
+                          widget.currentTab != 'Closed Leads' &&
+                          widget.currentTab != 'Lost Leads' &&
+                          widget.currentTab != 'New Leads'))
                     _buildCategoryItem('Tags', Icons.tag_rounded),
                   _buildCategoryItem('Assigned Staff', Icons.people_outline),
                   _buildCategoryItem('Category', Icons.category_outlined),

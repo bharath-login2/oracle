@@ -3,7 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/customers/customerLeadModel.dart';
 import 'package:login2/models/lead_management/cloudCallModel.dart';
-import 'package:login2/screens/leadManagement/leadDetails.dart';
+import 'package:login2/models/lead_management/addLeadCommonDataModel.dart';
+import 'package:login2/models/lead_management/leadDetailsModel.dart';
+import 'package:login2/models/lead_management/leadDetailsModelAdd.dart';
+import 'package:login2/models/lead_management/leadFollowupAdd.dart';
+import 'package:login2/models/lead_management/leadMileStoneListModel.dart';
+import 'package:login2/models/lead_management/listFolderName.dart';
+import 'package:login2/screens/leadManagement/lead_details_popup.dart';
 import 'package:login2/service/service.dart';
 import 'package:lottie/lottie.dart';
 
@@ -29,6 +35,8 @@ class _CustomerLeadsPageState extends State<CustomerLeadsPage> {
   String cloudCallPermission = "false";
   String updateLeadPermission = "false";
   String deleteLeadPermission = "false";
+  AddLeadCommonDataModel? commonDetails;
+  String? token;
 
   final List<Color> _colors = [
     Colors.teal,
@@ -110,6 +118,9 @@ class _CustomerLeadsPageState extends State<CustomerLeadsPage> {
         await Common.getSharedPref("updateLeadPermission") ?? "false";
     deleteLeadPermission =
         await Common.getSharedPref("deleteLeadPermission") ?? "false";
+    token = await Common.getSharedPref("token") ?? "";
+    commonDetails = await HttpService.addLeadCommonData(token!);
+    if (mounted) setState(() {});
   }
 
   Future<void> _fetchCustomerLeads() async {
@@ -266,20 +277,7 @@ class _CustomerLeadsPageState extends State<CustomerLeadsPage> {
       padding: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
       child: GestureDetector(
         onTap: () async {
-          final token = await Common.getSharedPref("token") ?? "";
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => LeadDetails(
-                token,
-                updateLeadPermission == "true",
-                deleteLeadPermission == "true",
-                cloudCallPermission == "true",
-                lead.callMasterId ?? "",
-                pageName: "",
-              ),
-            ),
-          );
+          _showLeadDetailsPopup(index);
         },
         child: Container(
           width: screenWidth,
@@ -855,5 +853,79 @@ class _CustomerLeadsPageState extends State<CustomerLeadsPage> {
         );
       },
     );
+  }
+
+  Future<void> _showLeadDetailsPopup(int index) async {
+    if (_leadsData?.data == null || index >= _leadsData!.data!.length) return;
+
+    final displayItem = _leadsData!.data![index];
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: CircularProgressIndicator(
+              color: Colors.blue,
+              strokeWidth: 3,
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      final results = await Future.wait([
+        HttpService.leadDetails(token!, displayItem.callMasterId!),
+        HttpService.listAddonDet(token!, displayItem.callMasterId!),
+        HttpService.listFolderAndFiles(token!, displayItem.callMasterId!, ''),
+        HttpService.leadMileStone(token!, displayItem.callMasterId!),
+        HttpService.leadFollowupData(token!, displayItem.callMasterId!),
+      ]);
+
+      if (!mounted) return;
+
+      Navigator.pop(context);
+
+      final leadDetails = results[0] as LeadDeatailsModel?;
+      if (leadDetails == null) {
+        Common.toastMessaage("Failed to load lead details", Colors.red);
+        return;
+      }
+
+      final leadDetailsAdditional = results[1] as LeadDeatailsModelAdd?;
+      final listFolder = results[2] as ListFolderNameModel?;
+      final mileStone = results[3] as LeadMileStoneListModel?;
+      final leadDetailsFollowup = results[4] as LeadFollowupData?;
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => LeadDetailsPopup(
+          token: token!,
+          editLead: updateLeadPermission == "true",
+          deleteLead: deleteLeadPermission == "true",
+          cloudCall: cloudCallPermission == "true",
+          callMasterId: displayItem.callMasterId!,
+          leadDetails: leadDetails,
+          leadDetailsAdditional: leadDetailsAdditional,
+          listFolder: listFolder,
+          mileStone: mileStone,
+          leadDetailsFollowup: leadDetailsFollowup,
+          commonDetails: commonDetails,
+          pageName: "Customer Leads",
+          onDataChanged: () {
+            _fetchCustomerLeads();
+          },
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) Navigator.pop(context);
+      Common.toastMessaage("Error loading details: $e", Colors.red);
+    }
   }
 }

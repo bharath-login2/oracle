@@ -60,7 +60,7 @@ class _EditFollowupState extends State<EditFollowup> {
   // Form Fields
   String callResult = 'New';
   String callResultId = '1';
-  String callResponse = 'Call Response';
+  String callResponse = 'Call Status';
   String callResponseId = '';
   String leadType = 'Lead Category';
   String leadTypeId = '';
@@ -187,11 +187,11 @@ class _EditFollowupState extends State<EditFollowup> {
     setState(() {
       callResult = followupDetails!.data!.callResult.toString();
       callResultId = followupDetails!.data!.callResultId.toString();
-      calledDate1.text = DateFormat('dd-MM-yyyy HH:mm')
+      calledDate1.text = DateFormat('dd-MM-yyyy hh:mm a')
           .format(DateTime.parse(followupDetails!.data!.calledDate.toString()));
       if (followupDetails?.data?.followupDate != null &&
           !followupDetails!.data!.followupDate!.toString().contains("0001")) {
-        nextFollowupDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(
+        nextFollowupDate1.text = DateFormat('dd-MM-yyyy hh:mm a').format(
             DateTime.parse(followupDetails!.data!.followupDate.toString()));
       } else {
         nextFollowupDate1.text = "";
@@ -200,7 +200,6 @@ class _EditFollowupState extends State<EditFollowup> {
       leadTypeId = followupDetails!.data!.leadCategoryId.toString();
       cost.text = followupDetails!.data!.cost.toString();
       remarks.text = followupDetails!.data!.remarks.toString();
-
       leadSubType = followupDetails!.data!.leadSubCategory.toString();
       leadSubTypeId = followupDetails!.data!.leadSubCategoryId.toString();
       leadTypeVal.text = followupDetails?.data?.leadCategory?.toString() ?? "";
@@ -254,7 +253,7 @@ class _EditFollowupState extends State<EditFollowup> {
     }
 
     if (callResponseId.isEmpty) {
-      Common.toastMessaage('Select Call Response', Colors.red);
+      Common.toastMessaage('Select Call Status', Colors.red);
       return;
     }
 
@@ -268,7 +267,10 @@ class _EditFollowupState extends State<EditFollowup> {
     }
 
     bool reasonRequired = leadSettings?.isReasonRequiredBool ?? false;
-    if (reasonRequired && callResultReasonId.isEmpty) {
+    if (reasonRequired &&
+        (callResultReasonId.isEmpty ||
+            callResultReasonId == '0' ||
+            callResultReasonId == 'null')) {
       Common.toastMessaage('Select Tag', Colors.red);
       return;
     }
@@ -441,29 +443,30 @@ class _EditFollowupState extends State<EditFollowup> {
             ),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Contact Details',
-              icon: Icons.contact_phone_outlined,
+              title: 'Lead Info',
+              icon: Icons.assignment_outlined,
               children: [
                 const SizedBox(height: 12),
-                _buildContactRow(),
+                _buildCallResultField(),
+                const SizedBox(height: 12),
+                if (callResultReason?.data?.isNotEmpty ?? false)
+                  _buildCallReasonField(),
+                const SizedBox(height: 12),
+                if (leadSettings != null
+                    ? leadSettings!.isFollowupRequiredBool
+                    : (callResultId == '2'))
+                  _buildNextFollowupField(),
               ],
             ),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Products',
+              title: 'Product Details',
               icon: Icons.inventory_2_outlined,
               children: [
                 const SizedBox(height: 12),
                 _buildProductSelection(),
                 const SizedBox(height: 12),
                 _buildCostField(),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildSectionCard(
-              title: 'Category & Sub Category',
-              icon: Icons.category_outlined,
-              children: [
                 const SizedBox(height: 12),
                 _buildLeadCategoryField(),
                 const SizedBox(height: 12),
@@ -473,30 +476,36 @@ class _EditFollowupState extends State<EditFollowup> {
             ),
             const SizedBox(height: 12),
             _buildSectionCard(
-              title: 'Stages',
-              icon: Icons.assignment_outlined,
+              title: 'Contact Info',
+              icon: Icons.contact_phone_outlined,
               children: [
                 const SizedBox(height: 12),
-                _buildCallResultField(),
-                const SizedBox(height: 12),
-                if (leadSettings != null
-                    ? leadSettings!.isFollowupRequiredBool
-                    : (callResultId == '2'))
-                  _buildNextFollowupField(),
-                const SizedBox(height: 12),
-                if (callResultReason?.data?.isNotEmpty ?? false)
-                  _buildCallReasonField(),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildSectionCard(
-              title: 'Additional Information',
-              icon: Icons.note_outlined,
-              children: [
+                _buildContactRow(),
                 const SizedBox(height: 12),
                 _buildRemarksField(),
               ],
             ),
+            // const SizedBox(height: 12),
+            // _buildSectionCard(
+            //   title: 'Category & Sub Category',
+            //   icon: Icons.category_outlined,
+            //   children: [
+            //     const SizedBox(height: 12),
+            //     _buildLeadCategoryField(),
+            //     const SizedBox(height: 12),
+            //     if (leadSubTypeList?.data?.isNotEmpty ?? false)
+            //       _buildLeadSubCategoryField(),
+            //   ],
+            // ),
+            // const SizedBox(height: 12),
+            // _buildSectionCard(
+            //   title: 'Additional Information',
+            //   icon: Icons.note_outlined,
+            //   children: [
+            //     const SizedBox(height: 12),
+            //     _buildRemarksField(),
+            //   ],
+            // ),
             const SizedBox(height: 24),
             _buildSubmitButton(),
             const SizedBox(height: 20),
@@ -563,10 +572,15 @@ class _EditFollowupState extends State<EditFollowup> {
           );
 
           if (selectedTime != null) {
-            String newDate = selectedDate.toString().split(' ')[0];
-            String convertedNewDate = getYmdFromDmy(newDate);
+            final dateTime = DateTime(
+              selectedDate.year,
+              selectedDate.month,
+              selectedDate.day,
+              selectedTime.hour,
+              selectedTime.minute,
+            );
             calledDate1.text =
-                "$convertedNewDate ${selectedTime.format(context)}";
+                DateFormat('dd-MM-yyyy hh:mm a').format(dateTime);
           }
         }
       },
@@ -667,7 +681,7 @@ class _EditFollowupState extends State<EditFollowup> {
   Widget _buildCallResultField() {
     return GestureDetector(
       onTap: () => _showSelectionDialog(
-        title: 'Stages',
+        title: 'Lead Stages',
         items: commonDetails!.data.callResult
             .map((cr) => cr.callResult.toString())
             .toList(),
@@ -696,8 +710,9 @@ class _EditFollowupState extends State<EditFollowup> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callResultVal,
-          validator: (v) => v!.isEmpty ? 'Stages is required' : null,
-          decoration: _inputDecoration('Stages *', Icons.assignment_turned_in),
+          validator: (v) => v!.isEmpty ? 'Lead Stages is required' : null,
+          decoration:
+              _inputDecoration('Lead Stages *', Icons.assignment_turned_in),
         ),
       ),
     );
@@ -740,7 +755,7 @@ class _EditFollowupState extends State<EditFollowup> {
                       if (selectedDateTime.isAfter(now)) {
                         setState(() {
                           nextFollowupDate1.text =
-                              DateFormat('dd-MM-yyyy HH:mm')
+                              DateFormat('dd-MM-yyyy hh:mm a')
                                   .format(selectedDateTime);
 
                           // Auto-adjust reminder if needed
@@ -828,7 +843,7 @@ class _EditFollowupState extends State<EditFollowup> {
                   checked = !checked;
                   if (checked && nextFollowupDate1.text.isNotEmpty) {
                     try {
-                      DateTime dt = DateFormat('dd-MM-yyyy HH:mm')
+                      DateTime dt = DateFormat('dd-MM-yyyy hh:mm a')
                           .parse(nextFollowupDate1.text);
                       int minutes = int.tryParse(timeBefore.text) ?? 10;
                       DateTime reminderTime =
@@ -891,7 +906,7 @@ class _EditFollowupState extends State<EditFollowup> {
   Widget _buildCallResponseField() {
     return GestureDetector(
       onTap: () => _showSelectionDialog(
-        title: 'Call Response',
+        title: 'Call Status',
         items: commonDetails!.data.callResponseStatus
             .map((r) => r.callResponse.toString())
             .toList(),
@@ -912,7 +927,7 @@ class _EditFollowupState extends State<EditFollowup> {
       child: AbsorbPointer(
         child: TextFormField(
           controller: callResponseVal,
-          decoration: _inputDecoration('Call Response *', Icons.add_call),
+          decoration: _inputDecoration('Call Status *', Icons.add_call),
         ),
       ),
     );

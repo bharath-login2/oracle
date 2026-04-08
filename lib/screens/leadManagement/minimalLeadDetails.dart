@@ -4020,35 +4020,57 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                               ? const Center(
                                                   child:
                                                       CircularProgressIndicator())
-                                              : (callDetailsDataS
-                                                          ?.data
-                                                          ?.lists!
+                                              : (callDetailsDataS?.data?.lists!
                                                           .isNotEmpty ??
                                                       false)
                                                   ? Column(
                                                       children: [
-                                                        if (callDetailsDataS?.data?.totalDuration != null)
+                                                        if (callDetailsDataS
+                                                                ?.data
+                                                                ?.totalDuration !=
+                                                            null)
                                                           Container(
-                                                            width: double.infinity,
-                                                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                                                            color: Colors.blue.shade50,
+                                                            width:
+                                                                double.infinity,
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical: 8,
+                                                                    horizontal:
+                                                                        16),
+                                                            color: Colors
+                                                                .blue.shade50,
                                                             child: Row(
-                                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
                                                               children: [
                                                                 const Text(
                                                                   'Total Call Duration:',
-                                                                  style: TextStyle(
-                                                                    fontWeight: FontWeight.bold,
-                                                                    fontSize: 13,
-                                                                    color: Color(0xFF2a86c9),
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    fontSize:
+                                                                        13,
+                                                                    color: Color(
+                                                                        0xFF2a86c9),
                                                                   ),
                                                                 ),
                                                                 Text(
-                                                                  callDetailsDataS!.data!.totalDuration!,
-                                                                  style: const TextStyle(
-                                                                    fontWeight: FontWeight.bold,
-                                                                    fontSize: 13,
-                                                                    color: Color(0xFF2a86c9),
+                                                                  callDetailsDataS!
+                                                                      .data!
+                                                                      .totalDuration!,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    fontSize:
+                                                                        13,
+                                                                    color: Color(
+                                                                        0xFF2a86c9),
                                                                   ),
                                                                 ),
                                                               ],
@@ -4056,10 +4078,19 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                           ),
                                                         ListView.builder(
                                                           shrinkWrap: true,
-                                                          physics: const NeverScrollableScrollPhysics(),
-                                                          itemCount: callDetailsDataS!.data!.lists!.length,
-                                                          itemBuilder: (context, i) {
-                                                            final call = callDetailsDataS!.data!.lists![i];
+                                                          physics:
+                                                              const NeverScrollableScrollPhysics(),
+                                                          itemCount:
+                                                              callDetailsDataS!
+                                                                  .data!
+                                                                  .lists!
+                                                                  .length,
+                                                          itemBuilder:
+                                                              (context, i) {
+                                                            final call =
+                                                                callDetailsDataS!
+                                                                    .data!
+                                                                    .lists![i];
                                                             return AudioItem(
                                                               call.direction,
                                                               call.time,
@@ -4068,7 +4099,9 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                               call.status,
                                                               call.resourceUrl,
                                                               call.callDurationHr,
-                                                              leadDetailsAdditional!.data.voiceListerningPermission,
+                                                              leadDetailsAdditional!
+                                                                  .data
+                                                                  .voiceListerningPermission,
                                                               call.id,
                                                               call.isTransfered,
                                                               widget.token,
@@ -4078,15 +4111,24 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
                                                               callMasterId,
                                                               call.callHistoryImage,
                                                               call.staffName,
-                                                              leadDetails!.data!.clientName,
-                                                              leadDetails!.data!.callResult,
-                                                              pageName: widget.pageName,
-                                                              sts: widget.status,
-                                                              staff: widget.staff,
-                                                              isCalled: widget.isCalled,
-                                                              fromDate: widget.fromDate,
-                                                              toDate: widget.toDate,
-                                                              category: widget.category,
+                                                              leadDetails!.data!
+                                                                  .clientName,
+                                                              leadDetails!.data!
+                                                                  .callResult,
+                                                              pageName: widget
+                                                                  .pageName,
+                                                              sts:
+                                                                  widget.status,
+                                                              staff:
+                                                                  widget.staff,
+                                                              isCalled: widget
+                                                                  .isCalled,
+                                                              fromDate: widget
+                                                                  .fromDate,
+                                                              toDate:
+                                                                  widget.toDate,
+                                                              category: widget
+                                                                  .category,
                                                             );
                                                           },
                                                         ),
@@ -8140,50 +8182,53 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
 
                         const SizedBox(height: 20),
 
-                        // Transfer as Fresh Data Toggle
-                        InkWell(
-                          onTap: () {
-                            setDialogState(() {
-                              transferFresh = transferFresh == 0 ? 1 : 0;
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 8),
-                            child: Row(
-                              children: [
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 22,
-                                  height: 22,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: transferFresh == 1
-                                        ? appBarStart
-                                        : Colors.white,
-                                    border: Border.all(
+                        // Transfer as Fresh Data Toggle - Hidden as per request
+                        Visibility(
+                          visible: false,
+                          child: InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                transferFresh = transferFresh == 0 ? 1 : 0;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 8),
+                              child: Row(
+                                children: [
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
                                       color: transferFresh == 1
                                           ? appBarStart
-                                          : Colors.grey.shade400,
-                                      width: 2,
+                                          : Colors.white,
+                                      border: Border.all(
+                                        color: transferFresh == 1
+                                            ? appBarStart
+                                            : Colors.grey.shade400,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: transferFresh == 1
+                                        ? const Icon(Icons.check,
+                                            size: 14, color: Colors.white)
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'Transfer as Fresh Data',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: textPrimary,
                                     ),
                                   ),
-                                  child: transferFresh == 1
-                                      ? const Icon(Icons.check,
-                                          size: 14, color: Colors.white)
-                                      : null,
-                                ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Transfer as Fresh Data',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: textPrimary,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),

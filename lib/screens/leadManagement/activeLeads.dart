@@ -1787,6 +1787,71 @@ class _ActiveLeadsState extends State<ActiveLeads>
                           ],
                         ),
                         const SizedBox(height: 10),
+                        if (displayItem.lastCalledDate.isNotEmpty ||
+                            (displayItem.nextFollowupDate.isNotEmpty &&
+                                displayItem.nextFollowupDate !=
+                                    "00-00-0000 12:00 AM")) ...[
+                          Row(
+                            children: [
+                              if (displayItem.lastCalledDate.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.phone_callback,
+                                          size: 12, color: Colors.blue),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "Called: ${displayItem.lastCalledDate}",
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.blue.shade700,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              if (displayItem.lastCalledDate.isNotEmpty &&
+                                  displayItem.nextFollowupDate.isNotEmpty &&
+                                  displayItem.nextFollowupDate !=
+                                      "00-00-0000 12:00 AM")
+                                const SizedBox(width: 8),
+                              if (displayItem.nextFollowupDate.isNotEmpty &&
+                                  displayItem.nextFollowupDate !=
+                                      "00-00-0000 12:00 AM")
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade50,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.event_note,
+                                          size: 12, color: Colors.orange),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "Next: ${displayItem.nextFollowupDate}",
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.orange.shade700,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                        ],
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -2319,96 +2384,69 @@ class _ActiveLeadsState extends State<ActiveLeads>
                         ],
                       ),
                     )
-                  else
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 6),
+                  else if (displayItem.lastCalledDate.isNotEmpty ||
+                      (displayItem.nextFollowupDate.isNotEmpty &&
+                          displayItem.nextFollowupDate !=
+                              "00-00-0000 12:00 AM"))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          Expanded(
-                            child: Container(
+                          if (displayItem.lastCalledDate.isNotEmpty)
+                            Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: backgroundLight,
+                                color: Colors.blue.shade50,
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                    color: borderLight.withOpacity(0.5)),
                               ),
                               child: Row(
                                 children: [
-                                  Image.asset("assets/icons/calendar.png",
-                                      width: 14, color: appBarStart),
+                                  const Icon(Icons.phone_callback,
+                                      size: 12, color: Colors.blue),
                                   const SizedBox(width: 4),
-                                  const Text(
-                                    'Called: ',
+                                  Text(
+                                    "Called: ${displayItem.lastCalledDate}",
                                     style: TextStyle(
-                                      fontSize: 11,
-                                      color: textSecondary,
+                                      fontSize: 10,
+                                      color: Colors.blue.shade700,
                                       fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      displayItem.isCalled == false
-                                          ? '--'
-                                          : (displayItem.lastCalledDate.isEmpty
-                                              ? "--"
-                                              : displayItem.lastCalledDate),
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Container(
+                          if (displayItem.lastCalledDate.isNotEmpty &&
+                              displayItem.nextFollowupDate.isNotEmpty &&
+                              displayItem.nextFollowupDate !=
+                                  "00-00-0000 12:00 AM")
+                            const SizedBox(width: 8),
+                          if (displayItem.nextFollowupDate.isNotEmpty &&
+                              displayItem.nextFollowupDate !=
+                                  "00-00-0000 12:00 AM")
+                            Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: backgroundLight,
+                                color: Colors.orange.shade50,
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                    color: borderLight.withOpacity(0.5)),
                               ),
                               child: Row(
                                 children: [
-                                  Image.asset("assets/icons/calendar.png",
-                                      width: 14, color: appBarStart),
+                                  const Icon(Icons.event_note,
+                                      size: 12, color: Colors.orange),
                                   const SizedBox(width: 4),
-                                  const Text(
-                                    'Next: ',
+                                  Text(
+                                    "Next: ${displayItem.nextFollowupDate}",
                                     style: TextStyle(
-                                      fontSize: 11,
-                                      color: textSecondary,
+                                      fontSize: 10,
+                                      color: Colors.orange.shade700,
                                       fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      displayItem.nextFollowupDate.isEmpty
-                                          ? "--"
-                                          : displayItem.nextFollowupDate,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: textPrimary,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -3003,68 +3041,71 @@ class _ActiveLeadsState extends State<ActiveLeads>
                     ),
                     const SizedBox(height: 20),
 
-                    // Fresh Data Toggle (Radio style)
-                    InkWell(
-                      onTap: () {
-                        setDialogState(() {
-                          transferFresh = transferFresh == 1 ? 0 : 1;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: transferFresh == 1
-                              ? appBarStart.withOpacity(0.04)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
+                    // Fresh Data Toggle (Radio style) - Hidden as per request
+                    Visibility(
+                      visible: false,
+                      child: InkWell(
+                        onTap: () {
+                          setDialogState(() {
+                            transferFresh = transferFresh == 1 ? 0 : 1;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
                             color: transferFresh == 1
-                                ? appBarStart.withOpacity(0.2)
+                                ? appBarStart.withOpacity(0.04)
                                 : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: transferFresh == 1
+                                  ? appBarStart.withOpacity(0.2)
+                                  : Colors.transparent,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: transferFresh == 1
-                                      ? appBarStart
-                                      : Colors.grey.shade300,
-                                  width: 2,
-                                ),
-                                color: Colors.white,
-                              ),
-                              child: Center(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
                                     color: transferFresh == 1
                                         ? appBarStart
-                                        : Colors.transparent,
+                                        : Colors.grey.shade300,
+                                    width: 2,
+                                  ),
+                                  color: Colors.white,
+                                ),
+                                child: Center(
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: transferFresh == 1
+                                          ? appBarStart
+                                          : Colors.transparent,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              "Transfer as Fresh Data",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: textPrimary,
+                              const SizedBox(width: 12),
+                              const Text(
+                                "Transfer as Fresh Data",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: textPrimary,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

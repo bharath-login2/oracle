@@ -58,6 +58,8 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
   CallLogHistoryModel? logHistory;
   String assignStaff = '';
   String assignStaffId = '';
+  String callType = 'All';
+  String callTypeValue = '';
   bool? result = true;
   bool? result1 = true;
   bool search = false;
@@ -154,6 +156,7 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
       assignStaffId,
       fromdate,
       todate,
+      callType: callTypeValue,
     );
     if (callHistory != null) {
       _calculateHistoryCount();
@@ -166,6 +169,7 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
       fromdate,
       todate,
       assignStaffId,
+      callType: callTypeValue,
     );
   }
 
@@ -330,13 +334,120 @@ class _CallHistoryPageTwoState extends State<CallHistoryPageTwo>
           Row(
             children: [
               Expanded(
-                child: _buildStaffSelector(),
+                child: _buildCallTypeSelector(),
               ),
               const SizedBox(width: 12),
-              _buildSearchButton(),
+              Expanded(
+                child: _buildStaffSelector(),
+              ),
             ],
           ),
+          const SizedBox(height: 12),
+          _buildSearchButtonWidget(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchButtonWidget() {
+    return SizedBox(
+      width: double.infinity,
+      child: _buildSearchButton(),
+    );
+  }
+
+  Widget _buildCallTypeSelector() {
+    return InkWell(
+      onTap: _showCallTypeSelectionDialog,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.compare_arrows, size: 18, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                callType,
+                style: const TextStyle(fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCallTypeSelectionDialog() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select Call Type',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildCallTypeOption('All', ''),
+              _buildCallTypeOption('Incoming', 'Inbound'),
+              _buildCallTypeOption('Outgoing', 'Outbound'),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCallTypeOption(String label, String value) {
+    bool isSelected = callType == label;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        title: Text(
+          label,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+          ),
+        ),
+        trailing: isSelected
+            ? const Icon(Icons.check_circle, color: AppColors.primary)
+            : null,
+        onTap: () {
+          setState(() {
+            callType = label;
+            callTypeValue = value;
+          });
+          Navigator.pop(context);
+          _search();
+        },
       ),
     );
   }

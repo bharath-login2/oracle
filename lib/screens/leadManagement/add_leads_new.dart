@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:login2/models/clients/postalCodeModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
@@ -14,6 +15,8 @@ import 'package:login2/screens/product_mannagement/add_products.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
+import '../../models/lead_management/getLeadSourceModel.dart';
+
 import '../../models/lead_management/leadProductsModel.dart';
 import '../../service/service.dart';
 import '../../models/lead_management/leadExtraSettings.dart';
@@ -150,6 +153,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   List<DistrictList> districtList = [];
   PostOffice? selectedPostOffice;
   LeadProductSectionModel? productSectionModel;
+  GetLeadSourceModel? leadSourceModel;
+
   List<LeadProduct> _selectedProducts = [];
   TextEditingController _productSearchCtrl = TextEditingController();
   List<LeadProduct> _productSearchResults = [];
@@ -321,6 +326,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     }
     stateDetails = await HttpService.getState();
     productSectionModel = await HttpService.leadProductSection();
+    leadSourceModel = await HttpService.getLeadSourceAddleads();
 
     if (widget.products != null &&
         widget.products!.isNotEmpty &&
@@ -621,6 +627,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     return TextFormField(
       controller: contactNoCtrl,
       keyboardType: TextInputType.phone,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         label: RichText(
           text: const TextSpan(
@@ -661,6 +668,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     return TextFormField(
       controller: whatsappNoCtrl,
       keyboardType: TextInputType.phone,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         labelText: 'Whatsapp Number',
         prefix: GestureDetector(
@@ -1458,7 +1466,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       context: context,
       builder: (_) {
         final searchCtrl = TextEditingController();
-        var filtered = List.from(commonDetails!.data.leadSource);
+        var filtered = List.from(leadSourceModel?.data ?? []);
         return StatefulBuilder(builder: (ctx, setDialogState) {
           return AlertDialog(
             title: const Text('Lead Source'),
@@ -1477,8 +1485,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                       ),
                     ),
                     onChanged: (v) => setDialogState(() {
-                      filtered = commonDetails!.data.leadSource
-                          .where((s) => s.leadSource
+                      filtered = (leadSourceModel?.data ?? [])
+                          .where((s) => (s.leadSource ?? "")
                               .toLowerCase()
                               .contains(v.toLowerCase()))
                           .toList();
@@ -1491,12 +1499,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                       itemBuilder: (_, i) {
                         final src = filtered[i];
                         return ListTile(
-                          title: Text(src.leadSource),
+                          title: Text(src.leadSource ?? ""),
                           onTap: () {
                             setState(() {
-                              leadSource = src.leadSource;
+                              leadSource = src.leadSource ?? "";
                               leadSourceCtrl.text = leadSource;
-                              leadSourceId = src.leadSourceId;
+                              leadSourceId = src.leadSourceId ?? "";
                             });
                             Navigator.pop(context);
                           },
@@ -1792,15 +1800,16 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           final response = await HttpService.postLeadSource(name);
           if (response?.status ?? false) {
             commonDetails = await HttpService.addLeadCommonData(token);
+            leadSourceModel = await HttpService.getLeadSourceAddleads();
             if (commonDetails != null) {
               try {
-                final newSrc = commonDetails!.data.leadSource.firstWhere(
-                  (s) => s.leadSource.toLowerCase() == name.toLowerCase(),
+                final newSrc = leadSourceModel!.data!.firstWhere(
+                  (s) => s.leadSource?.toLowerCase() == name.toLowerCase(),
                 );
                 setState(() {
-                  leadSource = newSrc.leadSource;
+                  leadSource = newSrc.leadSource ?? "";
                   leadSourceCtrl.text = leadSource;
-                  leadSourceId = newSrc.leadSourceId;
+                  leadSourceId = newSrc.leadSourceId ?? "";
                 });
               } catch (e) {
                 // Source not found in refreshed list

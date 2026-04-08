@@ -357,10 +357,10 @@ class _AddFollowupState extends State<AddFollowup> {
       callHistoryId = '';
     }
     if (widget.callingDate != null) {
-      calledDate1.text = DateFormat('dd-MM-yyyy HH:mm')
+      calledDate1.text = DateFormat('dd-MM-yyyy hh:mm a')
           .format(DateTime.parse(widget.callingDate.toString()));
     } else {
-      calledDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+      calledDate1.text = DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
     }
 
     return result == true && timeOut == false
@@ -524,7 +524,8 @@ class _AddFollowupState extends State<AddFollowup> {
                                                   callResultReasonList();
 
                                                   // Clear tags when status changes
-                                                  callResultReasonName = 'Reason';
+                                                  callResultReasonName =
+                                                      'Reason';
                                                   callResultReasonId = '';
                                                   callReasonVal.text = 'Reason';
 
@@ -557,20 +558,35 @@ class _AddFollowupState extends State<AddFollowup> {
                             maxLines: 1,
                             readOnly: true,
                             controller: callResultVal,
-                            decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.only(
+                            decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.only(
                                     left: 10, top: 2, bottom: 2),
-                                labelText: 'Status *',
+                                label: RichText(
+                                  text: const TextSpan(
+                                    text: 'Status',
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 13),
+                                    children: [
+                                      TextSpan(
+                                        text: ' *',
+                                        style: TextStyle(
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                                 fillColor: Colors.white,
                                 filled: true,
-                                prefixIcon: Icon(
+                                prefixIcon: const Icon(
                                     Icons.arrow_drop_down_circle_outlined,
                                     color: Colors.grey),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
+                                border: const OutlineInputBorder(),
+                                focusedBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(color: Colors.grey),
                                 ),
-                                labelStyle: TextStyle(color: Colors.grey)),
+                                labelStyle:
+                                    const TextStyle(color: Colors.grey)),
                           ),
                           const SizedBox(
                             height: 15,
@@ -655,21 +671,38 @@ class _AddFollowupState extends State<AddFollowup> {
                                     maxLines: 1,
                                     readOnly: true,
                                     controller: callReasonVal,
-                                    decoration: const InputDecoration(
-                                        contentPadding: EdgeInsets.only(
+                                    decoration: InputDecoration(
+                                        contentPadding: const EdgeInsets.only(
                                             left: 10, top: 2, bottom: 2),
-                                        labelText: 'Call Result',
+                                        label: RichText(
+                                          text: const TextSpan(
+                                            text: 'Reason',
+                                            style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 13),
+                                            children: [
+                                              TextSpan(
+                                                text: ' *',
+                                                style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                         fillColor: Colors.white,
                                         filled: true,
-                                        prefixIcon: Icon(Icons.reply_all_sharp,
+                                        prefixIcon: const Icon(
+                                            Icons.reply_all_sharp,
                                             color: Colors.grey),
-                                        border: OutlineInputBorder(),
-                                        focusedBorder: OutlineInputBorder(
+                                        border: const OutlineInputBorder(),
+                                        focusedBorder: const OutlineInputBorder(
                                           borderSide:
                                               BorderSide(color: Colors.grey),
                                         ),
                                         labelStyle:
-                                            TextStyle(color: Colors.grey)),
+                                            const TextStyle(color: Colors.grey)),
                                   ),
                                 )
                               : const SizedBox(),
@@ -4582,141 +4615,148 @@ class _AddFollowupState extends State<AddFollowup> {
       final connectivityResult = await (Connectivity().checkConnectivity());
       // if (connectivityResult == ConnectivityResult.mobile ||
       //     connectivityResult == ConnectivityResult.wifi) {
-        if (connectivityResult is List<ConnectivityResult>) {
+      if (connectivityResult is List<ConnectivityResult>) {
         if (connectivityResult.contains(ConnectivityResult.mobile) ||
             connectivityResult.contains(ConnectivityResult.wifi)) {
-        if (callResultId == '') {
-          Common.toastMessaage('Choose any Status', Colors.red);
-        } else if (callResponseId == '') {
-          Common.toastMessaage('Choose call response', Colors.red);
-        } else if (callResultId == '2' && nextFollowupDate1.text.isEmpty) {
-          Common.toastMessaage('Choose next followup date', Colors.red);
-        } else if (createOrder == true &&
-            products.isEmpty &&
-            commonDetails!.data.customerAddInvoicePermission) {
-          Common.toastMessaage('Please add a product to continue', Colors.red);
-        } else if (createOrder == true &&
-            commonDetails!.data.customerAddInvoicePermission &&
-            paymentStatus == null) {
-          Common.toastMessaage(
-              'Payment Status is required to add invoice', Colors.red);
-        } else if (createOrder == true &&
-            paidAmount.text.isEmpty &&
-            commonDetails!.data.customerAddInvoicePermission &&
-            paymentStatus != "unpaid") {
-          Common.toastMessaage(
-              'Paid Amount is required to add invoice', Colors.red);
-        } else if (createOrder == true &&
-            paymentStatus != "unpaid" &&
-            commonDetails!.data.customerAddInvoicePermission &&
-            paymentMethod == null) {
-          Common.toastMessaage(
-              'Payment Method is required to add invoice', Colors.red);
-        } else if (createOrder == true &&
-            commonDetails!.data.customerAddInvoicePermission &&
-            paymentStatus != "unpaid" &&
-            staffId == "") {
-          Common.toastMessaage(
-              'Collected Staff is required to add invoice', Colors.red);
-        } else if (createRenewal == true &&
-            commonDetails!.data.isRenewal &&
-            startDate.text == "") {
-          Common.toastMessaage(
-              'Start date is required to add renewal', Colors.red);
-        } else if (createRenewal == true &&
-            commonDetails!.data.isRenewal &&
-            endDate.text == "") {
-          Common.toastMessaage(
-              'End date is required to add renewal', Colors.red);
-        } else if (double.parse(discount.text == "" ? "0.0" : discount.text) >
-            subTotal) {
-          Common.toastMessaage(
-              'The discount should not exceed the total amount', Colors.red);
-        } else if (double.parse(discount.text == "" ? "0.0" : discount.text) <
-            0) {
-          Common.toastMessaage(
-              'Please enter valid discount amount', Colors.red);
-        } else if (double.parse(
-                shippingCharge.text == "" ? "0.0" : shippingCharge.text) <
-            0) {
-          Common.toastMessaage(
-              'Please enter valid shipping charge', Colors.red);
-        } else {
-          if (mounted) {
-            Common.showProgressDialog(context, "Loading..");
-          }
-          AddLeadFollowupModel object1 = await HttpService.addLeadsFollowup(
-              widget.token,
-              callResultId,
-              nextFollowupDate1.text,
-              cost.text,
-              address.text,
-              leadTypeId,
-              leadSubTypeId,
-              remarks.text,
-              widget.callMasterId,
-              calledDate1.text,
-              callHistoryId,
-              priorityId,
-              checked,
-              timeBefore.text,
-              callResponseId,
-              callResultReasonId,
-              createOrder,
-              createRenewal ? "renewal" : "invoice",
-              detailsResponse!.data.checkId,
-              invoiceDate,
-              products,
-              reminderTemplate.text,
-              allTotal,
-              startDate.text,
-              endDate.text,
-              paymentStatus,
-              subTotal,
-              totalTaxAmount,
-              discount.text,
-              shippingCharge.text,
-              paymentMethod,
-              paidAmount.text,
-              staffId,
-              isDifrent,
-              renProducts,
-              targetGroups);
-          if (object1.status == true) {
-            Common.toastMessaage(object1.message, Colors.green);
-            if (mounted) {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => LeadDetails(
-                          widget.token!,
-                          widget.editLead,
-                          widget.deleteLead,
-                          widget.cloudCall,
-                          widget.callMasterId,
-                          pageName: widget.pageName.toString(),
-                          fromDate: widget.fromDate,
-                          toDate: widget.toDate,
-                          status: widget.status,
-                          category: widget.category,
-                          staff: widget.staff,
-                          isCalled: widget.isCalled,
-                          searchKey: widget.searchKey,
-                          scrollToIndex: widget.scrollToIndex,
-                          leadType: widget.leadType1,
-                        )),
-              );
-              Navigator.pop(context);
-            }
+          if (callResultId == '') {
+            Common.toastMessaage('Choose any Status', Colors.red);
+          } else if (callResponseId == '') {
+            Common.toastMessaage('Choose call response', Colors.red);
+          } else if (callResultId == '2' && nextFollowupDate1.text.isEmpty) {
+            Common.toastMessaage('Choose next followup date', Colors.red);
+          } else if (callResultId == '3' &&
+              (callResultReasonId.isEmpty ||
+                  callResultReasonId == '0' ||
+                  callResultReasonId == 'null')) {
+            Common.toastMessaage('Choose any Reason', Colors.red);
+          } else if (createOrder == true &&
+              products.isEmpty &&
+              commonDetails!.data.customerAddInvoicePermission) {
+            Common.toastMessaage(
+                'Please add a product to continue', Colors.red);
+          } else if (createOrder == true &&
+              commonDetails!.data.customerAddInvoicePermission &&
+              paymentStatus == null) {
+            Common.toastMessaage(
+                'Payment Status is required to add invoice', Colors.red);
+          } else if (createOrder == true &&
+              paidAmount.text.isEmpty &&
+              commonDetails!.data.customerAddInvoicePermission &&
+              paymentStatus != "unpaid") {
+            Common.toastMessaage(
+                'Paid Amount is required to add invoice', Colors.red);
+          } else if (createOrder == true &&
+              paymentStatus != "unpaid" &&
+              commonDetails!.data.customerAddInvoicePermission &&
+              paymentMethod == null) {
+            Common.toastMessaage(
+                'Payment Method is required to add invoice', Colors.red);
+          } else if (createOrder == true &&
+              commonDetails!.data.customerAddInvoicePermission &&
+              paymentStatus != "unpaid" &&
+              staffId == "") {
+            Common.toastMessaage(
+                'Collected Staff is required to add invoice', Colors.red);
+          } else if (createRenewal == true &&
+              commonDetails!.data.isRenewal &&
+              startDate.text == "") {
+            Common.toastMessaage(
+                'Start date is required to add renewal', Colors.red);
+          } else if (createRenewal == true &&
+              commonDetails!.data.isRenewal &&
+              endDate.text == "") {
+            Common.toastMessaage(
+                'End date is required to add renewal', Colors.red);
+          } else if (double.parse(discount.text == "" ? "0.0" : discount.text) >
+              subTotal) {
+            Common.toastMessaage(
+                'The discount should not exceed the total amount', Colors.red);
+          } else if (double.parse(discount.text == "" ? "0.0" : discount.text) <
+              0) {
+            Common.toastMessaage(
+                'Please enter valid discount amount', Colors.red);
+          } else if (double.parse(
+                  shippingCharge.text == "" ? "0.0" : shippingCharge.text) <
+              0) {
+            Common.toastMessaage(
+                'Please enter valid shipping charge', Colors.red);
           } else {
-            Common.toastMessaage(object1.message, Colors.red);
             if (mounted) {
-              Navigator.pop(context);
+              Common.showProgressDialog(context, "Loading..");
+            }
+            AddLeadFollowupModel object1 = await HttpService.addLeadsFollowup(
+                widget.token,
+                callResultId,
+                nextFollowupDate1.text,
+                cost.text,
+                address.text,
+                leadTypeId,
+                leadSubTypeId,
+                remarks.text,
+                widget.callMasterId,
+                calledDate1.text,
+                callHistoryId,
+                priorityId,
+                checked,
+                timeBefore.text,
+                callResponseId,
+                callResultReasonId,
+                createOrder,
+                createRenewal ? "renewal" : "invoice",
+                detailsResponse!.data.checkId,
+                invoiceDate,
+                products,
+                reminderTemplate.text,
+                allTotal,
+                startDate.text,
+                endDate.text,
+                paymentStatus,
+                subTotal,
+                totalTaxAmount,
+                discount.text,
+                shippingCharge.text,
+                paymentMethod,
+                paidAmount.text,
+                staffId,
+                isDifrent,
+                renProducts,
+                targetGroups);
+            if (object1.status == true) {
+              Common.toastMessaage(object1.message, Colors.green);
+              if (mounted) {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => LeadDetails(
+                            widget.token!,
+                            widget.editLead,
+                            widget.deleteLead,
+                            widget.cloudCall,
+                            widget.callMasterId,
+                            pageName: widget.pageName.toString(),
+                            fromDate: widget.fromDate,
+                            toDate: widget.toDate,
+                            status: widget.status,
+                            category: widget.category,
+                            staff: widget.staff,
+                            isCalled: widget.isCalled,
+                            searchKey: widget.searchKey,
+                            scrollToIndex: widget.scrollToIndex,
+                            leadType: widget.leadType1,
+                          )),
+                );
+                Navigator.pop(context);
+              }
+            } else {
+              Common.toastMessaage(object1.message, Colors.red);
+              if (mounted) {
+                Navigator.pop(context);
+              }
             }
           }
         }
-      } }else {
+      } else {
         setState(() {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

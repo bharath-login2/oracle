@@ -9,6 +9,7 @@ import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
 import 'package:login2/screens/homePage.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -175,7 +176,8 @@ class _InfoCardExampleState extends State<InfoCardExample> {
                         : Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => Dashboard(token)),
+                                builder: (context) =>
+                                    DashboardLeadNewUpdatedTwo(token)),
                           );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -319,7 +319,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       contactMobile.text = '+${leadDetails!.data!.contactNumber1 ?? ''}';
 
       // Initialize followup form defaults
-      calledDate1.text = DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+      calledDate1.text =
+          DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
       cost.text = leadDetails!.data!.cost ?? '';
       address.text = leadDetails!.data!.address ?? '';
       leadType = leadDetails!.data!.leadCategory ?? '';
@@ -371,6 +372,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       mileStone = widget.mileStone;
       leadDetailsFollowup = widget.leadDetailsFollowup;
       commonDetails = widget.commonDetails;
+      if (commonDetails == null) {
+        _fetchCommonDetails();
+      }
 
       if (leadDetails != null) {
         final data = leadDetails!.data!;
@@ -389,7 +393,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
         // Initialize followup date
         calledDate1.text =
-            DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+            DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
       }
     });
 
@@ -400,6 +404,19 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     _fetchProductSection();
     listFolderList(widget.token, widget.callMasterId, '');
     _fetchGoogleDriveAccounts();
+  }
+
+  Future<void> _fetchCommonDetails() async {
+    try {
+      final response = await HttpService.addLeadCommonData(widget.token);
+      if (response != null && mounted) {
+        setState(() {
+          commonDetails = response;
+        });
+      }
+    } catch (e) {
+      log("Error fetching common details: $e");
+    }
   }
 
   listFolderList(token, callMasterId, pathValue) async {
@@ -1995,7 +2012,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     }
 
     bool isReasonReq = leadSettings?.isReasonRequiredBool ?? false;
-    if (isReasonReq && callResultReasonId.isEmpty) {
+    if (isReasonReq &&
+        (callResultReasonId.isEmpty ||
+            callResultReasonId == '0' ||
+            callResultReasonId == 'null')) {
       Common.toastMessaage('Select Tags', Colors.red);
       return;
     }
@@ -2099,7 +2119,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         if (result.status == true) {
           Common.toastMessaage(result.message, Colors.green);
           widget.onDataChanged();
-          Navigator.pop(context); // Close popup
+          _refreshData(widget.callMasterId);
+          setState(() {
+            remarks.clear();
+            isExpand = false;
+            isChecked = false;
+            checked = false;
+          });
         } else {
           Common.toastMessaage(result.message, Colors.red);
         }
@@ -2271,7 +2297,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   Widget _buildAddNewFollowupForm() {
     if (commonDetails == null) return const SizedBox();
-
     return Column(
       children: [
         Padding(
@@ -2282,7 +2307,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 isExpand = !isExpand;
                 if (isExpand) {
                   calledDate1.text =
-                      DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+                      DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
                 }
               });
             },
@@ -2365,7 +2390,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 pickedTime.hour,
                                 pickedTime.minute);
                             calledDate1.text =
-                                DateFormat('dd-MM-yyyy HH:mm').format(dt);
+                                DateFormat('dd-MM-yyyy hh:mm a').format(dt);
                           });
                         }
                       }
@@ -2387,7 +2412,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   ),
                   const SizedBox(height: 12),
                   _buildDropdown(
-                    label: 'Call Result',
+                    label: 'Call Status',
                     isMandatory: true,
                     value: callResponseId.isEmpty ? null : callResponseId,
                     items: commonDetails!.data.callResponseStatus.map((item) {
@@ -2406,9 +2431,299 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       });
                     },
                   ),
-                  // const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                  _buildDropdown(
+                    label: 'Lead Stages',
+                    isMandatory: true,
+                    value: callResultId.isEmpty ? null : callResultId,
+                    items: commonDetails!.data.callResult.map((item) {
+                      return DropdownMenuItem(
+                        value: item.callResultId.toString(),
+                        child: Text(item.callResult),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        callResultId = value!;
+                        callResult = commonDetails!.data.callResult
+                            .firstWhere((element) =>
+                                element.callResultId.toString() == value)
+                            .callResult;
+                        _fetchCallResultReason();
+                        _fetchLeadExtraSettings(callResultId).then((_) {
+                          if (leadSettings != null &&
+                              !leadSettings!.isFollowupRequiredBool) {
+                            if (mounted) {
+                              setState(() {
+                                nextFollowupDate1.clear();
+                                checked = false;
+                              });
+                            }
+                          } else if (leadSettings == null &&
+                              callResultId != '2') {
+                            if (mounted) {
+                              setState(() {
+                                nextFollowupDate1.clear();
+                                checked = false;
+                              });
+                            }
+                          }
+                        });
+                      });
+                    },
+                  ),
+                  if (callResultReason != null &&
+                      (callResultReason!.data?.isNotEmpty ?? false))
+                    _buildDropdown(
+                      label: 'Tags',
+                      isMandatory: leadSettings?.isReasonRequiredBool ?? false,
+                      value: callResultReasonId.isEmpty
+                          ? null
+                          : callResultReasonId,
+                      items: callResultReason!.data!.map((item) {
+                        return DropdownMenuItem(
+                          value: item.id ?? '',
+                          child: Text(item.reason ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          callResultReasonId = value!;
+                        });
+                      },
+                    ),
+                  if (leadSettings != null
+                      ? leadSettings!.isFollowupRequiredBool
+                      : callResultId == '2') // Assuming '2' is Pending/Followup
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: const TextSpan(
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black),
+                            children: [
+                              TextSpan(text: 'Next Followup Date '),
+                              TextSpan(
+                                text: '*',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () async {
+                            DateTime now = DateTime.now();
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: now,
+                              firstDate: now,
+                              lastDate: DateTime(2101),
+                            );
+                            if (pickedDate != null) {
+                              TimeOfDay? pickedTime = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+                              if (pickedTime != null) {
+                                final dt = DateTime(
+                                    pickedDate.year,
+                                    pickedDate.month,
+                                    pickedDate.day,
+                                    pickedTime.hour,
+                                    pickedTime.minute);
 
-                  // Product Selection (Moved from More Details)
+                                if (!dt.isAfter(now)) {
+                                  if (context.mounted) {
+                                    Common.toastMessaage(
+                                        'You cannot choose a past time for the follow-up date',
+                                        Colors.red);
+                                  }
+                                  return;
+                                }
+
+                                setState(() {
+                                  nextFollowupDate1.text =
+                                      DateFormat('dd-MM-yyyy hh:mm a')
+                                          .format(dt);
+                                  if (checked && timeBefore.text.isNotEmpty) {
+                                    int minutes =
+                                        int.tryParse(timeBefore.text) ?? 10;
+                                    DateTime reminderTime =
+                                        dt.subtract(Duration(minutes: minutes));
+                                    if (reminderTime.isBefore(DateTime.now())) {
+                                      int maxMinutes = dt
+                                          .difference(DateTime.now())
+                                          .inMinutes;
+                                      if (maxMinutes <= 0) {
+                                        timeBefore.text = "0";
+                                      } else {
+                                        timeBefore.text = maxMinutes.toString();
+                                      }
+                                      if (context.mounted) {
+                                        Common.toastMessaage(
+                                            'Reminder time adjusted to ${timeBefore.text} mins before',
+                                            Colors.orange);
+                                      }
+                                    }
+                                  }
+                                });
+                              }
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade400),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  nextFollowupDate1.text.isEmpty
+                                      ? 'Select Date & Time'
+                                      : nextFollowupDate1.text,
+                                ),
+                                const Icon(Icons.calendar_month, size: 18),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Reminder
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Reminder',
+                              style: TextStyle(fontSize: 14)),
+                          value: checked,
+                          onChanged: (value) {
+                            setState(() {
+                              checked = value!;
+                              if (checked &&
+                                  nextFollowupDate1.text.isNotEmpty) {
+                                try {
+                                  DateTime dt = DateFormat('dd-MM-yyyy hh:mm a')
+                                      .parse(nextFollowupDate1.text);
+                                  int minutes =
+                                      int.tryParse(timeBefore.text) ?? 10;
+                                  DateTime reminderTime =
+                                      dt.subtract(Duration(minutes: minutes));
+                                  if (reminderTime.isBefore(DateTime.now())) {
+                                    int maxMinutes =
+                                        dt.difference(DateTime.now()).inMinutes;
+                                    if (maxMinutes <= 0) {
+                                      timeBefore.text = "0";
+                                    } else {
+                                      timeBefore.text = maxMinutes.toString();
+                                    }
+                                    if (context.mounted) {
+                                      Common.toastMessaage(
+                                          'Reminder time adjusted to ${timeBefore.text} mins before',
+                                          Colors.orange);
+                                    }
+                                  }
+                                } catch (e) {
+                                  // Ignore parsing error
+                                }
+                              }
+                            });
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                        if (checked) ...[
+                          Row(
+                            children: [
+                              const Text('Time Before (min): ',
+                                  style: TextStyle(fontSize: 13)),
+                              const SizedBox(width: 10),
+                              Container(
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade400),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: timeBefore,
+                                        textAlign: TextAlign.center,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                            border: InputBorder.none),
+                                      ),
+                                    ),
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            int val =
+                                                int.tryParse(timeBefore.text) ??
+                                                    0;
+                                            int newVal = val + 1;
+
+                                            // Validate before incrementing
+                                            if (nextFollowupDate1
+                                                .text.isNotEmpty) {
+                                              try {
+                                                DateTime dt = DateFormat(
+                                                        'dd-MM-yyyy hh:mm a')
+                                                    .parse(
+                                                        nextFollowupDate1.text);
+                                                DateTime reminderTime =
+                                                    dt.subtract(Duration(
+                                                        minutes: newVal));
+                                                if (reminderTime
+                                                    .isBefore(DateTime.now())) {
+                                                  Common.toastMessaage(
+                                                      'Cannot set reminder time in the past',
+                                                      Colors.red);
+                                                  return;
+                                                }
+                                              } catch (e) {
+                                                // Ignore
+                                              }
+                                            }
+
+                                            setState(() => timeBefore.text =
+                                                newVal.toString());
+                                          },
+                                          child: const Icon(Icons.arrow_drop_up,
+                                              size: 18),
+                                        ),
+                                        InkWell(
+                                          onTap: () {
+                                            int val =
+                                                int.tryParse(timeBefore.text) ??
+                                                    0;
+                                            if (val > 0) {
+                                              setState(() => timeBefore.text =
+                                                  "${val - 1}");
+                                            }
+                                          },
+                                          child: const Icon(
+                                              Icons.arrow_drop_down,
+                                              size: 18),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    ),
+
                   const Text(
                     'Products',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
@@ -2500,7 +2815,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Status Dropdown
                   _buildDropdown(
                     label: 'Category',
                     value: leadTypeId.isEmpty ? null : leadTypeId,
@@ -2521,9 +2835,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       });
                     },
                   ),
-                  //  const SizedBox(height: 12),
-
-                  // Sub Category
+                  //  const SizedBox(height:12),
                   _buildDropdown(
                     label: 'Sub Category',
                     value: leadSubTypeId.isEmpty ? null : leadSubTypeId,
@@ -2543,283 +2855,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       });
                     },
                   ),
-                  const SizedBox(height: 12),
-                  _buildDropdown(
-                    label: 'Stages',
-                    isMandatory: true,
-                    value: callResultId.isEmpty ? null : callResultId,
-                    items: commonDetails!.data.callResult.map((item) {
-                      return DropdownMenuItem(
-                        value: item.callResultId.toString(),
-                        child: Text(item.callResult),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        callResultId = value!;
-                        callResult = commonDetails!.data.callResult
-                            .firstWhere((element) =>
-                                element.callResultId.toString() == value)
-                            .callResult;
-                        _fetchCallResultReason();
-                        _fetchLeadExtraSettings(callResultId).then((_) {
-                          if (leadSettings != null &&
-                              !leadSettings!.isFollowupRequiredBool) {
-                            if (mounted) {
-                              setState(() {
-                                nextFollowupDate1.clear();
-                                checked = false;
-                              });
-                            }
-                          } else if (leadSettings == null &&
-                              callResultId != '2') {
-                            if (mounted) {
-                              setState(() {
-                                nextFollowupDate1.clear();
-                                checked = false;
-                              });
-                            }
-                          }
-                        });
-                      });
-                    },
-                  ),
 
-                  // Next Followup Date (Conditional)
-                  if (leadSettings != null
-                      ? leadSettings!.isFollowupRequiredBool
-                      : callResultId == '2') // Assuming '2' is Pending/Followup
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black),
-                            children: [
-                              TextSpan(text: 'Next Followup Date '),
-                              TextSpan(
-                                text: '*',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        InkWell(
-                          onTap: () async {
-                            DateTime now = DateTime.now();
-                            DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: now,
-                              firstDate: now,
-                              lastDate: DateTime(2101),
-                            );
-                            if (pickedDate != null) {
-                              TimeOfDay? pickedTime = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                              );
-                              if (pickedTime != null) {
-                                final dt = DateTime(
-                                    pickedDate.year,
-                                    pickedDate.month,
-                                    pickedDate.day,
-                                    pickedTime.hour,
-                                    pickedTime.minute);
-
-                                if (!dt.isAfter(now)) {
-                                  if (context.mounted) {
-                                    Common.toastMessaage(
-                                        'You cannot choose a past time for the follow-up date',
-                                        Colors.red);
-                                  }
-                                  return;
-                                }
-
-                                setState(() {
-                                  nextFollowupDate1.text =
-                                      DateFormat('dd-MM-yyyy HH:mm').format(dt);
-
-                                  // Auto-adjust reminder if needed
-                                  if (checked && timeBefore.text.isNotEmpty) {
-                                    int minutes =
-                                        int.tryParse(timeBefore.text) ?? 10;
-                                    DateTime reminderTime =
-                                        dt.subtract(Duration(minutes: minutes));
-                                    if (reminderTime.isBefore(DateTime.now())) {
-                                      int maxMinutes = dt
-                                          .difference(DateTime.now())
-                                          .inMinutes;
-                                      if (maxMinutes <= 0) {
-                                        timeBefore.text = "0";
-                                      } else {
-                                        timeBefore.text = maxMinutes.toString();
-                                      }
-                                      if (context.mounted) {
-                                        Common.toastMessaage(
-                                            'Reminder time adjusted to ${timeBefore.text} mins before',
-                                            Colors.orange);
-                                      }
-                                    }
-                                  }
-                                });
-                              }
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade400),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  nextFollowupDate1.text.isEmpty
-                                      ? 'Select Date & Time'
-                                      : nextFollowupDate1.text,
-                                ),
-                                const Icon(Icons.calendar_month, size: 18),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Reminder
-                        CheckboxListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Text('Reminder',
-                              style: TextStyle(fontSize: 14)),
-                          value: checked,
-                          onChanged: (value) {
-                            setState(() {
-                              checked = value!;
-                              if (checked &&
-                                  nextFollowupDate1.text.isNotEmpty) {
-                                try {
-                                  DateTime dt = DateFormat('dd-MM-yyyy HH:mm')
-                                      .parse(nextFollowupDate1.text);
-                                  int minutes =
-                                      int.tryParse(timeBefore.text) ?? 10;
-                                  DateTime reminderTime =
-                                      dt.subtract(Duration(minutes: minutes));
-                                  if (reminderTime.isBefore(DateTime.now())) {
-                                    int maxMinutes =
-                                        dt.difference(DateTime.now()).inMinutes;
-                                    if (maxMinutes <= 0) {
-                                      timeBefore.text = "0";
-                                    } else {
-                                      timeBefore.text = maxMinutes.toString();
-                                    }
-                                    if (context.mounted) {
-                                      Common.toastMessaage(
-                                          'Reminder time adjusted to ${timeBefore.text} mins before',
-                                          Colors.orange);
-                                    }
-                                  }
-                                } catch (e) {
-                                  // Ignore parsing error
-                                }
-                              }
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity.leading,
-                        ),
-                        if (checked) ...[
-                          Row(
-                            children: [
-                              const Text('Time Before (min): ',
-                                  style: TextStyle(fontSize: 13)),
-                              const SizedBox(width: 10),
-                              Container(
-                                width: 100,
-                                decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.grey.shade400),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: timeBefore,
-                                        textAlign: TextAlign.center,
-                                        keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
-                                            border: InputBorder.none),
-                                      ),
-                                    ),
-                                    Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        InkWell(
-                                          onTap: () {
-                                            int val =
-                                                int.tryParse(timeBefore.text) ??
-                                                    0;
-                                            int newVal = val + 1;
-
-                                            // Validate before incrementing
-                                            if (nextFollowupDate1
-                                                .text.isNotEmpty) {
-                                              try {
-                                                DateTime dt = DateFormat(
-                                                        'dd-MM-yyyy HH:mm')
-                                                    .parse(
-                                                        nextFollowupDate1.text);
-                                                DateTime reminderTime =
-                                                    dt.subtract(Duration(
-                                                        minutes: newVal));
-                                                if (reminderTime
-                                                    .isBefore(DateTime.now())) {
-                                                  Common.toastMessaage(
-                                                      'Cannot set reminder time in the past',
-                                                      Colors.red);
-                                                  return;
-                                                }
-                                              } catch (e) {
-                                                // Ignore
-                                              }
-                                            }
-
-                                            setState(() => timeBefore.text =
-                                                newVal.toString());
-                                          },
-                                          child: const Icon(Icons.arrow_drop_up,
-                                              size: 18),
-                                        ),
-                                        InkWell(
-                                          onTap: () {
-                                            int val =
-                                                int.tryParse(timeBefore.text) ??
-                                                    0;
-                                            if (val > 0) {
-                                              setState(() => timeBefore.text =
-                                                  "${val - 1}");
-                                            }
-                                          },
-                                          child: const Icon(
-                                              Icons.arrow_drop_down,
-                                              size: 18),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                      ],
-                    ),
-
-                  // Call Result Description Dropdown
                   // _buildDropdown(
                   //   label: 'Call Result *',
                   //   value: callResponseId.isEmpty ? null : callResponseId,
@@ -2839,31 +2875,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   //     });
                   //   },
                   // ),
-
-                  // Call Result Reason (if available)
-                  if (callResultReason != null &&
-                      (callResultReason!.data?.isNotEmpty ?? false))
-                    _buildDropdown(
-                      label: (leadSettings?.isReasonRequiredBool ?? false)
-                          ? 'Tags *'
-                          : 'Tags',
-                      value: callResultReasonId.isEmpty
-                          ? null
-                          : callResultReasonId,
-                      items: callResultReason!.data!.map((item) {
-                        return DropdownMenuItem(
-                          value: item.id ?? '',
-                          child: Text(item.reason ?? ''),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          callResultReasonId = value!;
-                        });
-                      },
-                    ),
-
-                  // More Details Toggle
                   InkWell(
                     onTap: () {
                       setState(() {
@@ -2892,7 +2903,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       ),
                     ),
                   ),
-
                   Visibility(
                     visible: isMoreDetails,
                     child: Column(
@@ -2993,8 +3003,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         //   },
                         // ),
                         const SizedBox(height: 12),
-
-                        // WhatsApp Number
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -3020,8 +3028,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           ],
                         ),
                         const SizedBox(height: 12),
-
-                        // Email ID
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -3046,7 +3052,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                         // const SizedBox(height: 12),
 
-                        // // Product Selection (Moved from More Details)
                         // const Text(
                         //   'Products',
                         //   style: TextStyle(
@@ -3171,8 +3176,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           ],
                         ),
                         const SizedBox(height: 12),
-
-                        // Common Response suggestions
                         if (commonDetails!.data.callResponse.isNotEmpty)
                           SizedBox(
                             height: 35,
@@ -3806,7 +3809,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         final dt = DateTime(pickedDate.year, pickedDate.month,
                             pickedDate.day, pickedTime.hour, pickedTime.minute);
                         nextFollowupDate1.text =
-                            DateFormat('dd-MM-yyyy HH:mm').format(dt);
+                            DateFormat('dd-MM-yyyy hh:mm a').format(dt);
                       });
                     }
                   }
@@ -4679,31 +4682,129 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Remarks: ${followup.remarks}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isLatest
-                            ? Colors.blue.shade800
-                            : Colors.grey.shade800,
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            followup.callResultId != "3" &&
+                                    followup.callResultId != "4"
+                                ? Icon(
+                                    Icons.access_time,
+                                    size: 12,
+                                    color: isLatest
+                                        ? Colors.blue.shade400
+                                        : Colors.grey.shade500,
+                                  )
+                                : SizedBox(),
+                            const SizedBox(width: 4),
+                            followup.callResultId != "3" &&
+                                    followup.callResultId != "4"
+                                ? Text(
+                                    followup.isNewCall == "Y"
+                                        ? 'Created Date: ${followup.scheduledDate}'
+                                        : 'Scheduled Date: ${followup.scheduledDate}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold, // Added bold
+                                      color: isLatest
+                                          ? Colors.blue.shade600
+                                          : Colors.grey.shade500,
+                                      letterSpacing:
+                                          0.5, // Added for better readability
+                                      shadows: isLatest
+                                          ? [
+                                              // Added shadow effect for "showy" look
+                                              Shadow(
+                                                offset: Offset(0, 0.5),
+                                                blurRadius: 1,
+                                                color: Colors.blue.shade200
+                                                    .withOpacity(0.5),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                  )
+                                : SizedBox(),
+                            // if (followup.calledDate != "") ...[
+                            //   const SizedBox(width: 4),
+                            //   Text(
+                            //     'Called Date: ${followup.calledDate}',
+                            //     style: TextStyle(
+                            //       fontSize: 11,
+                            //       fontWeight: FontWeight.bold, // Added bold
+                            //       color: isLatest
+                            //           ? Colors.blue.shade600
+                            //           : Colors.grey.shade500,
+                            //       letterSpacing:
+                            //           0.5, // Added for better readability
+                            //       shadows: isLatest
+                            //           ? [
+                            //               // Added shadow effect for "showy" look
+                            //               Shadow(
+                            //                 offset: Offset(0, 0.5),
+                            //                 blurRadius: 1,
+                            //                 color: Colors.blue.shade200
+                            //                     .withOpacity(0.5),
+                            //               ),
+                            //             ]
+                            //           : null,
+                            //     ),
+                            //   ),
+                            //],
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Tags: ${followup.reason.isNotEmpty ? followup.reason : "Not Added"}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isLatest
-                            ? Colors.blue.shade600
-                            : Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            if (followup.calledDate != "" &&
+                                followup.calledDate != "-")
+                              Icon(
+                                Icons.access_time,
+                                size: 12,
+                                color: isLatest
+                                    ? Colors.blue.shade400
+                                    : Colors.grey.shade500,
+                              ),
+                            if (followup.calledDate != "" &&
+                                followup.calledDate != "-") ...[
+                              const SizedBox(width: 4),
+                              Text(
+                                'Called Date: ${followup.calledDate}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: isLatest
+                                      ? Colors.blue.shade600
+                                      : Colors.grey.shade500,
+                                  letterSpacing: 0.5,
+                                  shadows: isLatest
+                                      ? [
+                                          Shadow(
+                                            offset: Offset(0, 0.5),
+                                            blurRadius: 1,
+                                            color: Colors.blue.shade200
+                                                .withOpacity(0.5),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
                     ),
                     if (followup.callResponse.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        'Call Response: ${followup.callResponse}',
+                        'Call Status: ${followup.callResponse}',
                         style: TextStyle(
                           fontSize: 12,
                           color: isLatest
@@ -4713,6 +4814,49 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                       ),
                     ],
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        followup.reason.isNotEmpty
+                            ? Text(
+                                'Tags: ${followup.reason.isNotEmpty ? followup.reason : ""}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isLatest
+                                      ? Colors.blue.shade600
+                                      : Colors.grey.shade600,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )
+                            : SizedBox(),
+                        followup.reason.isNotEmpty
+                            ? const SizedBox(width: 107)
+                            : SizedBox(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isLatest
+                                ? Colors.green.shade100
+                                : Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "F.No : $followupNumber",
+                            style: TextStyle(
+                              color: isLatest
+                                  ? Colors.green.shade700
+                                  : Colors.green,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
                     if (followup.productNames.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
@@ -4726,6 +4870,18 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                       ),
                     ],
+                    const SizedBox(height: 4),
+                    followup.remarks.isNotEmpty
+                        ? Text(
+                            'Remarks: ${followup.remarks}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isLatest
+                                  ? Colors.blue.shade800
+                                  : Colors.grey.shade800,
+                            ),
+                          )
+                        : SizedBox(),
 
                     // Voice Recording Section
                     if ((followup.playVoicePermission == true ||
@@ -4809,56 +4965,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ],
                       ),
                     ],
-
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: 12,
-                              color: isLatest
-                                  ? Colors.blue.shade400
-                                  : Colors.grey.shade500,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              followup.scheduledDate,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isLatest
-                                    ? Colors.blue.shade600
-                                    : Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isLatest
-                                ? Colors.green.shade100
-                                : Colors.green.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            "F.No : $followupNumber",
-                            style: TextStyle(
-                              color: isLatest
-                                  ? Colors.green.shade700
-                                  : Colors.green,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -6012,8 +6118,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         final activity = activeMode!.activities[index];
         final isLatest = index == 0;
         final isLastItem = index == activeMode!.activities.length - 1;
-
-        // Use two colors only
         final activityColor = isLatest ? latestColor : otherColor;
         final lightColor = activityColor.withOpacity(0.1);
 
@@ -6084,7 +6188,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Header
                               Row(
                                 children: [
                                   Expanded(
@@ -6192,27 +6295,25 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 ),
                               ),
 
-                              const SizedBox(height: 12),
-
-                              // Date
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Icon(
-                                    Icons.calendar_month_rounded,
-                                    size: 12,
-                                    color: activityColor.withOpacity(0.5),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _formatFullDate(activity.createdTime),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: activityColor.withOpacity(0.7),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              //const SizedBox(height: 12),
+                              // Row(
+                              //   mainAxisAlignment: MainAxisAlignment.end,
+                              //   children: [
+                              //     Icon(
+                              //       Icons.calendar_month_rounded,
+                              //       size: 12,
+                              //       color: activityColor.withOpacity(0.5),
+                              //     ),
+                              //     const SizedBox(width: 4),
+                              //     Text(
+                              //       _formatFullDate(activity.createdTime),
+                              //       style: TextStyle(
+                              //         fontSize: 11,
+                              //         color: activityColor.withOpacity(0.7),
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
                             ],
                           ),
                         ),
@@ -8984,7 +9085,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   ),
                 ).then((_) {
                   widget.onDataChanged();
-                  Navigator.pop(context); // Close popup
+                  _refreshData(widget.callMasterId);
                 });
               },
               child: const Text('Followup'),
@@ -9164,68 +9265,72 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       ),
                       const SizedBox(height: 20),
 
-                      // Fresh Data Toggle (Radio style)
-                      InkWell(
-                        onTap: () {
-                          setDialogState(() {
-                            transferFresh = transferFresh == 1 ? 0 : 1;
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: transferFresh == 1
-                                ? appBarStart.withOpacity(0.04)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                      // Fresh Data Toggle (Radio style) - Hidden as per request
+                      Visibility(
+                        visible: false,
+                        child: InkWell(
+                          onTap: () {
+                            setDialogState(() {
+                              transferFresh = transferFresh == 1 ? 0 : 1;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
                               color: transferFresh == 1
-                                  ? appBarStart.withOpacity(0.2)
+                                  ? appBarStart.withOpacity(0.04)
                                   : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: transferFresh == 1
+                                    ? appBarStart.withOpacity(0.2)
+                                    : Colors.transparent,
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 20,
-                                height: 20,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: transferFresh == 1
-                                        ? appBarStart
-                                        : Colors.grey.shade300,
-                                    width: 2,
-                                  ),
-                                  color: Colors.white,
-                                ),
-                                child: Center(
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
                                       color: transferFresh == 1
                                           ? appBarStart
-                                          : Colors.transparent,
+                                          : Colors.grey.shade300,
+                                      width: 2,
+                                    ),
+                                    color: Colors.white,
+                                  ),
+                                  child: Center(
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: transferFresh == 1
+                                            ? appBarStart
+                                            : Colors.transparent,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                "Transfer as Fresh Data",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: textPrimary,
+                                const SizedBox(width: 12),
+                                const Text(
+                                  "Transfer as Fresh Data",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: textPrimary,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),

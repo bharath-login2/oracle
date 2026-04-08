@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/search/search.dart';
-import 'package:login2/screens/accounts/clients/clientDetails.dart';
 import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/screens/leadManagement/viewLeadsNew.dart';
 import 'package:login2/service/service.dart';
@@ -105,16 +104,30 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   Timer? _debounceTimer;
   final FocusNode _searchFocusNode = FocusNode();
 
-  final List<Color> _statusColors = const [
-    Color(0xFFEF4444), // Red
-    Color(0xFFF59E0B), // Orange
-    Color(0xFF10B981), // Green
-    Color(0xFF3B82F6), // Blue
-    Color(0xFF8B5CF6), // Purple
-    Color(0xFFEC4899), // Pink
-    Color(0xFF6366F1), // Indigo
-    Color(0xFF14B8A6), // Teal
-    Color(0xFF6B7280), // Gray
+  static const Color appBarStart = Color(0xFF2a86c9);
+  static const Color callGreen = Color(0xFF4CAF50);
+  static const Color accentOrange = Color(0xFFFF9800);
+  static const Color textPrimary = Color(0xFF1E293B);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color borderLight = Color(0xFFF1F5F9);
+  static const Color backgroundLight = Color(0xFFF8FAFC);
+
+  final List<Color> _colors = [
+    const Color(0xFF2196F3), // Vibrant Blue (index 0)
+    const Color(0xFF2196F3), // Blue at index 1 for "New"
+    const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
+    const Color.fromARGB(
+        255, 255, 7, 7), // Amber/Yellow at index 3 for Followup
+    const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
+    const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
+    const Color(0xFF9C27B0), // Purple 500 (index 6)
+    const Color(0xFF2a84c9), // Primary Blue (index 7)
+    const Color(0xFF009688), // Teal (index 8)
+    const Color(0xFFFF6F00), // Amber 900 (index 9)
+    const Color(0xFFD32F2F), // Red 700 (index 10)
+    const Color(0xFF1B5E20), // Green 900 (index 11)
+    const Color(0xFF0D47A1), // Blue 900 (index 12)
+    const Color(0xFF3F51B5), // Indigo (index 13)
   ];
 
   @override
@@ -142,8 +155,9 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   }
 
   void _onScroll() {
-    if (scrollController.position.pixels >=
-        scrollController.position.maxScrollExtent * 0.8) {
+    if (!scrollController.hasClients) return;
+    final threshold = scrollController.position.maxScrollExtent * 0.9;
+    if (scrollController.position.pixels >= threshold) {
       if (hasMoreData && !isLoadingMore && searchController.text.isNotEmpty) {
         loadMoreData();
       }
@@ -151,7 +165,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   }
 
   void _onSearchChanged() {
-    // No full state rebuild on every keystroke. 
+    // No full state rebuild on every keystroke.
     // The clear icon will be handled by a ValueListenableBuilder in _buildSearchBar.
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
@@ -181,18 +195,14 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
       userId = await Common.getSharedPref("userId");
       phoneCallLogPermission =
           await Common.getSharedPref("phoneCallLogPermission");
-
       final connectivityResult = await Connectivity().checkConnectivity();
-
       setState(() {
         result = connectivityResult.isNotEmpty &&
             !connectivityResult.contains(ConnectivityResult.none);
       });
-
       statusWise = await Common.getSharedPref("statusWise");
       roleId = await Common.getSharedPref("roleId");
       multiBranch = await Common.getSharedPref("multiBranch");
-
       if (statusWise == 'yes') {
         statusWiseId = await Common.getSharedPref("statusWisId");
         statusCatId = await Common.getSharedPref("statusCatId");
@@ -253,20 +263,17 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
       setState(() => response = null);
       return;
     }
-
     setState(() {
       isLoading = true;
       currentPage = 1;
       hasMoreData = true;
     });
-
     try {
       final newResponse = await HttpService.getSearchData(
         searchController.text,
         page: currentPage,
         pageSize: pageSize,
       );
-
       if (mounted) {
         setState(() {
           response = newResponse;
@@ -286,9 +293,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
 
   Future<void> loadMoreData() async {
     if (isLoadingMore || !hasMoreData || searchController.text.isEmpty) return;
-
     setState(() => isLoadingMore = true);
-
     try {
       currentPage++;
       final newResponse = await HttpService.getSearchData(
@@ -296,14 +301,25 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
         page: currentPage,
         pageSize: pageSize,
       );
-
       if (mounted) {
         setState(() {
-          if (newResponse != null &&
-              (newResponse.data.customers.isNotEmpty ||
-                  newResponse.data.leadData.isNotEmpty)) {
-            response!.data.customers.addAll(newResponse.data.customers);
-            response!.data.leadData.addAll(newResponse.data.leadData);
+          if (newResponse != null && newResponse.data != null) {
+            // deduplicate items
+            final existingCustIds =
+                response!.data.customers.map((c) => c.id).toSet();
+            final newCusts = newResponse.data.customers
+                .where((c) => !existingCustIds.contains(c.id))
+                .toList();
+            response!.data.customers.addAll(newCusts);
+
+            final existingLeadIds =
+                response!.data.leadData.map((l) => l.callMasterId).toSet();
+            final newLeads = newResponse.data.leadData
+                .where((l) => !existingLeadIds.contains(l.callMasterId))
+                .toList();
+            response!.data.leadData.addAll(newLeads);
+
+            hasMoreData = newCusts.isNotEmpty || newLeads.isNotEmpty;
           } else {
             hasMoreData = false;
           }
@@ -337,40 +353,59 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   }
 
   Widget _buildMainContent() {
+    final showViewLeads = searchController.text.isEmpty && viewLeads != null;
+    final showSearchResults =
+        searchController.text.isNotEmpty && response != null;
+    final showEmpty = !isLoading &&
+        !showViewLeads &&
+        !showSearchResults &&
+        searchController.text.isNotEmpty;
+
     return CustomScrollView(
+      key: const PageStorageKey('search_scroll_view'),
       controller: scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
+        // Index 0: Search Bar
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: _buildSearchBar(),
           ),
         ),
-        if (isLoading)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildLoadingIndicator(),
-            ),
-          ),
-        if (searchController.text.isEmpty)
-          ..._buildViewLeadsResultsSlivers()
-        else if (response != null &&
-            (response!.data.customers.isNotEmpty ||
-                response!.data.leadData.isNotEmpty))
-          ..._buildResultsSlivers()
-        else if (!isLoading)
+
+        // Index 1: Loading Indicator
+        SliverToBoxAdapter(
+          child: isLoading
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _buildLoadingIndicator(),
+                )
+              : const SizedBox.shrink(),
+        ),
+
+        // Index 2: Leads (Initial View)
+        if (showViewLeads) ..._buildViewLeadsResultsSlivers(),
+
+        // Index 3+: Search Results (Customers then Leads)
+        if (showSearchResults) ..._buildResultsSlivers(),
+
+        // Empty State
+        if (showEmpty)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: _buildEmptyState(),
             ),
           ),
-        if (isLoadingMore)
-          SliverToBoxAdapter(
-            child: _buildShimmerLoading(),
-          ),
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+        // Index N: Shimmer Loading More
+        SliverToBoxAdapter(
+          child:
+              isLoadingMore ? _buildShimmerLoading() : const SizedBox.shrink(),
+        ),
+
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
   }
@@ -527,76 +562,66 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
 
   List<Widget> _buildResultsSlivers() {
     if (response == null) return [];
-    List<Widget> slivers = [];
 
-    // Customers Section
-    if (response!.data.customers.isNotEmpty) {
-      slivers.add(
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildSectionHeader(
-              title: 'Customers',
-              icon: Icons.people_alt_rounded,
-              color: const Color(0xFF2a86c9),
-              count: response!.data.customers.length,
-              isExpanded: custSwitch,
-              onToggle: () => setState(() => custSwitch = !custSwitch),
+    return [
+      // Customers Section
+      SliverToBoxAdapter(
+        child: response!.data.customers.isNotEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildSectionHeader(
+                  title: 'Customers',
+                  icon: Icons.people_alt_rounded,
+                  color: const Color(0xFF2a86c9),
+                  count: response!.data.customers.length,
+                  isExpanded: custSwitch,
+                  onToggle: () => setState(() => custSwitch = !custSwitch),
+                ),
+              )
+            : const SizedBox.shrink(),
+      ),
+      if (custSwitch && response!.data.customers.isNotEmpty)
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) =>
+                  _buildCustomerCard(response!.data.customers[index]),
+              childCount: response!.data.customers.length,
             ),
           ),
         ),
-      );
-      if (custSwitch) {
-        slivers.add(
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) =>
-                    _buildCustomerCard(response!.data.customers[index]),
-                childCount: response!.data.customers.length,
-              ),
-            ),
-          ),
-        );
-      }
-      slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 16)));
-    }
 
-    // Leads Section
-    if (response!.data.leadData.isNotEmpty) {
-      slivers.add(
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _buildSectionHeader(
-              title: 'Leads',
-              icon: Icons.leaderboard_rounded,
-              color: const Color(0xFF10B981),
-              count: response!.data.leadData.length,
-              isExpanded: leadSwitch,
-              onToggle: () => setState(() => leadSwitch = !leadSwitch),
+      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+      // Leads Section
+      SliverToBoxAdapter(
+        child: response!.data.leadData.isNotEmpty
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildSectionHeader(
+                  title: 'Leads',
+                  icon: Icons.leaderboard_rounded,
+                  color: const Color(0xFF10B981),
+                  count: response!.data.leadData.length,
+                  isExpanded: leadSwitch,
+                  onToggle: () => setState(() => leadSwitch = !leadSwitch),
+                ),
+              )
+            : const SizedBox.shrink(),
+      ),
+      if (leadSwitch && response!.data.leadData.isNotEmpty)
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) =>
+                  _buildLeadCard(response!.data.leadData[index], index),
+              childCount: response!.data.leadData.length,
             ),
           ),
         ),
-      );
-      if (leadSwitch) {
-        slivers.add(
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) =>
-                    _buildLeadCard(response!.data.leadData[index], index),
-                childCount: response!.data.leadData.length,
-              ),
-            ),
-          ),
-        );
-      }
-    }
-
-    return slivers;
+    ];
   }
 
   Widget _buildSectionHeader({
@@ -797,13 +822,13 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
       key: Key('lead_${lead.callMasterId}'),
       direction: DismissDirection.horizontal,
       background: _buildSwipeBackground(
-        color: const Color(0xFF10B981),
+        color: callGreen,
         icon: Icons.call_rounded,
         label: "Call",
         alignment: Alignment.centerLeft,
       ),
       secondaryBackground: _buildSwipeBackground(
-        color: const Color(0xFF2a86c9),
+        color: appBarStart,
         icon: Icons.add_rounded,
         label: "Follow-up",
         alignment: Alignment.centerRight,
@@ -826,8 +851,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color:
-                isSelected ? const Color(0xFF2a86c9) : const Color(0xFFF1F5F9),
+            color: isSelected ? appBarStart : borderLight,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: [
@@ -878,7 +902,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF1E293B),
+                                      color: textPrimary,
                                       decoration: lead.priority == "4"
                                           ? TextDecoration.lineThrough
                                           : null,
@@ -933,7 +957,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: backgroundLight,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
@@ -941,7 +965,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
                             _buildDateColumn(
                               label: "Next Follow-up",
                               date: lead.scheduledDate,
-                              color: const Color(0xFF2a86c9),
+                              color: appBarStart,
                             ),
                             Container(
                               height: 30,
@@ -953,7 +977,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
                             _buildDateColumn(
                               label: "Last Call",
                               date: lead.calledDate,
-                              color: const Color(0xFF64748B),
+                              color: textSecondary,
                             ),
                           ],
                         ),
@@ -1075,23 +1099,41 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   }
 
   Widget _buildStatusBadge(String? status, int? statusId) {
-    final int safeId = (statusId ?? 0) % _statusColors.length;
-    final Color color = _statusColors[safeId];
+    final int id = statusId ?? 0;
+    final bool isValidId = id >= 0 && id < _colors.length;
+    final Color color = isValidId ? _colors[id] : accentOrange;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Text(
-        status ?? "Unknown",
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: color,
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: color.withOpacity(0.4),
+          width: 1,
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            (status == null || status.isEmpty) ? "Pending" : status,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1127,7 +1169,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
 
   Widget _buildCallButton(dynamic lead, int index) {
     return Material(
-      color: const Color(0xFF10B981),
+      color: callGreen,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () => _handleCallAction(lead, index),
@@ -1585,7 +1627,9 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
       final mileStone = results[3] as LeadMileStoneListModel?;
       final leadDetailsFollowup = results[4] as af.LeadFollowupData?;
       if (commonDetails == null && results.length > 5) {
-        commonDetails = results[5] as AddLeadCommonDataModel?;
+        setState(() {
+          commonDetails = results[5] as AddLeadCommonDataModel?;
+        });
       }
 
       showModalBottomSheet(

@@ -1225,7 +1225,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
 
                                         const SizedBox(height: 30),
                                         Text(
-                                          "Version 2.0.7",
+                                          "Version 3.0.0",
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey.shade400,
@@ -1337,7 +1337,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
     }
   }
 }
-
 
 // Custom painter for blue wave background
 class BlueWavePainter extends CustomPainter {

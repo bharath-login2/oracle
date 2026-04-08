@@ -17,8 +17,11 @@ class LeadFollowupData {
     required this.message,
   });
 
-  factory LeadFollowupData.fromJson(Map<String, dynamic> json) => LeadFollowupData(
-        data: json["data"] != null ? Data.fromJson(json["data"]) : Data(followUpData: []),
+  factory LeadFollowupData.fromJson(Map<String, dynamic> json) =>
+      LeadFollowupData(
+        data: json["data"] != null
+            ? Data.fromJson(json["data"])
+            : Data(followUpData: []),
         status: json["status"] ?? false,
         message: json["message"] ?? "",
       );
@@ -76,7 +79,7 @@ class FollowUpDatum {
   String voiceFile;
   bool voiceUploadPermission;
   bool playVoicePermission;
-
+  String isNewCall;
   FollowUpDatum({
     required this.callDetailsId,
     required this.scheduledDate,
@@ -104,6 +107,7 @@ class FollowUpDatum {
     required this.voiceFile,
     required this.voiceUploadPermission,
     required this.playVoicePermission,
+    required this.isNewCall,
   });
 
   factory FollowUpDatum.fromJson(Map<String, dynamic> json) => FollowUpDatum(
@@ -133,6 +137,7 @@ class FollowUpDatum {
         voiceFile: json["voice_file"] ?? "",
         voiceUploadPermission: json["voiceUploadPermission"] ?? false,
         playVoicePermission: json["playVoicePermission"] ?? false,
+        isNewCall: json["is_new_call"] ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -162,5 +167,6 @@ class FollowUpDatum {
         "voice_file": voiceFile,
         "voiceUploadPermission": voiceUploadPermission,
         "playVoicePermission": playVoicePermission,
+        "is_new_call": isNewCall,
       };
 }

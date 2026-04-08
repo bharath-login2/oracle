@@ -77,6 +77,8 @@ class _CallLogsState extends State<CallLogs> {
   // String selectedSimId = "";
   List<Map<String, dynamic>> simList = [];
   String phoneNumber = "";
+  String callType = 'All';
+  String callTypeValue = '';
 
   Future<void> checkPermission() async {
     final bool status = await FlutterOverlayWindow.isPermissionGranted();
@@ -1607,7 +1609,8 @@ class _CallLogsState extends State<CallLogs> {
       setState(() {});
     }
     logHistory = await HttpService.callLogHistory(
-        widget.token, fromdate, todate, assignStaffId);
+        widget.token, fromdate, todate, assignStaffId,
+        callType: callTypeValue);
     if (logHistory != null) {
       setState(() {
         if (isSearch == false) {
@@ -2954,11 +2957,121 @@ class _CallLogsState extends State<CallLogs> {
                                               left: 10, right: 10),
                                           child: Row(
                                             children: [
-                                              SizedBox(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.45,
+                                              Expanded(
+                                                child: GestureDetector(
+                                                  onTap: () {
+                                                    showModalBottomSheet(
+                                                      context: context,
+                                                      shape:
+                                                          const RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.vertical(
+                                                                top: Radius
+                                                                    .circular(
+                                                                        20)),
+                                                      ),
+                                                      builder: (context) {
+                                                        return Container(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(16),
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Container(
+                                                                width: 40,
+                                                                height: 4,
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      300],
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              2),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 16),
+                                                              const Text(
+                                                                'Select Call Type',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 20,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  height: 16),
+                                                              _buildCallLogTypeOption(
+                                                                  'All', ''),
+                                                              _buildCallLogTypeOption(
+                                                                  'Incoming',
+                                                                  'Inbound'),
+                                                              _buildCallLogTypeOption(
+                                                                  'Outgoing',
+                                                                  'Outbound'),
+                                                              const SizedBox(
+                                                                  height: 16),
+                                                            ],
+                                                          ),
+                                                        );
+                                                      },
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    height: 45,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              5),
+                                                      color: Colors.white,
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                                  left: 10),
+                                                          child: Text(
+                                                            callType,
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize: 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w400,
+                                                              color:
+                                                                  Colors.black,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  right: 10),
+                                                          child: Icon(
+                                                            Icons
+                                                                .arrow_drop_down,
+                                                            color: Colors.grey,
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
                                                 child: TextFormField(
                                                     onTap: () {
                                                       staffDialog(context);
@@ -2972,7 +3085,6 @@ class _CallLogsState extends State<CallLogs> {
                                                             const EdgeInsets
                                                                 .all(3),
                                                         filled: true,
-                                                        //<-- SEE HERE
                                                         fillColor: Colors.white,
                                                         prefixIcon: const Icon(
                                                           Icons
@@ -2983,6 +3095,11 @@ class _CallLogsState extends State<CallLogs> {
                                                         hintText: assignStaff ??
                                                             widget.name ??
                                                             'Select Staff',
+                                                        hintStyle:
+                                                            const TextStyle(
+                                                          fontSize: 14,
+                                                          color: Colors.black,
+                                                        ),
                                                         isDense: true,
                                                         border: OutlineInputBorder(
                                                             borderSide:
@@ -2992,43 +3109,40 @@ class _CallLogsState extends State<CallLogs> {
                                                                     .circular(
                                                                         5)))),
                                               ),
-                                              const SizedBox(
-                                                width: 12,
-                                              ),
-                                              InkWell(
-                                                onTap: () {
-                                                  setState(() {
-                                                    search = true;
-                                                    isSearch = false;
-                                                  });
-                                                  Common.showProgressDialog(
-                                                      context, "Loading..");
-                                                  getData();
-                                                },
-                                                child: Container(
-                                                  width: MediaQuery.of(context)
-                                                          .size
-                                                          .width *
-                                                      0.45,
-                                                  height: 40,
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                  ),
-                                                  child: const Center(
-                                                    child: Text('Search',
-                                                        style: TextStyle(
-                                                            fontSize: 14,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .w500)),
-                                                  ),
-                                                ),
-                                              ),
                                             ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 15),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 10, right: 10),
+                                          child: InkWell(
+                                            onTap: () {
+                                              setState(() {
+                                                search = true;
+                                                isSearch = false;
+                                              });
+                                              Common.showProgressDialog(
+                                                  context, "Loading..");
+                                              getData();
+                                            },
+                                            child: Container(
+                                              width: double.infinity,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: Colors.black,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: const Center(
+                                                child: Text('Search',
+                                                    style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.w500)),
+                                              ),
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(
@@ -3875,6 +3989,32 @@ class _CallLogsState extends State<CallLogs> {
               ));
         });
       },
+    );
+  }
+
+  Widget _buildCallLogTypeOption(String label, String value) {
+    bool isSelected = callType == label;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        title: Text(
+          label,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? Colors.blue : Colors.black,
+          ),
+        ),
+        trailing: isSelected
+            ? const Icon(Icons.check_circle, color: Colors.blue)
+            : null,
+        onTap: () {
+          setState(() {
+            callType = label;
+            callTypeValue = value;
+          });
+          Navigator.pop(context);
+        },
+      ),
     );
   }
 

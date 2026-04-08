@@ -298,8 +298,6 @@ class _ViewLeadsState extends State<ViewLeads>
   String multiBranch = '';
   String transferPermission = '';
   String phoneCallLogPermission = '';
-
-  // Data management
   CommonResponse? loginOrNot;
   bool _isDataLoaded = false;
   String? _currentCacheKey;

@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:login2/models/clients/postalCodeModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
@@ -375,48 +376,48 @@ class _EditLeadNewState extends State<EditLeadNew> {
                 _buildLocationFields(),
               ],
             ),
-            const SizedBox(height: 12),
-            _buildSectionCard(
-              title: 'Lead Information',
-              icon: Icons.info_outline,
-              children: [
-                const SizedBox(height: 12),
-                _buildStaffField(),
-                const SizedBox(height: 12),
-                _buildLeadCategoryField(),
-                const SizedBox(height: 12),
-                if (leadSubTypeList?.data?.isNotEmpty ?? false)
-                  _buildSubCategoryField(),
-                const SizedBox(height: 12),
+            // const SizedBox(height: 12),
+            // _buildSectionCard(
+            //   title: 'Lead Information',
+            //   icon: Icons.info_outline,
+            //   children: [
+            //     const SizedBox(height: 12),
+            //     _buildStaffField(),
+            //     const SizedBox(height: 12),
+            //     _buildLeadCategoryField(),
+            //     const SizedBox(height: 12),
+            //     if (leadSubTypeList?.data?.isNotEmpty ?? false)
+            //       _buildSubCategoryField(),
+            //     const SizedBox(height: 12),
 
-                _buildLeadSourceField(),
-                const SizedBox(height: 12),
-                _buildPriorityField(),
-                const SizedBox(height: 12),
-                // _buildStaffField(),
-                // const SizedBox(height: 12),
-                _buildStatusField(),
-                const SizedBox(height: 12),
-                if (leadSettings != null
-                    ? leadSettings!.isFollowupRequiredBool
-                    : (callResultId == '2'))
-                  _buildFollowupRow(),
-                const SizedBox(height: 12),
+            //     _buildLeadSourceField(),
+            //     const SizedBox(height: 12),
+            //     _buildPriorityField(),
+            //     const SizedBox(height: 12),
+            //     // _buildStaffField(),
+            //     // const SizedBox(height: 12),
+            //     _buildStatusField(),
+            //     const SizedBox(height: 12),
+            //     if (leadSettings != null
+            //         ? leadSettings!.isFollowupRequiredBool
+            //         : (callResultId == '2'))
+            //       _buildFollowupRow(),
+            //     const SizedBox(height: 12),
 
-                if (leadSettings != null
-                    ? leadSettings!.isFollowupRequiredBool ||
-                        callResultId == '2' ||
-                        callResultId == '3' ||
-                        callResultId == '4'
-                    : (callResultId == '2' ||
-                        callResultId == '3' ||
-                        callResultId == '4'))
-                  _buildCallResponseField(),
+            //     if (leadSettings != null
+            //         ? leadSettings!.isFollowupRequiredBool ||
+            //             callResultId == '2' ||
+            //             callResultId == '3' ||
+            //             callResultId == '4'
+            //         : (callResultId == '2' ||
+            //             callResultId == '3' ||
+            //             callResultId == '4'))
+            //       _buildCallResponseField(),
 
-                const SizedBox(height: 12),
-                _buildRemarksField(),
-              ],
-            ),
+            //     const SizedBox(height: 12),
+            //     _buildRemarksField(),
+            //   ],
+            // ),
             const SizedBox(height: 12),
             _buildSectionCard(
               title: 'Product Info',
@@ -514,6 +515,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
     return TextFormField(
       controller: contactNoCtrl,
       keyboardType: TextInputType.phone,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: _inputDecoration('Contact Number *', Icons.phone).copyWith(
         prefix: GestureDetector(
           onTap: () => showCountryPicker(
@@ -540,6 +542,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
     return TextFormField(
       controller: whatsappNoCtrl,
       keyboardType: TextInputType.phone,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       decoration: InputDecoration(
         labelText: 'Whatsapp Number',
         prefix: GestureDetector(

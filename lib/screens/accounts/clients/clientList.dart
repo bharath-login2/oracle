@@ -36,7 +36,7 @@ class _ClientListState extends State<ClientList> {
   bool _shouldRestoreScroll = false;
   int page = 1;
   int add = 1;
-  int pageSize = 15;
+  int pageSize = 10;
   String name = '';
   String role = '';
   String userId = '';
@@ -46,7 +46,7 @@ class _ClientListState extends State<ClientList> {
   final ItemPositionsListener itemPositionsListener =
       ItemPositionsListener.create();
   void _onLoadMore() {
-    if (items.length + 15 == page * pageSize &&
+    if (items.length + 10 == page * pageSize &&
         itemPositionsListener.itemPositions.value.last.index == items.length &&
         page > add) {
       getData();
@@ -401,7 +401,7 @@ class _ClientListState extends State<ClientList> {
                                     itemPositionsListener:
                                         itemPositionsListener,
                                     itemCount: items.length +
-                                        (items.length + 15 == page * pageSize
+                                        (items.length + 10 == page * pageSize
                                             ? 1
                                             : 0),
                                     initialScrollIndex: _shouldRestoreScroll
