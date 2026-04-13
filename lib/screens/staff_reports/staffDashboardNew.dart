@@ -17,6 +17,12 @@ import '../../screens/userManagement/changePassword.dart';
 import '../../screens/userManagement/editStaffPage.dart';
 import '../../service/service.dart';
 import 'timeline_page.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../models/lead_management/documentListModel.dart';
+import '../../models/lead_management/salaryDetailsModel.dart';
+import '../authentication/googleDriveAccountsModel.dart';
+import '../authentication/googleDriveFilesModel.dart';
+import 'package:path/path.dart' as p;
 
 class StaffReportDashboardNew extends StatefulWidget {
   String id;
@@ -27,7 +33,8 @@ class StaffReportDashboardNew extends StatefulWidget {
       _StaffReportDashboardNewState();
 }
 
-class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
+class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
+    with SingleTickerProviderStateMixin {
   Map<String, double> data = {};
   final List<Color> _chartColors = [
     const Color(0xFF667eea),
@@ -63,7 +70,27 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
 
   UserDashboardModel? staffDetails;
   StaffCalldetailsModel? callDetails;
+  SalaryDetailsModel? salaryDetails;
   bool isLoading = true;
+
+  // File Manager State
+  String selectedDocumentType = 's3';
+  List<DocumentData> documentTypes = [];
+  String? selectedDocumentTypeId;
+  String selectedDocumentTypeName = 'Select Document';
+
+  List<DriveAccount> googleDriveAccounts = [];
+  List<GoogleDriveFile> googleDriveFiles = [];
+  DriveAccount? selectedDriveAccount;
+  bool isDriveAccountsLoading = false;
+  bool isDriveFilesLoading = false;
+  String? selectedFolderId;
+  String? currentFolderName;
+  List<Map<String, String>> driveBreadcrumbs = [
+    {'id': 'root', 'name': 'Drive'}
+  ];
+  String path = '';
+  TabController? _tabController;
 
   getStaffDetails() async {
     staffDetails = await HttpService.getStaffDashboardNew(
@@ -108,9 +135,89 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
     deleteLeadPermission1 = deleteLeadPermission == 'true';
     cloudCallPermission1 = cloudCallPermission == 'true';
 
+    _tabController = TabController(length: 3, vsync: this);
+    await getDocumentTypes();
+    await _fetchGoogleDriveAccounts();
+    await getSalaryDetails();
+
     setState(() {
       isLoading = false;
     });
+  }
+
+  getSalaryDetails() async {
+    salaryDetails = await HttpService.getSalaryDetails(widget.id);
+    if (mounted) setState(() {});
+  }
+
+  getDocumentTypes() async {
+    DocumentListModel? documentList = await HttpService.getDocumentType();
+    if (documentList != null && documentList.status == true) {
+      documentTypes = documentList.data;
+      if (documentTypes.isNotEmpty) {
+        selectedDocumentTypeId = documentTypes.first.id;
+        selectedDocumentTypeName = documentTypes.first.documentName;
+      }
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _fetchGoogleDriveAccounts() async {
+    if (!mounted) return;
+    setState(() => isDriveAccountsLoading = true);
+    final response = await HttpService.getGoogleDriveAccounts();
+    if (mounted && response != null && response.status) {
+      googleDriveAccounts = response.data;
+      try {
+        final defaultAccount =
+            googleDriveAccounts.firstWhere((a) => a.isActive == "1");
+        selectedDriveAccount = defaultAccount;
+        _fetchGoogleDriveFiles(defaultAccount.id);
+      } catch (_) {}
+    }
+    if (mounted) setState(() => isDriveAccountsLoading = false);
+  }
+
+  Future<void> _fetchGoogleDriveFiles(String accountId,
+      {String parentId = ""}) async {
+    if (!mounted) return;
+    setState(() {
+      isDriveFilesLoading = true;
+      googleDriveFiles = [];
+    });
+    final response = await HttpService.getGoogleDriveFiles(
+        "", accountId, parentId,
+        refFunction: "Media");
+    if (mounted && response != null && response.status) {
+      googleDriveFiles = response.data;
+    }
+    if (mounted) setState(() => isDriveFilesLoading = false);
+  }
+
+  void _updateBreadcrumbs(String id, String name) {
+    setState(() => driveBreadcrumbs.add({'id': id, 'name': name}));
+  }
+
+  void _popBreadcrumb() {
+    if (driveBreadcrumbs.length > 1) {
+      setState(() {
+        driveBreadcrumbs.removeLast();
+        final last = driveBreadcrumbs.last;
+        selectedFolderId = last['id'] == 'root' ? null : last['id'];
+        currentFolderName = last['id'] == 'root' ? null : last['name'];
+      });
+      _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+          parentId: selectedFolderId ?? "");
+    } else {
+      setState(() {
+        selectedDriveAccount = null;
+        selectedFolderId = null;
+        currentFolderName = null;
+        driveBreadcrumbs = [
+          {'id': 'root', 'name': 'Drive'}
+        ];
+      });
+    }
   }
 
   @override
@@ -126,20 +233,17 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
       body: isLoading == true
           ? _buildShimmerLoader()
           : SafeArea(
-              child: CustomScrollView(
-                slivers: [
+              child: Column(
+                children: [
                   _buildModernAppBar(),
-                  SliverPadding(
-                    padding: const EdgeInsets.all(16),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _buildTargetReportCard(),
-                        const SizedBox(height: 20),
-                        _buildCallStatusCard(),
-                        const SizedBox(height: 20),
-                        _buildLeadStatusSection(),
-                        const SizedBox(height: 80),
-                      ]),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildDashboardTab(),
+                        _buildDocumentTab(),
+                        _buildSalaryTab(),
+                      ],
                     ),
                   ),
                 ],
@@ -149,45 +253,52 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
   }
 
   Widget _buildModernAppBar() {
-    return SliverAppBar(
-      automaticallyImplyLeading: false,
-      expandedHeight: 120,
-      floating: false,
-      pinned: true,
-      backgroundColor: Colors.transparent,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.fromARGB(255, 47, 131, 180),
-                Color.fromARGB(255, 47, 131, 180),
-                Color.fromARGB(255, 47, 131, 180),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF2a86c9),
+            Color(0xFF406dbe),
+          ],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Row(
+              children: [
+                _buildBackButton(),
+                const SizedBox(width: 16),
+                _buildStaffAvatar(),
+                const SizedBox(width: 16),
+                Expanded(child: _buildStaffInfo()),
               ],
             ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                children: [
-                  _buildBackButton(),
-                  const SizedBox(width: 16),
-                  _buildStaffAvatar(),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildStaffInfo()),
-                  //  _buildMenuButton(),
-                ],
-              ),
-            ),
+          TabBar(
+            controller: _tabController,
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white.withOpacity(0.7),
+            labelStyle:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            tabs: const [
+              Tab(text: "Staff Dashboard"),
+              Tab(text: "Staff Document"),
+              Tab(text: "Salary"),
+            ],
           ),
-        ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }
@@ -1470,6 +1581,849 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew> {
         lastDate: DateTime.now().add(const Duration(days: 365)),
         onChanged: onChanged,
       ),
+    );
+  }
+
+  Widget _buildDashboardTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildTargetReportCard(),
+          const SizedBox(height: 20),
+          _buildCallStatusCard(),
+          const SizedBox(height: 20),
+          _buildLeadStatusSection(),
+          const SizedBox(height: 80),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentTab() {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            color: Colors.white,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Upload Files",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1a237e),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ),
+          _buildDocumentTypeSelector(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              "Select Storage Provider",
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildStorageProviderSelection(),
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              border: Border(top: BorderSide(color: Colors.grey.shade300)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Documents",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 166, 168, 180),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
+                  ),
+                  child: const Text("Upload"),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 400, // Fixed height for scrollable file list
+            child: selectedDocumentType == 's3'
+                ? _buildS3Documents()
+                : _buildDriveDocuments(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentTypeSelector() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Select Document Name",
+            style:
+                TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedDocumentTypeId,
+                isExpanded: true,
+                hint: const Text("-- Select Document --"),
+                onChanged: (value) {
+                  setState(() {
+                    selectedDocumentTypeId = value;
+                    selectedDocumentTypeName = documentTypes
+                        .firstWhere((e) => e.id == value)
+                        .documentName;
+                  });
+                },
+                items: documentTypes.map((doc) {
+                  return DropdownMenuItem<String>(
+                    value: doc.id.toString(),
+                    child: Text(doc.documentName),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStorageProviderSelection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStorageCard(
+              label: "Google Drive",
+              assetPath: 'assets/icons/drive.png',
+              isSelected: selectedDocumentType == 'drive',
+              colors: [const Color(0xFF4285F4), const Color(0xFF34A853)],
+              onTap: () {
+                setState(() => selectedDocumentType = 'drive');
+                if (googleDriveAccounts.isEmpty) _fetchGoogleDriveAccounts();
+              },
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildStorageCard(
+              label: "S3 Bucket",
+              assetPath: 'assets/icons/cloud2.jpg',
+              isSelected: selectedDocumentType == 's3',
+              colors: [const Color(0xFF2a86c9), const Color(0xFF406dbe)],
+              onTap: () => setState(() => selectedDocumentType = 's3'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStorageCard({
+    required String label,
+    required String assetPath,
+    required bool isSelected,
+    required List<Color> colors,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.first.withOpacity(0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? colors.first : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Image.asset(assetPath, height: 32, width: 32, fit: BoxFit.contain),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? colors.first : Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildS3Documents() {
+    // Basic S3 view, can be expanded like in FileManagerList
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text("S3 Storage content will appear here"),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {},
+            child: const Text("Upload to S3"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDriveDocuments() {
+    if (isDriveAccountsLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (selectedDriveAccount == null) {
+      if (googleDriveAccounts.isEmpty) {
+        return const Center(child: Text("No Drive Accounts Found"));
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: googleDriveAccounts.length,
+        itemBuilder: (context, index) =>
+            _buildDriveEmailCard(googleDriveAccounts[index]),
+      );
+    }
+
+    return Column(
+      children: [
+        _buildDriveHeader(),
+        Expanded(
+          child: isDriveFilesLoading
+              ? const Center(child: CircularProgressIndicator())
+              : googleDriveFiles.isEmpty
+                  ? const Center(child: Text("No Files Found"))
+                  : GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.8,
+                      ),
+                      itemCount: googleDriveFiles.length,
+                      itemBuilder: (context, index) =>
+                          _buildGoogleDriveFileItem(googleDriveFiles[index]),
+                    ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDriveEmailCard(DriveAccount account) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.blue.withOpacity(0.1),
+          child: const Icon(Icons.email, color: Colors.blue),
+        ),
+        title: Text(account.accountEmail),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () {
+          setState(() => selectedDriveAccount = account);
+          _fetchGoogleDriveFiles(account.id);
+        },
+      ),
+    );
+  }
+
+  Widget _buildDriveHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.grey.shade50,
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _popBreadcrumb,
+          ),
+          Expanded(
+            child: Text(
+              currentFolderName ?? "Root",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.upload_file, color: Colors.blue),
+            onPressed: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleDriveFileItem(GoogleDriveFile file) {
+    IconData icon =
+        file.isFolder == 'Y' ? Icons.folder : Icons.insert_drive_file;
+    Color color = file.isFolder == 'Y' ? Colors.blue : Colors.grey;
+
+    return InkWell(
+      onTap: () {
+        if (file.isFolder == 'Y') {
+          setState(() {
+            selectedFolderId = file.fileId ?? file.id;
+            currentFolderName = file.fileName;
+          });
+          _updateBreadcrumbs(selectedFolderId!, currentFolderName!);
+          _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+              parentId: selectedFolderId!);
+        }
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 40),
+          const SizedBox(height: 4),
+          Text(
+            file.fileName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 10),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalaryTab() {
+    if (salaryDetails == null) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(LucideIcons.banknote,
+                  size: 64, color: Colors.grey.shade400),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "No Salary Data Found",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Add salary details for this staff member to get started.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 32),
+            _buildAddSalaryButton(),
+          ],
+        ),
+      );
+    }
+
+    final data = salaryDetails!.data;
+    final salary = data.salaryDetails;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildSalaryTotalCard(salary.netSalary.toStringAsFixed(2)),
+          const SizedBox(height: 20),
+          _buildSalaryDetailCard("Monthly Salary", "₹${salary.monthlySalary}",
+              LucideIcons.banknote, Colors.blue),
+          _buildSalaryDetailCard("Per Day Salary", "₹${salary.perDaySalary}",
+              LucideIcons.calendarDays, Colors.green),
+          _buildSalaryDetailCard("Incentives", "₹${salary.incentives}",
+              LucideIcons.plusCircle, Colors.orange),
+          _buildSalaryDetailCard("Deductions", "₹${salary.deductions}",
+              LucideIcons.minusCircle, Colors.red),
+          const SizedBox(height: 30),
+          _buildAddSalaryButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalaryTotalCard(String netSalary) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF667eea).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Text(
+            "Current Net Salary",
+            style: TextStyle(color: Colors.white70, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "₹ $netSalary",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalaryDetailCard(
+      String title, String value, IconData icon, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          const Spacer(),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddSalaryButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          _showSalaryAddDialog();
+        },
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text("Salary Add",
+            style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 47, 131, 180),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+        ),
+      ),
+    );
+  }
+
+  void _showSalaryAddDialog() {
+    final TextEditingController salaryAmountController =
+        TextEditingController();
+    final TextEditingController openingBalanceController =
+        TextEditingController();
+    String salaryType = "Advance";
+    bool isPettyCash = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              elevation: 0,
+              backgroundColor: Colors.white,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Colors.blue, Colors.blueAccent],
+                            ),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(LucideIcons.banknote,
+                              color: Colors.white, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            "Add Salary Details",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close, color: Colors.grey),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Salary Amount Field
+                    TextField(
+                      controller: salaryAmountController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        labelText: "Salary Amount",
+                        hintText: "Enter salary amount",
+                        prefixIcon: const Icon(Icons.currency_rupee,
+                            size: 20, color: Colors.blue),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide:
+                              const BorderSide(color: Colors.blue, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Opening Balance Field
+                    TextField(
+                      controller: openingBalanceController,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 16),
+                      decoration: InputDecoration(
+                        labelText: "Opening Balance",
+                        hintText: "Enter opening balance",
+                        prefixIcon: const Icon(LucideIcons.wallet,
+                            size: 20, color: Colors.blue),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide:
+                              const BorderSide(color: Colors.blue, width: 2),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Salary Type",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () =>
+                                  setDialogState(() => salaryType = "Advance"),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: salaryType == "Advance"
+                                      ? Colors.blue.withOpacity(0.1)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Radio<String>(
+                                      value: "Advance",
+                                      groupValue: salaryType,
+                                      onChanged: (val) => setDialogState(
+                                          () => salaryType = val!),
+                                      activeColor: Colors.blue,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    const Text("Advance",
+                                        style: TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () =>
+                                  setDialogState(() => salaryType = "Pending"),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: salaryType == "Pending"
+                                      ? Colors.blue.withOpacity(0.1)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Radio<String>(
+                                      value: "Pending",
+                                      groupValue: salaryType,
+                                      onChanged: (val) => setDialogState(
+                                          () => salaryType = val!),
+                                      activeColor: Colors.blue,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    const Text("Pending",
+                                        style: TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () =>
+                            setDialogState(() => isPettyCash = !isPettyCash),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: isPettyCash,
+                                onChanged: (val) =>
+                                    setDialogState(() => isPettyCash = val!),
+                                activeColor: Colors.blue,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6)),
+                              ),
+                              const Text(
+                                "Petty Cash Transaction",
+                                style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text(
+                              "Cancel",
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 15),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (salaryAmountController.text.isEmpty) {
+                                Common.toastMessaage(
+                                    "Please enter salary amount", Colors.red);
+                                return;
+                              }
+
+                              Common.showProgressDialog(
+                                  context, "Adding Salary...");
+
+                              final success =
+                                  await HttpService.addSalaryDetails(
+                                userId: widget.id,
+                                salary: salaryAmountController.text,
+                                openingBalance: openingBalanceController.text,
+                                type: salaryType,
+                                isPettyCash: isPettyCash ? "1" : "0",
+                              );
+                              Navigator.pop(context);
+
+                              if (success) {
+                                Navigator.pop(context);
+                                Common.premiumToast(
+                                  context,
+                                  "Salary details added successfully",
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                );
+                                getSalaryDetails();
+                              } else {
+                                Common.toastMessaage(
+                                    "Failed to add salary details", Colors.red);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Text(
+                              "Add Salary",
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

@@ -99,6 +99,8 @@ import '../../widgets/viewLeadsFilterWidget.dart';
 import '../../widgets/togglebutton_start.dart';
 import '../drawerScreen.dart';
 import '../../models/lead_management/BulkTransferLeadModel.dart';
+import '../../models/lead_management/showTransferHideorShowModel.dart';
+
 
 class DashboardLeadNewUpdated extends StatefulWidget {
   String? token;
@@ -230,6 +232,8 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
   bool updateLeadCategory1 = false;
   bool deleteLeadCategory1 = false;
   bool accessCallRecordingPermission1 = false;
+  bool viewTargetReportPermission1 = false;
+  bool showTransferFreshValue = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   DashboardLeadsCountsModel? dashboardCounts;
   DashboardLeadCounts? dashboardMainCounts;
@@ -693,8 +697,15 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
     String tog = await Common.getSharedPref("acc_toggle") ?? "";
     toggle = tog == "true";
     if (targetStaffId == null) {
-      targetStaffId = userId;
+      targetStaffId ??= userId;
     }
+    HttpService.showTransferHideOrShow().then((value) {
+      if (value != null && value.status == true) {
+        setState(() {
+          showTransferFreshValue = value.data ?? false;
+        });
+      }
+    });
   }
 
   Future<void> _checkLoginPrompt() async {
@@ -13687,67 +13698,70 @@ class _DashboardLeadNewUpdatedState extends State<DashboardLeadNewUpdated>
                     const SizedBox(height: 20),
 
                     // Fresh Data Toggle (Radio style)
-                    InkWell(
-                      onTap: () {
-                        setDialogState(() {
-                          transferFresh = transferFresh == 1 ? 0 : 1;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: transferFresh == 1
-                              ? appBarStart.withOpacity(0.04)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
+                    Visibility(
+                      visible: showTransferFreshValue,
+                      child: InkWell(
+                        onTap: () {
+                          setDialogState(() {
+                            transferFresh = transferFresh == 1 ? 0 : 1;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
                             color: transferFresh == 1
-                                ? appBarStart.withOpacity(0.2)
+                                ? appBarStart.withOpacity(0.04)
                                 : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: transferFresh == 1
+                                  ? appBarStart.withOpacity(0.2)
+                                  : Colors.transparent,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: transferFresh == 1
-                                      ? appBarStart
-                                      : Colors.grey.shade300,
-                                  width: 2,
-                                ),
-                                color: Colors.white,
-                              ),
-                              child: Center(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
                                     color: transferFresh == 1
                                         ? appBarStart
-                                        : Colors.transparent,
+                                        : Colors.grey.shade300,
+                                    width: 2,
+                                  ),
+                                  color: Colors.white,
+                                ),
+                                child: Center(
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: transferFresh == 1
+                                          ? appBarStart
+                                          : Colors.transparent,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              "Transfer as Fresh Data",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: textPrimary,
+                              const SizedBox(width: 12),
+                              const Text(
+                                "Transfer as Fresh Data",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: textPrimary,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

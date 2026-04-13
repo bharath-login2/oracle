@@ -88,8 +88,6 @@ import '../homePage.dart';
 import '../search/search.dart';
 import '../leadManagement/notification_page.dart';
 import '../leadManagement/lead_details_popup.dart';
-
-// import '../leadManagement/callHistoryPage.dart';
 import '../leadManagement/projectDashboard.dart';
 import '../leadManagement/minimalDashboard.dart';
 import '../accounts/renewal_mannagement/renewal_dashboard.dart';
@@ -98,6 +96,7 @@ import '../../widgets/viewLeadsFilterWidget.dart';
 import '../../widgets/togglebutton_start.dart';
 import '../drawerScreen.dart';
 import '../../models/lead_management/BulkTransferLeadModel.dart';
+import '../../models/lead_management/showTransferHideorShowModel.dart';
 
 class DashboardLeadNewUpdatedTwo extends StatefulWidget {
   final String? token;
@@ -243,7 +242,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   bool deleteLeadCategory1 = false;
   bool accessCallRecordingPermission1 = false;
   bool viewTargetReportPermission1 = false;
+  bool showTransferFreshValue = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   DashboardLeadsCountsModel? dashboardCounts;
   DashboardLeadCounts? dashboardMainCounts;
   bool isDashboardCountsLoading = false;
@@ -301,25 +302,25 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   bool _isFlipped3 = false;
   bool _isFlipped4 = false;
   final List<Color> _colors = [
-    const Color(0xFF2196F3), // Vibrant Blue (index 0)
-    const Color(0xFF2196F3), // Blue at index 1 for "New"
-    const Color(0xFFFFC107), // Amber/Yellow for Followup (index 2)
+    const Color(0xFF2196F3),
+    const Color(0xFF2196F3),
+    const Color(0xFFFFC107),
     const Color.fromARGB(
       255,
       255,
       7,
       7,
-    ), // Amber/Yellow at index 3 for Followup
-    const Color(0xFF4CAF50), // Green 500 (index 4) - Standardized for Closed
-    const Color(0xFFF44336), // Red 500 (index 5) - Standardized for Rejected
-    const Color(0xFF9C27B0), // Purple 500 (index 6)
-    const Color(0xFF2a84c9), // Primary Blue (index 7)
-    const Color(0xFF009688), // Teal (index 8)
-    const Color(0xFFFF6F00), // Amber 900 (index 9)
-    const Color(0xFFD32F2F), // Red 700 (index 10)
-    const Color(0xFF1B5E20), // Green 900 (index 11)
-    const Color(0xFF0D47A1), // Blue 900 (index 12)
-    const Color(0xFF3F51B5), // Indigo (index 13)
+    ),
+    const Color(0xFF4CAF50),
+    const Color(0xFFF44336),
+    const Color(0xFF9C27B0),
+    const Color(0xFF2a84c9),
+    const Color(0xFF009688),
+    const Color(0xFFFF6F00),
+    const Color(0xFFD32F2F),
+    const Color(0xFF1B5E20),
+    const Color(0xFF0D47A1),
+    const Color(0xFF3F51B5),
   ];
 
   Map<String, double> reportDataMap = {};
@@ -479,18 +480,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (lsCats != null && lsCats.isNotEmpty) {
       leadSourceCategories = lsCats.split(",");
     }
-
     String? catStaffs = await Common.getSharedPref("categoryStaffIdStr");
     if (catStaffs != null && catStaffs.isNotEmpty) {
       categoryStaffs = catStaffs.split(",");
     }
-
     setState(() {});
   }
 
   void _updateTabController() {
     if (!mounted) return;
-
     final newLength = _getTabCount();
     if (_tabController.length != newLength) {
       final oldIndex = _tabController.index;
@@ -793,7 +791,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     deleteLeadCategory1 = deleteLeadCategory == 'true';
     accessCallRecordingPermission1 = accessCallRecordingPermission == 'true';
     viewTargetReportPermission1 = viewTargetReportPermission == 'true';
-
     isVisible = visibleP != 'true';
     renewalPermission =
         await Common.getSharedPref("renewalPermission") ?? "false";
@@ -801,13 +798,19 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     String tog = await Common.getSharedPref("acc_toggle") ?? "";
     toggle = tog == "true";
     targetStaffId ??= userId;
+    HttpService.showTransferHideOrShow().then((value) {
+      if (value != null && value.status == true) {
+        setState(() {
+          showTransferFreshValue = value.data ?? false;
+        });
+      }
+    });
   }
 
   Future<void> _checkLoginPrompt() async {
     final prefs = await SharedPreferences.getInstance();
     final dismissedDate = prefs.getString('loginPromptDismissedDate');
     final today = DateTime.now().toIso8601String().substring(0, 10);
-
     if (dismissedDate != today && startAndStopWorkPermission == "true") {
       if (loginOrNot?.data != true) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1045,12 +1048,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       toDate1.toString(),
     );
     await getLeadProgressbar(widget.token!, fromDate, toDate, "");
-
     _fetchCallStatusReport();
     _fetchStageWiseReport();
     _fetchLeadSourceReport();
     _fetchCategoryReport();
-
     if (staffWise != null) {
       _processReportData();
     }
@@ -1061,11 +1062,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     reportDataMap.clear();
     for (int i = 0; i < (staffWise?.data?.categoryGraph?.length ?? 0); i++) {
       reportDataMap.addAll({
-        staffWise!.data!.categoryGraph![i].categoryName.toString(): staffWise!
-            .data!
-            .categoryGraph![i]
-            .categoryCount!
-            .toDouble(),
+        staffWise!.data!.categoryGraph![i].categoryName.toString():
+            staffWise!.data!.categoryGraph![i].categoryCount!.toDouble(),
       });
     }
     catNew = 0;
@@ -1074,28 +1072,23 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     catRejected = 0;
     catClosed = 0;
     for (int i = 0; i < (staffWise?.data?.categoryLeads?.length ?? 0); i++) {
-      catNew +=
-          int.tryParse(
+      catNew += int.tryParse(
             staffWise!.data!.categoryLeads![i].newCount.toString(),
           ) ??
           0;
-      catPending +=
-          int.tryParse(
+      catPending += int.tryParse(
             staffWise!.data!.categoryLeads![i].pendingCount.toString(),
           ) ??
           0;
-      catFollowup +=
-          int.tryParse(
+      catFollowup += int.tryParse(
             staffWise!.data!.categoryLeads![i].followupCount.toString(),
           ) ??
           0;
-      catRejected +=
-          int.tryParse(
+      catRejected += int.tryParse(
             staffWise!.data!.categoryLeads![i].rejectedCount.toString(),
           ) ??
           0;
-      catClosed +=
-          int.tryParse(
+      catClosed += int.tryParse(
             staffWise!.data!.categoryLeads![i].confirmedCount.toString(),
           ) ??
           0;
@@ -1697,8 +1690,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           (tableData is List<csrt.CallStatusReportData>)) {
         final List<csrt.CallStatusReportData> items =
             tableData is csrt.CallStatusReportResponse
-            ? tableData.data
-            : List<csrt.CallStatusReportData>.from(tableData);
+                ? tableData.data
+                : List<csrt.CallStatusReportData>.from(tableData);
         if (items.isNotEmpty) {
           headers = ["Staff Name"];
           headers.addAll(items.first.statuses.map((s) => s.callResponse));
@@ -1715,8 +1708,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           (tableData is List<swrt.StagewiseReportData>)) {
         final List<swrt.StagewiseReportData> items =
             tableData is swrt.StagewiseReportResponse
-            ? tableData.data
-            : List<swrt.StagewiseReportData>.from(tableData);
+                ? tableData.data
+                : List<swrt.StagewiseReportData>.from(tableData);
         if (items.isNotEmpty) {
           headers = ["Staff Name"];
           headers.addAll(items.first.statuses.map((s) => s.callResult));
@@ -1733,8 +1726,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           (tableData is List<lsrt.LeadSourceReportData>)) {
         final List<lsrt.LeadSourceReportData> items =
             tableData is lsrt.LeadSourceReportResponse
-            ? tableData.data
-            : List<lsrt.LeadSourceReportData>.from(tableData);
+                ? tableData.data
+                : List<lsrt.LeadSourceReportData>.from(tableData);
         if (items.isNotEmpty) {
           headers = ["Staff Name"];
           headers.addAll(items.first.statuses.map((s) => s.leadSource));
@@ -1751,8 +1744,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           (tableData is List<catrt.StaffCategoryData>)) {
         final List<catrt.StaffCategoryData> items =
             tableData is catrt.CategoryReportTableModel
-            ? (tableData.data ?? [])
-            : List<catrt.StaffCategoryData>.from(tableData);
+                ? (tableData.data ?? [])
+                : List<catrt.StaffCategoryData>.from(tableData);
         if (items.isNotEmpty) {
           headers = ["Staff Name"];
           headers.addAll(
@@ -1845,8 +1838,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       DateTime now = DateTime.now();
       initialFrom = leadSourceFromDate ?? DateTime(now.year, now.month, 1);
       DateTime lastDayOfCurrentMonth = DateTime(now.year, now.month + 1, 0);
-      initialTo =
-          leadSourceToDate ??
+      initialTo = leadSourceToDate ??
           (lastDayOfCurrentMonth.isAfter(now) ? now : lastDayOfCurrentMonth);
       initialStaffs = leadSourceStaffs;
       initialProducts = leadSourceProducts;
@@ -1961,8 +1953,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       List<String> staffIds,
       List<String>? productIds,
       List<String>? categoryIds,
-    )
-    onApply,
+    ) onApply,
   }) {
     DateTime tempFrom = initialFromDate;
     DateTime tempTo = initialToDate;
@@ -2050,9 +2041,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.w500,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w500,
                           color: isSelected
                               ? Colors.blue
                               : const Color(0xFF8F9BB3),
@@ -2079,8 +2069,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     context: context,
                     initialDate:
                         value != null && value.isBefore(firstAvailableDate)
-                        ? firstAvailableDate
-                        : (value ?? now),
+                            ? firstAvailableDate
+                            : (value ?? now),
                     firstDate: firstAvailableDate,
                     lastDate: now,
                   );
@@ -2136,8 +2126,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               required VoidCallback onThisMonth,
             }) {
               final now = DateTime.now();
-              final isTodaySelected =
-                  tempFrom.year == now.year &&
+              final isTodaySelected = tempFrom.year == now.year &&
                   tempFrom.month == now.month &&
                   tempFrom.day == now.day &&
                   tempTo.year == now.year &&
@@ -2148,11 +2137,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
               final isThisMonthSelected =
                   tempFrom.year == firstDayOfMonth.year &&
-                  tempFrom.month == firstDayOfMonth.month &&
-                  tempFrom.day == firstDayOfMonth.day &&
-                  tempTo.year == lastDayOfMonth.year &&
-                  tempTo.month == lastDayOfMonth.month &&
-                  tempTo.day == lastDayOfMonth.day;
+                      tempFrom.month == firstDayOfMonth.month &&
+                      tempFrom.day == firstDayOfMonth.day &&
+                      tempTo.year == lastDayOfMonth.year &&
+                      tempTo.month == lastDayOfMonth.month &&
+                      tempTo.day == lastDayOfMonth.day;
 
               return Row(
                 children: [
@@ -2201,9 +2190,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         "This Month",
                         style: TextStyle(
                           fontSize: 12,
-                          color: isThisMonthSelected
-                              ? Colors.white
-                              : Colors.blue,
+                          color:
+                              isThisMonthSelected ? Colors.white : Colors.blue,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -2283,8 +2271,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
                         if (searchController.text.isNotEmpty &&
                             !name.toLowerCase().contains(
-                              searchController.text.toLowerCase(),
-                            )) {
+                                  searchController.text.toLowerCase(),
+                                )) {
                           return const SizedBox.shrink();
                         }
 
@@ -2345,8 +2333,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
                         if (searchProductController.text.isNotEmpty &&
                             !name.toLowerCase().contains(
-                              searchProductController.text.toLowerCase(),
-                            )) {
+                                  searchProductController.text.toLowerCase(),
+                                )) {
                           return const SizedBox.shrink();
                         }
 
@@ -2406,8 +2394,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
                         if (searchCategoryController.text.isNotEmpty &&
                             !name.toLowerCase().contains(
-                              searchCategoryController.text.toLowerCase(),
-                            )) {
+                                  searchCategoryController.text.toLowerCase(),
+                                )) {
                           return const SizedBox.shrink();
                         }
 
@@ -2524,10 +2512,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             child: selectedCategory == 'Date Range'
                                 ? buildDateOptions()
                                 : selectedCategory == 'Staff'
-                                ? buildStaffOptions()
-                                : selectedCategory == 'Products'
-                                ? buildProductOptions()
-                                : buildCategoryOptions(),
+                                    ? buildStaffOptions()
+                                    : selectedCategory == 'Products'
+                                        ? buildProductOptions()
+                                        : buildCategoryOptions(),
                           ),
                         ),
                       ],
@@ -2978,8 +2966,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           children: [
             _buildDashboardBox(
               title: 'New',
-              mainValue: (dashboardCounts?.data?.leads?.newLeads ?? 0)
-                  .toString(),
+              mainValue:
+                  (dashboardCounts?.data?.leads?.newLeads ?? 0).toString(),
               color: const Color(0xFF2a86c9),
               child: Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -3086,8 +3074,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             ),
             _buildDashboardBox(
               title: 'Active',
-              mainValue: (dashboardCounts?.data?.leads?.activeLeads ?? 0)
-                  .toString(),
+              mainValue:
+                  (dashboardCounts?.data?.leads?.activeLeads ?? 0).toString(),
               color: Colors.orange,
               child: _buildBoxIcons('Active', '2', 'Active Leads'),
             ),
@@ -3101,9 +3089,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 'Closed',
                 '4',
                 'Closed Leads',
-                customFromDate: isClosedDateFiltered
-                    ? fromDateClosed
-                    : fromDate,
+                customFromDate:
+                    isClosedDateFiltered ? fromDateClosed : fromDate,
                 customToDate: isClosedDateFiltered ? toDateClosed : toDate,
               ),
             ),
@@ -3112,7 +3099,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               mainValue: isLostDateFiltered
                   ? lostCount
                   : (dashboardCounts?.data?.leads?.rejectedLeads ?? 0)
-                        .toString(),
+                      .toString(),
               color: accentRed,
               child: _buildBoxIcons(
                 'Lost',
@@ -3180,16 +3167,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     Text(
                       targetStaffId != null && targetStaffId!.isNotEmpty
                           ? (staffList
-                                .firstWhere(
-                                  (s) =>
-                                      s.userIdStaff.toString() == targetStaffId,
-                                  orElse: () => sl.Staff(
-                                    id: '',
-                                    name: 'All Staff',
-                                    userIdStaff: '',
-                                  ),
-                                )
-                                .name)
+                              .firstWhere(
+                                (s) =>
+                                    s.userIdStaff.toString() == targetStaffId,
+                                orElse: () => sl.Staff(
+                                  id: '',
+                                  name: 'All Staff',
+                                  userIdStaff: '',
+                                ),
+                              )
+                              .name)
                           : "All Staff",
                       style: TextStyle(
                         fontSize: 13,
@@ -3691,32 +3678,32 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 borderRadius: BorderRadius.circular(16),
                 child:
                     module.image != null && module.image.toString().isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: module.image.toString(),
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                        ? CachedNetworkImage(
+                            imageUrl: module.image.toString(),
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
                               ),
                             ),
+                            errorWidget: (context, url, error) => Icon(
+                              _getModuleIcon(module.menuName),
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          )
+                        : Icon(
+                            _getModuleIcon(module.menuName),
+                            color: Colors.white,
+                            size: 24,
                           ),
-                        ),
-                        errorWidget: (context, url, error) => Icon(
-                          _getModuleIcon(module.menuName),
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      )
-                    : Icon(
-                        _getModuleIcon(module.menuName),
-                        color: Colors.white,
-                        size: 24,
-                      ),
               ),
             ),
             const SizedBox(height: 6),
@@ -3788,16 +3775,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       String effectiveGraphStatus = _listTabFilter == 'New'
           ? '1'
           : _listTabFilter == 'Followup'
-          ? '2'
-          : _listTabFilter == 'Missed'
-          ? '0'
-          : _listTabFilter == 'Called'
-          ? '1'
-          : _listTabFilter == 'Transferred'
-          ? '2'
-          : _listTabFilter == 'Closed'
-          ? '4'
-          : '';
+              ? '2'
+              : _listTabFilter == 'Missed'
+                  ? '0'
+                  : _listTabFilter == 'Called'
+                      ? '1'
+                      : _listTabFilter == 'Transferred'
+                          ? '2'
+                          : _listTabFilter == 'Closed'
+                              ? '4'
+                              : '';
 
       dynamic fDate = fromDate;
       dynamic tDate = toDate;
@@ -3976,11 +3963,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     return _buildCompactProgressItem(
                       name: entry.value.staffName ?? "N/A",
                       count: entry.value.staffCount ?? "0",
-                      percentage:
-                          (double.tryParse(data.totalCount ?? "0") ?? 0) > 0
+                      percentage: (double.tryParse(data.totalCount ?? "0") ??
+                                  0) >
+                              0
                           ? (double.tryParse(entry.value.staffCount ?? "0") ??
-                                    0) /
-                                (double.tryParse(data.totalCount ?? "0") ?? 0)
+                                  0) /
+                              (double.tryParse(data.totalCount ?? "0") ?? 0)
                           : 0,
                       color: _getStaffColor(entry.key),
                       onTap: () => _activeGraphCategory == "Followup"
@@ -4024,12 +4012,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       count: entry.value.categoryCount ?? "0",
                       percentage:
                           (double.tryParse(data.totalCount ?? "0") ?? 0) > 0
-                          ? (double.tryParse(
-                                      entry.value.categoryCount ?? "0",
-                                    ) ??
-                                    0) /
-                                (double.tryParse(data.totalCount ?? "0") ?? 0)
-                          : 0,
+                              ? (double.tryParse(
+                                        entry.value.categoryCount ?? "0",
+                                      ) ??
+                                      0) /
+                                  (double.tryParse(data.totalCount ?? "0") ?? 0)
+                              : 0,
                       color: _getStaffColor(entry.key + 3),
                       onTap: () => _navigateToFilteredLeads(
                         context: context,
@@ -4062,12 +4050,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       count: entry.value.missedstaffCount ?? "0",
                       percentage:
                           (double.tryParse(data.totalCount ?? "0") ?? 0) > 0
-                          ? (double.tryParse(
-                                      entry.value.missedstaffCount ?? "0",
-                                    ) ??
-                                    0) /
-                                (double.tryParse(data.totalCount ?? "0") ?? 0)
-                          : 0,
+                              ? (double.tryParse(
+                                        entry.value.missedstaffCount ?? "0",
+                                      ) ??
+                                      0) /
+                                  (double.tryParse(data.totalCount ?? "0") ?? 0)
+                              : 0,
                       color: _getStaffColor(entry.key + 6),
                       onTap: () => _navigateToFilteredLeads(
                         context: context,
@@ -4147,13 +4135,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           fromDate: from != null
               ? from.toString()
               : (isGlobalContext
-                    ? (_isGlobalDateFiltered ? fromDate.toString() : null)
-                    : (_isListTabDateFiltered ? fromDate.toString() : null)),
+                  ? (_isGlobalDateFiltered ? fromDate.toString() : null)
+                  : (_isListTabDateFiltered ? fromDate.toString() : null)),
           toDate: to != null
               ? to.toString()
               : (isGlobalContext
-                    ? (_isGlobalDateFiltered ? toDate.toString() : null)
-                    : (_isListTabDateFiltered ? toDate.toString() : null)),
+                  ? (_isGlobalDateFiltered ? toDate.toString() : null)
+                  : (_isListTabDateFiltered ? toDate.toString() : null)),
           status: status ?? '0',
           leadType: type ?? '',
           staffName: staffName,
@@ -4197,13 +4185,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           fromDate: from != null
               ? from.toString()
               : (isGlobalContext
-                    ? (_isGlobalDateFiltered ? fromDate.toString() : null)
-                    : (_isListTabDateFiltered ? fromDate.toString() : null)),
+                  ? (_isGlobalDateFiltered ? fromDate.toString() : null)
+                  : (_isListTabDateFiltered ? fromDate.toString() : null)),
           toDate: to != null
               ? to.toString()
               : (isGlobalContext
-                    ? (_isGlobalDateFiltered ? toDate.toString() : null)
-                    : (_isListTabDateFiltered ? toDate.toString() : null)),
+                  ? (_isGlobalDateFiltered ? toDate.toString() : null)
+                  : (_isListTabDateFiltered ? toDate.toString() : null)),
           status: status ?? '0',
           leadType: type ?? '',
           staffName: staffName,
@@ -4248,13 +4236,13 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           fromDate: from != null
               ? from.toString()
               : (isGlobalContext
-                    ? (_isGlobalDateFiltered ? fromDate.toString() : null)
-                    : (_isListTabDateFiltered ? fromDate.toString() : null)),
+                  ? (_isGlobalDateFiltered ? fromDate.toString() : null)
+                  : (_isListTabDateFiltered ? fromDate.toString() : null)),
           toDate: to != null
               ? to.toString()
               : (isGlobalContext
-                    ? (_isGlobalDateFiltered ? toDate.toString() : null)
-                    : (_isListTabDateFiltered ? toDate.toString() : null)),
+                  ? (_isGlobalDateFiltered ? toDate.toString() : null)
+                  : (_isListTabDateFiltered ? toDate.toString() : null)),
           status: status ?? '0',
           leadType: type ?? '',
           staffName: staffName,
@@ -4416,20 +4404,22 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               _isGraphViewActive
                                   ? '$_listTabFilter '
                                   : _listTabFilter == 'New'
-                                  ? 'New Leads'
-                                  : _listTabFilter == 'Followup'
-                                  ? 'Followup Leads'
-                                  : _listTabFilter == 'Missed'
-                                  ? 'Missed Leads'
-                                  : _listTabFilter == 'Called'
-                                  ? 'Called Leads'
-                                  : _listTabFilter == 'Transferred'
-                                  ? 'Transferred Leads'
-                                  : 'Total Leads',
+                                      ? 'New Leads'
+                                      : _listTabFilter == 'Followup'
+                                          ? 'Followup Leads'
+                                          : _listTabFilter == 'Missed'
+                                              ? 'Missed Leads'
+                                              : _listTabFilter == 'Called'
+                                                  ? 'Called Leads'
+                                                  : _listTabFilter ==
+                                                          'Transferred'
+                                                      ? 'Transferred Leads'
+                                                      : 'Total Leads',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: _getListTabPrimaryColor(),
+                                color: Colors.black,
+                                //color: _getListTabPrimaryColor(),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -4437,8 +4427,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               '$_totalLeads Leads',
                               style: TextStyle(
                                 fontSize: 12,
-                                //  color: Colors.black,
-                                _getListTabPrimaryColor().withOpacity(0.7),
+                                color: Colors.black,
+                                // _getListTabPrimaryColor().withOpacity(0.7),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -4574,9 +4564,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                           _listTabSelectedPriorityIds,
                                       'productIds': _listTabSelectedProductIds,
                                     },
-                                    isActiveLeads: _listTabFilter == "Followup"
-                                        ? "1"
-                                        : "",
+                                    isActiveLeads:
+                                        _listTabFilter == "Followup" ? "1" : "",
                                     onApplyFilters: (filters) {
                                       setState(() {
                                         _isListTabLoading = true;
@@ -4584,52 +4573,52 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                             []; // Immediate visual reset
 
                                         // Reset to now if filters are null (cleared from widget)
-                                        fromDate =
-                                            filters['fromDate'] ??
+                                        fromDate = filters['fromDate'] ??
                                             DateTime.now();
                                         toDate =
                                             filters['toDate'] ?? DateTime.now();
 
                                         _listTabSelectedStatusIds =
                                             List<String>.from(
-                                              filters['statusIds'] ?? [],
-                                            );
+                                          filters['statusIds'] ?? [],
+                                        );
                                         _listTabSelectedStaffIds =
                                             List<String>.from(
-                                              filters['staffIds'] ?? [],
-                                            );
+                                          filters['staffIds'] ?? [],
+                                        );
                                         _listTabSelectedCategoryIds =
                                             List<String>.from(
-                                              filters['categoryIds'] ?? [],
-                                            );
+                                          filters['categoryIds'] ?? [],
+                                        );
                                         _listTabSelectedPriorityIds =
                                             List<String>.from(
-                                              filters['priorityIds'] ?? [],
-                                            );
+                                          filters['priorityIds'] ?? [],
+                                        );
                                         _listTabSelectedProductIds =
                                             List<String>.from(
-                                              filters['productIds'] ?? [],
-                                            );
+                                          filters['productIds'] ?? [],
+                                        );
                                         _listTabSelectedTagIds =
                                             List<String>.from(
-                                              filters['tagIds'] ?? [],
-                                            );
+                                          filters['tagIds'] ?? [],
+                                        );
 
                                         _isListTabDateFiltered =
                                             filters['isDateFiltered'] ?? false;
                                         _isListTabFilterApplied =
                                             _listTabSelectedStatusIds
-                                                .isNotEmpty ||
-                                            _listTabSelectedStaffIds
-                                                .isNotEmpty ||
-                                            _listTabSelectedCategoryIds
-                                                .isNotEmpty ||
-                                            _listTabSelectedPriorityIds
-                                                .isNotEmpty ||
-                                            _listTabSelectedProductIds
-                                                .isNotEmpty ||
-                                            _listTabSelectedTagIds.isNotEmpty ||
-                                            _isListTabDateFiltered;
+                                                    .isNotEmpty ||
+                                                _listTabSelectedStaffIds
+                                                    .isNotEmpty ||
+                                                _listTabSelectedCategoryIds
+                                                    .isNotEmpty ||
+                                                _listTabSelectedPriorityIds
+                                                    .isNotEmpty ||
+                                                _listTabSelectedProductIds
+                                                    .isNotEmpty ||
+                                                _listTabSelectedTagIds
+                                                    .isNotEmpty ||
+                                                _isListTabDateFiltered;
 
                                         _listTabPage = 1;
                                       });
@@ -4707,9 +4696,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               onTap: () {
                                 setState(() {
                                   _isSortAscending = !_isSortAscending;
-                                  _listTabSortOrder = _isSortAscending
-                                      ? 'asc'
-                                      : 'desc';
+                                  _listTabSortOrder =
+                                      _isSortAscending ? 'asc' : 'desc';
                                 });
                                 if (_listTabFilter == "Followup") {
                                   _fetchTabLeadsActive();
@@ -5021,7 +5009,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     // For Followup tab filtering, selected stages IDs should be passed as leadType, and callResultId should be empty
     bool isFollowupFiltering =
         (_listTabFilter == "Followup" || status == "2") &&
-        (_listTabSelectedStatusIds?.isNotEmpty ?? false);
+            (_listTabSelectedStatusIds?.isNotEmpty ?? false);
 
     Map<String, dynamic> body = {
       "token": widget.token,
@@ -5030,9 +5018,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           : (_listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? "")),
       "leadCategoryId": _listTabSelectedCategoryIds,
       "leadSubcategoryId": [],
-      "callResponseId": isFollowupFiltering
-          ? []
-          : (_listTabSelectedStatusIds ?? []),
+      "callResponseId":
+          isFollowupFiltering ? [] : (_listTabSelectedStatusIds ?? []),
       "callStatus": _listTabCurrentCallStatus ?? "",
       "staffId": _listTabSelectedStaffIds,
       "isCalled": _listTabCurrentIsCalled ?? true,
@@ -5048,19 +5035,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "call_result_reason": _listTabSelectedTagIds,
     };
 
-    bool shouldSendDates =
-        _isListTabDateFiltered ||
+    bool shouldSendDates = _isListTabDateFiltered ||
         (_listTabCurrentLeadType == "-1" ||
             _listTabCurrentLeadType == "1" ||
             _listTabCurrentLeadType == "2" ||
             _listTabCurrentStatus == "4");
     body["filterStatus"] = shouldSendDates ? 1 : 0;
-    body["fromDate"] = shouldSendDates
-        ? DateFormat('yyyy-MM-dd').format(fromDate)
-        : "";
-    body["toDate"] = shouldSendDates
-        ? DateFormat('yyyy-MM-dd').format(toDate)
-        : "";
+    body["fromDate"] =
+        shouldSendDates ? DateFormat('yyyy-MM-dd').format(fromDate) : "";
+    body["toDate"] =
+        shouldSendDates ? DateFormat('yyyy-MM-dd').format(toDate) : "";
 
     try {
       final response = await HttpService.viewLeadsforActive(body);
@@ -5126,9 +5110,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     Map<String, dynamic> body = {
       "token": widget.token,
-      "callResultId": _listTabCurrentStatus == "0"
-          ? ""
-          : (_listTabCurrentStatus ?? ""),
+      "callResultId":
+          _listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? ""),
       "leadCategoryId": _listTabSelectedCategoryIds,
       "leadSubcategoryId": [],
       "callResponseId": _listTabSelectedStatusIds,
@@ -5145,19 +5128,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "call_result_reason": _listTabSelectedTagIds,
     };
 
-    bool shouldSendDates =
-        _isListTabDateFiltered ||
+    bool shouldSendDates = _isListTabDateFiltered ||
         (_listTabCurrentLeadType == "-1" ||
             _listTabCurrentLeadType == "1" ||
             _listTabCurrentLeadType == "2" ||
             _listTabCurrentStatus == "4");
     body["filterStatus"] = shouldSendDates ? 1 : 0;
-    body["fromDate"] = shouldSendDates
-        ? DateFormat('yyyy-MM-dd').format(fromDate)
-        : "";
-    body["toDate"] = shouldSendDates
-        ? DateFormat('yyyy-MM-dd').format(toDate)
-        : "";
+    body["fromDate"] =
+        shouldSendDates ? DateFormat('yyyy-MM-dd').format(fromDate) : "";
+    body["toDate"] =
+        shouldSendDates ? DateFormat('yyyy-MM-dd').format(toDate) : "";
 
     try {
       final response = await HttpService.leadReport(body);
@@ -5290,12 +5270,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       color: lead.priority == '1'
                           ? Colors.grey.shade300
                           : lead.priority == '2'
-                          ? callGreen
-                          : lead.priority == '3'
-                          ? accentRed
-                          : lead.priority == '4'
-                          ? textSecondary
-                          : Colors.grey.shade300,
+                              ? callGreen
+                              : lead.priority == '3'
+                                  ? accentRed
+                                  : lead.priority == '4'
+                                      ? textSecondary
+                                      : Colors.grey.shade300,
                     ),
                     Expanded(
                       child: Padding(
@@ -5486,19 +5466,17 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color:
-                                        lead.callResultId >= 0 &&
+                                    color: lead.callResultId >= 0 &&
                                             lead.callResultId < _colors.length
                                         ? _colors[lead.callResultId]
-                                              .withOpacity(0.15)
+                                            .withOpacity(0.15)
                                         : accentOrange.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color:
-                                          lead.callResultId >= 0 &&
+                                      color: lead.callResultId >= 0 &&
                                               lead.callResultId < _colors.length
                                           ? _colors[lead.callResultId]
-                                                .withOpacity(0.4)
+                                              .withOpacity(0.4)
                                           : accentOrange.withOpacity(0.4),
                                       width: 1,
                                     ),
@@ -5511,8 +5489,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                         height: 6,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color:
-                                              lead.callResultId >= 0 &&
+                                          color: lead.callResultId >= 0 &&
                                                   lead.callResultId <
                                                       _colors.length
                                               ? _colors[lead.callResultId]
@@ -5527,8 +5504,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
-                                          color:
-                                              lead.callResultId >= 0 &&
+                                          color: lead.callResultId >= 0 &&
                                                   lead.callResultId <
                                                       _colors.length
                                               ? _colors[lead.callResultId]
@@ -5640,8 +5616,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               color: lead.isSelected
                   ? appBarStart.withOpacity(0.05)
                   : (isCreatedToday
-                        ? const Color(0xFFE8F5E9) // Light green for today
-                        : Colors.white),
+                      ? const Color(0xFFE8F5E9) // Light green for today
+                      : Colors.white),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -5678,12 +5654,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           color: lead.priority == '1'
                               ? Colors.grey
                               : lead.priority == '2'
-                              ? callGreen
-                              : lead.priority == '3'
-                              ? accentRed
-                              : lead.priority == '4'
-                              ? textSecondary
-                              : Colors.grey,
+                                  ? callGreen
+                                  : lead.priority == '3'
+                                      ? accentRed
+                                      : lead.priority == '4'
+                                          ? textSecondary
+                                          : Colors.grey,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -5900,8 +5876,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  lead.callResultId >= 0 &&
+                              color: lead.callResultId >= 0 &&
                                       lead.callResultId < _colors.length
                                   ? _colors[lead.callResultId].withOpacity(0.15)
                                   : const Color.fromARGB(
@@ -5912,8 +5887,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     ).withOpacity(0.17),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color:
-                                    lead.callResultId >= 0 &&
+                                color: lead.callResultId >= 0 &&
                                         lead.callResultId < _colors.length
                                     ? _colors[lead.callResultId].withOpacity(
                                         0.4,
@@ -5934,8 +5908,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color:
-                                    lead.callResultId >= 0 &&
+                                color: lead.callResultId >= 0 &&
                                         lead.callResultId < _colors.length
                                     ? _colors[lead.callResultId]
                                     : accentOrange,
@@ -6093,17 +6066,20 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color:
-                                              (category.leadStatus ?? "") ==
+                                          color: (category.leadStatus ?? "") ==
                                                   "New"
                                               ? appBarStart.withOpacity(0.1)
                                               : (category.leadStatus ?? "") ==
-                                                    "Follow Up"
-                                              ? accentOrange.withOpacity(0.1)
-                                              : (category.leadStatus ?? "") ==
-                                                    "Rejected"
-                                              ? accentRed.withOpacity(0.1)
-                                              : accentOrange.withOpacity(0.1),
+                                                      "Follow Up"
+                                                  ? accentOrange
+                                                      .withOpacity(0.1)
+                                                  : (category.leadStatus ??
+                                                              "") ==
+                                                          "Rejected"
+                                                      ? accentRed
+                                                          .withOpacity(0.1)
+                                                      : accentOrange
+                                                          .withOpacity(0.1),
                                           borderRadius: BorderRadius.circular(
                                             4,
                                           ),
@@ -6113,17 +6089,18 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w500,
-                                            color:
-                                                (category.leadStatus ?? "") ==
+                                            color: (category.leadStatus ??
+                                                        "") ==
                                                     "New"
                                                 ? appBarStart
                                                 : (category.leadStatus ?? "") ==
-                                                      "Follow Up"
-                                                ? accentOrange
-                                                : (category.leadStatus ?? "") ==
-                                                      "Rejected"
-                                                ? accentRed
-                                                : accentOrange,
+                                                        "Follow Up"
+                                                    ? accentOrange
+                                                    : (category.leadStatus ??
+                                                                "") ==
+                                                            "Rejected"
+                                                        ? accentRed
+                                                        : accentOrange,
                                           ),
                                         ),
                                       ),
@@ -6276,8 +6253,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       icon = title == "Cloud Call Report"
           ? Icons.cloud_outlined
           : (title == "Phone Call Report"
-                ? Icons.phone_outlined
-                : Icons.call_rounded);
+              ? Icons.phone_outlined
+              : Icons.call_rounded);
       isFlipped = _isFlipped1;
       onFlip = () => setState(() => _isFlipped1 = !_isFlipped1);
     } else if (index == 2) {
@@ -6374,8 +6351,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             String key = index == 1
                 ? "reportType1"
                 : (index == 2
-                      ? "reportType2"
-                      : (index == 3 ? "reportType3" : "reportType4"));
+                    ? "reportType2"
+                    : (index == 3 ? "reportType3" : "reportType4"));
             Common.saveSharedPref(key, newType);
             setState(() {
               if (index == 1) {
@@ -6764,21 +6741,20 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     final csro.CallStatusReportOntapModel? result =
         await HttpService.callStatusReportOntapData(
-          fromDate: DateFormat(
-            'dd-MM-yyyy',
-          ).format(callStatusFromDate ?? DateTime.now()),
-          toDate: DateFormat(
-            'dd-MM-yyyy',
-          ).format(callStatusToDate ?? DateTime.now()),
-          staffId: callStatusStaffs.join(','),
-          callResponseId: callResultId,
-        );
+      fromDate: DateFormat(
+        'dd-MM-yyyy',
+      ).format(callStatusFromDate ?? DateTime.now()),
+      toDate: DateFormat(
+        'dd-MM-yyyy',
+      ).format(callStatusToDate ?? DateTime.now()),
+      staffId: callStatusStaffs.join(','),
+      callResponseId: callResultId,
+    );
 
     if (mounted) Navigator.pop(context);
 
     if (result != null) {
-      final drillDownDetails =
-          result.data?.details
+      final drillDownDetails = result.data?.details
               ?.map(
                 (s) => {
                   'name': s.staffName,
@@ -6895,32 +6871,28 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children:
-                                (isStageWiseExpanded
-                                        ? details
-                                        : details.take(6).toList())
-                                    .map((item) {
-                                      int index = details.indexOf(item);
-                                      final color = _getReportItemColor(
-                                        item.callResult,
-                                        index,
-                                      );
-                                      return Padding(
-                                        padding: EdgeInsets.only(
-                                          right: index == details.length - 1
-                                              ? 0
-                                              : 20,
-                                        ),
-                                        child: _buildStageItem(
-                                          item.callResult,
-                                          item.total,
-                                          color,
-                                          totalCount,
-                                          item.callResultId,
-                                        ),
-                                      );
-                                    })
-                                    .toList(),
+                            children: (isStageWiseExpanded
+                                    ? details
+                                    : details.take(6).toList())
+                                .map((item) {
+                              int index = details.indexOf(item);
+                              final color = _getReportItemColor(
+                                item.callResult,
+                                index,
+                              );
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  right: index == details.length - 1 ? 0 : 20,
+                                ),
+                                child: _buildStageItem(
+                                  item.callResult,
+                                  item.total,
+                                  color,
+                                  totalCount,
+                                  item.callResultId,
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
                         if (details.length > 6)
@@ -6964,15 +6936,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
         final swro.StagewiseReportOntapModel? result =
             await HttpService.stagwWiseReportOntapData(
-              fromDate: stageWiseFromDate != null
-                  ? DateFormat('dd-MM-yyyy').format(stageWiseFromDate!)
-                  : null,
-              toDate: stageWiseToDate != null
-                  ? DateFormat('dd-MM-yyyy').format(stageWiseToDate!)
-                  : null,
-              staffId: stageWiseStaffs.join(','),
-              callResultId: callResultId,
-            );
+          fromDate: stageWiseFromDate != null
+              ? DateFormat('dd-MM-yyyy').format(stageWiseFromDate!)
+              : null,
+          toDate: stageWiseToDate != null
+              ? DateFormat('dd-MM-yyyy').format(stageWiseToDate!)
+              : null,
+          staffId: stageWiseStaffs.join(','),
+          callResultId: callResultId,
+        );
 
         if (mounted) Navigator.pop(context);
         if (result != null) {
@@ -7092,8 +7064,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             showLeadSourceTable
                 ? leadSourceTableLastUpdated
                 : leadSourceLastUpdated,
-            fromDate:
-                leadSourceFromDate ??
+            fromDate: leadSourceFromDate ??
                 DateTime(DateTime.now().year, DateTime.now().month, 1),
             toDate: leadSourceToDate ?? DateTime.now(),
             onRefresh: showLeadSourceTable
@@ -7134,8 +7105,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           itemCount: isLeadSourceExpanded
                               ? leadSourceDetails.length
                               : (leadSourceDetails.length > 6
-                                    ? 6
-                                    : leadSourceDetails.length),
+                                  ? 6
+                                  : leadSourceDetails.length),
                           itemBuilder: (context, index) {
                             final item = leadSourceDetails[index];
                             final percent = totalCount > 0
@@ -7155,21 +7126,20 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
                                 final lsro.LeadSourceReportOntapModel? result =
                                     await HttpService.leadSourceReportOntapData(
-                                      fromDate: DateFormat('dd-MM-yyyy').format(
-                                        leadSourceFromDate ??
-                                            DateTime(
-                                              DateTime.now().year,
-                                              DateTime.now().month,
-                                              1,
-                                            ),
-                                      ),
-                                      toDate: DateFormat('dd-MM-yyyy').format(
-                                        leadSourceToDate ?? DateTime.now(),
-                                      ),
-                                      staffId: leadSourceStaffs.join(','),
-                                      leadSourceId: item.leadSourceId
-                                          .toString(),
-                                    );
+                                  fromDate: DateFormat('dd-MM-yyyy').format(
+                                    leadSourceFromDate ??
+                                        DateTime(
+                                          DateTime.now().year,
+                                          DateTime.now().month,
+                                          1,
+                                        ),
+                                  ),
+                                  toDate: DateFormat('dd-MM-yyyy').format(
+                                    leadSourceToDate ?? DateTime.now(),
+                                  ),
+                                  staffId: leadSourceStaffs.join(','),
+                                  leadSourceId: item.leadSourceId.toString(),
+                                );
 
                                 if (mounted) Navigator.pop(context);
 
@@ -7199,20 +7169,20 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                             cloudCallPermission1,
                                             pageName:
                                                 '${item.leadSource} Source',
-                                            fromDate: DateFormat('yyyy-MM-dd')
-                                                .format(
-                                                  leadSourceFromDate ??
-                                                      DateTime(
-                                                        DateTime.now().year,
-                                                        DateTime.now().month,
-                                                        1,
-                                                      ),
-                                                ),
-                                            toDate: DateFormat('yyyy-MM-dd')
-                                                .format(
-                                                  leadSourceToDate ??
-                                                      DateTime.now(),
-                                                ),
+                                            fromDate:
+                                                DateFormat('yyyy-MM-dd').format(
+                                              leadSourceFromDate ??
+                                                  DateTime(
+                                                    DateTime.now().year,
+                                                    DateTime.now().month,
+                                                    1,
+                                                  ),
+                                            ),
+                                            toDate:
+                                                DateFormat('yyyy-MM-dd').format(
+                                              leadSourceToDate ??
+                                                  DateTime.now(),
+                                            ),
                                             leadSourceId: item.leadSourceId,
                                             staff: staffItem['staffId'],
                                             staffName: staffItem['name'],
@@ -7276,8 +7246,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                             milliseconds: 1000,
                                           ),
                                           height: 10,
-                                          width:
-                                              (MediaQuery.of(
+                                          width: (MediaQuery.of(
                                                     context,
                                                   ).size.width -
                                                   72) *
@@ -7423,8 +7392,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           itemCount: isCategoryExpanded
                               ? categoryDetails.length
                               : (categoryDetails.length > 6
-                                    ? 6
-                                    : categoryDetails.length),
+                                  ? 6
+                                  : categoryDetails.length),
                           itemBuilder: (context, index) {
                             final item = categoryDetails[index];
                             final percent = totalCount > 0
@@ -7443,26 +7412,26 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                 );
 
                                 final catro.LeadCategoryReportOntapModel?
-                                result =
-                                    await HttpService.leadCategoryReportOntapData(
-                                      fromDate: categoryFromDate != null
-                                          ? DateFormat(
-                                              'dd-MM-yyyy',
-                                            ).format(categoryFromDate!)
-                                          : DateFormat(
-                                              'dd-MM-yyyy',
-                                            ).format(DateTime.now()),
-                                      toDate: categoryToDate != null
-                                          ? DateFormat(
-                                              'dd-MM-yyyy',
-                                            ).format(categoryToDate!)
-                                          : DateFormat(
-                                              'dd-MM-yyyy',
-                                            ).format(DateTime.now()),
-                                      staffId: categoryStaffs.join(','),
-                                      leadCategoryId: item.leadCategoryId
-                                          .toString(),
-                                    );
+                                    result = await HttpService
+                                        .leadCategoryReportOntapData(
+                                  fromDate: categoryFromDate != null
+                                      ? DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(categoryFromDate!)
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(DateTime.now()),
+                                  toDate: categoryToDate != null
+                                      ? DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(categoryToDate!)
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(DateTime.now()),
+                                  staffId: categoryStaffs.join(','),
+                                  leadCategoryId:
+                                      item.leadCategoryId.toString(),
+                                );
 
                                 if (mounted) Navigator.pop(context);
 
@@ -7506,8 +7475,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                                 : DateFormat(
                                                     'yyyy-MM-dd',
                                                   ).format(DateTime.now()),
-                                            category: item.leadCategoryId
-                                                .toString(),
+                                            category:
+                                                item.leadCategoryId.toString(),
                                             categoryName: item.leadCategory,
                                             staff: staffItem['staffId'],
                                             staffName: staffItem['name'],
@@ -7566,8 +7535,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                             milliseconds: 1000,
                                           ),
                                           height: 10,
-                                          width:
-                                              (MediaQuery.of(
+                                          width: (MediaQuery.of(
                                                     context,
                                                   ).size.width -
                                                   72) *
@@ -11264,16 +11232,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (from == null && to == null) return "Showing all data";
     if (from == null || to == null) return "";
     final today = DateTime.now();
-    final isToday =
-        from.year == today.year &&
+    final isToday = from.year == today.year &&
         from.month == today.month &&
         from.day == today.day &&
         to.year == today.year &&
         to.month == today.month &&
         to.day == today.day;
     if (isToday) return "Showing today's data";
-    final isFullMonth =
-        from.day == 1 &&
+    final isFullMonth = from.day == 1 &&
         to.day == DateTime(to.year, to.month + 1, 0).day &&
         from.month == to.month &&
         from.year == to.year;
@@ -11798,8 +11764,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             final filteredStaff = staffList
                 .where(
                   (s) => s.name.toLowerCase().contains(
-                    staffSearchController.text.toLowerCase(),
-                  ),
+                        staffSearchController.text.toLowerCase(),
+                      ),
                 )
                 .toList();
             return Container(
@@ -11952,9 +11918,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected
-                ? appBarStart.withOpacity(0.08)
-                : Colors.transparent,
+            color:
+                isSelected ? appBarStart.withOpacity(0.08) : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
@@ -11998,9 +11963,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       name,
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: isSelected
-                            ? FontWeight.w800
-                            : FontWeight.w600,
+                        fontWeight:
+                            isSelected ? FontWeight.w800 : FontWeight.w600,
                         color: isSelected ? appBarStart : Colors.grey[800],
                       ),
                     ),
@@ -12414,7 +12378,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           'New',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts?.data.leads.newLeads ?? 0)
-                                    .toString()
+                                  .toString()
                               : data.newLeads.toString(),
                           Icons.person_add_rounded,
                           _colors[1], // Standardized Blue
@@ -12425,11 +12389,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           'Followup',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts
-                                            ?.data
-                                            .leads
-                                            .followupLeads ??
-                                        0)
-                                    .toString()
+                                          ?.data.leads.followupLeads ??
+                                      0)
+                                  .toString()
                               : data.followupLeads.toString(),
                           Icons.schedule_rounded,
                           _colors[2],
@@ -12440,8 +12402,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           'Missed',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts?.data.leads.missedLeads ??
-                                        0)
-                                    .toString()
+                                      0)
+                                  .toString()
                               : data.missedLeads.toString(),
                           Icons.event_busy_rounded,
                           _colors[5],
@@ -12455,8 +12417,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           'Called',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts?.data.leads.calledCount ??
-                                        0)
-                                    .toString()
+                                      0)
+                                  .toString()
                               : data.totalCalled.toString(),
                           Icons.phone_in_talk_rounded,
                           _colors[6],
@@ -12470,11 +12432,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           'Transferred',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts
-                                            ?.data
-                                            .leads
-                                            .transferLeads ??
-                                        0)
-                                    .toString()
+                                          ?.data.leads.transferLeads ??
+                                      0)
+                                  .toString()
                               : data.transferLeads.toString(),
                           Icons.swap_horiz_rounded,
                           _colors[8],
@@ -12487,8 +12447,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           'Closed',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts?.data.leads.closedLeads ??
-                                        0)
-                                    .toString()
+                                      0)
+                                  .toString()
                               : '0',
                           Icons.check_circle_outline_rounded,
                           _colors[4],
@@ -12509,8 +12469,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             'New',
                             dashboardMainCounts != null
                                 ? (dashboardMainCounts?.data.leads.newLeads ??
-                                          0)
-                                      .toString()
+                                        0)
+                                    .toString()
                                 : data.newLeads.toString(),
                             Icons.person_add_rounded,
                             _colors[1],
@@ -12524,11 +12484,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             'Followup',
                             dashboardMainCounts != null
                                 ? (dashboardMainCounts
-                                              ?.data
-                                              .leads
-                                              .followupLeads ??
-                                          0)
-                                      .toString()
+                                            ?.data.leads.followupLeads ??
+                                        0)
+                                    .toString()
                                 : data.followupLeads.toString(),
                             Icons.schedule_rounded,
                             _colors[2],
@@ -12542,11 +12500,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             'Missed',
                             dashboardMainCounts != null
                                 ? (dashboardMainCounts
-                                              ?.data
-                                              .leads
-                                              .missedLeads ??
-                                          0)
-                                      .toString()
+                                            ?.data.leads.missedLeads ??
+                                        0)
+                                    .toString()
                                 : data.missedLeads.toString(),
                             Icons.event_busy_rounded,
                             _colors[5],
@@ -12567,11 +12523,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             'Called',
                             dashboardMainCounts != null
                                 ? (dashboardMainCounts
-                                              ?.data
-                                              .leads
-                                              .calledCount ??
-                                          0)
-                                      .toString()
+                                            ?.data.leads.calledCount ??
+                                        0)
+                                    .toString()
                                 : data.totalCalled.toString(),
                             Icons.phone_in_talk_rounded,
                             _colors[6],
@@ -12588,11 +12542,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             'Transferred',
                             dashboardMainCounts != null
                                 ? (dashboardMainCounts
-                                              ?.data
-                                              .leads
-                                              .transferLeads ??
-                                          0)
-                                      .toString()
+                                            ?.data.leads.transferLeads ??
+                                        0)
+                                    .toString()
                                 : data.transferLeads.toString(),
                             Icons.swap_horiz_rounded,
                             _colors[8], // Teal for Transferred
@@ -12608,8 +12560,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             'Closed',
                             dashboardCounts != null
                                 ? (dashboardCounts?.data?.leads?.closedLeads ??
-                                          0)
-                                      .toString()
+                                        0)
+                                    .toString()
                                 : '0',
                             Icons.check_circle_outline_rounded,
                             _colors[4], // Standardized Green for Closed
@@ -12728,9 +12680,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     label,
                     style: TextStyle(
                       fontSize: 9,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected ? color : textSecondary,
                     ),
                     textAlign: TextAlign.center,
@@ -12748,8 +12699,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               onTap: () async {
                 Common.showProgressDialog(context, "Loading Analytics..");
                 Common.saveSharedPref("statusWise", 'no');
-                String effectiveGraphStatus =
-                    graphId ??
+                String effectiveGraphStatus = graphId ??
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
@@ -12761,39 +12711,39 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         effectiveGraphStatus,
                       )
                     : label == "Followup"
-                    ? await getLeadProgressbarFollowup(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Missed"
-                    ? await getLeadProgressbarMissed(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Called"
-                    ? await getLeadProgressbarCalled(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Transferred"
-                    ? await getLeadProgressbarTransferred(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : await getLeadProgressbar(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      );
+                        ? await getLeadProgressbarFollowup(
+                            widget.token!,
+                            fromDate,
+                            toDate,
+                            effectiveGraphStatus,
+                          )
+                        : label == "Missed"
+                            ? await getLeadProgressbarMissed(
+                                widget.token!,
+                                fromDate,
+                                toDate,
+                                effectiveGraphStatus,
+                              )
+                            : label == "Called"
+                                ? await getLeadProgressbarCalled(
+                                    widget.token!,
+                                    fromDate,
+                                    toDate,
+                                    effectiveGraphStatus,
+                                  )
+                                : label == "Transferred"
+                                    ? await getLeadProgressbarTransferred(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      )
+                                    : await getLeadProgressbar(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      );
 
                 if (object1!.status == true) {
                   if (context.mounted) {
@@ -12941,9 +12891,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     label,
                     style: TextStyle(
                       fontSize: 9,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected ? color : textSecondary,
                     ),
                     textAlign: TextAlign.center,
@@ -12961,8 +12910,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               onTap: () async {
                 Common.showProgressDialog(context, "Loading Analytics..");
                 Common.saveSharedPref("statusWise", 'no');
-                String effectiveGraphStatus =
-                    graphId ??
+                String effectiveGraphStatus = graphId ??
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
@@ -12974,39 +12922,39 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         effectiveGraphStatus,
                       )
                     : label == "Followup"
-                    ? await getLeadProgressbarFollowup(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Missed"
-                    ? await getLeadProgressbarMissed(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Called"
-                    ? await getLeadProgressbarCalled(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Transferred"
-                    ? await getLeadProgressbarTransferred(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : await getLeadProgressbar(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      );
+                        ? await getLeadProgressbarFollowup(
+                            widget.token!,
+                            fromDate,
+                            toDate,
+                            effectiveGraphStatus,
+                          )
+                        : label == "Missed"
+                            ? await getLeadProgressbarMissed(
+                                widget.token!,
+                                fromDate,
+                                toDate,
+                                effectiveGraphStatus,
+                              )
+                            : label == "Called"
+                                ? await getLeadProgressbarCalled(
+                                    widget.token!,
+                                    fromDate,
+                                    toDate,
+                                    effectiveGraphStatus,
+                                  )
+                                : label == "Transferred"
+                                    ? await getLeadProgressbarTransferred(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      )
+                                    : await getLeadProgressbar(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      );
 
                 if (object1!.status == true) {
                   if (context.mounted) {
@@ -13160,9 +13108,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       label,
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w600,
                         color: isSelected ? color : textSecondary,
                       ),
                       textAlign: TextAlign.center,
@@ -13181,8 +13128,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               onTap: () async {
                 Common.showProgressDialog(context, "Loading Analytics..");
                 Common.saveSharedPref("statusWise", 'no');
-                String effectiveGraphStatus =
-                    graphId ??
+                String effectiveGraphStatus = graphId ??
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
@@ -13194,39 +13140,39 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         effectiveGraphStatus,
                       )
                     : label == "Followup"
-                    ? await getLeadProgressbarFollowup(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Missed"
-                    ? await getLeadProgressbarMissed(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Called"
-                    ? await getLeadProgressbarCalled(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Transferred"
-                    ? await getLeadProgressbarTransferred(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : await getLeadProgressbar(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      );
+                        ? await getLeadProgressbarFollowup(
+                            widget.token!,
+                            fromDate,
+                            toDate,
+                            effectiveGraphStatus,
+                          )
+                        : label == "Missed"
+                            ? await getLeadProgressbarMissed(
+                                widget.token!,
+                                fromDate,
+                                toDate,
+                                effectiveGraphStatus,
+                              )
+                            : label == "Called"
+                                ? await getLeadProgressbarCalled(
+                                    widget.token!,
+                                    fromDate,
+                                    toDate,
+                                    effectiveGraphStatus,
+                                  )
+                                : label == "Transferred"
+                                    ? await getLeadProgressbarTransferred(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      )
+                                    : await getLeadProgressbar(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      );
 
                 if (object1!.status == true) {
                   if (context.mounted) {
@@ -13380,9 +13326,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       label,
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w600,
                         color: isSelected ? color : textSecondary,
                       ),
                       textAlign: TextAlign.center,
@@ -13401,8 +13346,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               onTap: () async {
                 Common.showProgressDialog(context, "Loading Analytics..");
                 Common.saveSharedPref("statusWise", 'no');
-                String effectiveGraphStatus =
-                    graphId ??
+                String effectiveGraphStatus = graphId ??
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
@@ -13414,39 +13358,39 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         effectiveGraphStatus,
                       )
                     : label == "Followup"
-                    ? await getLeadProgressbarFollowup(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Missed"
-                    ? await getLeadProgressbarMissed(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Called"
-                    ? await getLeadProgressbarCalled(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : label == "Transferred"
-                    ? await getLeadProgressbarTransferred(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      )
-                    : await getLeadProgressbar(
-                        widget.token!,
-                        fromDate,
-                        toDate,
-                        effectiveGraphStatus,
-                      );
+                        ? await getLeadProgressbarFollowup(
+                            widget.token!,
+                            fromDate,
+                            toDate,
+                            effectiveGraphStatus,
+                          )
+                        : label == "Missed"
+                            ? await getLeadProgressbarMissed(
+                                widget.token!,
+                                fromDate,
+                                toDate,
+                                effectiveGraphStatus,
+                              )
+                            : label == "Called"
+                                ? await getLeadProgressbarCalled(
+                                    widget.token!,
+                                    fromDate,
+                                    toDate,
+                                    effectiveGraphStatus,
+                                  )
+                                : label == "Transferred"
+                                    ? await getLeadProgressbarTransferred(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      )
+                                    : await getLeadProgressbar(
+                                        widget.token!,
+                                        fromDate,
+                                        toDate,
+                                        effectiveGraphStatus,
+                                      );
 
                 if (object1!.status == true) {
                   if (context.mounted) {
@@ -13707,8 +13651,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final staff = staffProgressData!.data!.staffLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 staffProgressData?.data?.staffTotal
                                         ?.toString() ??
                                     "0",
@@ -13716,9 +13659,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               0;
                           double count =
                               double.tryParse(staff.staffCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -13773,7 +13715,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (staff.staffName?.isNotEmpty ==
                                                       true)
                                                   ? staff.staffName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -14090,8 +14032,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final staff = staffProgressData!.data!.staffLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 staffProgressData?.data?.staffTotal
                                         ?.toString() ??
                                     "0",
@@ -14099,9 +14040,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               0;
                           double count =
                               double.tryParse(staff.staffCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -14156,7 +14096,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (staff.staffName?.isNotEmpty ==
                                                       true)
                                                   ? staff.staffName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -14475,8 +14415,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         itemBuilder: (context, i) {
                           final cat =
                               categoryProgressData!.data!.categoryLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 categoryProgressData?.data?.categoryTotal
                                         ?.toString() ??
                                     "0",
@@ -14484,9 +14423,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               0;
                           double count =
                               double.tryParse(cat.categoryCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -14541,7 +14479,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (cat.categoryName?.isNotEmpty ==
                                                       true)
                                                   ? cat.categoryName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -14860,8 +14798,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         itemBuilder: (context, i) {
                           final cat =
                               categoryProgressData!.data!.categoryLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 categoryProgressData?.data?.categoryTotal
                                         ?.toString() ??
                                     "0",
@@ -14869,9 +14806,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               0;
                           double count =
                               double.tryParse(cat.categoryCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -14926,7 +14862,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (cat.categoryName?.isNotEmpty ==
                                                       true)
                                                   ? cat.categoryName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -15244,8 +15180,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final st = statusProgressData!.data!.statusLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 statusProgressData?.data?.statusTotal
                                         ?.toString() ??
                                     "0",
@@ -15253,9 +15188,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               0;
                           double count =
                               double.tryParse(st.statusCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getReportItemColor(st.statusName, i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -15309,7 +15243,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (st.statusName?.isNotEmpty ==
                                                       true)
                                                   ? st.statusName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -15627,8 +15561,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final st = statusProgressData!.data!.statusLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 statusProgressData?.data?.statusTotal
                                         ?.toString() ??
                                     "0",
@@ -15636,9 +15569,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               0;
                           double count =
                               double.tryParse(st.statusCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getReportItemColor(st.statusName, i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -15692,7 +15624,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (st.statusName?.isNotEmpty ==
                                                       true)
                                                   ? st.statusName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -16008,16 +15940,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final staff = object1!.data!.staffLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(staff.staffCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -16072,7 +16002,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (staff.staffName?.isNotEmpty ==
                                                       true)
                                                   ? staff.staffName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -16195,16 +16125,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final cat = object1!.data!.categoryLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(cat.categoryCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i + 3);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -16257,7 +16185,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (cat.categoryName?.isNotEmpty ==
                                                       true)
                                                   ? cat.categoryName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -16380,17 +16308,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final missed = object1!.data!.missedLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(missed.missedstaffCount ?? "0") ??
-                              0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                                  0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i + 5);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -16441,12 +16367,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                           ),
                                           child: Center(
                                             child: Text(
-                                              (missed
-                                                          .missedstaffName
+                                              (missed.missedstaffName
                                                           ?.isNotEmpty ==
                                                       true)
                                                   ? missed.missedstaffName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -16569,17 +16494,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final statusLead = object1!.data!.statusLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(statusLead.statusCount ?? "0") ??
-                              0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                                  0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i + 7);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -16628,12 +16551,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                           ),
                                           child: Center(
                                             child: Text(
-                                              (statusLead
-                                                          .statusName
+                                              (statusLead.statusName
                                                           ?.isNotEmpty ==
                                                       true)
                                                   ? statusLead.statusName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -16949,16 +16871,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final staff = object1!.data!.staffLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(staff.staffCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -17014,7 +16934,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (staff.staffName?.isNotEmpty ==
                                                       true)
                                                   ? staff.staffName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -17137,16 +17057,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final cat = object1!.data!.categoryLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(cat.categoryCount ?? "0") ?? 0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i + 3);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -17199,7 +17117,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                               (cat.categoryName?.isNotEmpty ==
                                                       true)
                                                   ? cat.categoryName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -17322,17 +17240,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final missed = object1!.data!.missedLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(missed.missedstaffCount ?? "0") ??
-                              0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                                  0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i + 5);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -17383,12 +17299,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                           ),
                                           child: Center(
                                             child: Text(
-                                              (missed
-                                                          .missedstaffName
+                                              (missed.missedstaffName
                                                           ?.isNotEmpty ==
                                                       true)
                                                   ? missed.missedstaffName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -17511,17 +17426,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, i) {
                           final statusLead = object1!.data!.statusLeads![i];
-                          double total =
-                              double.tryParse(
+                          double total = double.tryParse(
                                 object1?.data?.totalCount?.toString() ?? "0",
                               ) ??
                               0;
                           double count =
                               double.tryParse(statusLead.statusCount ?? "0") ??
-                              0;
-                          final double percentage = total > 0
-                              ? count / total
-                              : 0;
+                                  0;
+                          final double percentage =
+                              total > 0 ? count / total : 0;
                           final color = _getStaffColor(i + 7);
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
@@ -17570,12 +17483,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                           ),
                                           child: Center(
                                             child: Text(
-                                              (statusLead
-                                                          .statusName
+                                              (statusLead.statusName
                                                           ?.isNotEmpty ==
                                                       true)
                                                   ? statusLead.statusName![0]
-                                                        .toUpperCase()
+                                                      .toUpperCase()
                                                   : "?",
                                               style: TextStyle(
                                                 color: color,
@@ -18066,10 +17978,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Fresh Data Toggle (Radio style) - Hidden as per request
                     Visibility(
-                      visible: false,
+                      visible: showTransferFreshValue,
                       child: InkWell(
                         onTap: () {
                           setDialogState(() {
@@ -18138,8 +18048,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    // Actions
                     Row(
                       children: [
                         Expanded(
@@ -18282,15 +18190,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       autofocus: true,
                       onChanged: (value) {
                         setState(() {
-                          filteredTransferStaff = commonDetails!
-                              .data
-                              .transferStaffs
-                              .where(
-                                (item) => item.tranStaffName
-                                    .toLowerCase()
-                                    .contains(value.toLowerCase()),
-                              )
-                              .toList();
+                          filteredTransferStaff =
+                              commonDetails!.data.transferStaffs
+                                  .where(
+                                    (item) => item.tranStaffName
+                                        .toLowerCase()
+                                        .contains(value.toLowerCase()),
+                                  )
+                                  .toList();
                         });
                       },
                       decoration: InputDecoration(
@@ -18359,9 +18266,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   }
 
   Future<void> _showStatusDateRangePickerDialog(String statusType) async {
-    DateTime currentFrom = statusType == 'Closed'
-        ? fromDateClosed
-        : fromDateLost;
+    DateTime currentFrom =
+        statusType == 'Closed' ? fromDateClosed : fromDateLost;
     DateTime currentTo = statusType == 'Closed' ? toDateClosed : toDateLost;
 
     showDialog(

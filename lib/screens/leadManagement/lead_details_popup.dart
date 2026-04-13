@@ -26,6 +26,8 @@ import '../../models/lead_management/leadDetailsModelAdd.dart';
 import '../../models/lead_management/leadMileStoneListModel.dart';
 import '../../models/lead_management/listFolderName.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
+import '../../models/lead_management/showTransferHideorShowModel.dart';
+
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/activityModel.dart';
 import 'package:login2/models/lead_management/callDataModel.dart';
@@ -142,6 +144,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   ActivityMode? activeMode;
   CallHistoryResponse? callDetailsDataS;
   bool isActivityLoading = false;
+  bool showTransferFreshValue = false;
   bool isCallHistoryLoading = false;
 
   TextEditingController contactFName = TextEditingController();
@@ -254,6 +257,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   LeadProductSectionModel? productSectionModel;
   List<LeadProduct> _selectedProducts = [];
+  final List<TextEditingController> _additionalCtrls = [];
+  final List<Map<String, dynamic>> _additionalValues = [];
   final TextEditingController _productSearchCtrl = TextEditingController();
   List<LeadProduct> _productSearchResults = [];
   List<DriveAccount> googleDriveAccounts = [];
@@ -374,6 +379,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       commonDetails = widget.commonDetails;
       if (commonDetails == null) {
         _fetchCommonDetails();
+      } else {
+        _initializeAdditionalFields();
       }
 
       if (leadDetails != null) {
@@ -413,6 +420,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         setState(() {
           commonDetails = response;
         });
+        _initializeAdditionalFields();
       }
     } catch (e) {
       log("Error fetching common details: $e");
@@ -424,8 +432,43 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         await HttpService.listFolderAndFiles(token, callMasterId, pathValue);
     if (listFolder != null) {
       fileManagerPermissionFunction(widget.token);
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     }
+  }
+
+  void _initializeAdditionalFields() {
+    if (commonDetails?.data.additionalFields != null) {
+      if (_additionalCtrls.length !=
+          commonDetails!.data.additionalFields.length) {
+        _additionalCtrls.clear();
+        for (int i = 0; i < commonDetails!.data.additionalFields.length; i++) {
+          _additionalCtrls.add(TextEditingController());
+        }
+      }
+    }
+  }
+
+  List<Widget> _buildAdditionalFieldsUI() {
+    if (commonDetails == null ||
+        commonDetails!.data.additionalFields.isEmpty ||
+        _additionalCtrls.length < commonDetails!.data.additionalFields.length) {
+      return [];
+    }
+    return List.generate(commonDetails!.data.additionalFields.length, (i) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextField(
+          controller: _additionalCtrls[i],
+          decoration: InputDecoration(
+            labelText: commonDetails!.data.additionalFields[i].fieldName,
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.all(12),
+          ),
+        ),
+      );
+    });
   }
 
   fileManagerPermissionFunction(token) async {
@@ -576,6 +619,15 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         await Common.getSharedPref("phoneCallLogPermission");
     accessCallRecordingPermission =
         await Common.getSharedPref("accessCallRecordingPermission");
+
+    HttpService.showTransferHideOrShow().then((value) {
+      if (value != null && value.status == true) {
+        setState(() {
+          showTransferFreshValue = value.data ?? false;
+        });
+      }
+    });
+
     setState(() {});
   }
 
@@ -607,6 +659,29 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     } catch (e) {
       log("Error fetching drive accounts: $e");
       if (mounted) setState(() => isDriveAccountsLoading = false);
+    }
+  }
+
+  Future<void> _addDriveAccount() async {
+    Common.showProgressDialog(context, "Generating connection link...");
+    try {
+      final res = await HttpService.addConnectGoogleAccountApi();
+      if (mounted) Navigator.pop(context);
+      if (res != null && res.status == true && res.authUrl != null) {
+        final url = Uri.parse(res.authUrl!);
+        //  if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+        // } else {
+        //   Common.toastMessaage("Could not launch Google Auth URL", Colors.red);
+        // }
+      } else {
+        Common.toastMessaage(
+            "Failed to get connection link. Please try again.", Colors.red);
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      log("Error in _addDriveAccount: $e");
+      Common.toastMessaage("Error connecting account: $e", Colors.red);
     }
   }
 
@@ -2066,6 +2141,22 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       isSavingFollowup = true;
     });
 
+    if (commonDetails == null) {
+      Common.toastMessaage('Common data not loaded yet', Colors.red);
+      return;
+    }
+
+    _additionalValues.clear();
+    for (int i = 0; i < _additionalCtrls.length; i++) {
+      if (i < commonDetails!.data.additionalFields.length) {
+        _additionalValues.add({
+          "id": commonDetails!.data.additionalFields[i].id,
+          "name": commonDetails!.data.additionalFields[i].fieldName,
+          "value": _additionalCtrls[i].text,
+        });
+      }
+    }
+
     Common.showProgressDialog(context, "Saving Followup...");
 
     try {
@@ -2108,6 +2199,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           isDifrent,
           renProducts,
           targetGroups,
+          _additionalValues,
           products: productIds,
           createCustomer: createCustomer,
           whatsappLead: whatsappLead.text,
@@ -2146,6 +2238,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Widget _buildFollowupTab() {
+    if (commonDetails == null) {
+      return const Center(
+          child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: CircularProgressIndicator(),
+      ));
+    }
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -3176,7 +3275,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           ],
                         ),
                         const SizedBox(height: 12),
-                        if (commonDetails!.data.callResponse.isNotEmpty)
+                        if (commonDetails != null &&
+                            commonDetails!.data.callResponse.isNotEmpty)
                           SizedBox(
                             height: 35,
                             child: ListView.builder(
@@ -3231,6 +3331,23 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                         const SizedBox(height: 12),
 
+                        if (commonDetails?.data.additionalFields != null &&
+                            commonDetails!
+                                .data.additionalFields.isNotEmpty) ...[
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8.0, top: 4.0),
+                            child: Text(
+                              "Additional Fields",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ),
+                          ..._buildAdditionalFieldsUI(),
+                        ],
+
                         const SizedBox(height: 12),
                       ],
                     ),
@@ -3241,8 +3358,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   if ((leadSettings != null
                           ? leadSettings!.createInvoiceBool
                           : (callResultId == '4' &&
-                              commonDetails!
-                                      .data.customerAddInvoicePermission ==
+                              commonDetails
+                                      ?.data.customerAddInvoicePermission ==
                                   true)) ||
                       (leadSettings?.createCustomerBool ?? false))
                     Row(
@@ -3250,8 +3367,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         if (leadSettings != null
                             ? leadSettings!.createInvoiceBool
                             : (callResultId == '4' &&
-                                commonDetails!
-                                        .data.customerAddInvoicePermission ==
+                                commonDetails
+                                        ?.data.customerAddInvoicePermission ==
                                     true))
                           Expanded(
                             child: CheckboxListTile(
@@ -6771,6 +6888,15 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           //           .toList()),
           //   const SizedBox(height: 16),
           // ],
+          if (leadDetailsAdditional?.data.additionalFields.isNotEmpty ??
+              false) ...[
+            const SizedBox(height: 16),
+            _buildDetailSection(
+                'Additional Fields',
+                leadDetailsAdditional!.data.additionalFields
+                    .map((field) => _buildDetailRow(field.name, field.value))
+                    .toList()),
+          ],
           if (data.callHandledUsers != null &&
               data.callHandledUsers!.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -6780,15 +6906,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   .map((staff) => _buildStaffCard(staff))
                   .toList(),
             ),
-          ],
-          if (leadDetailsAdditional?.data.additionalFields.isNotEmpty ??
-              false) ...[
-            const SizedBox(height: 16),
-            _buildDetailSection(
-                'Additional Fields',
-                leadDetailsAdditional!.data.additionalFields
-                    .map((field) => _buildDetailRow(field.name, field.value))
-                    .toList()),
           ],
         ],
       ),
@@ -7144,7 +7261,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "Select Drive Account",
                   style: TextStyle(
                     fontSize: 16,
@@ -7152,19 +7269,58 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     color: Color(0xFF2a86c9),
                   ),
                 ),
-                if (isDriveAccountsLoading)
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                Row(
+                  children: [
+                    if (isDriveAccountsLoading)
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    if (!isDriveAccountsLoading)
+                      OutlinedButton(
+                        onPressed: _addDriveAccount,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          minimumSize: Size.zero,
+                          side: BorderSide(
+                            color: const Color(0xFF2a86c9),
+                            width: 1.2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.add_circle_outline,
+                              size: 16,
+                              color: Color(0xFF2a86c9),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              "Add Account",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF2a86c9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                  ],
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Expanded(
             child: isDriveAccountsLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator())
                 : googleDriveAccounts.isEmpty
                     ? Center(
                         child: Column(
@@ -7175,6 +7331,15 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                             const SizedBox(height: 16),
                             Text("No Drive Accounts Linked",
                                 style: TextStyle(color: Colors.grey.shade600)),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: _addDriveAccount,
+                              icon: const Icon(Icons.add),
+                              label: const Text("Add Account"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Color(0xFF2a86c9),
+                              ),
+                            ),
                           ],
                         ),
                       )
@@ -7188,6 +7353,59 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         ],
       );
     }
+    // if (selectedDriveAccount == null) {
+    //   return Column(
+    //     children: [
+    //       const SizedBox(height: 20),
+    //       Padding(
+    //         padding: const EdgeInsets.symmetric(horizontal: 16),
+    //         child: Row(
+    //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //           children: [
+    //             Text(
+    //               "Select Drive Account",
+    //               style: TextStyle(
+    //                 fontSize: 16,
+    //                 fontWeight: FontWeight.bold,
+    //                 color: Color(0xFF2a86c9),
+    //               ),
+    //             ),
+    //             if (isDriveAccountsLoading)
+    //               SizedBox(
+    //                 width: 16,
+    //                 height: 16,
+    //                 child: CircularProgressIndicator(strokeWidth: 2),
+    //               ),
+    //           ],
+    //         ),
+    //       ),
+    //       SizedBox(height: 10),
+    //       Expanded(
+    //         child: isDriveAccountsLoading
+    //             ? Center(child: CircularProgressIndicator())
+    //             : googleDriveAccounts.isEmpty
+    //                 ? Center(
+    //                     child: Column(
+    //                       mainAxisAlignment: MainAxisAlignment.center,
+    //                       children: [
+    //                         Icon(Icons.cloud_off_rounded,
+    //                             size: 48, color: Colors.grey.shade400),
+    //                         const SizedBox(height: 16),
+    //                         Text("No Drive Accounts Linked",
+    //                             style: TextStyle(color: Colors.grey.shade600)),
+    //                       ],
+    //                     ),
+    //                   )
+    //                 : ListView.builder(
+    //                     padding: const EdgeInsets.all(16),
+    //                     itemCount: googleDriveAccounts.length,
+    //                     itemBuilder: (ctx, idx) =>
+    //                         _buildDriveEmailCard(googleDriveAccounts[idx]),
+    //                   ),
+    //       ),
+    //     ],
+    //   );
+    // }
 
     return Column(
       children: [
@@ -8960,19 +9178,19 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     String s = statusId.toLowerCase();
     switch (s) {
       case '1':
-        return const Color(0xFF2196F3); // Blue for "New"
+        return const Color(0xFF2196F3);
       case '2':
-        return const Color(0xFFFFC107); // Yellow/Amber for Followup
+        return const Color(0xFFFFC107);
       case '3':
         return const Color.fromARGB(255, 255, 7, 7);
       case '4':
-        return const Color(0xFF4CAF50); // Red
+        return const Color(0xFF4CAF50);
       case '5':
-        return const Color(0xFF9C27B0); // Purple
+        return const Color(0xFF9C27B0);
       case '6':
         return Colors.pink;
       case '7':
-        return const Color(0xFF4CAF50); // Green
+        return const Color(0xFF4CAF50);
     }
 
     if (s.contains('new')) return const Color(0xFF2196F3);
@@ -9023,11 +9241,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   );
 
                   if (context.mounted) {
-                    Navigator.pop(context); // Close progress dialog
-
+                    Navigator.pop(context);
                     if (result.data == true) {
                       Common.toastMessaage(result.message, Colors.green);
-                      Navigator.pop(context); // Close popup
+                      Navigator.pop(context);
                     } else {
                       Common.toastMessaage(result.message, Colors.red);
                     }
@@ -9063,7 +9280,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close permission dialog
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -9129,7 +9346,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header
                       Row(
                         children: [
                           Container(
@@ -9167,8 +9383,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ],
                       ),
                       const SizedBox(height: 24),
-
-                      // Staff Selector Label
                       const Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -9267,7 +9481,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
                       // Fresh Data Toggle (Radio style) - Hidden as per request
                       Visibility(
-                        visible: false,
+                        visible: showTransferFreshValue,
                         child: InkWell(
                           onTap: () {
                             setDialogState(() {

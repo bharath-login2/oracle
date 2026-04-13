@@ -232,7 +232,7 @@ class _SplashScreenState extends State<SplashScreen> {
     } else if (RoomDashboardPer == "true") {
       dashboardToOpen = RoomDashboard();
     } else {
-      dashboardToOpen = DashboardLeadNewUpdatedTwo(token);
+      dashboardToOpen = HomePage(token);
     }
 
     if (mounted) {

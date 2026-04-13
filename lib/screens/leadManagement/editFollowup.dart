@@ -109,6 +109,8 @@ class _EditFollowupState extends State<EditFollowup> {
   LeadProductSectionModel? productSectionModel;
   LeadDeatailsModel? leadDetails;
   List<LeadProduct> _selectedProducts = [];
+  final List<TextEditingController> _additionalCtrls = [];
+  final List<Map<String, dynamic>> _additionalValues = [];
 
   bool? result = true;
   bool isLoading = true;
@@ -133,6 +135,9 @@ class _EditFollowupState extends State<EditFollowup> {
     whatsappLead.dispose();
     emailLead.dispose();
     timeBefore.dispose();
+    for (var ctrl in _additionalCtrls) {
+      ctrl.dispose();
+    }
     super.dispose();
   }
 
@@ -174,6 +179,7 @@ class _EditFollowupState extends State<EditFollowup> {
               followupDetails!.data!.leadCategoryId.toString());
         }
 
+        _initializeAdditionalFields();
         _populateFormData();
       }
     } catch (e) {
@@ -181,6 +187,53 @@ class _EditFollowupState extends State<EditFollowup> {
     } finally {
       setState(() => isLoading = false);
     }
+  }
+
+  void _initializeAdditionalFields() {
+    if (commonDetails?.data.additionalFields != null) {
+      if (_additionalCtrls.length !=
+          commonDetails!.data.additionalFields.length) {
+        for (var ctrl in _additionalCtrls) {
+          ctrl.dispose();
+        }
+        _additionalCtrls.clear();
+        for (int i = 0; i < commonDetails!.data.additionalFields.length; i++) {
+          String initialValue = "";
+          // If editing, try to find existing value
+          if (followupDetails?.data?.additionalFields != null) {
+            final fieldId = commonDetails!.data.additionalFields[i].id;
+            final existing = followupDetails!.data!.additionalFields!
+                .where((f) => f.id == fieldId)
+                .toList();
+            if (existing.isNotEmpty) {
+              initialValue = existing.first.value ?? "";
+            }
+          }
+          _additionalCtrls.add(TextEditingController(text: initialValue));
+        }
+      }
+    }
+  }
+
+  List<Widget> _buildAdditionalFieldsUI() {
+    if (commonDetails == null ||
+        commonDetails!.data.additionalFields.isEmpty ||
+        _additionalCtrls.length < commonDetails!.data.additionalFields.length) {
+      return [];
+    }
+    return List.generate(commonDetails!.data.additionalFields.length, (i) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: TextFormField(
+          controller: _additionalCtrls[i],
+          decoration: InputDecoration(
+            labelText: commonDetails!.data.additionalFields[i].fieldName,
+            prefixIcon: const Icon(Icons.edit_note),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      );
+    });
   }
 
   void _populateFormData() {
@@ -231,6 +284,7 @@ class _EditFollowupState extends State<EditFollowup> {
           }
         }
       }
+      _initializeAdditionalFields();
     });
   }
 
@@ -279,6 +333,17 @@ class _EditFollowupState extends State<EditFollowup> {
       Common.showProgressDialog(context, "Loading..");
     }
 
+    _additionalValues.clear();
+    for (int i = 0; i < _additionalCtrls.length; i++) {
+      if (i < commonDetails!.data.additionalFields.length) {
+        _additionalValues.add({
+          "id": commonDetails!.data.additionalFields[i].id,
+          "name": commonDetails!.data.additionalFields[i].fieldName,
+          "value": _additionalCtrls[i].text,
+        });
+      }
+    }
+
     EditLeadFollowupModel object1 = await HttpService.editLeadsFollowupUpdated(
         widget.token,
         widget.callFollowupId,
@@ -294,6 +359,7 @@ class _EditFollowupState extends State<EditFollowup> {
         callResultReasonId,
         checked,
         timeBefore.text,
+        _additionalValues,
         whatsappLead: whatsappLead.text,
         emailLead: emailLead.text,
         products: _selectedProducts.map((p) => p.id).join(','));
@@ -485,6 +551,19 @@ class _EditFollowupState extends State<EditFollowup> {
                 _buildRemarksField(),
               ],
             ),
+            if (commonDetails?.data.additionalFields != null &&
+                commonDetails!.data.additionalFields.isNotEmpty)
+              const SizedBox(height: 12),
+            if (commonDetails?.data.additionalFields != null &&
+                commonDetails!.data.additionalFields.isNotEmpty)
+              _buildSectionCard(
+                title: 'Additional Fields',
+                icon: Icons.more_outlined,
+                children: [
+                  const SizedBox(height: 12),
+                  ..._buildAdditionalFieldsUI(),
+                ],
+              ),
             // const SizedBox(height: 12),
             // _buildSectionCard(
             //   title: 'Category & Sub Category',

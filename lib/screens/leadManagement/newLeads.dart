@@ -34,6 +34,8 @@ import 'lead_details_popup.dart';
 import '../../widgets/viewLeadsFilterWidget.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import 'product_details_popup.dart';
+import '../../models/lead_management/showTransferHideorShowModel.dart';
+
 
 // ignore: must_be_immutable
 class NewLeads extends StatefulWidget {
@@ -228,7 +230,9 @@ class _NewLeadsState extends State<NewLeads>
   List<TransferStaff> filteredStaff = [];
   String staffId = "";
   String staffName = "Staff";
+  bool showTransferFreshValue = false;
   bool hasMore = true;
+
   String name = '';
   String userId = '';
   String statusWise = '';
@@ -490,7 +494,16 @@ class _NewLeadsState extends State<NewLeads>
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission") ?? "";
 
+    HttpService.showTransferHideOrShow().then((value) {
+      if (value != null && value.status == true) {
+        setState(() {
+          showTransferFreshValue = value.data ?? false;
+        });
+      }
+    });
+
     if (statusWise == 'yes') {
+
       statusWiseId = await Common.getSharedPref("statusWisId") ?? "";
       statusCatId = await Common.getSharedPref("statusCatId") ?? "";
       type = await Common.getSharedPref("type") ?? "";
@@ -3045,7 +3058,8 @@ class _NewLeadsState extends State<NewLeads>
 
                         // Transfer as Fresh Data Toggle - Hidden as per request
                         Visibility(
-                          visible: false,
+                          visible: showTransferFreshValue,
+
                           child: InkWell(
                             onTap: () {
                               setDialogState(() {

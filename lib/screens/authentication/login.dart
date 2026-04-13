@@ -615,8 +615,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
               } else {
                 // dashboardToOpen =
                 //     Dashboard(object.data!.token.toString()); // fallback
-                dashboardToOpen =
-                    DashboardLeadNewUpdatedTwo(object.data!.token.toString());
+                dashboardToOpen = HomePage(object.data!.token.toString());
               }
 
               if (object.status == true) {

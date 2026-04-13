@@ -50,6 +50,11 @@ android {
             minifyEnabled false
         }
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
 }
 flutter {
     source = "../.."

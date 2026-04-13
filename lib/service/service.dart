@@ -49,6 +49,7 @@ import 'package:login2/models/lead_management/AssignedWorkModel.dart';
 import 'package:login2/models/lead_management/TransferWorkResponse.dart';
 import 'package:login2/models/lead_management/WorkLoginAndOutModel.dart';
 import 'package:login2/models/lead_management/activityModel.dart';
+import 'package:login2/models/lead_management/addGoogleDriveResponseModel.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
 import 'package:login2/models/lead_management/approvedListLeaveModel.dart';
 import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
@@ -111,6 +112,7 @@ import 'package:login2/models/lead_management/requestCreateResponseModel.dart';
 import 'package:login2/models/lead_management/requestDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryListModel.dart';
+import 'package:login2/models/lead_management/showTransferHideorShowModel.dart';
 import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
 import 'package:login2/models/lead_management/staffReportModel.dart';
 import 'package:login2/models/lead_management/staffWisePendingModel.dart';
@@ -1385,6 +1387,7 @@ class HttpService {
       isDiff,
       renProducts,
       targetGroup,
+      descriptions,
       {String? products,
       bool? createCustomer,
       String? whatsappLead,
@@ -1426,6 +1429,7 @@ class HttpService {
       "next_cost_diff": isDiff,
       "next_renewal_product": jsonEncode(renProducts),
       "target_group": jsonEncode(targetGroup),
+      "additionalFields": jsonEncode(descriptions),
       "products_lead": products ?? '', // Pass lead selected products
       "whatsapp_number_lead": whatsappLead ?? '',
       "email_lead": emailLead ?? '',
@@ -1570,6 +1574,7 @@ class HttpService {
       reasonId,
       bool checked,
       String? timeBefore,
+      descriptions,
       {String? whatsappLead,
       String? emailLead,
       String? products}) async {
@@ -1591,6 +1596,7 @@ class HttpService {
       "whatsapp_number_lead": whatsappLead ?? '',
       "email_lead": emailLead ?? '',
       "products_lead": products ?? '',
+      "additionalFields": jsonEncode(descriptions),
     });
 
     try {
@@ -1991,7 +1997,8 @@ class HttpService {
     }
   }
 
-  static Future callHistory(token, userId, fromDate, toDate, {String? callType}) async {
+  static Future callHistory(token, userId, fromDate, toDate,
+      {String? callType}) async {
     //t(userId);
     var formData = FormData.fromMap({
       "token": token,
@@ -3023,7 +3030,8 @@ class HttpService {
     }
   }
 
-  static Future callLogHistory(token, fromDate, toDate, staffId, {String? callType}) async {
+  static Future callLogHistory(token, fromDate, toDate, staffId,
+      {String? callType}) async {
     var params = {
       "token": token,
       "fromDate": fromDate,
@@ -8087,6 +8095,33 @@ class HttpService {
     } catch (e) {
       debugPrint("🔥 Error fetching salary details: $e");
       return null;
+    }
+  }
+
+  static Future<bool> addSalaryDetails({
+    required String userId,
+    required String salary,
+    required String openingBalance,
+    required String type,
+    required String isPettyCash,
+  }) async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_salary_summary",
+        data: FormData.fromMap({
+          "token": token,
+          "id": userId,
+          "salary": salary,
+          "opening_balance": openingBalance,
+          "type": type,
+          "is_petty_cash": isPettyCash,
+        }),
+      );
+      return response.statusCode == 200 && response.data['status'] == true;
+    } catch (e) {
+      debugPrint("🔥 Error adding salary details: $e");
+      return false;
     }
   }
 
@@ -13776,6 +13811,59 @@ class HttpService {
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
         return GetLeadSourceModel.fromJson(response.data);
+      }
+      log("leadSourceAddleads error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("leadSourceAddleads error: $e");
+    }
+    return null;
+  }
+
+  static Future<ShowTransferHideOrShowModel?> showTransferHideOrShow() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("leadSourceAddleads error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}show_transfer_fresh",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ShowTransferHideOrShowModel.fromJson(response.data);
+      }
+      log("leadSourceAddleads error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("leadSourceAddleads error: $e");
+    }
+    return null;
+  }
+
+  static Future<AddGoogleDriveResponseModel?>
+      addConnectGoogleAccountApi() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("leadSourceAddleads error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}connect_google_account_api",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return AddGoogleDriveResponseModel.fromJson(response.data);
       }
       log("leadSourceAddleads error: ${response.data?['message'] ?? 'Unknown error'}");
     } catch (e) {

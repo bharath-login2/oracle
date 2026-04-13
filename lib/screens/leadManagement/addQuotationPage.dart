@@ -42,6 +42,8 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
   String? selectedCustomerId;
   bool isLoadingCustomers = false;
   bool isLoadingTemplates = false;
+  bool includeProductImages = false;
+  bool includeGst = false;
   final TextEditingController customerNameCtrl = TextEditingController();
   final TextEditingController templateCtrl = TextEditingController();
   final TextEditingController materialCtrl = TextEditingController();
@@ -584,6 +586,8 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
             _calculateGrandTotals()['gstAmount']?.toStringAsFixed(2) ?? '0.00',
         "grand_total":
             _calculateGrandTotals()['subTotal']?.toStringAsFixed(2) ?? '0.00',
+        "include_product_images": includeProductImages ? "1" : "0",
+        "include_gst": includeGst ? "1" : "0",
       });
       final response = await httpService.submitQuotation(formData);
       if (response != null && response["status"] == "success") {
@@ -1275,64 +1279,32 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              isLoadingState
-                                  ? const Center(
-                                      child: CircularProgressIndicator())
-                                  : DropdownButtonFormField<String>(
-                                      value: (selectedStateId == null ||
-                                              selectedStateId == "0" ||
-                                              selectedStateId!.isEmpty)
-                                          ? null
-                                          : selectedStateId,
-                                      hint: const Text("Select State"),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 10,
-                                        ),
-                                      ),
-                                      items: [
-                                        const DropdownMenuItem<String>(
-                                          value: null,
-                                          child: Text("Select State"),
-                                        ),
-                                        ...stateList.map((state) {
-                                          return DropdownMenuItem<String>(
-                                            value: state.id,
-                                            child: Text(state.name),
-                                          );
-                                        }).toList(),
-                                      ],
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedStateId = value;
-                                          if (value != null) {
-                                            final state = stateList.firstWhere(
-                                              (s) => s.id == value,
-                                              orElse: () =>
-                                                  StateList(id: '', name: ''),
-                                            );
-                                            if (state.id.isNotEmpty) {
-                                              selectedStateName = state.name;
-                                              stateController.text = state.name;
-                                            }
-                                          } else {
-                                            selectedStateName = null;
-                                            stateController.clear();
-                                          }
-                                          selectedDistrictId = null;
-                                          selectedDistrictName = null;
-                                          districtController.clear();
-                                          districtList.clear();
-                                        });
-                                        if (value != null) _getDistricts(value);
-                                      },
-                                    ),
+                              TextFormField(
+                                controller: stateController,
+                                readOnly: true,
+                                decoration: InputDecoration(
+                                  hintText: "Select State",
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  suffixIcon: isLoadingState
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2))
+                                      : const Icon(Icons.arrow_drop_down),
+                                ),
+                                onTap: isLoadingState
+                                    ? null
+                                    : () => _showStateSelectionDialog(),
+                                validator: (_) =>
+                                    selectedStateId == null ? "Required" : null,
+                              ),
                             ],
                           ),
                         ),
@@ -1422,62 +1394,33 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              isLoadingDistrict
-                                  ? const Center(
-                                      child: CircularProgressIndicator())
-                                  : DropdownButtonFormField<String>(
-                                      value: (selectedDistrictId == null ||
-                                              selectedDistrictId == "0" ||
-                                              selectedDistrictId!.isEmpty)
-                                          ? null
-                                          : selectedDistrictId,
-                                      hint: const Text("Select District"),
-                                      decoration: InputDecoration(
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 10,
-                                        ),
-                                      ),
-                                      items: [
-                                        const DropdownMenuItem<String>(
-                                          value: null,
-                                          child: Text("Select District"),
-                                        ),
-                                        ...districtList.map((district) {
-                                          return DropdownMenuItem<String>(
-                                            value: district.id,
-                                            child: Text(district.name),
-                                          );
-                                        }).toList(),
-                                      ],
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedDistrictId = value;
-                                          if (value != null) {
-                                            final district =
-                                                districtList.firstWhere(
-                                              (d) => d.id == value,
-                                              orElse: () => DistrictList(
-                                                  id: '', name: ''),
-                                            );
-                                            if (district.id.isNotEmpty) {
-                                              selectedDistrictName =
-                                                  district.name;
-                                              districtController.text =
-                                                  district.name;
-                                            }
-                                          } else {
-                                            selectedDistrictName = null;
-                                            districtController.clear();
-                                          }
-                                        });
-                                      },
-                                    ),
+                              TextFormField(
+                                controller: districtController,
+                                readOnly: true,
+                                decoration: InputDecoration(
+                                  hintText: "Select District",
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  suffixIcon: isLoadingDistrict
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2))
+                                      : const Icon(Icons.arrow_drop_down),
+                                ),
+                                onTap: isLoadingDistrict
+                                    ? null
+                                    : () => _showDistrictSelectionDialog(),
+                                validator: (_) => selectedDistrictId == null
+                                    ? "Required"
+                                    : null,
+                              ),
                             ],
                           ),
                         ),
@@ -1513,6 +1456,43 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
                         ),
                         const SizedBox(height: 6),
                         _templateDropdown(),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: includeProductImages,
+                              activeColor:
+                                  const Color.fromARGB(255, 22, 145, 216),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              onChanged: (val) {
+                                setState(() {
+                                  includeProductImages = val ?? false;
+                                });
+                              },
+                            ),
+                            const Text("Include product Images",
+                                style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: includeGst,
+                              activeColor:
+                                  const Color.fromARGB(255, 22, 145, 216),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              onChanged: (val) {
+                                setState(() {
+                                  includeGst = val ?? false;
+                                });
+                              },
+                            ),
+                            const Text("Include GST and GST Amount",
+                                style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
                       ],
                     ),
 
@@ -2323,6 +2303,57 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     }
   }
 
+  void _showStateSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => _GenericSearchDialog(
+        title: "Select State",
+        hintText: "Search state",
+        items: stateList,
+        onSelected: (state) {
+          setState(() {
+            selectedStateId = state.id;
+            selectedStateName = state.name;
+            stateController.text = state.name;
+
+            // Clear district when state changes
+            selectedDistrictId = null;
+            selectedDistrictName = null;
+            districtController.clear();
+            districtList.clear();
+          });
+          _getDistricts(state.id);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showDistrictSelectionDialog() {
+    if (selectedStateId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a state first")),
+      );
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (context) => _GenericSearchDialog(
+        title: "Select District",
+        hintText: "Search district",
+        items: districtList,
+        onSelected: (district) {
+          setState(() {
+            selectedDistrictId = district.id;
+            selectedDistrictName = district.name;
+            districtController.text = district.name;
+          });
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
   Future<bool?> _showQuickAddCustomerDialog(BuildContext context) async {
     return await showDialog<bool>(
       context: context,
@@ -2758,6 +2789,94 @@ class __MaterialSearchDialogState extends State<_MaterialSearchDialog> {
                               style: const TextStyle(fontSize: 14),
                             ),
                           ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GenericSearchDialog extends StatefulWidget {
+  final String title;
+  final String hintText;
+  final List<dynamic> items;
+  final Function(dynamic) onSelected;
+
+  const _GenericSearchDialog({
+    required this.title,
+    required this.hintText,
+    required this.items,
+    required this.onSelected,
+  });
+
+  @override
+  __GenericSearchDialogState createState() => __GenericSearchDialogState();
+}
+
+class __GenericSearchDialogState extends State<_GenericSearchDialog> {
+  late TextEditingController searchCtrl;
+  late List<dynamic> filteredList;
+
+  @override
+  void initState() {
+    super.initState();
+    searchCtrl = TextEditingController();
+    filteredList = List.from(widget.items);
+  }
+
+  @override
+  void dispose() {
+    searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: Column(
+          children: [
+            TextField(
+              controller: searchCtrl,
+              autofocus: true,
+              onChanged: (value) {
+                setState(() {
+                  filteredList = widget.items.where((item) {
+                    final name = item.name ?? "";
+                    return name.toLowerCase().contains(value.toLowerCase());
+                  }).toList();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: widget.hintText,
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: filteredList.isEmpty
+                  ? const Center(child: Text("No items found"))
+                  : ListView.builder(
+                      itemCount: filteredList.length,
+                      itemBuilder: (context, index) {
+                        final item = filteredList[index];
+                        return ListTile(
+                          title: Text(item.name ?? ""),
+                          onTap: () => widget.onSelected(item),
                         );
                       },
                     ),

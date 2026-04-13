@@ -34,6 +34,7 @@ import 'lead_details_popup.dart';
 import '../../widgets/viewLeadsFilterWidget.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import 'product_details_popup.dart';
+import '../../models/lead_management/showTransferHideorShowModel.dart';
 
 // ignore: must_be_immutable
 class ActiveLeads extends StatefulWidget {
@@ -226,6 +227,8 @@ class _ActiveLeadsState extends State<ActiveLeads>
   List<TransferStaff> filteredStaff = [];
   String staffId = "";
   String staffName = "Staff";
+  bool isCallPermission = true;
+  bool showTransferFreshValue = false;
   bool hasMore = true;
   String name = '';
   String userId = '';
@@ -468,12 +471,22 @@ class _ActiveLeadsState extends State<ActiveLeads>
   Future<void> _loadUserPreferences() async {
     statusWise = await Common.getSharedPref("statusWise") ?? "";
     roleId = await Common.getSharedPref("roleId") ?? "";
-    multiBranch = await Common.getSharedPref("multiBranch") ?? "";
-    transferPermission = await Common.getSharedPref("transferLeads") ?? "";
-    userId = await Common.getSharedPref("userId") ?? "";
-    name = await Common.getSharedPref("name") ?? "";
+    name = await Common.getSharedPref("name") ?? '';
+    userId = await Common.getSharedPref("userId") ?? '';
+    whatsappNo = await Common.getSharedPref("whatsappValue") ?? '';
+    whatsappNo1 = await Common.getSharedPref("whatsapp") ?? '';
+    multiBranch = await Common.getSharedPref("multiple_branch") ?? '';
+    transferPermission = await Common.getSharedPref("transferLeads") ?? '';
     phoneCallLogPermission =
-        await Common.getSharedPref("phoneCallLogPermission") ?? "";
+        await Common.getSharedPref("phoneCallLogPermission") ?? '';
+
+    HttpService.showTransferHideOrShow().then((value) {
+      if (value != null && value.status == true) {
+        setState(() {
+          showTransferFreshValue = value.data ?? false;
+        });
+      }
+    });
 
     if (statusWise == 'yes') {
       statusWiseId = await Common.getSharedPref("statusWisId") ?? "";
@@ -3043,7 +3056,7 @@ class _ActiveLeadsState extends State<ActiveLeads>
 
                     // Fresh Data Toggle (Radio style) - Hidden as per request
                     Visibility(
-                      visible: false,
+                      visible: showTransferFreshValue,
                       child: InkWell(
                         onTap: () {
                           setDialogState(() {

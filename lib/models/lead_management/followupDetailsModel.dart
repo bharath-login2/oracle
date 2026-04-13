@@ -39,22 +39,26 @@ class Data {
   String? remarks;
   String? reason;
   String? reasonId;
+  List<AdditionalField>? additionalFields;
 
   Data(
       {this.callDetailsId,
-        this.callMasterId,
-        this.cost,
-        this.leadCategoryId,
-        this.leadCategory,
-        this.leadSubCategoryId,
-        this.leadSubCategory,
-        this.calledDate,
-        this.callResultId,
-        this.callResult,
-        this.callResponseId,
-        this.callResponse,
-        this.followupDate,
-        this.remarks,this.reason,this.reasonId});
+      this.callMasterId,
+      this.cost,
+      this.leadCategoryId,
+      this.leadCategory,
+      this.leadSubCategoryId,
+      this.leadSubCategory,
+      this.calledDate,
+      this.callResultId,
+      this.callResult,
+      this.callResponseId,
+      this.callResponse,
+      this.followupDate,
+      this.remarks,
+      this.reason,
+      this.reasonId,
+      this.additionalFields});
 
   Data.fromJson(Map<String, dynamic> json) {
     callDetailsId = json['call_details_id'];
@@ -73,6 +77,12 @@ class Data {
     remarks = json['remarks'];
     reason = json['reason'];
     reasonId = json['reason_id'];
+    if (json['additional_fields'] != null) {
+      additionalFields = <AdditionalField>[];
+      json['additional_fields'].forEach((v) {
+        additionalFields!.add(AdditionalField.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -93,6 +103,32 @@ class Data {
     data['remarks'] = remarks;
     data['reason'] = reason;
     data['reason_id'] = reasonId;
+    if (additionalFields != null) {
+      data['additional_fields'] =
+          additionalFields!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class AdditionalField {
+  String? id;
+  String? name;
+  String? value;
+
+  AdditionalField({this.id, this.name, this.value});
+
+  AdditionalField.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    name = json['name'];
+    value = json['value'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['name'] = name;
+    data['value'] = value;
     return data;
   }
 }

@@ -34,6 +34,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/common.dart';
+import '../../models/lead_management/BulkTransferLeadModel.dart';
+import '../../models/lead_management/showTransferHideorShowModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/addMileStoneModel.dart';
 import '../../models/lead_management/cloudCallModel.dart';
@@ -120,7 +122,9 @@ class _LeadDetailsState extends State<LeadDetails> {
   static const Color textPrimary = Color(0xFF2C3E50);
   static const Color textSecondary = Color(0xFF7F8C8D);
 
+  bool showTransferFreshValue = false;
   TextEditingController transferRemark = TextEditingController();
+
   TextEditingController folderName = TextEditingController();
   TextEditingController fileName = TextEditingController();
   TextEditingController fileNameEdit = TextEditingController();
@@ -726,6 +730,13 @@ class _LeadDetailsState extends State<LeadDetails> {
     name = await Common.getSharedPref("name");
     role = await Common.getSharedPref("role");
     userId = await Common.getSharedPref("userId");
+    HttpService.showTransferHideOrShow().then((value) {
+      if (value != null && value.status == true) {
+        setState(() {
+          showTransferFreshValue = value.data ?? false;
+        });
+      }
+    });
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
     contactPermission = await Common.getSharedPref("saveContactPermission");
@@ -7571,7 +7582,8 @@ class _LeadDetailsState extends State<LeadDetails> {
 
                         // Transfer as Fresh Data Toggle - Hidden as per request
                         Visibility(
-                          visible: false,
+                          visible: showTransferFreshValue,
+
                           child: InkWell(
                             onTap: () {
                               setDialogState(() {

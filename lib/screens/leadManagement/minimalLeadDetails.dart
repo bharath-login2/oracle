@@ -47,6 +47,8 @@ import '../../models/lead_management/leadDetailsModel.dart';
 import '../../models/lead_management/leadDetailsModelAdd.dart';
 import '../../models/lead_management/leadMileStoneListModel.dart';
 import '../../models/lead_management/leadTransferModel.dart';
+import '../../models/lead_management/showTransferHideorShowModel.dart';
+
 import '../../models/lead_management/listFolderName.dart';
 import '../../models/lead_management/renameFolderModel.dart';
 import '../../models/lead_management/unsetReminderModel.dart';
@@ -143,7 +145,9 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
   TextEditingController timeBefore = TextEditingController();
   TextEditingController remarks = TextEditingController();
   int selectedIndex = 0;
+  bool showTransferFreshValue = false;
   String callResult = 'New';
+
   String callResultId = '1';
   var callDate = DateTime.now();
   String? nextFollowupDate = '';
@@ -830,7 +834,15 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
           timeOut = true;
         });
       }
+      HttpService.showTransferHideOrShow().then((value) {
+        if (value != null && value.status == true) {
+          setState(() {
+            showTransferFreshValue = value.data ?? false;
+          });
+        }
+      });
       commonDetails = await HttpService.addLeadCommonData(widget.token);
+
     } catch (e) {
       log(e.toString());
       setState(() {
@@ -8184,7 +8196,8 @@ class _MinimalLeadDetailsState extends State<MinimalLeadDetails> {
 
                         // Transfer as Fresh Data Toggle - Hidden as per request
                         Visibility(
-                          visible: false,
+                          visible: showTransferFreshValue,
+
                           child: InkWell(
                             onTap: () {
                               setDialogState(() {
