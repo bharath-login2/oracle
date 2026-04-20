@@ -70,8 +70,10 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
     _loadData();
     _invoiceDateController.text =
         DateFormat('dd-MM-yyyy').format(DateTime.now());
-    _fromDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-    _toDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+    _fromDateController.text =
+        DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+    _toDateController.text =
+        DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
     if (widget.rentId != null) {
       _loadEditData();
     } else {
@@ -359,8 +361,17 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
       BuildContext context, TextEditingController controller) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
+      initialDate: controller == _fromDateController
+          ? DateTime.now()
+          : (DateFormat('dd-MM-yyyy HH:mm')
+                      .parse(_fromDateController.text)
+                      .isAfter(DateTime.now())
+                  ? DateFormat('dd-MM-yyyy HH:mm')
+                      .parse(_fromDateController.text)
+                  : DateTime.now()),
+      firstDate: controller == _fromDateController
+          ? DateTime.now()
+          : DateFormat('dd-MM-yyyy HH:mm').parse(_fromDateController.text),
       lastDate: DateTime(2100),
     );
     if (pickedDate != null) {
@@ -401,10 +412,24 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
       Common.toastMessaage('Please select a work site', Colors.red);
       return;
     }
-    if (_selectedCollectedByStaffId == null) {
-      Common.toastMessaage('Please select a collected staff', Colors.red);
-      return;
+    // if (_selectedCollectedByStaffId == null) {
+    //   Common.toastMessaage('Please select a collected staff', Colors.red);
+    //   return;
+    // }
+
+    // Payment validation
+    if (_selectedPaymentStatus == 'Paid' ||
+        _selectedPaymentStatus == 'Partial') {
+      if (_selectedPaymentMethod == null) {
+        Common.toastMessaage('Please select a payment method', Colors.red);
+        return;
+      }
+      if (_paymentCollectedByStaffId == null) {
+        Common.toastMessaage('Please select a payment collector', Colors.red);
+        return;
+      }
     }
+
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields')),
@@ -790,7 +815,6 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // General & Staff Information Section
                     _buildSectionCard(
                       title: 'Client & Staff Info',
                       icon: Icons.info_outline,
@@ -800,7 +824,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                           children: [
                             Expanded(
                               child: _buildFormRow(
-                                "Select Customer * :",
+                                "Customer *:",
                                 GestureDetector(
                                   onTap: () => _showCustomerDialog(context),
                                   child: Container(
@@ -836,7 +860,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _buildFormRow(
-                                "Work Site * :",
+                                "Site * :",
                                 _dropdown(
                                   _customerLocations
                                       .map((l) => l.locationName)
@@ -878,7 +902,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                           children: [
                             Expanded(
                               child: _buildFormRow(
-                                "Collected Staff * :",
+                                "Customer Staff :",
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 8),
@@ -1116,7 +1140,6 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                           return _buildMinimalProductRow(index);
                         }),
                         const Divider(height: 32),
-                        // Summary Section within Product Card
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -1125,9 +1148,9 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                           ),
                           child: Column(
                             children: [
-                              _buildMinimalSummaryRow("Gross Total",
+                              _buildMinimalSummaryRow("Total Gross Amount",
                                   "₹${_totalGrossAmount.toStringAsFixed(2)}"),
-                              _buildMinimalSummaryRow("Tax Amount",
+                              _buildMinimalSummaryRow("GST Amount",
                                   "₹${_gstAmount.toStringAsFixed(2)}"),
                               const SizedBox(height: 8),
                               Row(
@@ -1166,7 +1189,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text("Net Total",
+                                  const Text("Grand Total",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16)),
@@ -1231,7 +1254,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
           children: [
             Expanded(
               child: _buildFormRow(
-                "Pay Status * :",
+                "Payment Status * :",
                 _dropdown(
                     _paymentStatuses, _selectedPaymentStatus, "Select Status",
                     (newVal) {
@@ -1251,7 +1274,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
             if (_selectedPaymentStatus != "Unpaid")
               Expanded(
                 child: _buildFormRow(
-                  "Paid Amount * :",
+                  "Total Paid Amount * :",
                   TextFormField(
                     controller: _totalPaidAmountController,
                     keyboardType: TextInputType.number,
@@ -1271,7 +1294,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
             children: [
               Expanded(
                 child: _buildFormRow(
-                  "Pay Method * :",
+                  "Payment Detail * :",
                   _dropdown(
                       _paymentMethods, _selectedPaymentMethod, "Select Method",
                       (val) {
@@ -1363,15 +1386,33 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
   Widget _buildFormRow(String title, Widget child) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
+          RichText(
+            text: TextSpan(
               style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
-                  fontSize: 13)),
+                  fontSize: 13),
+              children: _parseTitle(title),
+            ),
+          ),
           const SizedBox(height: 6),
           child,
         ],
       );
+
+  List<TextSpan> _parseTitle(String title) {
+    List<TextSpan> spans = [];
+    List<String> parts = title.split('*');
+    for (int i = 0; i < parts.length; i++) {
+      spans.add(TextSpan(text: parts[i]));
+      if (i < parts.length - 1) {
+        spans.add(const TextSpan(
+            text: '*',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)));
+      }
+    }
+    return spans;
+  }
 
   InputDecoration _inputDecoration({bool isDense = false}) {
     return InputDecoration(
@@ -1523,7 +1564,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: const Text('Add Collected Staff'),
+              title: const Text('Add Customer Staff'),
               content: TextFormField(
                 controller: staffController,
                 decoration: _inputDecoration().copyWith(hintText: 'Staff Name'),
@@ -1548,6 +1589,10 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                           'Staff added successfully', Colors.green);
                       Navigator.pop(context);
                       await _loadCollectedStaffs(_selectedCustomerId!);
+                      // Immediately reopen the staff selection dialog so the new staff appears
+                      Future.delayed(const Duration(milliseconds: 200), () {
+                        _showStaffDialog(context, isPayment: false);
+                      });
                     } else {
                       Common.toastMessaage(
                           response?['message'] ?? 'Failed', Colors.red);

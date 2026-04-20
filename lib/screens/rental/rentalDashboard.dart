@@ -14,6 +14,8 @@ import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/rental/paymentReportListPage.dart';
 import 'package:login2/screens/rental/rentIssueListPage.dart';
 import 'package:login2/screens/rental/rentalReturnList.dart';
+import 'package:login2/screens/rental/damagedListPage.dart';
+import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/service/service.dart';
 
 class RentalDashboard extends StatefulWidget {
@@ -327,25 +329,28 @@ class _RentalDashboardState extends State<RentalDashboard> {
       automaticallyImplyLeading: false,
       title: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 2,
-                  color: Colors.grey.shade800,
-                  offset: const Offset(0, 2.0),
-                )
-              ],
-              shape: BoxShape.circle,
-              color: const Color(0xFF2191ce),
-            ),
-            child: const CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.white,
-              child: Icon(
-                Icons.person,
-                color: Colors.blue,
-                size: 24,
+          InkWell(
+            onTap: () => logout(context),
+            child: Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 2,
+                    color: Colors.grey.shade800,
+                    offset: const Offset(0, 2.0),
+                  )
+                ],
+                shape: BoxShape.circle,
+                color: const Color(0xFF2191ce),
+              ),
+              child: const CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  color: Colors.blue,
+                  size: 24,
+                ),
               ),
             ),
           ),
@@ -375,12 +380,39 @@ class _RentalDashboardState extends State<RentalDashboard> {
           ),
         ],
       ),
+      actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.white),
+          onSelected: (value) {
+            if (value == 'damaged_list') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DamagedListPage(token: widget.token),
+                ),
+              );
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'damaged_list',
+              child: Row(
+                children: [
+                  Icon(Icons.report_problem_outlined, color: Colors.red),
+                  SizedBox(width: 10),
+                  Text('Damaged List'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   Widget _buildTopStats(BuildContext context) {
     final data = dashboardData?.data;
-
+    
     // Calculate pending returns
     final pendingReturn = (data?.pendingReturn ?? 0);
     final overdueCount = (data?.overdueCount ?? 0);

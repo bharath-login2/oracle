@@ -70,6 +70,7 @@ import 'package:login2/models/lead_management/createGoogleFoldersModel.dart';
 import 'package:login2/models/lead_management/customerDetailsModel.dart';
 import 'package:login2/models/lead_management/customerModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
+import 'package:login2/models/lead_management/damagedListApiModel.dart';
 import 'package:login2/models/lead_management/dashboardLeadsCountsModel.dart';
 import 'package:login2/models/lead_management/deleteQuotationModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
@@ -81,6 +82,7 @@ import 'package:login2/models/lead_management/getAttendanceReportModel.dart';
 import 'package:login2/models/lead_management/getLeadSourceModel.dart';
 import 'package:login2/models/lead_management/getLeaveApprovalRejectTemplate.dart';
 import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
+import 'package:login2/models/lead_management/getRentReturnModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/invoiceListHistory.dart';
 import 'package:login2/models/lead_management/leadCategoryReportOntapModel.dart';
@@ -100,6 +102,7 @@ import 'package:login2/models/lead_management/pendingListLeaveModel.dart';
 import 'package:login2/models/lead_management/pendingListModel.dart';
 import 'package:login2/models/lead_management/phoneCallReportModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
+import 'package:login2/models/lead_management/productDescriptionModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/quotationDetailsModel.dart';
 import 'package:login2/models/lead_management/quotationEditModel.dart';
@@ -9821,9 +9824,7 @@ class HttpService {
           receiveTimeout: const Duration(seconds: 30),
         ),
       );
-
       print("🟢 Get Request Quotation Details Response: ${response.data}");
-
       if (response.statusCode == 200 && response.data != null) {
         try {
           final result = RequestResponseModel.fromJson(response.data);
@@ -11214,7 +11215,68 @@ class HttpService {
   }
 
   static Future<Map<String, dynamic>?> createRentalIssue(
+
+  Future<RentalReturnModel?> getRentalReturnList(
+      {Map<String, dynamic>? filters}) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      Map<String, dynamic> formDataMap = {"token": token};
+      if (filters != null) formDataMap.addAll(filters);
+      final response = await _dio.post(
+        "${await Config.getUrl()}rent_return_list_api",
+        data: FormData.fromMap(formDataMap),
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return RentalReturnModel.fromJson(data);
+        }
+      }
+    } catch (e) {
+      log("getRentalReturnList error: $e");
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> createRentalReturn(
       Map<String, dynamic> data) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      data['token'] = token;
+      final response = await _dio.post(
+        "${await Config.getUrl()}create_rental_return",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      log("createRentalReturn error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> updateRentalReturn(
+      Map<String, dynamic> data) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      data['token'] = token;
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_rental_return",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      log("updateRentalReturn error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+  Future<CustomerRentalProductListModel?> getCustomerProductRental(String customerId) async {
     try {
       final token = await Common.getSharedPref("token");
       data['token'] = token;
@@ -11325,9 +11387,27 @@ class HttpService {
     return null;
   }
 
+  Future<Map<String, dynamic>?> updateRentalReturn(
+      Map<String, dynamic> data) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      data['token'] = token;
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_rental_return",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e, stackTrace) {
+      log("updateRentalReturn error: $e");
+      log("StackTrace: $stackTrace");
+    }
+    return null;
+  }
+
   Future<CustomerRentalProductListModel?> getCustomerProductRental(
-    String customerId,
-  ) async {
+      String customerId) async {
     try {
       final token = await Common.getSharedPref("token");
       final formData = FormData.fromMap({
@@ -11783,7 +11863,7 @@ class HttpService {
         "staff_name": staffName,
       });
       final response = await _dio.post(
-        "${await Config.getUrl()}add_collected_staff_post",
+        "${await Config.getUrl()}add_customer_staff_post",
         data: formData,
       );
       if (response.statusCode == 200) {
@@ -13864,6 +13944,90 @@ class HttpService {
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
         return AddGoogleDriveResponseModel.fromJson(response.data);
+      }
+      log("leadSourceAddleads error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("leadSourceAddleads error: $e");
+    }
+    return null;
+  }
+
+  static Future<ProductDescriptionModel?> productDescription(
+      String productId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("leadSourceAddleads error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "product_id": productId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_description_by_product",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ProductDescriptionModel.fromJson(response.data);
+      }
+      log("leadSourceAddleads error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("leadSourceAddleads error: $e");
+    }
+    return null;
+  }
+
+  static Future<DamagedListApiResponse?> damagedListApi(
+      String customerId, String productId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("leadSourceAddleads error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "customer_id": customerId,
+        "product_id": productId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}damaged_list_api",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return DamagedListApiResponse.fromJson(response.data);
+      }
+      log("leadSourceAddleads error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("leadSourceAddleads error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetRentReturnModel?> getRentReturnList(String rentId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("leadSourceAddleads error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "return_id": rentId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_rent_return",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetRentReturnModel.fromJson(response.data);
       }
       log("leadSourceAddleads error: ${response.data?['message'] ?? 'Unknown error'}");
     } catch (e) {

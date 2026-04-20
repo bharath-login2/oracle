@@ -15,6 +15,7 @@ import '../../models/lead_management/leadDetailsModel.dart';
 import '../../service/service.dart';
 import '../../models/lead_management/leadExtraSettings.dart';
 import 'dart:developer';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 
 // ignore: must_be_immutable
 class EditFollowup extends StatefulWidget {
@@ -109,6 +110,35 @@ class _EditFollowupState extends State<EditFollowup> {
   LeadProductSectionModel? productSectionModel;
   LeadDeatailsModel? leadDetails;
   List<LeadProduct> _selectedProducts = [];
+  String? _expandedProductId;
+  final Map<String, String> _productDescriptions = {};
+  final Map<String, bool> _descriptionLoading = {};
+
+  Future<void> _fetchProductDescription(String productId) async {
+    if (_productDescriptions.containsKey(productId)) return;
+    setState(() => _descriptionLoading[productId] = true);
+    try {
+      final response = await HttpService.productDescription(productId);
+      if (mounted) {
+        setState(() {
+          _descriptionLoading[productId] = false;
+          if (response != null && response.status == true) {
+            _productDescriptions[productId] = response.data;
+          } else {
+            _productDescriptions[productId] = "";
+          }
+        });
+      }
+    } catch (e) {
+      log("Error fetching product description: $e");
+      if (mounted) {
+        setState(() {
+          _descriptionLoading[productId] = false;
+          _productDescriptions[productId] = "Failed to load description.";
+        });
+      }
+    }
+  }
   final List<TextEditingController> _additionalCtrls = [];
   final List<Map<String, dynamic>> _additionalValues = [];
 
@@ -693,62 +723,159 @@ class _EditFollowupState extends State<EditFollowup> {
       ],
     );
   }
-
-  Widget _buildProductSelection() {
+Widget _buildProductSelection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        InkWell(
-          onTap: () {
-            if (productSectionModel?.data != null) {
-              _showProductSelectionDialog(productSectionModel!.data!);
-            } else {
-              Common.toastMessaage('Products not loaded yet', Colors.orange);
-            }
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _selectedProducts.isEmpty
-                      ? 'Select Products'
-                      : '${_selectedProducts.length} Product(s) Selected',
-                  style: TextStyle(
-                    color: _selectedProducts.isEmpty
-                        ? Colors.grey.shade600
-                        : Colors.black87,
-                    fontSize: 14,
+        Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  if (productSectionModel?.data != null) {
+                    _showProductSelectionDialog(productSectionModel!.data!);
+                  } else {
+                    Common.toastMessaage(
+                        'Products not loaded yet', Colors.orange);
+                  }
+                },
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    key: ValueKey(_selectedProducts.length),
+                    initialValue: _selectedProducts.isEmpty
+                        ? ''
+                        : "${_selectedProducts.length} Product(s) Selected",
+                    decoration: _inputDecoration(
+                        'Select Products', Icons.shopping_cart,
+                        isDense: true),
                   ),
                 ),
-                const Icon(Icons.arrow_drop_down, color: Colors.grey),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddProducts(),
+                    )).then((_) {
+                  getData();
+                });
+              },
+              child: Container(
+                height: 42,
+                width: 42,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
         if (_selectedProducts.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _selectedProducts.map((product) {
-              return Chip(
-                label: Text(product.productName ?? 'Unknown',
-                    style: const TextStyle(fontSize: 12)),
-                deleteIcon: const Icon(Icons.close, size: 16),
-                onDeleted: () => setState(() {
-                  _selectedProducts.remove(product);
-                  _updateCostFromProducts();
-                }),
-                backgroundColor: Colors.blue.shade50,
-                side: BorderSide(color: Colors.blue.shade200),
+          Column(
+            children: _selectedProducts.map((p) {
+              bool isExpanded = _expandedProductId == p.id;
+              return Column(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (_expandedProductId == p.id) {
+                          _expandedProductId = null;
+                        } else {
+                          _expandedProductId = p.id;
+                          if (p.id != null) {
+                            _fetchProductDescription(p.id!);
+                          }
+                        }
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade100),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "${p.productName} - Rs ${p.totalAmount}",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF2a86c9)),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => setState(() {
+                              _selectedProducts.remove(p);
+                              _updateCostFromProducts();
+                            }),
+                            child: const Icon(Icons.cancel,
+                                size: 20, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (isExpanded &&
+                      (_descriptionLoading[p.id] == true ||
+                          (_productDescriptions[p.id]?.isNotEmpty ?? false)))
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      margin:
+                          const EdgeInsets.only(bottom: 12, left: 4, right: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Product Description",
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87),
+                          ),
+                          const SizedBox(height: 4),
+                          _descriptionLoading[p.id] == true
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  _productDescriptions[p.id] ?? "",
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                        ],
+                      ),
+                    ),
+                ],
               );
             }).toList(),
           ),
@@ -1080,8 +1207,10 @@ class _EditFollowupState extends State<EditFollowup> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon) {
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {bool isDense = false}) {
     return InputDecoration(
+      isDense: isDense,
       label: RichText(
         text: TextSpan(
           text: label.replaceAll(' *', ''),

@@ -896,6 +896,7 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        item.returned =="0"?
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.push(
@@ -905,6 +906,8 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                             customerId: item.customerId,
                             customerName: item.customerName,
                             locationId: item.locationId,
+                            customerStaffId: item.customerStaffId,
+                            customerStaffName: item.customerStaffName,
                             rentId: item.rentId,
                           ),
                         ),
@@ -926,7 +929,7 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                  ),
+                  ):SizedBox(),
                 ],
               ),
             ],
@@ -1114,10 +1117,8 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
           //     ],
           //   ),
           // ),
-
           const SizedBox(height: 8),
-
-          if (!_isLoading)
+           if (!_isLoading)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Container(
@@ -1198,7 +1199,6 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
               ),
             ),
 
-          // Results count
           if (!_isLoading && _searchQuery.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),

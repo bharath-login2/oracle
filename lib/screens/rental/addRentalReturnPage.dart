@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/customerListModel.dart';
-
 import 'package:login2/models/rental/rentalCustomerLocations.dart';
 import 'package:login2/models/rental/rentIdByCustomerReturnModel.dart';
 import 'package:login2/models/rental/rentalCollectedByStaffList.dart';
 import 'package:login2/models/rental/returnDetailsRentalModel.dart';
+import 'package:login2/models/lead_management/getRentReturnModel.dart';
 import 'package:login2/service/service.dart';
 
 class AddRentalReturnPage extends StatefulWidget {
@@ -15,6 +15,9 @@ class AddRentalReturnPage extends StatefulWidget {
   final String? customerName;
   final String? locationId;
   final String? rentId;
+  final String? customerStaffId;
+  final String? customerStaffName;
+  final String? returnId;
 
   const AddRentalReturnPage({
     super.key,
@@ -22,6 +25,9 @@ class AddRentalReturnPage extends StatefulWidget {
     this.customerName,
     this.locationId,
     this.rentId,
+    this.customerStaffId,
+    this.customerStaffName,
+    this.returnId,
   });
 
   @override
@@ -40,14 +46,14 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
   final TextEditingController _invoiceNoController =
       TextEditingController(text: "#");
   String? _selectedCustomerId;
-  String? _selectedCustomerName = "Select Customer";
+  String? _selectedCustomerName = "Customer";
+  String? _selectedCustomerStaffName = "Customer Staff";
   String? _selectedLocationId;
   List<CustomerExp> _customers = [];
   List<LocationData> _locations = [];
   List<RentIssueItem> _rentalIssues = [];
   List<RentalReturnRow> _productRows = [RentalReturnRow()];
   List<Staff> _customerStaff = [];
-
   String? _selectedRentId;
   String? _selectedStaffId;
   String? _selectedPaymentStatus = 'Unpaid';
@@ -57,8 +63,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
   ReturnDetailsData? _details;
   List<String> _paymentStatuses = ['Unpaid', 'Paid', 'Partial'];
   final List<String> _paymentMethods = ['Cash', 'Bank'];
-  List<dynamic> _generalStaff = []; // To store staff list from getStaffs()
-
+  List<dynamic> _generalStaff = [];
   double _grandTotal = 0.0;
   double _invoiceAmount = 0.0;
   bool _isLoading = false;
@@ -66,13 +71,15 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
   final TextEditingController _totalPaidAmountController =
       TextEditingController(text: "0.00");
   final TextEditingController _remarksController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _loadData();
     if (widget.customerId != null) {
       _selectedCustomerId = widget.customerId;
-      _selectedCustomerName = widget.customerName ?? "Select Customer";
+      _selectedCustomerName = widget.customerName ?? "Customer";
+      _selectedCustomerStaffName = widget.customerStaffName ?? "Customer Staff";
     }
     if (widget.locationId != null) {
       _selectedLocationId = widget.locationId;
@@ -95,7 +102,9 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
         _loadGeneralStaff(),
       ]);
 
-      if (_selectedCustomerId != null) {
+      if (widget.returnId != null) {
+        await _loadEditDetails();
+      } else if (_selectedCustomerId != null) {
         await _loadLocations();
         await _loadCustomerStaff();
         if (_selectedLocationId != null) {
@@ -109,6 +118,48 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       log('Error loading data: $e');
     }
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadEditDetails() async {
+    final response = await HttpService.getRentReturnList(widget.returnId!);
+    if (response != null && response.status) {
+      final data = response.data.rentReturn;
+      setState(() {
+        _selectedCustomerId = data.customerId;
+        _selectedCustomerName = data.customerName;
+        _selectedLocationId = data.locationId;
+        _selectedRentId = data.rentId;
+        _returnDateController.text = data.returnDate;
+        _invoiceDateController.text = data.issuedDate;
+        _otherExpensesController.text = data.otherExpenses;
+        _invoiceNoController.text = data.invoiceNo;
+        _rentReturnIdController.text = data.returnNo;
+        _grandTotal = double.tryParse(data.grandTotal) ?? 0.0;
+        
+        _productRows = response.data.items.map((item) {
+          final row = RentalReturnRow()
+            ..selectedProductId = item.itemId
+            ..productName = item.productName
+            ..unitPrice = double.tryParse(item.ratePerDay) ?? 0.0
+            ..returningQty = int.tryParse(item.returning) ?? 0
+            ..damagedQty = int.tryParse(item.damaged) ?? 0
+            ..isReturning = (int.tryParse(item.returning) ?? 0) > 0
+            ..isDamaged = (int.tryParse(item.damaged) ?? 0) > 0
+            ..ratePerDayController.text = item.ratePerDay
+            ..noOfDaysController.text = item.days
+            ..totalController.text = item.total;
+          return row;
+        }).toList();
+      });
+      
+      await Future.wait([
+        _loadLocations(),
+        _loadCustomerStaff(),
+        _loadRentIds(),
+      ]);
+      
+      _calculateSummary();
+    }
   }
 
   Future<void> _loadCustomers() async {
@@ -137,12 +188,13 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       if (data != null && data.status) {
         setState(() {
           _rentalIssues = data.data;
-          // Preserve selection if it exists in the new list
           if (_selectedRentId != null &&
               !_rentalIssues.any((issue) => issue.id == _selectedRentId)) {
-            _selectedRentId = null;
-            _productRows = [RentalReturnRow()];
-            _details = null;
+            if (widget.returnId == null) {
+               _selectedRentId = null;
+               _productRows = [RentalReturnRow()];
+               _details = null;
+            }
           }
         });
       }
@@ -154,7 +206,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
 
   Future<void> _loadCustomerStaff() async {
     if (_selectedCustomerId == null) return;
-
     try {
       final data =
           await HttpService.getCollectedStaffRentalList(_selectedCustomerId!);
@@ -185,7 +236,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     if (_selectedCustomerId == null ||
         _selectedLocationId == null ||
         _selectedRentId == null) return;
-
     setState(() => _isLoading = true);
     try {
       final data = await HttpService.getReturnDetails(
@@ -197,7 +247,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       if (data != null && data.status) {
         setState(() {
           _details = data.data;
-          // Populate product rows from return details
           final String issuedDateStr = data.data.issuedDate;
           _productRows = data.data.items.map((item) {
             final row = RentalReturnRow()
@@ -256,21 +305,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     row.totalController.text = grossAmount.toStringAsFixed(2);
   }
 
-  void _addProductRow() {
-    setState(() {
-      _productRows.add(RentalReturnRow());
-    });
-  }
-
-  void _removeProductRow(int index) {
-    if (_productRows.length > 1) {
-      setState(() {
-        _productRows.removeAt(index);
-        _calculateSummary();
-      });
-    }
-  }
-
   void _recalculateRow(int index) {
     _recalculateRowInternal(_productRows[index]);
     _calculateSummary();
@@ -284,7 +318,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     final otherExpenses = double.tryParse(_otherExpensesController.text) ?? 0;
     setState(() {
       _invoiceAmount = totalAmount + otherExpenses;
-      // _grandTotal = (_details?.previousGrandTotal ?? 0) + _invoiceAmount;
       _grandTotal = totalAmount;
       if (_selectedPaymentStatus == 'Paid') {
         _totalPaidAmountController.text =
@@ -292,34 +325,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                 .toStringAsFixed(2);
       }
     });
-  }
-
-  Future<void> _selectDate(
-      BuildContext context, TextEditingController controller) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null) {
-      setState(() {
-        controller.text = DateFormat('dd-MM-yyyy').format(picked);
-        if (controller == _returnDateController) {
-          _updateAllDurations();
-        }
-      });
-    }
-  }
-
-  void _updateAllDurations() {
-    if (_details == null) return;
-    final String issuedDateStr = _details!.issuedDate;
-    for (var row in _productRows) {
-      row.noOfDaysController.text = _calculateDuration(issuedDateStr);
-      _recalculateRowInternal(row);
-    }
-    _calculateSummary();
   }
 
   Future<void> _submitForm() async {
@@ -330,7 +335,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       return;
     }
 
-    // Verify at least one item has a returning quality > 0
     bool hasReturning = _productRows.any((row) => row.returningQty > 0);
     if (!hasReturning) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -340,16 +344,44 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       return;
     }
 
+    if (_selectedPaymentStatus == 'Paid' ||
+        _selectedPaymentStatus == 'Partial') {
+      if (_paymentCollectedByStaffId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Please select Payment Collected By staff')),
+        );
+        return;
+      }
+      if (_selectedPaymentMethod == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select Payment Method')),
+        );
+        return;
+      }
+      if (_selectedPaymentStatus == 'Partial') {
+        double paidAmount =
+            double.tryParse(_totalPaidAmountController.text) ?? 0;
+        if (paidAmount <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Please enter a valid Paid Amount for Partial payment')),
+          );
+          return;
+        }
+      }
+    }
+
     setState(() => _isSubmitting = true);
     try {
       Map<String, dynamic> formData = {
         'token': await Common.getSharedPref('token'),
         'customer_id': _selectedCustomerId,
-        'rent_id': _selectedRentId, // Added rent_id
-        'staff_id': _selectedStaffId, // Added staff_id
+        'rent_id': _selectedRentId,
+        'staff_id': _selectedStaffId,
         'return_date': _returnDateController.text,
-        'invoice_date': _returnDateController
-            .text, // Use return date for invoice date if needed
+        'invoice_date': _returnDateController.text,
         'location': _selectedLocationId,
         'other_expenses': _otherExpensesController.text,
         'grand_total': _grandTotal.toStringAsFixed(2),
@@ -377,12 +409,20 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
             .toList(),
       };
 
-      final response = await _httpService.createRentalReturn(formData);
+      if (widget.returnId != null) {
+        formData['return_id'] = widget.returnId;
+      }
+
+      final response = widget.returnId != null
+          ? await _httpService.updateRentalReturn(formData)
+          : await _httpService.createRentalReturn(formData);
 
       if (response != null && response['status'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Rental Return created successfully'),
+            content: Text(widget.returnId != null
+                ? 'Rental Return updated successfully'
+                : 'Rental Return created successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -391,7 +431,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text(response?['message'] ?? 'Failed to create rental return'),
+                Text(response?['message'] ?? 'Failed to process rental return'),
             backgroundColor: Colors.red,
           ),
         );
@@ -439,16 +479,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                   ),
                 ],
               ),
-              if (_productRows.length > 1)
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red, size: 14),
-                  onPressed: () => _removeProductRow(index),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
             ],
           ),
-          // Selection for Returning and Damaged
           Row(
             children: [
               _buildCompactCheckbox(
@@ -488,7 +520,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                   _buildQuantitySelector(
                     'Returning Qty *',
                     row.returningQty,
-                    row.maxQty - row.damagedQty,
+                    widget.returnId != null ? 999 : (row.maxQty - row.damagedQty),
                     (val) => setState(() {
                       row.returningQty = val;
                       _recalculateRowInternal(row);
@@ -500,7 +532,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                   _buildQuantitySelector(
                     'Damaged Qty',
                     row.damagedQty,
-                    row.maxQty - row.returningQty,
+                    widget.returnId != null ? 999 : (row.maxQty - row.returningQty),
                     (val) => setState(() {
                       row.damagedQty = val;
                       _recalculateRowInternal(row);
@@ -511,8 +543,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
             ),
           ],
           const SizedBox(height: 10),
-
-          // Rate, Days, Total
           Row(
             children: [
               _buildCompactField('Rent Price', row.ratePerDayController, index,
@@ -544,8 +574,9 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                       fontSize: 11,
                       color: Colors.grey,
                       fontWeight: FontWeight.bold)),
-              Text('/ $max',
-                  style: const TextStyle(fontSize: 10, color: Colors.blueGrey)),
+              if (max < 999)
+                Text('/ $max',
+                    style: const TextStyle(fontSize: 10, color: Colors.blueGrey)),
             ],
           ),
           const SizedBox(height: 4),
@@ -653,28 +684,12 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Add Rental Return',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+        title: Text(
+          widget.returnId != null ? 'Edit Rental Return' : 'Add Rental Return',
+          style: const TextStyle(color: Colors.white, fontSize: 18),
         ),
         backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
-        actions: [
-          if (_isSubmitting)
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Center(
-                child: SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -686,7 +701,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSectionCard(
-                      title: 'Customer & Site*',
+                      title: 'Customer & Site',
+                      isMandatory: true,
                       icon: Icons.person,
                       children: [
                         const SizedBox(height: 10),
@@ -694,7 +710,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                           children: [
                             Expanded(
                               child: GestureDetector(
-                                onTap: () => _showCustomerDialog(context),
+                                onTap: widget.returnId != null ? null : () => _showCustomerDialog(context),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 12),
@@ -702,7 +718,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                     border:
                                         Border.all(color: Colors.grey.shade300),
                                     borderRadius: BorderRadius.circular(8),
-                                    color: Colors.grey.shade50,
+                                    color: widget.returnId != null ? Colors.grey.shade100 : Colors.grey.shade50,
                                   ),
                                   child: Row(
                                     mainAxisAlignment:
@@ -710,8 +726,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                     children: [
                                       Expanded(
                                         child: Text(
-                                          _selectedCustomerName ??
-                                              "Select Customer",
+                                          _selectedCustomerName ?? "Customer",
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: _selectedCustomerId != null
@@ -721,8 +736,9 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      const Icon(Icons.arrow_drop_down,
-                                          size: 20, color: Colors.grey),
+                                      if (widget.returnId == null)
+                                        const Icon(Icons.arrow_drop_down,
+                                            size: 20, color: Colors.grey),
                                     ],
                                   ),
                                 ),
@@ -737,11 +753,13 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                   border:
                                       Border.all(color: Colors.grey.shade300),
                                   borderRadius: BorderRadius.circular(8),
+                                  color: widget.returnId != null ? Colors.grey.shade100 : null,
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _selectedLocationId,
                                     isExpanded: true,
+                                    disabledHint: Text(_locations.firstWhere((l) => l.id == _selectedLocationId, orElse: () => LocationData(id: '', locationName: 'Site')).locationName, style: const TextStyle(fontSize: 12)),
                                     hint: const Text('Site',
                                         style: TextStyle(fontSize: 12)),
                                     icon: const Icon(Icons.arrow_drop_down,
@@ -754,7 +772,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                                 const TextStyle(fontSize: 12)),
                                       );
                                     }).toList(),
-                                    onChanged: (value) {
+                                    onChanged: widget.returnId != null ? null : (value) {
                                       setState(() {
                                         _selectedLocationId = value;
                                         _selectedRentId = null;
@@ -781,11 +799,13 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                   border:
                                       Border.all(color: Colors.grey.shade300),
                                   borderRadius: BorderRadius.circular(8),
+                                  color: widget.returnId != null ? Colors.grey.shade100 : null,
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _selectedRentId,
                                     isExpanded: true,
+                                    disabledHint: Text(_selectedRentId ?? 'Rent ID', style: const TextStyle(fontSize: 12)),
                                     hint: const Text('Rent ID',
                                         style: TextStyle(fontSize: 12)),
                                     icon: const Icon(Icons.arrow_drop_down,
@@ -798,7 +818,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                                 const TextStyle(fontSize: 12)),
                                       );
                                     }).toList(),
-                                    onChanged: (value) {
+                                    onChanged: widget.returnId != null ? null : (value) {
                                       setState(() => _selectedRentId = value);
                                       if (value != null) {
                                         _fetchReturnDetails();
@@ -822,14 +842,16 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                   child: DropdownButton<String>(
                                     value: _selectedStaffId,
                                     isExpanded: true,
-                                    hint: const Text('Staff',
-                                        style: TextStyle(fontSize: 12)),
+                                    hint: Text(
+                                        _selectedCustomerStaffName ??
+                                            "Customer Staff",
+                                        style: const TextStyle(fontSize: 12)),
                                     icon: const Icon(Icons.arrow_drop_down,
                                         size: 20),
                                     items: _customerStaff.map((staff) {
                                       return DropdownMenuItem<String>(
                                         value: staff.id,
-                                        child: Text(staff.customerStaff,
+                                        child: Text(staff.customerStaff ?? 'Staff',
                                             style:
                                                 const TextStyle(fontSize: 12)),
                                       );
@@ -846,10 +868,10 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                         const SizedBox(height: 10),
                       ],
                     ),
-
                     const SizedBox(height: 12),
                     _buildSectionCard(
                       title: 'Dates',
+                      isMandatory: true,
                       icon: Icons.calendar_month,
                       children: [
                         const SizedBox(height: 10),
@@ -857,8 +879,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                           children: [
                             Expanded(
                               child: TextFormField(
-                                controller: TextEditingController(
-                                    text: _details?.issuedDate ?? ""),
+                                controller: _invoiceDateController,
                                 readOnly: true,
                                 style: const TextStyle(fontSize: 12),
                                 decoration: InputDecoration(
@@ -882,54 +903,19 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                         const SizedBox(height: 10),
                       ],
                     ),
-
                     const SizedBox(height: 12),
-
                     _buildSectionCard(
                       title: 'Products',
+                      isMandatory: true,
                       icon: Icons.shopping_cart,
                       children: [
                         const SizedBox(height: 8),
                         ...List.generate(_productRows.length, (index) {
                           return _buildProductRow(index);
                         }),
-                        // const SizedBox(height: 12),
-                        // Center(
-                        //   child: ElevatedButton.icon(
-                        //     onPressed: _addProductRow,
-                        //     icon: const Icon(Icons.add, size: 16),
-                        //     label: const Text('Add Product'),
-                        //     style: ElevatedButton.styleFrom(
-                        //       backgroundColor: const Color(0xFF2a86c9),
-                        //       foregroundColor: Colors.white,
-                        //       padding: const EdgeInsets.symmetric(
-                        //           horizontal: 16, vertical: 10),
-                        //       shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(8),
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
                         const SizedBox(height: 8),
                       ],
                     ),
-
-                    const SizedBox(height: 12),
-                    _buildSectionCard(
-                      title: 'Previous Details',
-                      icon: Icons.history,
-                      children: [
-                        const SizedBox(height: 8),
-                        _buildSummaryRow('Previous Total',
-                            '₹${(_details?.previousGrandTotal ?? 0).toStringAsFixed(2)}'),
-                        _buildSummaryRow('Previously Paid',
-                            '₹${(_details?.previousAmountPaid ?? 0).toStringAsFixed(2)}'),
-                        _buildSummaryRow('Prev. Balance',
-                            '₹${(_details?.previousBalance ?? 0).toStringAsFixed(2)}',
-                            isBold: true),
-                      ],
-                    ),
-
                     const SizedBox(height: 12),
                     _buildSectionCard(
                       title: 'Summary',
@@ -938,12 +924,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                         const SizedBox(height: 8),
                         _buildSummaryRow('Grand Total',
                             '₹${_grandTotal.toStringAsFixed(2)}'),
-                        // _buildSummaryRow('Total Balance',
-                        //     '₹${((_details?.previousBalance ?? 0) + _grandTotal).toStringAsFixed(2)}',
-                        //     isBold: true),
                         const SizedBox(height: 8),
 
-                        // Other Expenses
                         TextFormField(
                           controller: _otherExpensesController,
                           keyboardType: TextInputType.number,
@@ -960,8 +942,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                         ),
 
                         const SizedBox(height: 10),
-
-                        // Invoice Amount
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -994,12 +974,9 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                         const SizedBox(height: 8),
                       ],
                     ),
-
                     const SizedBox(height: 12),
                     _buildPaymentSection(),
                     const SizedBox(height: 20),
-
-                    // Submit Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -1020,9 +997,9 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text(
-                                'Submit',
-                                style: TextStyle(
+                            : Text(
+                                widget.returnId != null ? 'Update' : 'Submit',
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
@@ -1030,7 +1007,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -1055,10 +1031,10 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
           ),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF2a86c9),
+              color: Color(0xFF2a86c9),
             ),
           ),
         ],
@@ -1069,6 +1045,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
   Widget _buildPaymentSection() {
     return _buildSectionCard(
       title: "Payment Details",
+      isMandatory: true,
       icon: Icons.payment,
       children: [
         const SizedBox(height: 12),
@@ -1076,7 +1053,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
           children: [
             Expanded(
               child: _buildFormRow(
-                "Pay Status * :",
+                "Pay Status",
+                isMandatory: true,
                 _dropdown(
                     _paymentStatuses, _selectedPaymentStatus, "Select Status",
                     (newVal) {
@@ -1099,7 +1077,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
             if (_selectedPaymentStatus != "Unpaid")
               Expanded(
                 child: _buildFormRow(
-                  "Paid Amount * :",
+                  "Paid Amount",
+                  isMandatory: true,
                   TextFormField(
                     controller: _totalPaidAmountController,
                     keyboardType: TextInputType.number,
@@ -1124,7 +1103,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
             children: [
               Expanded(
                 child: _buildFormRow(
-                  "Pay Method * :",
+                  "Pay Method",
+                  isMandatory: true,
                   _dropdown(
                       _paymentMethods, _selectedPaymentMethod, "Select Method",
                       (val) {
@@ -1135,7 +1115,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildFormRow(
-                  "Collected By * :",
+                  "Collected By",
+                  isMandatory: true,
                   GestureDetector(
                     onTap: () => _showPaymentStaffDialog(context),
                     child: Container(
@@ -1197,7 +1178,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                 .toList();
 
             return AlertDialog(
-              title: const Text("Select Customer"),
+              title: const Text("Customer"),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
@@ -1267,7 +1248,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                 .toList();
 
             return AlertDialog(
-              title: const Text("Select Staff"),
+              title: const Text("Customer Staff"),
               content: SizedBox(
                 width: double.maxFinite,
                 child: Column(
@@ -1339,14 +1320,28 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     );
   }
 
-  Widget _buildFormRow(String title, Widget child) => Column(
+  Widget _buildFormRow(String title, Widget child,
+          {bool isMandatory = false}) =>
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
+          RichText(
+            text: TextSpan(
+              text: title,
               style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                  fontSize: 12)),
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                fontSize: 12,
+              ),
+              children: [
+                if (isMandatory)
+                  const TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: Colors.red),
+                  ),
+              ],
+            ),
+          ),
           const SizedBox(height: 6),
           child,
         ],
@@ -1377,6 +1372,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     required String title,
     required IconData icon,
     required List<Widget> children,
+    bool isMandatory = false,
   }) {
     return Card(
       elevation: 0.5,
@@ -1394,11 +1390,21 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
               children: [
                 Icon(icon, color: const Color(0xFF2a86c9), size: 16),
                 const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                RichText(
+                  text: TextSpan(
+                    text: title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    children: [
+                      if (isMandatory)
+                        const TextSpan(
+                          text: ' *',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -1414,6 +1420,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       String label, TextEditingController controller, bool isRequired) {
     return TextFormField(
       controller: controller,
+      style: const TextStyle(fontSize: 12),
       readOnly: true,
       decoration: InputDecoration(
         labelText: label,
@@ -1421,11 +1428,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
         ),
-        prefixIcon: const Icon(Icons.calendar_today, size: 20),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.calendar_month, size: 18),
-          onPressed: () => _selectDate(context, controller),
-        ),
+        prefixIcon: const Icon(Icons.calendar_month, size: 16),
       ),
       validator: isRequired
           ? (value) {
@@ -1466,6 +1469,5 @@ class RentalReturnRow {
   int maxQty = 0;
   bool isReturning = false;
   bool isDamaged = false;
-
   RentalReturnRow();
 }

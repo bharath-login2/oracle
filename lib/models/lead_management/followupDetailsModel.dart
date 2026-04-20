@@ -61,11 +61,11 @@ class Data {
       this.additionalFields});
 
   Data.fromJson(Map<String, dynamic> json) {
-    callDetailsId = json['call_details_id'];
-    callMasterId = json['call_master_id'];
-    cost = json['cost'];
-    leadCategoryId = json['lead_category_id'];
-    leadCategory = json['lead_category'];
+    callDetailsId = json['call_details_id']??"";
+    callMasterId = json['call_master_id']??"";
+    cost = json['cost']??"";
+    leadCategoryId = json['lead_category_id']??"";
+    leadCategory = json['lead_category']??"";
     leadSubCategoryId = json['lead_sub_category_id'];
     leadSubCategory = json['lead_sub_category'];
     calledDate = json['called_date'];

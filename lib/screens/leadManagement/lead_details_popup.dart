@@ -23,6 +23,7 @@ import 'package:login2/service/service.dart';
 import '../../core/common.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
 import '../../models/lead_management/leadDetailsModelAdd.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 import '../../models/lead_management/leadMileStoneListModel.dart';
 import '../../models/lead_management/listFolderName.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
@@ -128,6 +129,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String? contactPermission;
   String? transferPermission;
   String? cloudCallPermission;
+   String? createRenewalPermission;
+     String? customerAddInvoicePermission;
+       String? createCustomerInvoice;
+       String? voiceListerningPermission;
   String? whatsappOfficial;
   String? name;
   String? userId;
@@ -257,10 +262,117 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   LeadProductSectionModel? productSectionModel;
   List<LeadProduct> _selectedProducts = [];
+  String? _expandedProductId;
+  final Map<String, String> _productDescriptions = {};
+  final Map<String, bool> _descriptionLoading = {};
+
+  Future<void> _fetchProductDescription(String productId) async {
+    if (_productDescriptions.containsKey(productId)) return;
+    setState(() => _descriptionLoading[productId] = true);
+    try {
+      final response = await HttpService.productDescription(productId);
+      if (mounted) {
+        setState(() {
+          _descriptionLoading[productId] = false;
+          if (response != null && response.status == true) {
+            _productDescriptions[productId] = response.data;
+          } else {
+            _productDescriptions[productId] = "";
+          }
+        });
+      }
+    } catch (e) {
+      log("Error fetching product description: $e");
+      if (mounted) {
+        setState(() {
+          _descriptionLoading[productId] = false;
+          _productDescriptions[productId] = "Failed to load description.";
+        });
+      }
+    }
+  }
   final List<TextEditingController> _additionalCtrls = [];
   final List<Map<String, dynamic>> _additionalValues = [];
-  final TextEditingController _productSearchCtrl = TextEditingController();
-  List<LeadProduct> _productSearchResults = [];
+
+  void _showProductPopup() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (productSectionModel == null ||
+        productSectionModel!.data == null ||
+        productSectionModel!.data!.isEmpty) {
+      Common.toastMessaage('No Products found', Colors.orange);
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (_) {
+        final searchCtrl = TextEditingController();
+        var filtered = List.from(productSectionModel!.data!);
+        return StatefulBuilder(builder: (ctx, setDialogState) {
+          return AlertDialog(
+            title: const Text('Select Products'),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: 400,
+              child: Column(
+                children: [
+                  TextField(
+                    controller: searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Search',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onChanged: (v) => setDialogState(() {
+                      filtered = productSectionModel!.data!
+                          .where((p) => (p.productName ?? "")
+                              .toLowerCase()
+                              .contains(v.toLowerCase()))
+                          .toList();
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) {
+                        final p = filtered[i];
+                        bool isSelected =
+                            _selectedProducts.any((item) => item.id == p.id);
+                        return ListTile(
+                          title: Text(p.productName ?? ''),
+                          subtitle: Text("Rs ${p.totalAmount}"),
+                          trailing: isSelected
+                              ? const Icon(Icons.check_circle,
+                                  color: Colors.green)
+                              : null,
+                          onTap: () {
+                            if (isSelected) {
+                              _removeFollowupProduct(p);
+                            } else {
+                              _addFollowupProduct(p);
+                            }
+                            setDialogState(() {});
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('DONE'),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
   List<DriveAccount> googleDriveAccounts = [];
   DriveAccount? selectedDriveAccount;
   bool isDriveAccountsLoading = false;
@@ -359,6 +471,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     contactPermission = await Common.getSharedPref("getContactPermission");
     transferPermission = await Common.getSharedPref("transferPermission");
     cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
+     createRenewalPermission = await Common.getSharedPref("createRenewalPermission");
+       customerAddInvoicePermission = await Common.getSharedPref("customerAddInvoicePermission");
+       createCustomerInvoice = await Common.getSharedPref("createCustomerInvoice");
+        voiceListerningPermission = await Common.getSharedPref("voiceListerningPermission");
     whatsappOfficial = await Common.getSharedPref("officialWhatsapp");
     name = await Common.getSharedPref("name");
     userId = await Common.getSharedPref("userId");
@@ -444,7 +560,19 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           commonDetails!.data.additionalFields.length) {
         _additionalCtrls.clear();
         for (int i = 0; i < commonDetails!.data.additionalFields.length; i++) {
-          _additionalCtrls.add(TextEditingController());
+          final commonField = commonDetails!.data.additionalFields[i];
+          String existingValue = "";
+
+          if (leadDetailsAdditional?.data.additionalFields != null) {
+            for (var f in leadDetailsAdditional!.data.additionalFields) {
+              if (f.id == commonField.id) {
+                existingValue = f.value;
+                break;
+              }
+            }
+          }
+
+          _additionalCtrls.add(TextEditingController(text: existingValue));
         }
       }
     }
@@ -2114,12 +2242,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       Common.toastMessaage('Select at least one Target Group', Colors.red);
       return;
     } else if (createRenewal == true &&
-        commonDetails!.data.isRenewal &&
+        createRenewalPermission == "true" &&
         startDate.text == "") {
       Common.toastMessaage('Start date is required to add renewal', Colors.red);
       return;
     } else if (createRenewal == true &&
-        commonDetails!.data.isRenewal &&
+        createRenewalPermission == "true" &&
         endDate.text == "") {
       Common.toastMessaage('End date is required to add renewal', Colors.red);
       return;
@@ -2283,7 +2411,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     ),
                     const Divider(),
                     _buildOrderSection(),
-                    if (commonDetails?.data.isRenewal == true) ...[
+                    if (createRenewalPermission == true) ...[
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('Create Renewal',
@@ -2828,61 +2956,174 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _productSearchCtrl,
-                    onChanged: _onFollowupProductSearch,
-                    decoration: InputDecoration(
-                      hintText: 'Search Product...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      isDense: true,
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _showProductPopup(),
+                          child: AbsorbPointer(
+                            child: TextFormField(
+                              key: ValueKey(_selectedProducts.length),
+                              initialValue: _selectedProducts.isEmpty
+                                  ? ''
+                                  : "${_selectedProducts.length} Product(s) Selected",
+                              decoration: InputDecoration(
+                                hintText: 'Select Products',
+                                prefixIcon:
+                                    const Icon(Icons.shopping_cart, size: 20),
+                                isDense: true,
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade200),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  if (_productSearchResults.isNotEmpty)
-                    Container(
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      margin: const EdgeInsets.only(top: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )
-                        ],
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _productSearchResults.length,
-                        itemBuilder: (ctx, i) {
-                          final p = _productSearchResults[i];
-                          return ListTile(
-                            title: Text(p.productName ?? ''),
-                            subtitle: Text("₹ ${p.totalAmount}"),
-                            onTap: () => _addFollowupProduct(p),
-                          );
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddProducts(),
+                              )).then((_) {
+                            _fetchProductSection();
+                          });
                         },
+                        child: Container(
+                          height: 42,
+                          width: 42,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                                colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: _selectedProducts
-                        .map((p) => Chip(
-                              label: Text(p.productName ?? ''),
-                              onDeleted: () => _removeFollowupProduct(p),
-                              backgroundColor: Colors.blue.shade50,
-                              deleteIconColor: Colors.red,
-                            ))
-                        .toList(),
+                    ],
                   ),
+                  const SizedBox(height: 12),
+                  if (_selectedProducts.isNotEmpty)
+                    Column(
+                      children: _selectedProducts.map((p) {
+                        bool isExpanded = _expandedProductId == p.id;
+                        return Column(
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (_expandedProductId == p.id) {
+                                    _expandedProductId = null;
+                                  } else {
+                                    _expandedProductId = p.id;
+                                    if (p.id != null) {
+                                      _fetchProductDescription(p.id!);
+                                    }
+                                  }
+                                });
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius:
+                                      BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: Colors.blue.shade100),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        "${p.productName} - Rs ${p.totalAmount}",
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF2a86c9)),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () =>
+                                          _removeFollowupProduct(p),
+                                      child: const Icon(Icons.cancel,
+                                          size: 20, color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (isExpanded &&
+                                (_descriptionLoading[p.id] == true ||
+                                    (_productDescriptions[p.id]?.isNotEmpty ??
+                                        false)))
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(
+                                    bottom: 12, left: 4, right: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius:
+                                      BorderRadius.circular(8),
+                                  border: Border.all(
+                                      color: Colors.grey.shade200),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Product Description",
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    _descriptionLoading[p.id] == true
+                                        ? const Center(
+                                            child: Padding(
+                                              padding:
+                                                  EdgeInsets.all(8.0),
+                                              child: SizedBox(
+                                                height: 20,
+                                                width: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        : Text(
+                                            _productDescriptions[p.id] ??
+                                                "",
+                                            style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey),
+                                          ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   const SizedBox(height: 12),
 
                   Row(
@@ -3358,8 +3599,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   if ((leadSettings != null
                           ? leadSettings!.createInvoiceBool
                           : (callResultId == '4' &&
-                              commonDetails
-                                      ?.data.customerAddInvoicePermission ==
+                              customerAddInvoicePermission ==
                                   true)) ||
                       (leadSettings?.createCustomerBool ?? false))
                     Row(
@@ -3367,8 +3607,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         if (leadSettings != null
                             ? leadSettings!.createInvoiceBool
                             : (callResultId == '4' &&
-                                commonDetails
-                                        ?.data.customerAddInvoicePermission ==
+                                customerAddInvoicePermission ==
                                     true))
                           Expanded(
                             child: CheckboxListTile(
@@ -3412,8 +3651,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       (leadSettings != null
                           ? leadSettings!.createInvoiceBool
                           : (callResultId == '4' &&
-                              commonDetails!
-                                      .data.customerAddInvoicePermission ==
+                              customerAddInvoicePermission ==
                                   true)))
                     _buildOrderSection(),
 
@@ -3422,7 +3660,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       (leadSettings != null
                           ? leadSettings!.createRenewalBool
                           : (callResultId == '4' &&
-                              commonDetails!.data.isRenewal == true)))
+                              createRenewalPermission == "true")))
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Create Renewal',
@@ -3442,7 +3680,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       createOrder &&
                       (leadSettings != null
                           ? leadSettings!.createRenewalBool
-                          : commonDetails!.data.isRenewal == true))
+                          : createRenewalPermission == "true"))
                     _buildRenewalSection(),
 
                   const SizedBox(height: 20),
@@ -4316,27 +4554,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  void _onFollowupProductSearch(String v) {
-    if (v.isEmpty) {
-      setState(() => _productSearchResults = []);
-      return;
-    }
-    setState(() {
-      _productSearchResults = productSectionModel?.data
-              ?.where((p) =>
-                  (p.productName ?? '').toLowerCase().contains(v.toLowerCase()))
-              .toList() ??
-          [];
-    });
-  }
 
   void _addFollowupProduct(LeadProduct p) {
     setState(() {
       if (!_selectedProducts.any((item) => item.id == p.id)) {
         _selectedProducts.add(p);
       }
-      _productSearchCtrl.clear();
-      _productSearchResults = [];
       _updateFollowupCostFromProducts();
     });
   }
@@ -4656,8 +4879,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   ),
                                 ),
                               ),
-                            if (leadDetailsAdditional
-                                        ?.data.createCustomerInvoice ==
+                            if (createCustomerInvoice ==
                                     true &&
                                 (leadDetailsFollowup
                                         ?.data?.followUpData?.isNotEmpty ??
@@ -6790,8 +7012,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               call.status,
               call.resourceUrl,
               call.callDurationHr,
-              (leadDetailsAdditional?.data.voiceListerningPermission ??
-                      false) ||
+              (voiceListerningPermission == "true") ||
                   accessCallRecordingPermission == 'true',
               leadDetails?.data?.clientName ?? "",
               leadDetails?.data?.leadCategory ?? "",

@@ -107,7 +107,13 @@ class Data {
   String? rejectRequestLeave;
   String? editLeaveRequest;
   String? deleteLeaveRequest;
-
+  String? voiceListerningPermission;
+  String? voiceUploadPermission;
+  String? createCustomerInvoice;
+  String? createRenewal;
+  String? createInstallment;
+  String? customerAddPermission;
+  String? customerAddInvoicePermission;
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
@@ -193,6 +199,13 @@ class Data {
     this.rejectRequestLeave,
     this.editLeaveRequest,
     this.deleteLeaveRequest,
+    this.voiceListerningPermission,
+    this.voiceUploadPermission,
+    this.createCustomerInvoice,
+    this.createRenewal,
+    this.createInstallment,
+    this.customerAddPermission,
+    this.customerAddInvoicePermission,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -280,6 +293,13 @@ class Data {
     rejectRequestLeave = json['reject_leave_request'];
     editLeaveRequest = json['edit_leave_request'];
     deleteLeaveRequest = json['delete_leave_request'];
+    voiceListerningPermission = json['voiceListerningPermission'];
+    voiceUploadPermission = json['voiceUploadPermission'];
+    createCustomerInvoice = json['createCustomerInvoice'];
+    createRenewal = json['createRenewal'];
+    createInstallment = json['createInstallment'];
+    customerAddPermission = json['customerAddPermission'];
+    customerAddInvoicePermission = json['customerAddInvoicePermission'];
   }
 
   Map<String, dynamic> toJson() {
@@ -363,7 +383,13 @@ class Data {
     data['reject_leave_request'] = rejectRequestLeave;
     data['edit_leave_request'] = editLeaveRequest;
     data['delete_leave_request'] = deleteLeaveRequest;
-
+    data['voiceListerningPermission'] = voiceListerningPermission;
+    data['voiceUploadPermission'] = voiceUploadPermission;
+    data['createCustomerInvoice'] = createCustomerInvoice;
+    data['createRenewal'] = createRenewal;
+    data['createInstallment'] = createInstallment;
+    data['customerAddPermission'] = customerAddPermission;
+    data['customerAddInvoicePermission'] = customerAddInvoicePermission;
     return data;
   }
 }

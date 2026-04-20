@@ -64,12 +64,15 @@ class RentItem {
   final String rentId;
   final String rentNo;
   final String invoiceNo;
+   final String customerStaffId;
+    final String customerStaffName;
   final String fromDate;
   final String toDate;
   final String customerName;
   final String customerId;
   final String locationId;
   final int totalQty;
+   final int returned;
   final double grandTotal;
   final double amountPaid;
   final double balance;
@@ -82,12 +85,15 @@ class RentItem {
     required this.rentId,
     required this.rentNo,
     required this.invoiceNo,
+    required this.customerStaffId,
+    required this.customerStaffName,
     required this.fromDate,
     required this.toDate,
     required this.customerName,
     required this.customerId,
     required this.locationId,
     required this.totalQty,
+      required this.returned,
     required this.grandTotal,
     required this.amountPaid,
     required this.balance,
@@ -101,12 +107,15 @@ class RentItem {
         rentId: json["rent_id"]?.toString() ?? "",
         rentNo: json["rent_no"] ?? "",
         invoiceNo: json["invoice_no"] ?? "",
+        customerStaffId: json["customer_staff_id"]?.toString() ?? "",
+        customerStaffName: json["customer_staff_name"] ?? "",
         fromDate: json["from_date"] ?? "",
         toDate: json["to_date"] ?? "",
         customerName: json["customer_name"] ?? "",
         customerId: json["customer_id"]?.toString() ?? "",
         locationId: json["location_id"]?.toString() ?? "",
         totalQty: json["total_qty"] ?? 0,
+          returned: json["returned"] ?? 0,
         grandTotal: (json["grand_total"] ?? 0).toDouble(),
         amountPaid: (json["amount_paid"] ?? 0).toDouble(),
         balance: (json["balance"] ?? 0).toDouble(),
@@ -120,12 +129,15 @@ class RentItem {
         "rent_id": rentId,
         "rent_no": rentNo,
         "invoice_no": invoiceNo,
+        "customer_staff_id": customerStaffId,
+        "customer_staff_name": customerStaffName,
         "from_date": fromDate,
         "to_date": toDate,
         "customer_name": customerName,
         "customer_id": customerId,
         "location_id": locationId,
         "total_qty": totalQty,
+        "returned": returned,
         "grand_total": grandTotal,
         "amount_paid": amountPaid,
         "balance": balance,

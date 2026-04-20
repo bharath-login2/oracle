@@ -44,9 +44,8 @@ class QuotationData {
               json['ItemData'].map((x) => ItemDatum.fromJson(x)))
           : [],
       quotationPackageEst: json['quotationPackageEst'] != null
-          ? List<QuotationPackageEst>.from(
-              json['quotationPackageEst']
-                  .map((x) => QuotationPackageEst.fromJson(x)))
+          ? List<QuotationPackageEst>.from(json['quotationPackageEst']
+              .map((x) => QuotationPackageEst.fromJson(x)))
           : [],
     );
   }
@@ -78,6 +77,8 @@ class QuotationDatum {
   final String? templateId;
   final String? companyId;
   final String? remarks;
+  final String? hasProductImage;
+  final String? includeGst;
   final String? createdAt;
   final String? status;
   final String? qtePk;
@@ -103,6 +104,8 @@ class QuotationDatum {
     this.templateId,
     this.companyId,
     this.remarks,
+    this.hasProductImage,
+    this.includeGst,
     this.createdAt,
     this.status,
     this.qtePk,
@@ -130,6 +133,8 @@ class QuotationDatum {
       templateId: json['template_id'],
       companyId: json['company_id'],
       remarks: json['remarks'],
+      hasProductImage: json['has_prod_image'],
+      includeGst: json['inc_gst'],
       createdAt: json['created_at'],
       status: json['status'],
       qtePk: json['qte_pk'],
@@ -158,6 +163,8 @@ class QuotationDatum {
       'template_id': templateId,
       'company_id': companyId,
       'remarks': remarks,
+      'has_prod_image': hasProductImage,
+      'inc_gst': includeGst,
       'created_at': createdAt,
       'status': status,
       'qte_pk': qtePk,

@@ -74,6 +74,8 @@ class _AllReportState extends State<AllReport> {
   bool? result1 = true;
   String fromdate = DateTime.now().toString();
   String todate = DateTime.now().toString();
+    String fromdateUpdated = DateTime.now().toString();
+  String todateUpdated = DateTime.now().toString();
   String createdDate = DateTime.now().toString();
   String updatedDate = DateTime.now().toString();
   var outputFormat = DateFormat('dd-MM-yyyy');
@@ -482,6 +484,10 @@ class _AllReportState extends State<AllReport> {
             fromdate != "" ? outputFormat.format(DateTime.parse(fromdate)) : "",
         "toDate":
             todate != "" ? outputFormat.format(DateTime.parse(todate)) : "",
+             "fromDateUpdated":
+            fromdateUpdated != "" ? outputFormat.format(DateTime.parse(fromdateUpdated)) : "",
+        "toDateUpdated":
+            todate != "" ? outputFormat.format(DateTime.parse(todateUpdated)) : "",
         "createdDate": createdFlag,
         "updatedDate": updatedFlag,
         "page": page,

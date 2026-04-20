@@ -18,6 +18,7 @@ import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/getLeadSourceModel.dart';
 
 import '../../models/lead_management/leadProductsModel.dart';
+import '../../models/lead_management/productDescriptionModel.dart';
 import '../../service/service.dart';
 import '../../models/lead_management/leadExtraSettings.dart';
 import 'dart:developer';
@@ -156,8 +157,6 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   GetLeadSourceModel? leadSourceModel;
 
   List<LeadProduct> _selectedProducts = [];
-  TextEditingController _productSearchCtrl = TextEditingController();
-  List<LeadProduct> _productSearchResults = [];
 
   bool isLoading = true,
       isDistrictLoading = false,
@@ -165,6 +164,35 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       isLoadingSettings = false,
       checked = false;
   LeadSettings? leadSettings;
+  String? _expandedProductId;
+  final Map<String, String> _productDescriptions = {};
+  final Map<String, bool> _descriptionLoading = {};
+
+  Future<void> _fetchProductDescription(String productId) async {
+    if (_productDescriptions.containsKey(productId)) return;
+    setState(() => _descriptionLoading[productId] = true);
+    try {
+      final response = await HttpService.productDescription(productId);
+      if (mounted) {
+        setState(() {
+          _descriptionLoading[productId] = false;
+          if (response != null && response.status == true) {
+            _productDescriptions[productId] = response.data;
+          } else {
+            _productDescriptions[productId] = "";
+          }
+        });
+      }
+    } catch (e) {
+      log("Error fetching product description: $e");
+      if (mounted) {
+        setState(() {
+          _descriptionLoading[productId] = false;
+          _productDescriptions[productId] = "Failed to load description.";
+        });
+      }
+    }
+  }
 
   Future<void> _fetchLeadExtraSettings(String callResultId) async {
     setState(() => isLoadingSettings = true);
@@ -287,7 +315,6 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     callResponseCtrl.dispose();
     whatsappNoCtrl.dispose();
     emailCtrl.dispose();
-    _productSearchCtrl.dispose();
     for (var ctrl in _additionalCtrls) ctrl.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -1138,11 +1165,19 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _productSearchCtrl,
-                onChanged: _onProductSearch,
-                decoration: _inputDecoration('Search Product...', Icons.search,
-                    isDense: true),
+              child: GestureDetector(
+                onTap: () => _showProductPopup(),
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    key: ValueKey(_selectedProducts.length),
+                    initialValue: _selectedProducts.isEmpty
+                        ? ''
+                        : "${_selectedProducts.length} Products Selected",
+                    decoration: _inputDecoration(
+                        'Select Products', Icons.shopping_cart,
+                        isDense: true),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -1172,61 +1207,185 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
             ),
           ],
         ),
-        if (_productSearchResults.isNotEmpty)
-          Container(
-            constraints: const BoxConstraints(maxHeight: 200),
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                )
-              ],
-            ),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _productSearchResults.length,
-              itemBuilder: (ctx, i) {
-                final p = _productSearchResults[i];
-                return ListTile(
-                  title: Text(p.productName ?? ''),
-                  subtitle: Text("₹ ${p.totalAmount}"),
-                  onTap: () => _addProduct(p),
-                );
-              },
-            ),
+        const SizedBox(height: 12),
+        if (_selectedProducts.isNotEmpty)
+          Column(
+            children: _selectedProducts.map((p) {
+              bool isExpanded = _expandedProductId == p.id;
+              return Column(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (_expandedProductId == p.id) {
+                          _expandedProductId = null;
+                        } else {
+                          _expandedProductId = p.id;
+                          if (p.id != null) {
+                            _fetchProductDescription(p.id!);
+                          }
+                        }
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade100),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "${p.productName} - Rs ${p.totalAmount}",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF2a86c9)),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => _removeProduct(p),
+                            child: const Icon(Icons.cancel,
+                                size: 20, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (isExpanded &&
+                      (_descriptionLoading[p.id] == true ||
+                          (_productDescriptions[p.id]?.isNotEmpty ?? false)))
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      margin:
+                          const EdgeInsets.only(bottom: 12, left: 4, right: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Product Description",
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87),
+                          ),
+                          const SizedBox(height: 4),
+                          _descriptionLoading[p.id] == true
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  _productDescriptions[p.id] ?? "",
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                        ],
+                      ),
+                    ),
+                ],
+              );
+            }).toList(),
           ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: _selectedProducts
-              .map((p) => Chip(
-                    label: Text(p.productName ?? ''),
-                    onDeleted: () => _removeProduct(p),
-                    backgroundColor: Colors.blue.shade50,
-                  ))
-              .toList(),
-        ),
       ],
     );
   }
 
-  void _onProductSearch(String v) {
-    if (v.isEmpty) {
-      setState(() => _productSearchResults = []);
+  void _showProductPopup() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (productSectionModel == null ||
+        productSectionModel!.data == null ||
+        productSectionModel!.data!.isEmpty) {
+      Common.toastMessaage('No Products found', Colors.orange);
       return;
     }
-    setState(() {
-      _productSearchResults = productSectionModel?.data
-              ?.where((p) =>
-                  (p.productName ?? '').toLowerCase().contains(v.toLowerCase()))
-              .toList() ??
-          [];
-    });
+    showDialog(
+      context: context,
+      builder: (_) {
+        final searchCtrl = TextEditingController();
+        var filtered = List.from(productSectionModel!.data!);
+        return StatefulBuilder(builder: (ctx, setDialogState) {
+          return AlertDialog(
+            title: const Text('Select Products'),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.8,
+              height: 400,
+              child: Column(
+                children: [
+                  TextField(
+                    controller: searchCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Search',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onChanged: (v) => setDialogState(() {
+                      filtered = productSectionModel!.data!
+                          .where((p) => (p.productName ?? "")
+                              .toLowerCase()
+                              .contains(v.toLowerCase()))
+                          .toList();
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) {
+                        final p = filtered[i];
+                        bool isSelected =
+                            _selectedProducts.any((item) => item.id == p.id);
+                        return ListTile(
+                          title: Text(p.productName ?? ''),
+                          subtitle: Text("Rs ${p.totalAmount}"),
+                          trailing: isSelected
+                              ? const Icon(Icons.check_circle,
+                                  color: Colors.green)
+                              : null,
+                          onTap: () {
+                            if (isSelected) {
+                              _removeProduct(p);
+                            } else {
+                              _addProduct(p);
+                            }
+                            setDialogState(() {});
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('DONE'),
+              ),
+            ],
+          );
+        });
+      },
+    );
   }
 
   void _addProduct(LeadProduct p) {
@@ -1234,8 +1393,6 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       if (!_selectedProducts.any((item) => item.id == p.id)) {
         _selectedProducts.add(p);
       }
-      _productSearchCtrl.clear();
-      _productSearchResults = [];
       _calculateTotalAmount();
     });
   }
@@ -1984,7 +2141,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   Future<void> _submitLead() async {
-    String productIds = _selectedProducts.map((p) => p.id).join(',');
+    String productIds =
+        _selectedProducts.map((p) => p.id).where((id) => id != null).join(',');
 
     final result = await HttpService.addLeadsNew(
       widget.token,

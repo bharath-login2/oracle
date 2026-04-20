@@ -115,7 +115,7 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddRentalReturnPage(),
+        builder: (context) => const AddRentalReturnPage(),
       ),
     );
   }
@@ -739,6 +739,44 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert,
+                            size: 20, color: Colors.grey),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => AddRentalReturnPage(returnId: item.returnId.toString()))).then((_) => _loadRentalReturns());
+                          } else if (value == 'delete') {
+                            _showDeleteConfirmation(item);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined,
+                                    size: 18, color: Colors.orange),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_outline,
+                                    size: 18, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         "Balance: ${item.balanceQty}",
                         style: TextStyle(
@@ -894,11 +932,6 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
             tooltip: 'Filter',
             onPressed: _openFilterSheet,
           ),
-          // IconButton(
-          //   icon: const Icon(Icons.refresh, size: 26, color: Colors.white),
-          //   tooltip: 'Refresh',
-          //   onPressed: _loadRentalReturns,
-          // ),
           IconButton(
             icon: const Icon(Icons.add, size: 26, color: Colors.white),
             tooltip: 'Add Rental Return',
@@ -1109,6 +1142,34 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showDeleteConfirmation(RentalReturnItem item) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Return'),
+        content: Text(
+            'Are you sure you want to delete the rental return ${item.returnNo}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Implement delete logic here if API is available
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Delete functionality not yet implemented by API')),
+              );
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -5,7 +5,6 @@ LeadFollowupData leadFollowupDataFromJson(String str) =>
 
 String leadFollowupDataToJson(LeadFollowupData data) =>
     json.encode(data.toJson());
-
 class LeadFollowupData {
   Data data;
   bool status;
@@ -16,7 +15,6 @@ class LeadFollowupData {
     required this.status,
     required this.message,
   });
-
   factory LeadFollowupData.fromJson(Map<String, dynamic> json) =>
       LeadFollowupData(
         data: json["data"] != null

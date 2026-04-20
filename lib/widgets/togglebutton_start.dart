@@ -398,7 +398,35 @@ class _StartStopToggleState extends State<StartStopToggle> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isLoading ? null : toggleSwitch,
+      onTap: () async {
+        try {
+          final result = await HttpService.getWorkStatus();
+          if (result != null && result.data.isNotEmpty) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Logout Blocked'),
+                content: const Text(
+                    'Work is in progress. Please close all work before logging out.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            toggleSwitch;
+          }
+        } catch (e) {
+          print('Error checking work status: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to check work status')),
+          );
+        }
+      },
+      //   onTap: isLoading ? null : toggleSwitch,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         width: 40,

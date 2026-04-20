@@ -1635,7 +1635,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
             onPressed: () async {
               Navigator.pop(dialogContext);
               setState(() => _isDeleting = true);
-
               try {
                 final response =
                     await HttpService.deleteRequestQuotation(data.Id);
@@ -1712,7 +1711,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
     _searchController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1790,8 +1788,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
                     ),
                   ),
                 ),
-
-                // Filter Chips
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1803,7 +1799,6 @@ class _QuotationRequestPageState extends State<QuotationRequestPage> {
                   ),
                 ),
 
-                // Results count
                 if (_searchController.text.isNotEmpty ||
                     _selectedFilter != 'All')
                   Padding(

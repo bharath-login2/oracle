@@ -29,25 +29,25 @@ class ViewLeadsFilterWidget extends StatefulWidget {
 
 class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
   String selectedCategory = 'Leads Date';
-
-  // Filter states
   DateTime? fromDate;
   DateTime? toDate;
+  DateTime? fromDateUpdated;
+  DateTime? toDateUpdated;
   bool isDateFiltered = false;
+  bool isDateFilteredUpdated = false;
   Set<String> selectedStatusIds = {};
   Set<String> selectedStaffIds = {};
   Set<String> selectedCategoryIds = {};
   Set<String> selectedPriorityIds = {};
   Set<String> selectedProductIds = {};
   Set<String> selectedTagIds = {};
-
   final DateFormat _formatter = DateFormat('dd-MM-yyyy');
   final TextEditingController _searchController = TextEditingController();
   GetActiveStatusModel? _activeStatusModel;
   bool _isActiveStatusLoading = false;
   TagListForFilterModel? _tagListModel;
   bool _isTagLoading = false;
-
+String? selectedDateType;
   @override
   void initState() {
     super.initState();
@@ -63,6 +63,8 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     //   status = selectedStatusIds.isNotEmpty ? selectedStatusIds.first : null;
     // }
     _fetchActiveStatus();
+    selectedDateType =
+      widget.initialFilters?['dateType'] ?? 'created';
     // }
     if (selectedStatusIds.isNotEmpty) {
       _fetchTags(selectedStatusIds.first);
@@ -119,7 +121,7 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     if (widget.initialFilters != null) {
       final filters = widget.initialFilters!;
       isDateFiltered = filters['isDateFiltered'] ?? false;
-
+      isDateFilteredUpdated = filters['isDateFilteredUpdated'] ?? false;
       if (filters['fromDate'] != null) {
         fromDate = filters['fromDate'] is DateTime
             ? filters['fromDate']
@@ -129,6 +131,17 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
         toDate = filters['toDate'] is DateTime
             ? filters['toDate']
             : DateTime.tryParse(filters['toDate'].toString());
+      }
+
+      if (filters['fromDateUpdated'] != null) {
+        fromDate = filters['fromDateUpdated'] is DateTime
+            ? filters['fromDateUpdated']
+            : DateTime.tryParse(filters['fromDateUpdated'].toString());
+      }
+      if (filters['toDateUpdated'] != null) {
+        toDate = filters['toDateUpdated'] is DateTime
+            ? filters['toDateUpdated']
+            : DateTime.tryParse(filters['toDateUpdated'].toString());
       }
 
       if (filters['statusIds'] != null) {
@@ -151,6 +164,15 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
       }
       if (filters['call_result_reason'] != null) {
         selectedTagIds = Set<String>.from(filters['call_result_reason']);
+      }
+      if (filters['dateType'] != null) {
+        selectedDateType = filters['dateType'];
+        // Set selectedCategory based on dateType
+        if (selectedDateType == 'created') {
+          selectedCategory = 'Leads Date';
+        } else if (selectedDateType == 'updated') {
+          selectedCategory = 'Updated Date';
+        }
       }
     }
   }
@@ -218,6 +240,9 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
               child: Column(
                 children: [
                   _buildCategoryItem('Leads Date', Icons.calendar_today),
+                  // widget.currentTab == "All Leads"
+                  //     ? _buildCategoryItem('Updated Date', Icons.calendar_today)
+                  // : SizedBox.shrink(),
                   if (widget.currentTab != 'New' &&
                       widget.currentTab != 'Closed Leads' &&
                       widget.currentTab != 'Lost Leads' &&
@@ -237,7 +262,6 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
               ),
             ),
           ),
-          // Right Side: Options
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -325,8 +349,10 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
 
   Widget _buildOptionsExpansion() {
     switch (selectedCategory) {
-      case 'Leads Date':
+      case 'Leads Date' || 'Created Date':
         return _buildDateOptions();
+      case 'Updated Date':
+        return _buildDateOptionsUpdated();
       case 'Stages':
         return _buildStatusOptions();
       case 'Assigned Staff':
@@ -348,6 +374,82 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        widget.currentTab == "All Leads"?
+        Row(
+          children: [
+            Expanded(
+              child: RadioListTile<String>(
+                value: 'created',
+                groupValue: selectedDateType,
+                onChanged: (value) {
+                  setState(() {
+                    selectedDateType = value!;
+                  });
+                },
+                title: const Text(
+                  'Created Date',
+                  style: TextStyle(fontSize: 12),
+                ),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+            // Expanded(
+            //   child: RadioListTile<String>(
+            //     value: 'updated',
+            //     groupValue: selectedDateType,
+            //     onChanged: (value) {
+            //       setState(() {
+            //         selectedDateType = value!;
+            //       });
+            //     },
+            //     title: const Text('Updated',style: TextStyle(fontSize: 12),),
+            //     dense: true,
+            //     contentPadding: EdgeInsets.zero,
+            //   ),
+            // ),
+          ],
+        ):SizedBox.shrink(),
+
+        //  const SizedBox(height: 8),
+         widget.currentTab == "All Leads"?
+        Row(
+          children: [
+            // Expanded(
+            //   child: RadioListTile<String>(
+            //     value: 'created',
+            //     groupValue: selectedDateType,
+            //     onChanged: (value) {
+            //       setState(() {
+            //         selectedDateType = value!;
+            //       });
+            //     },
+            //     title: const Text('Created',style: TextStyle(fontSize: 12),),
+            //     dense: true,
+            //     contentPadding: EdgeInsets.zero,
+            //   ),
+            // ),
+            Expanded(
+              child: RadioListTile<String>(
+                value: 'updated',
+                groupValue: selectedDateType,
+                onChanged: (value) {
+                  setState(() {
+                    selectedDateType = value!;
+                  });
+                },
+                title: const Text(
+                  'Updated Date',
+                  style: TextStyle(fontSize: 12),
+                ),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ],
+        ):SizedBox.shrink(),
+
+        //const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -409,7 +511,129 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
     );
   }
 
+  Widget _buildDateOptionsUpdated() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Select Date Updated',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            // if (isDateFiltered)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  fromDateUpdated = null;
+                  toDateUpdated = null;
+                  isDateFilteredUpdated = false;
+                });
+              },
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size(50, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Clear',
+                  style: TextStyle(color: Colors.red, fontSize: 12)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildDateField('From Date', fromDateUpdated, (date) {
+          setState(() {
+            fromDateUpdated = date;
+            isDateFilteredUpdated = true;
+          });
+        }),
+        const SizedBox(height: 12),
+        _buildDateField('To Date', toDateUpdated, (date) {
+          setState(() {
+            toDateUpdated = date;
+            isDateFilteredUpdated = true;
+          });
+        }),
+        const SizedBox(height: 16),
+        _buildQuickDateFiltersUpdated(
+          onToday: () {
+            final now = DateTime.now();
+            setState(() {
+              fromDateUpdated = now;
+              toDateUpdated = now;
+              isDateFilteredUpdated = true;
+            });
+          },
+          onThisMonth: () {
+            final now = DateTime.now();
+            setState(() {
+              fromDateUpdated = DateTime(now.year, now.month, 1);
+              toDateUpdated = DateTime(now.year, now.month + 1, 0);
+              isDateFilteredUpdated = true;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildQuickDateFilters({
+    required VoidCallback onToday,
+    required VoidCallback onThisMonth,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: onToday,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE3F2FD),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              side: const BorderSide(color: Colors.blue),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              minimumSize: const Size(0, 40),
+            ),
+            child: const Text(
+              "Today",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: onThisMonth,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE3F2FD),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              side: const BorderSide(color: Colors.blue),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              minimumSize: const Size(0, 40),
+            ),
+            child: const Text(
+              "This Month",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.blue,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget _buildQuickDateFiltersUpdated({
     required VoidCallback onToday,
     required VoidCallback onThisMonth,
   }) {
@@ -731,7 +955,10 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
                 _tagListModel = null;
                 fromDate = null;
                 toDate = null;
+                fromDateUpdated = null;
+                toDateUpdated = null;
                 isDateFiltered = false;
+                isDateFilteredUpdated = false;
               });
             },
             style: OutlinedButton.styleFrom(
@@ -749,8 +976,11 @@ class _ViewLeadsFilterWidgetState extends State<ViewLeadsFilterWidget> {
           child: ElevatedButton(
             onPressed: () {
               widget.onApplyFilters({
+                'dateType': selectedDateType,
                 'fromDate': fromDate,
                 'toDate': toDate,
+                //    'fromDateUpdated': fromDateUpdated,
+                // 'toDateUpdated': toDateUpdated,
                 'isDateFiltered': isDateFiltered,
                 'statusIds': selectedStatusIds.toList(),
                 'staffIds': selectedStaffIds.toList(),

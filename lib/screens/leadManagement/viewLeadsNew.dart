@@ -34,7 +34,6 @@ import '../../widgets/viewLeadsFilterWidget.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import '../../models/lead_management/showTransferHideorShowModel.dart';
 
-
 // ignore: must_be_immutable
 class ViewLeadsNew extends StatefulWidget {
   final String? token;
@@ -75,6 +74,7 @@ class ViewLeadsNew extends StatefulWidget {
   final String? isAllLeads;
   final String? notificationLeadId;
   final String? isFollowup;
+
   const ViewLeadsNew(
     this.token,
     this.editLead,
@@ -157,7 +157,9 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   FileManagerPermissionModel? fileManagerPermission;
   PostalCodeModel? postalCodeModel;
   LeadProductSectionModel? productSectionModel;
-
+  DateTime? fromdateUpdated;
+  DateTime? todateUpdated;
+  bool isDateFilteredUpdated = false;
   // State variables
   bool? result = true;
   bool? result1 = true;
@@ -197,7 +199,8 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   final Set<String> _expandedLeadIds = {};
   String? StateId;
   String? DistrictId;
-
+  List<String> selectedTagIds = [];
+  String? selectedDateType;
   final List<Color> _colors = [
     const Color(0xFF2196F3), // Vibrant Blue (index 0)
     const Color(0xFF2196F3), // Blue at index 1 for "New"
@@ -524,7 +527,6 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
     });
 
     if (statusWise == 'yes') {
-
       statusWiseId = await Common.getSharedPref("statusWisId") ?? "";
       statusCatId = await Common.getSharedPref("statusCatId") ?? "";
       type = await Common.getSharedPref("type") ?? "";
@@ -569,8 +571,16 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       "state": StateId ?? "",
       "district": DistrictId ?? "",
       "branchId": branch ?? "",
+      "tagIds": selectedTagIds ?? "",
       "leadSourceId": widget.leadSourceId ?? "",
-      "productId": checkedProductItems
+      "productId": checkedProductItems,
+      "selectedType": selectedDateType,
+      // 'updated_from_date': fromdateUpdated != null
+      //     ? DateFormat('dd-MM-yyyy').format(fromdateUpdated!)
+      //     : "",
+      // 'updated_to_date': todateUpdated != null
+      //     ? DateFormat('dd-MM-yyyy').format(todateUpdated!)
+      //     : "",
     };
 
     bool shouldSendDates = isFilterApplied ||
@@ -1654,11 +1664,13 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                             'categoryIds': checkedCategoryItems,
                             'priorityIds': checkedPriorityItems,
                             'productIds': checkedProductItems,
+                            'dateType': selectedDateType,
                           },
                           onApplyFilters: (filters) {
                             setState(() {
                               fromdate = filters['fromDate'];
                               todate = filters['toDate'];
+                                selectedDateType = filters['dateType'] ?? 'created';
                               checkedAssignedStaffItems =
                                   List<String>.from(filters['staffIds']);
                               checkedCategoryItems =
@@ -1673,7 +1685,15 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                               status =
                                   statusIds.isNotEmpty ? statusIds.first : null;
 
-                              isDateFiltered = filters['isDateFiltered'];
+                              //  isDateFiltered = filters['isDateFiltered'];
+                              fromdateUpdated = filters['fromDateUpdated'];
+                              todateUpdated = filters['toDateUpdated'];
+                              selectedTagIds =
+                                  List<String>.from(filters['tagIds'] ?? []);
+                              isDateFiltered =
+                                  filters['isDateFiltered'] ?? false;
+                              isDateFilteredUpdated =
+                                  filters['isDateFilteredUpdated'] ?? false;
                               isFilterApplied = true;
                               _isDataLoaded = false;
                               items.clear();
@@ -3267,7 +3287,6 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                     // Fresh Data Toggle (Radio style) - Hidden as per request
                     Visibility(
                       visible: showTransferFreshValue,
-
                       child: InkWell(
                         onTap: () {
                           setDialogState(() {

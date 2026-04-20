@@ -117,6 +117,8 @@ class _AddFollowupState extends State<AddFollowup> {
   String typeDuration = "";
   String? createLeadCategory = '';
   String? addLeadSource = '';
+    String? createRenewalPermission = '';
+      String? customerAddInvoicePermission = '';
   TextEditingController cost = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController calledDate1 = TextEditingController();
@@ -253,6 +255,8 @@ class _AddFollowupState extends State<AddFollowup> {
     startDate.text = DateFormat('dd-MM-yyyy').format(invoiceDate);
     createLeadCategory = await Common.getSharedPref("createLeadCategory");
     addLeadSource = await Common.getSharedPref("addLeadSource");
+    createRenewalPermission = await Common.getSharedPref("createRenewalPermission");
+    customerAddInvoicePermission = await Common.getSharedPref("customerAddInvoicePermission");
     try {
       final connectivityResult = await (Connectivity().checkConnectivity());
       // if (connectivityResult == ConnectivityResult.mobile ||
@@ -1538,8 +1542,7 @@ class _AddFollowupState extends State<AddFollowup> {
                             ),
                           ),
                           if (callResultId == '4' &&
-                              commonDetails!
-                                      .data.customerAddInvoicePermission ==
+                              customerAddInvoicePermission ==
                                   true)
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
@@ -1556,8 +1559,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           Visibility(
                             visible: createOrder &&
                                 callResultId == '4' &&
-                                commonDetails!
-                                        .data.customerAddInvoicePermission ==
+                                customerAddInvoicePermission ==
                                     true,
                             child: Column(
                               children: [
@@ -2682,7 +2684,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           ),
                           if (callResultId == '4' &&
                               createOrder &&
-                              commonDetails!.data.isRenewal)
+                              createRenewalPermission =="true")
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
@@ -2697,7 +2699,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           Visibility(
                               visible: createRenewal &&
                                   createOrder &&
-                                  commonDetails!.data.isRenewal,
+                                  createRenewalPermission == "true",
                               child: Column(
                                 children: [
                                   Row(
@@ -3209,8 +3211,7 @@ class _AddFollowupState extends State<AddFollowup> {
                           InkWell(
                             onTap: () async {
                               if (callResultId == '4' &&
-                                  commonDetails!
-                                          .data.customerAddInvoicePermission ==
+                                  customerAddInvoicePermission ==
                                       true) {
                                 // totalProdAmount = amountCalculate(products);
                                 if (callResultId == '4' &&
@@ -4631,39 +4632,39 @@ class _AddFollowupState extends State<AddFollowup> {
             Common.toastMessaage('Choose any Reason', Colors.red);
           } else if (createOrder == true &&
               products.isEmpty &&
-              commonDetails!.data.customerAddInvoicePermission) {
+              customerAddInvoicePermission == "true" ) {
             Common.toastMessaage(
                 'Please add a product to continue', Colors.red);
           } else if (createOrder == true &&
-              commonDetails!.data.customerAddInvoicePermission &&
+              customerAddInvoicePermission == "true"  &&
               paymentStatus == null) {
             Common.toastMessaage(
                 'Payment Status is required to add invoice', Colors.red);
           } else if (createOrder == true &&
               paidAmount.text.isEmpty &&
-              commonDetails!.data.customerAddInvoicePermission &&
+              customerAddInvoicePermission == "true"  &&
               paymentStatus != "unpaid") {
             Common.toastMessaage(
                 'Paid Amount is required to add invoice', Colors.red);
           } else if (createOrder == true &&
               paymentStatus != "unpaid" &&
-              commonDetails!.data.customerAddInvoicePermission &&
+              customerAddInvoicePermission == "true"  &&
               paymentMethod == null) {
             Common.toastMessaage(
                 'Payment Method is required to add invoice', Colors.red);
           } else if (createOrder == true &&
-              commonDetails!.data.customerAddInvoicePermission &&
+              customerAddInvoicePermission == "true" &&
               paymentStatus != "unpaid" &&
               staffId == "") {
             Common.toastMessaage(
                 'Collected Staff is required to add invoice', Colors.red);
           } else if (createRenewal == true &&
-              commonDetails!.data.isRenewal &&
+              createRenewalPermission == "true" &&
               startDate.text == "") {
             Common.toastMessaage(
                 'Start date is required to add renewal', Colors.red);
           } else if (createRenewal == true &&
-              commonDetails!.data.isRenewal &&
+              createRenewalPermission == "true" &&
               endDate.text == "") {
             Common.toastMessaage(
                 'End date is required to add renewal', Colors.red);

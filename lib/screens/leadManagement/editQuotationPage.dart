@@ -26,6 +26,8 @@ class EditQuotationPage extends StatefulWidget {
 }
 
 class _EditQuotationPageState extends State<EditQuotationPage> {
+    bool includeGst = false;
+    bool hasProductImage = false;
   final _formKey = GlobalKey<FormState>();
   String? selectedCustomer;
   String? selectedWorkOrder;
@@ -167,6 +169,10 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
       selectedRateType = quote.quotationType == "unit_based_rate"
           ? "Unit Based Rate"
           : "Fixed Rate";
+
+      // Set checkboxes from model
+      includeGst = quote.includeGst == "1";
+      hasProductImage = quote.hasProductImage == "1";
 
       // Set customer name
       final customer = _customerModel?.data.firstWhere(
@@ -1383,9 +1389,60 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                               );
                             }).toList(),
                           )
+                          
                         else if (isLoadingTemplates)
                           const Center(child: CircularProgressIndicator())
                         else
+                         const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: CheckboxListTile(
+                                value: hasProductImage,
+                                onChanged: (val) {
+                                  setState(() => hasProductImage = val ?? false);
+                                },
+                                title: const Text("Include Product Image",style: TextStyle(fontSize: 14)),
+                                controlAffinity: ListTileControlAffinity.leading,
+                              ),
+                            ),
+                            // Expanded(
+                            //   child: CheckboxListTile(
+                            //     value: includeGst,
+                            //     onChanged: (val) {
+                            //       setState(() => includeGst = val ?? false);
+                            //     },
+                            //     title: const Text("Include GST and GST Amount",style: TextStyle(fontSize: 14)),
+                            //     controlAffinity: ListTileControlAffinity.leading,
+                            //   ),
+                            // ),
+                          ],
+                        ),
+
+                          Row(
+                          children: [
+                            // Expanded(
+                            //   child: CheckboxListTile(
+                            //     value: hasProductImage,
+                            //     onChanged: (val) {
+                            //       setState(() => hasProductImage = val ?? false);
+                            //     },
+                            //     title: const Text("Include Product Image",style: TextStyle(fontSize: 14)),
+                            //     controlAffinity: ListTileControlAffinity.leading,
+                            //   ),
+                            // ),
+                            Expanded(
+                              child: CheckboxListTile(
+                                value: includeGst,
+                                onChanged: (val) {
+                                  setState(() => includeGst = val ?? false);
+                                },
+                                title: const Text("Include GST and GST Amount",style: TextStyle(fontSize: 14)),
+                                controlAffinity: ListTileControlAffinity.leading,
+                              ),
+                            ),
+                          ],
+                        ),
                           const SizedBox(),
                         _sectionTitle("Package Details"),
                         const SizedBox(height: 12),
@@ -1522,7 +1579,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
                               ]),
                         ),
                         _sectionTitle("Products", color: Colors.teal),
-                        const SizedBox(height: 12),
+                       
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -1654,26 +1711,28 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
             ),
           ),
         ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            "GST %*",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.teal.shade800,
+        if (includeGst) ...[
+          Expanded(
+            flex: 2,
+            child: Text(
+              "GST %*",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.teal.shade800,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            "GST Amount",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.teal.shade800,
+          Expanded(
+            flex: 2,
+            child: Text(
+              "GST Amount",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.teal.shade800,
+              ),
             ),
           ),
-        ),
+        ],
         Expanded(
           flex: 2,
           child: Text(
@@ -1854,37 +1913,39 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: TextField(
-              controller: row.gstController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+          if (includeGst) ...[
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: row.gstController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  suffixText: '%',
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                ),
+                onChanged: (value) => setState(() {}),
               ),
-              decoration: InputDecoration(
-                isDense: true,
-                suffixText: '%',
-                border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                "₹${calculateGstAmount().toStringAsFixed(2)}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.orange,
                 ),
               ),
-              onChanged: (value) => setState(() {}),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              "₹${calculateGstAmount().toStringAsFixed(2)}",
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                color: Colors.orange,
-              ),
-            ),
-          ),
+          ],
           Expanded(
             flex: 2,
             child: Text(

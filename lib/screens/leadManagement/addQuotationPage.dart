@@ -281,8 +281,20 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
         });
       }
 
-      if (customerData.customerName != null &&
-          customerData.customerName!.isNotEmpty) {}
+      // Set customer name from customer ID if available
+      if (customerData.customerName != null && customerData.customerName!.isNotEmpty) {
+        final customer = _customerModel?.data.firstWhere(
+          (c) => c.id == customerData.customerName,
+          orElse: () => CustomerDetails(id: '', name: '', address: '', contactNo: '', emailId: ''),
+        );
+        if (customer != null && customer.id.isNotEmpty) {
+          setState(() {
+            selectedCustomerId = customer.id;
+            customerNameCtrl.text = customer.name;
+          });
+        }
+      }
+
       if (customerData.state != null &&
           customerData.state!.isNotEmpty &&
           customerData.state != "0") {
@@ -295,7 +307,6 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
             (state) => state.id == customerData.state,
             orElse: () => StateList(id: '', name: ''),
           );
-
           if (matchedState.id.isNotEmpty) {
             if (!_isDisposed) {
               setState(() {
@@ -1967,26 +1978,28 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
             ),
           ),
         ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            "GST %*",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.teal.shade800,
+        if (includeGst) ...[
+          Expanded(
+            flex: 2,
+            child: Text(
+              "GST %*",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.teal.shade800,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          flex: 2,
-          child: Text(
-            "GST Amount",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.teal.shade800,
+          Expanded(
+            flex: 2,
+            child: Text(
+              "GST Amount",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.teal.shade800,
+              ),
             ),
           ),
-        ),
+        ],
         Expanded(
           flex: 2,
           child: Text(
@@ -2159,37 +2172,39 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
               ),
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: TextField(
-              controller: row.gstController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+          if (includeGst) ...[
+            Expanded(
+              flex: 2,
+              child: TextField(
+                controller: row.gstController,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: InputDecoration(
+                  isDense: true,
+                  suffixText: '%',
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                ),
+                onChanged: (value) => setState(() {}),
               ),
-              decoration: InputDecoration(
-                isDense: true,
-                suffixText: '%',
-                border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                "₹${calculateGstAmount().toStringAsFixed(2)}",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: Colors.orange,
                 ),
               ),
-              onChanged: (value) => setState(() {}),
             ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              "₹${calculateGstAmount().toStringAsFixed(2)}",
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-                color: Colors.orange,
-              ),
-            ),
-          ),
+          ],
           Expanded(
             flex: 2,
             child: Text(

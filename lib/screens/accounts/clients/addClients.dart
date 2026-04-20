@@ -71,6 +71,8 @@ class _AddClientsState extends State<AddClients> {
   String templateId = "";
   String roleId = '';
   String multiBranch = '';
+  String customerAddInvoicePermission = '';
+    String createRenewalPermission = '';
   String? branch;
   BranchListModel? branchList;
   bool result = true;
@@ -146,6 +148,8 @@ class _AddClientsState extends State<AddClients> {
     // }
     roleId = await Common.getSharedPref("roleId");
     multiBranch = await Common.getSharedPref("multiBranch");
+     customerAddInvoicePermission = await Common.getSharedPref("customerAddInvoicePermission");
+       createRenewalPermission = await Common.getSharedPref("createRenewalPermission");
     branchList = await HttpService.getBranchList(widget.token);
     if (branchList != null) {
       setState(() {});
@@ -1146,9 +1150,8 @@ class _AddClientsState extends State<AddClients> {
                           ),
                           Visibility(
                             visible: createOrder &&
-                                commonDetails!
-                                        .data.customerAddInvoicePermission ==
-                                    true,
+                                customerAddInvoicePermission == "true",
+                                  
                             child: Column(
                               children: [
                                 Padding(
@@ -2430,7 +2433,7 @@ class _AddClientsState extends State<AddClients> {
                               ],
                             ),
                           ),
-                          if (createOrder && commonDetails!.data.isRenewal)
+                          if (createOrder && createRenewalPermission =="true")
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
@@ -2445,7 +2448,7 @@ class _AddClientsState extends State<AddClients> {
                           Visibility(
                               visible: createRenewal &&
                                   createOrder &&
-                                  commonDetails!.data.isRenewal,
+                                  createRenewalPermission =="true",
                               child: Column(
                                 children: [
                                   Row(
@@ -2979,50 +2982,45 @@ class _AddClientsState extends State<AddClients> {
                                     'Please select Tax Type', Colors.red);
                               } else if (createOrder == true &&
                                   products.isEmpty &&
-                                  commonDetails!
-                                      .data.customerAddInvoicePermission) {
+                                  customerAddInvoicePermission == "true") {
                                 Common.toastMessaage(
                                     'Please add a product to continue',
                                     Colors.red);
                               } else if (createOrder == true &&
-                                  commonDetails!
-                                      .data.customerAddInvoicePermission &&
+                                  customerAddInvoicePermission == "true" &&
                                   paymentStatus == null) {
                                 Common.toastMessaage(
                                     'Payment Status is required to add invoice',
                                     Colors.red);
                               } else if (createOrder == true &&
                                   paidAmount.text.isEmpty &&
-                                  commonDetails!
-                                      .data.customerAddInvoicePermission &&
+                                  customerAddInvoicePermission == "true" &&
                                   paymentStatus != "unpaid") {
                                 Common.toastMessaage(
                                     'Paid Amount is required to add invoice',
                                     Colors.red);
                               } else if (createOrder == true &&
                                   paymentStatus != "unpaid" &&
-                                  commonDetails!
-                                      .data.customerAddInvoicePermission &&
+                                 customerAddInvoicePermission == "true" &&
                                   paymentMethod == null) {
                                 Common.toastMessaage(
                                     'Payment Method is required to add invoice',
                                     Colors.red);
                               } else if (createOrder == true &&
-                                  commonDetails!
-                                      .data.customerAddInvoicePermission &&
+                                  customerAddInvoicePermission == "true"  &&
                                   paymentStatus != "unpaid" &&
                                   staffId == "") {
                                 Common.toastMessaage(
                                     'Collected Staff is required to add invoice',
                                     Colors.red);
                               } else if (createRenewal == true &&
-                                  commonDetails!.data.isRenewal &&
+                                  createRenewalPermission == "true" &&
                                   startDate.text == "") {
                                 Common.toastMessaage(
                                     'Start date is required to add renewal',
                                     Colors.red);
                               } else if (createRenewal == true &&
-                                  commonDetails!.data.isRenewal &&
+                                  createRenewalPermission == "true" &&
                                   endDate.text == "") {
                                 Common.toastMessaage(
                                     'End date is required to add renewal',
