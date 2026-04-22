@@ -453,7 +453,7 @@ class _AddQuotationPageState extends State<AddQuotationPage> {
     if (_isDisposed) return;
     setState(() => isLoadingMaterials = true);
     final httpService = HttpService();
-    final materialList = await httpService.getMaterials();
+    final materialList = await HttpService.getMaterials();
     if (!_isDisposed) {
       if (materialList != null && materialList.data != null) {
         setState(() {

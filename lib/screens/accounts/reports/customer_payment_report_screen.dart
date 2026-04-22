@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:login2/models/customers/customerPaymentReportModel.dart';
+import 'package:login2/screens/accounts/clients/pendingInvoice.dart';
 import 'package:login2/screens/accounts/reports/hidden_customer_payment_report_screen.dart';
 import 'package:login2/screens/accounts/dashboard/bank_account.dart';
+import 'package:login2/screens/customer/customerDasboard.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/core/common.dart';
 
 class CustomerPaymentReportScreen extends StatefulWidget {
   final String? fDate;
@@ -32,6 +35,10 @@ class _CustomerPaymentReportScreenState
     "1 Year +": "6",
   };
   final FocusNode _searchFocusNode = FocusNode();
+  String? token;
+  String? userId;
+  String? name;
+  String? phoneCallLogPermission;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -60,7 +67,17 @@ class _CustomerPaymentReportScreenState
       curve: Curves.easeOutQuad,
     );
     _animationController.forward();
+    _loadSharedPrefs();
     fetchData();
+  }
+
+  Future<void> _loadSharedPrefs() async {
+    token = await Common.getSharedPref("token");
+    userId = await Common.getSharedPref("userId");
+    name = await Common.getSharedPref("name");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
+    if (mounted) setState(() {});
   }
 
   @override
@@ -913,6 +930,40 @@ class _CustomerPaymentReportScreenState
                                                                   'hide') {
                                                                 _showHideConfirmationDialog(
                                                                     item);
+                                                              } else if (value ==
+                                                                  'dashboard') {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder: (context) =>
+                                                                        CustomerDashboard(
+                                                                      token:
+                                                                          token ??
+                                                                              '',
+                                                                      name: item.accountName ??
+                                                                          '',
+                                                                      userId:
+                                                                          item.accountId ??
+                                                                              '',
+                                                                      phoneCallLogPermission:
+                                                                          phoneCallLogPermission,
+                                                                      custId: item
+                                                                          .accountId,
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              } else if (value ==
+                                                                  'pending_invoice') {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder: (context) =>
+                                                                        PendingInvoice(
+                                                                      token ??
+                                                                          '',
+                                                                    ),
+                                                                  ),
+                                                                );
                                                               }
                                                             },
                                                             itemBuilder:
@@ -953,6 +1004,46 @@ class _CustomerPaymentReportScreenState
                                                                             12),
                                                                     Text(
                                                                         'Hide'),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              const PopupMenuItem(
+                                                                value:
+                                                                    'dashboard',
+                                                                child: Row(
+                                                                  children: [
+                                                                    Icon(
+                                                                        Icons
+                                                                            .dashboard,
+                                                                        size:
+                                                                            18,
+                                                                        color: Color(
+                                                                            0xFF475569)),
+                                                                    SizedBox(
+                                                                        width:
+                                                                            12),
+                                                                    Text(
+                                                                        'Customer Dashboard'),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                              const PopupMenuItem(
+                                                                value:
+                                                                    'pending_invoice',
+                                                                child: Row(
+                                                                  children: [
+                                                                    Icon(
+                                                                        Icons
+                                                                            .money_off_outlined,
+                                                                        size:
+                                                                            18,
+                                                                        color: Color(
+                                                                            0xFF475569)),
+                                                                    SizedBox(
+                                                                        width:
+                                                                            12),
+                                                                    Text(
+                                                                        'Pending Invoice'),
                                                                   ],
                                                                 ),
                                                               ),

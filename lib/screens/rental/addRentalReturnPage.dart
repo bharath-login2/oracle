@@ -129,8 +129,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
         _selectedCustomerName = data.customerName;
         _selectedLocationId = data.locationId;
         _selectedRentId = data.rentId;
-        _returnDateController.text = data.returnDate;
-        _invoiceDateController.text = data.issuedDate;
+        _returnDateController.text = _formatDate(data.returnDate);
+        _invoiceDateController.text = _formatDate(data.issuedDate);
         _otherExpensesController.text = data.otherExpenses;
         _invoiceNoController.text = data.invoiceNo;
         _rentReturnIdController.text = data.returnNo;
@@ -247,6 +247,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       if (data != null && data.status) {
         setState(() {
           _details = data.data;
+          _invoiceDateController.text = _formatDate(_details!.issuedDate);
           final String issuedDateStr = data.data.issuedDate;
           _productRows = data.data.items.map((item) {
             final row = RentalReturnRow()
@@ -414,8 +415,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       }
 
       final response = widget.returnId != null
-          ? await _httpService.updateRentalReturn(formData)
-          : await _httpService.createRentalReturn(formData);
+          ? await HttpService.updateRentalReturn(formData)
+          : await HttpService.createRentalReturn(formData);
 
       if (response != null && response['status'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -446,6 +447,21 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
       );
     } finally {
       setState(() => _isSubmitting = false);
+    }
+  }
+
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return "";
+    try {
+      DateTime dateTime;
+      if (dateStr.contains(" ")) {
+        dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").parse(dateStr);
+      } else {
+        dateTime = DateFormat("yyyy-MM-dd").parse(dateStr);
+      }
+      return DateFormat("dd-MM-yyyy").format(dateTime);
+    } catch (e) {
+      return dateStr;
     }
   }
 
@@ -685,7 +701,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.returnId != null ? 'Edit Rental Return' : 'Add Rental Return',
+          widget.returnId != null ? 'Edit Rent Return' : 'Add Rent Return',
           style: const TextStyle(color: Colors.white, fontSize: 18),
         ),
         backgroundColor: const Color(0xFF2a86c9),
@@ -759,7 +775,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                   child: DropdownButton<String>(
                                     value: _selectedLocationId,
                                     isExpanded: true,
-                                    disabledHint: Text(_locations.firstWhere((l) => l.id == _selectedLocationId, orElse: () => LocationData(id: '', locationName: 'Site')).locationName, style: const TextStyle(fontSize: 12)),
+                                    disabledHint: Text(_locations.firstWhere((l) => l.id == _selectedLocationId, orElse: () => LocationData(id: '', locationName: 'Site',customerId: "")).locationName, style: const TextStyle(fontSize: 12)),
                                     hint: const Text('Site',
                                         style: TextStyle(fontSize: 12)),
                                     icon: const Icon(Icons.arrow_drop_down,
@@ -975,6 +991,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                       ],
                     ),
                     const SizedBox(height: 12),
+                    widget.returnId != null ? SizedBox():
                     _buildPaymentSection(),
                     const SizedBox(height: 20),
                     SizedBox(

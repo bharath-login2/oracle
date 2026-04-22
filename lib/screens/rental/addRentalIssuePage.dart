@@ -72,8 +72,8 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         DateFormat('dd-MM-yyyy').format(DateTime.now());
     _fromDateController.text =
         DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
-    _toDateController.text =
-        DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+    _toDateController.text = DateFormat('dd-MM-yyyy HH:mm')
+        .format(DateTime.now().add(const Duration(days: 1)));
     if (widget.rentId != null) {
       _loadEditData();
     } else {
@@ -97,9 +97,9 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         _selectedCollectedByStaffId = issue.collectedRent;
         _selectedStaffName = issue.collectedStaffName;
 
-        _invoiceDateController.text = issue.invoiceDate;
-        _fromDateController.text = issue.fromDate.split(' ')[0];
-        _toDateController.text = issue.toDate.split(' ')[0];
+        _invoiceDateController.text = _formatDate(issue.invoiceDate);
+        _fromDateController.text = _formatDate(issue.fromDate, includeTime: true);
+        _toDateController.text = _formatDate(issue.toDate, includeTime: true);
         _totalDaysController.text = issue.totalDays;
         _advanceAmountController.text = issue.advanceAmount;
         _discountController.text = issue.discount;
@@ -107,8 +107,6 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         _rentIssueIdController.text = issue.rentNo;
         _invoiceNoController.text = issue.invoiceNo;
         _totalPaidAmountController.text = issue.amountPaid;
-
-        // Load products
         _productRows.clear();
         for (var item in response.data.rentItems) {
           final row = ProductRow();
@@ -117,8 +115,8 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
           row.unitPriceController.text = item.unitPrice;
           row.ratePerDayController.text = item.ratePerDay;
           row.noOfDaysController.text = item.days;
-          row.fromDateController.text = issue.fromDate.split(' ')[0];
-          row.toDateController.text = issue.toDate.split(' ')[0];
+          row.fromDateController.text = _formatDate(issue.fromDate, includeTime: true);
+          row.toDateController.text = _formatDate(issue.toDate, includeTime: true);
           row.grossAmountController.text = item.gross;
           row.gstPercentController.text = item.gstPercent;
           row.gstAmountController.text = item.gstAmount;
@@ -158,7 +156,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
   }
 
   Future<void> _loadMaterials() async {
-    final data = await _httpService.getMaterials();
+    final data = await HttpService.getMaterials();
     if (data != null && data.status == true && data.data != null) {
       setState(() => _materials = data.data!);
     }
@@ -254,10 +252,14 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
             DateFormat('dd-MM-yyyy HH:mm').parse(_fromDateController.text);
         final toDate =
             DateFormat('dd-MM-yyyy HH:mm').parse(_toDateController.text);
-        final difference = toDate.difference(fromDate).inDays;
-        _totalDays = difference >= 0 ? difference + 1 : 1;
+
+        final diffInMinutes = toDate.difference(fromDate).inMinutes;
+        if (diffInMinutes <= 0) {
+          _totalDays = 1; 
+        } else {
+          _totalDays = (diffInMinutes / (24 * 60)).ceil();
+        }
         _totalDaysController.text = _totalDays.toString();
-        // Update No of Days and Dates for all product rows to match the new duration
         for (final row in _productRows) {
           row.noOfDaysController.text = _totalDays.toString();
           row.fromDateController.text = _fromDateController.text;
@@ -306,9 +308,15 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
             DateFormat('dd-MM-yyyy HH:mm').parse(row.fromDateController.text);
         final toDate =
             DateFormat('dd-MM-yyyy HH:mm').parse(row.toDateController.text);
-        final difference = toDate.difference(fromDate).inDays;
-        row.noOfDaysController.text =
-            (difference >= 0 ? difference + 1 : 1).toString();
+
+        final diffInMinutes = toDate.difference(fromDate).inMinutes;
+        int rowDays = 0;
+        if (diffInMinutes <= 0) {
+          rowDays = 1;
+        } else {
+          rowDays = (diffInMinutes / (24 * 60)).ceil();
+        }
+        row.noOfDaysController.text = rowDays.toString();
         _recalculateRow(index);
       } catch (e) {
         log("Error updating row days: $e");
@@ -359,25 +367,39 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
 
   Future<void> _selectDateTime(
       BuildContext context, TextEditingController controller) async {
+    DateTime issueDateTime;
+    try {
+      issueDateTime =
+          DateFormat('dd-MM-yyyy HH:mm').parse(_fromDateController.text);
+    } catch (e) {
+      issueDateTime = DateTime.now();
+    }
+
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: controller == _fromDateController
-          ? DateTime.now()
-          : (DateFormat('dd-MM-yyyy HH:mm')
-                      .parse(_fromDateController.text)
-                      .isAfter(DateTime.now())
-                  ? DateFormat('dd-MM-yyyy HH:mm')
-                      .parse(_fromDateController.text)
-                  : DateTime.now()),
+          ? (controller.text.isNotEmpty
+              ? DateFormat('dd-MM-yyyy HH:mm').parse(controller.text)
+              : DateTime.now())
+          : (controller.text.isNotEmpty
+              ? DateFormat('dd-MM-yyyy HH:mm').parse(controller.text)
+              : (issueDateTime.isAfter(DateTime.now())
+                  ? issueDateTime
+                  : DateTime.now())),
       firstDate: controller == _fromDateController
-          ? DateTime.now()
-          : DateFormat('dd-MM-yyyy HH:mm').parse(_fromDateController.text),
+          ? DateTime(2000)
+          : DateTime(
+              issueDateTime.year, issueDateTime.month, issueDateTime.day),
       lastDate: DateTime(2100),
     );
+
     if (pickedDate != null) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay.now(),
+        initialTime: controller.text.isNotEmpty
+            ? TimeOfDay.fromDateTime(
+                DateFormat('dd-MM-yyyy HH:mm').parse(controller.text))
+            : TimeOfDay.now(),
       );
       if (pickedTime != null) {
         final DateTime fullDateTime = DateTime(
@@ -387,6 +409,16 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
           pickedTime.hour,
           pickedTime.minute,
         );
+
+        if (controller == _toDateController) {
+          if (fullDateTime.isBefore(issueDateTime)) {
+            Common.toastMessaage(
+                'Due Date & Time cannot be before Issue Date & Time',
+                Colors.red);
+            return;
+          }
+        }
+
         setState(() {
           controller.text = DateFormat('dd-MM-yyyy HH:mm').format(fullDateTime);
           if (controller == _fromDateController ||
@@ -784,7 +816,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          widget.rentId != null ? 'Edit Rental Issue' : 'Add Rental Issue',
+          widget.rentId != null ? 'Edit Rent Issue' : 'Add Rent Issue',
           style: const TextStyle(color: Colors.white, fontSize: 18),
         ),
         backgroundColor: const Color(0xFF2a86c9),
@@ -1207,6 +1239,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                     ),
 
                     const SizedBox(height: 8),
+                    widget.rentId != null ?SizedBox():
                     _buildPaymentSection(),
 
                     const SizedBox(height: 24),
@@ -1526,11 +1559,23 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                             _selectedCustomerId!,
                             locationController.text.trim());
                     setStateDialog(() => adding = false);
+                    if (!mounted) return;
                     if (response != null && response['status'] == true) {
                       Common.toastMessaage(
                           'Work Site added successfully', Colors.green);
                       Navigator.pop(context);
                       await _loadCustomerLocations(_selectedCustomerId!);
+                      
+                      // Find and select the newly added location
+                      final newLoc = _customerLocations.firstWhere(
+                        (l) => l.locationName == locationController.text.trim(),
+                        orElse: () => LocationData(id: '', locationName: '', customerId: ''),
+                      );
+                      if (newLoc.id.isNotEmpty) {
+                        setState(() {
+                          _selectedLocationId = newLoc.id;
+                        });
+                      }
                     } else {
                       Common.toastMessaage(
                           response?['message'] ?? 'Failed', Colors.red);
@@ -1584,15 +1629,24 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                     final response = await HttpService.addRentalCollectedStaff(
                         _selectedCustomerId!, staffController.text.trim());
                     setStateDialog(() => adding = false);
+                    if (!mounted) return;
                     if (response != null && response['status'] == true) {
                       Common.toastMessaage(
                           'Staff added successfully', Colors.green);
                       Navigator.pop(context);
                       await _loadCollectedStaffs(_selectedCustomerId!);
-                      // Immediately reopen the staff selection dialog so the new staff appears
-                      Future.delayed(const Duration(milliseconds: 200), () {
-                        _showStaffDialog(context, isPayment: false);
-                      });
+                      
+                      // Find and select the newly added staff
+                      final newStaff = _collectedStaffs.firstWhere(
+                        (s) => s.customerStaff == staffController.text.trim(),
+                        orElse: () => rcs.Staff(id: '', customerStaff: ''),
+                      );
+                      if (newStaff.id.isNotEmpty) {
+                        setState(() {
+                          _selectedCollectedByStaffId = newStaff.id;
+                          _selectedStaffName = newStaff.customerStaff;
+                        });
+                      }
                     } else {
                       Common.toastMessaage(
                           response?['message'] ?? 'Failed', Colors.red);
@@ -1644,6 +1698,8 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                         ),
                       );
 
+                      if (!mounted) return;
+
                       if (result == true || result == false || result == null) {
                         await _loadCustomers();
                       }
@@ -1677,6 +1733,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                                 "#RIN$numericInvoiceNo";
                           });
                         }
+                        if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -1910,6 +1967,22 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         ),
       ),
     );
+  }
+
+  String _formatDate(String dateStr, {bool includeTime = false}) {
+    if (dateStr.isEmpty) return "";
+    try {
+      DateTime dateTime;
+      if (dateStr.contains(" ")) {
+        dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").parse(dateStr);
+      } else {
+        dateTime = DateFormat("yyyy-MM-dd").parse(dateStr);
+      }
+      return DateFormat(includeTime ? "dd-MM-yyyy HH:mm" : "dd-MM-yyyy")
+          .format(dateTime);
+    } catch (e) {
+      return dateStr;
+    }
   }
 
   @override

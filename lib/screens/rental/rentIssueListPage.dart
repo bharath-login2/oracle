@@ -896,7 +896,7 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        item.returned =="0"?
+                        item.returned == 0 ?
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.push(

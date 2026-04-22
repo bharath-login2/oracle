@@ -90,7 +90,7 @@ class _PaymentReportListPageState extends State<PaymentReportListPage> {
   }
 
   Future<void> _loadMaterials() async {
-    final data = await _httpService.getMaterials();
+    final data = await HttpService.getMaterials();
     if (data != null && data.status == true) {
       setState(() {
         _materials = data.data ?? [];

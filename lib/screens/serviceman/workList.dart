@@ -80,7 +80,7 @@ class _WorkListPageState extends State<WorkListPage>
   Future<void> _fetchMaterials() async {
     try {
       final httpService = HttpService();
-      final materialModel = await httpService.getMaterials();
+      final materialModel = await HttpService.getMaterials();
 
       if (materialModel != null && materialModel.status == true) {
         setState(() {
@@ -272,7 +272,7 @@ class _WorkListPageState extends State<WorkListPage>
     Future<void> _loadMaterials() async {
       try {
         final httpService = HttpService();
-        final materialModel = await httpService.getMaterials();
+        final materialModel = await HttpService.getMaterials();
         if (materialModel != null && materialModel.status == true) {
           materialsList = materialModel.data ?? [];
         }
@@ -834,7 +834,7 @@ class _WorkListPageState extends State<WorkListPage>
     Future<void> _loadMaterials() async {
       try {
         final httpService = HttpService();
-        final materialModel = await httpService.getMaterials();
+        final materialModel = await HttpService.getMaterials();
         if (materialModel != null && materialModel.status == true) {
           materialsList = materialModel.data ?? [];
         }
@@ -1446,7 +1446,7 @@ class _WorkListPageState extends State<WorkListPage>
     Future<void> _loadMaterials() async {
       try {
         final httpService = HttpService();
-        final materialModel = await httpService.getMaterials();
+        final materialModel = await HttpService.getMaterials();
         if (materialModel != null && materialModel.status == true) {
           materialsList = materialModel.data ?? [];
         }

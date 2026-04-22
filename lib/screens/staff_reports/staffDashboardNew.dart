@@ -1,11 +1,11 @@
 // ignore_for_file: must_be_immutable, prefer_const_constructors
 
+import 'dart:developer';
+
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:pie_chart/pie_chart.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:intl/intl.dart';
 import '../../core/common.dart';
 import '../../models/staff_report/staff_call_details_model.dart';
 import '../../models/staff_report/staff_details_model.dart';
@@ -21,8 +21,10 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../models/lead_management/documentListModel.dart';
 import '../../models/lead_management/salaryDetailsModel.dart';
 import '../authentication/googleDriveAccountsModel.dart';
-import '../authentication/googleDriveFilesModel.dart';
-import 'package:path/path.dart' as p;
+import '../../models/lead_management/getStaffDocumentListModel.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StaffReportDashboardNew extends StatefulWidget {
   String id;
@@ -80,7 +82,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   String selectedDocumentTypeName = 'Select Document';
 
   List<DriveAccount> googleDriveAccounts = [];
-  List<GoogleDriveFile> googleDriveFiles = [];
+  List<StaffDocument> googleDriveFiles = [];
   DriveAccount? selectedDriveAccount;
   bool isDriveAccountsLoading = false;
   bool isDriveFilesLoading = false;
@@ -167,7 +169,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
     setState(() => isDriveAccountsLoading = true);
     final response = await HttpService.getGoogleDriveAccounts();
     if (mounted && response != null && response.status) {
-      googleDriveAccounts = response.data;
+      googleDriveAccounts =
+          response.data.where((a) => a.isActive == "1").toList();
       try {
         final defaultAccount =
             googleDriveAccounts.firstWhere((a) => a.isActive == "1");
@@ -178,18 +181,16 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
     if (mounted) setState(() => isDriveAccountsLoading = false);
   }
 
-  Future<void> _fetchGoogleDriveFiles(String accountId,
-      {String parentId = ""}) async {
+  Future<void> _fetchGoogleDriveFiles(String accountId) async {
     if (!mounted) return;
     setState(() {
       isDriveFilesLoading = true;
       googleDriveFiles = [];
     });
-    final response = await HttpService.getGoogleDriveFiles(
-        "", accountId, parentId,
-        refFunction: "Media");
-    if (mounted && response != null && response.status) {
-      googleDriveFiles = response.data;
+    final response = await HttpService.getStaffDocumentList(
+        "Staff", accountId, widget.id);
+    if (mounted && response != null && response.status == true) {
+      googleDriveFiles = response.data ?? [];
     }
     if (mounted) setState(() => isDriveFilesLoading = false);
   }
@@ -206,8 +207,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
         selectedFolderId = last['id'] == 'root' ? null : last['id'];
         currentFolderName = last['id'] == 'root' ? null : last['name'];
       });
-      _fetchGoogleDriveFiles(selectedDriveAccount!.id,
-          parentId: selectedFolderId ?? "");
+      _fetchGoogleDriveFiles(selectedDriveAccount!.id);
     } else {
       setState(() {
         selectedDriveAccount = null;
@@ -1895,45 +1895,167 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
           ),
           IconButton(
             icon: const Icon(Icons.upload_file, color: Colors.blue),
-            onPressed: () {},
+            onPressed: () => _uploadStaffDocuments(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGoogleDriveFileItem(GoogleDriveFile file) {
-    IconData icon =
-        file.isFolder == 'Y' ? Icons.folder : Icons.insert_drive_file;
-    Color color = file.isFolder == 'Y' ? Colors.blue : Colors.grey;
-
+  Widget _buildGoogleDriveFileItem(StaffDocument file) {
     return InkWell(
-      onTap: () {
-        if (file.isFolder == 'Y') {
-          setState(() {
-            selectedFolderId = file.fileId ?? file.id;
-            currentFolderName = file.fileName;
-          });
-          _updateBreadcrumbs(selectedFolderId!, currentFolderName!);
-          _fetchGoogleDriveFiles(selectedDriveAccount!.id,
-              parentId: selectedFolderId!);
+      onLongPress: () => _showFileOptions(file),
+      onTap: () async {
+        String? linkToOpen = file.thumbnailLink ?? file.webViewLink;
+        if (linkToOpen != null && linkToOpen.isNotEmpty) {
+          final Uri url = Uri.parse(linkToOpen);
+          if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+            Common.toastMessaage("Could not launch $linkToOpen", Colors.red);
+          }
+        } else {
+          Common.toastMessaage("No link available for this file", Colors.orange);
         }
       },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
         children: [
-          Icon(icon, color: color, size: 40),
-          const SizedBox(height: 4),
-          Text(
-            file.fileName,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 10),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (file.thumbnailLink != null && file.thumbnailLink!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      file.thumbnailLink!,
+                      height: 40,
+                      width: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.insert_drive_file, color: Colors.grey, size: 40),
+                    ),
+                  )
+                else
+                  const Icon(Icons.insert_drive_file, color: Colors.grey, size: 40),
+                const SizedBox(height: 4),
+                Text(
+                  file.fileName ?? "Unknown",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 10),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+              onPressed: () => _confirmDeleteFile(file),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _uploadStaffDocuments() async {
+    if (selectedDriveAccount == null) return;
+
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.any,
+    );
+
+    if (result != null) {
+      setState(() => isDriveFilesLoading = true);
+      try {
+        List<MultipartFile> multipartFiles = [];
+        List<String> docTypes = [];
+
+        for (var file in result.files) {
+          if (file.path != null) {
+            multipartFiles.add(await MultipartFile.fromFile(file.path!,
+                filename: file.name));
+            docTypes.add(selectedDocumentTypeId ?? "");
+          }
+        }
+
+        final staffName = staffDetails?.data.userData.staffName ?? "";
+
+        final response = await HttpService.staffDocumentUpload(
+          selectedDriveAccount!.id,
+          docTypes,
+          multipartFiles,
+          staffName,
+          staffDetails!.data.userData.userId,
+        );
+
+        if (response != null && response.status == true) {
+          Common.toastMessaage(
+              response.message ?? "Uploaded successfully", Colors.green);
+          _fetchGoogleDriveFiles(selectedDriveAccount!.id);
+        } else {
+          Common.toastMessaage(
+              response?.message ?? "Upload failed", Colors.red);
+        }
+      } catch (e) {
+        log("Upload error: $e");
+        Common.toastMessaage("Error during upload", Colors.red);
+      } finally {
+        setState(() => isDriveFilesLoading = false);
+      }
+    }
+  }
+
+  void _confirmDeleteFile(StaffDocument file) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete File"),
+        content: Text("Are you sure you want to delete '${file.fileName}'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteStaffDocument(file);
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteStaffDocument(StaffDocument file) async {
+    if (file.fileId == null || selectedDriveAccount == null) return;
+
+    setState(() => isDriveFilesLoading = true);
+    try {
+      final response = await HttpService.deleteGoogleDriveFilesndFolders(
+          file.fileId!, selectedDriveAccount!.id);
+      if (response != null && response.status == true) {
+        Common.toastMessaage(
+            response.message ?? "Deleted successfully", Colors.green);
+        _fetchGoogleDriveFiles(selectedDriveAccount!.id);
+      } else {
+        Common.toastMessaage(response?.message ?? "Delete failed", Colors.red);
+      }
+    } catch (e) {
+      log("Delete error: $e");
+      Common.toastMessaage("Error during deletion", Colors.red);
+    } finally {
+      setState(() => isDriveFilesLoading = false);
+    }
+  }
+
+  void _showFileOptions(StaffDocument file) {
+    // Optional: show more options on long press
   }
 
   Widget _buildSalaryTab() {

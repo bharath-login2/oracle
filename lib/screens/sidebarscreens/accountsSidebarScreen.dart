@@ -12,6 +12,8 @@ import 'package:login2/screens/accounts/expense/expense_categories.dart';
 import 'package:login2/screens/accounts/expense/expense_list.dart';
 import 'package:login2/screens/accounts/expense/pendingExpenseHistory.dart';
 import 'package:login2/screens/accounts/expense/unverifiedReponsePage.dart';
+import 'package:login2/screens/accounts/recentTransactionsPage.dart';
+import 'package:login2/screens/accounts/archivedInvoicePage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/screens/leadManagement/viewLeadsNew.dart';
@@ -473,8 +475,8 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         icon: Icons.money_sharp,
         title: 'Recent Transactions',
         onTap: () {
-          // Navigator.pop(context);
-          //_handleMenuItemTap(context, 12);
+          Navigator.pop(context);
+          _handleMenuItemTap(context, 66);
         },
       ),
       _buildMenuItem(
@@ -489,8 +491,8 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         icon: Icons.pending_actions_rounded,
         title: 'Archived Invoices',
         onTap: () {
-          // Navigator.pop(context);
-          //  _handleMenuItemTap(context, 2);
+          Navigator.pop(context);
+          _handleMenuItemTap(context, 77);
         },
       ),
       _buildExpansionMenuItem(
@@ -770,6 +772,28 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
           context,
           MaterialPageRoute(
             builder: (context) => UnverifiedTransactionsPage(
+              token: widget.token,
+            ),
+          ),
+        );
+        break;
+
+      case 66:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RecentTransactionsPage(
+              token: widget.token,
+            ),
+          ),
+        );
+        break;
+
+      case 77:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ArchivedInvoicePage(
               token: widget.token,
             ),
           ),

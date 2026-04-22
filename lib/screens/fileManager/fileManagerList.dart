@@ -14,6 +14,8 @@ import '../leadManagement/imageUploadController.dart';
 import '../leadManagement/docViewWebView.dart';
 import 'package:login2/screens/authentication/googleDriveAccountsModel.dart';
 import 'package:login2/screens/authentication/googleDriveFilesModel.dart';
+import '../../models/lead_management/renameGdriveApiModel.dart';
+import '../../models/lead_management/deleteGoogleDriveFileModel.dart';
 import '../../core/common.dart';
 
 class FileMangerList extends StatefulWidget {
@@ -744,6 +746,7 @@ class _FileMangerListState extends State<FileMangerList> {
       color = Colors.orange;
     }
     return InkWell(
+      onLongPress: () => _showDriveItemOptions(file),
       onTap: () {
         if (file.isFolder == 'Y') {
           setState(() {
@@ -1208,5 +1211,161 @@ class _FileMangerListState extends State<FileMangerList> {
                   createdBy: file.createdBy ?? "S3",
                   createdDate: file.createdAt ?? "")));
     }
+  }
+  void _showDriveItemOptions(GoogleDriveFile file) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              file.fileName,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.edit_rounded, size: 20, color: Colors.blue),
+            ),
+            title: const Text("Rename", style: TextStyle(fontWeight: FontWeight.w500)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _showRenameDriveDialog(file);
+            },
+          ),
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.red),
+            ),
+            title: const Text("Delete", style: TextStyle(fontWeight: FontWeight.w500)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _showDeleteDriveConfirm(file);
+            },
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  void _showRenameDriveDialog(GoogleDriveFile file) {
+    final controller = TextEditingController(text: file.fileName);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Rename Item"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: "New Name",
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2a86c9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              final newName = controller.text.trim();
+              if (newName.isEmpty || newName == file.fileName) {
+                Navigator.pop(ctx);
+                return;
+              }
+              Navigator.pop(ctx);
+              Common.showProgressDialog(context, "Renaming...");
+              try {
+                final res = await HttpService.renameGoogleDriveFilesndFolders(
+                  file.fileId ?? file.id,
+                  newName,
+                );
+                if (mounted) Navigator.pop(context); // Close progress dialog
+                if (res != null && res.status == true) {
+                  Common.toastMessaage(res.message, Colors.green);
+                  _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+                      parentId: selectedFolderId ?? "");
+                } else {
+                  Common.toastMessaage(res?.message ?? "Rename failed", Colors.red);
+                }
+              } catch (e) {
+                if (mounted) Navigator.pop(context);
+                Common.toastMessaage("Error: $e", Colors.red);
+              }
+            },
+            child: const Text("Rename", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDriveConfirm(GoogleDriveFile file) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text("Delete Item"),
+        content: Text("Are you sure you want to delete '${file.fileName}'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              Common.showProgressDialog(context, "Deleting...");
+              try {
+                final res = await HttpService.deleteGoogleDriveFilesndFolders(
+                  file.fileId ?? file.id,
+                  selectedDriveAccount!.id,
+                );
+                if (mounted) Navigator.pop(context); // Close progress dialog
+                if (res != null && (res.status == true || res.status == 'success')) {
+                  Common.toastMessaage(res.message ?? "Deleted successfully", Colors.green);
+                  _fetchGoogleDriveFiles(selectedDriveAccount!.id,
+                      parentId: selectedFolderId ?? "");
+                } else {
+                  Common.toastMessaage(res?.message ?? "Delete failed", Colors.red);
+                }
+              } catch (e) {
+                if (mounted) Navigator.pop(context);
+                Common.toastMessaage("Error: $e", Colors.red);
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 }

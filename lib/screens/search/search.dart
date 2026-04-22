@@ -101,7 +101,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
   List checkedAssignedStaffItemsName = [];
   bool? isCalled = true;
 
-  Timer? _debounceTimer;
+
   final FocusNode _searchFocusNode = FocusNode();
 
   static const Color appBarStart = Color(0xFF2a86c9);
@@ -151,7 +151,8 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     getData('desc', false, widget.status);
 
     scrollController.addListener(_onScroll);
-    searchController.addListener(_onSearchChanged);
+    // Removed auto-search listener to reduce load
+    // searchController.addListener(_onSearchChanged);
   }
 
   void _onScroll() {
@@ -164,18 +165,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     }
   }
 
-  void _onSearchChanged() {
-    // No full state rebuild on every keystroke.
-    // The clear icon will be handled by a ValueListenableBuilder in _buildSearchBar.
-    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      if (searchController.text.isNotEmpty) {
-        getList();
-      } else {
-        setState(() => response = null);
-      }
-    });
-  }
+
 
   @override
   void dispose() {
@@ -183,7 +173,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     searchController.dispose();
     _searchFocusNode.dispose();
     _slideController.dispose();
-    _debounceTimer?.cancel();
+
     super.dispose();
   }
 
@@ -443,16 +433,35 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
             suffixIcon: ValueListenableBuilder<TextEditingValue>(
               valueListenable: searchController,
               builder: (context, value, child) {
-                return value.text.isNotEmpty
-                    ? IconButton(
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (value.text.isNotEmpty)
+                      IconButton(
                         icon: const Icon(Icons.clear_rounded,
                             color: Color(0xFF94A3B8)),
                         onPressed: () {
                           searchController.clear();
                           setState(() => response = null);
                         },
-                      )
-                    : const SizedBox.shrink();
+                      ),
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2a86c9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.search_rounded,
+                            color: Colors.white, size: 20),
+                        onPressed: () {
+                          _searchFocusNode.unfocus();
+                          getList();
+                        },
+                      ),
+                    ),
+                  ],
+                );
               },
             ),
             border: InputBorder.none,

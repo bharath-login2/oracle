@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/rental/rentReturnModel.dart';
 import 'package:login2/screens/rental/addRentalReturnPage.dart';
@@ -24,15 +25,15 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
   String? _selectedCustomerId;
   DateTime? _fromDate;
   DateTime? _toDate;
-  Set<String> _selectedStatuses = {};
+  final Set<String> _selectedStatuses = {};
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
   // UI State
   int _selectedTabIndex = 0;
-  bool _showFilters = false;
+  final bool _showFilters = false;
   String _selectedFilter = 'All';
-  List<String> _statusFilters = ['All', 'Pending', 'Completed'];
+  final List<String> _statusFilters = ['All', 'Pending', 'Completed'];
 
   @override
   void initState() {
@@ -65,7 +66,7 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
       filters['search'] = _searchQuery;
     }
 
-    final data = await _httpService.getRentalReturnList(filters: filters);
+    final data = await HttpService.getRentalReturnList(filters: filters);
     setState(() {
       _rentalReturnData = data;
       _isRefreshing = false;
@@ -614,7 +615,6 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
   Widget _buildRentalReturnCard(RentalReturnItem item) {
     return InkWell(
       onTap: () {
-        // Handle card tap - show details or edit
       },
       borderRadius: BorderRadius.circular(18),
       child: Container(
@@ -746,7 +746,7 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
                         constraints: const BoxConstraints(),
                         onSelected: (value) {
                           if (value == 'edit') {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => AddRentalReturnPage(returnId: item.returnId.toString()))).then((_) => _loadRentalReturns());
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => AddRentalReturnPage(returnId: item.returnId.toString(),customerName: item.customerName.toString()))).then((_) => _loadRentalReturns());
                           } else if (value == 'delete') {
                             _showDeleteConfirmation(item);
                           }
@@ -776,19 +776,19 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Balance: ${item.balanceQty}",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15.5,
-                          color: item.hasExcessReturn
-                              ? Colors.orange
-                              : item.hasBalance
-                                  ? Colors.red
-                                  : Colors.green,
-                        ),
-                      ),
+                      // const SizedBox(height: 4),
+                      // Text(
+                      //   "Balance: ${item.balanceQty}",
+                      //   style: TextStyle(
+                      //     fontWeight: FontWeight.bold,
+                      //     fontSize: 15.5,
+                      //     color: item.hasExcessReturn
+                      //         ? Colors.orange
+                      //         : item.hasBalance
+                      //             ? Colors.red
+                      //             : Colors.green,
+                      //   ),
+                      // ),
                       const SizedBox(height: 6),
                       _buildStatusChip(item),
                     ],
@@ -1158,13 +1158,23 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              // Implement delete logic here if API is available
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Delete functionality not yet implemented by API')),
-              );
+              setState(() => _isLoading = true);
+              try {
+                final response = await HttpService.deleteRentReturn(item.returnId.toString());
+                if (response != null && response.status) {
+                  Common.toastMessaage(response.message, Colors.green);
+                  _loadRentalReturns();
+                } else {
+                  Common.toastMessaage(response?.message ?? 'Failed to delete rental return', Colors.red);
+                  setState(() => _isLoading = false);
+                }
+              } catch (e) {
+                log('Error deleting rental return: $e');
+                Common.toastMessaage('Error: $e', Colors.red);
+                setState(() => _isLoading = false);
+              }
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),

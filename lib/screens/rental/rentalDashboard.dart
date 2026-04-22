@@ -15,6 +15,7 @@ import 'package:login2/screens/rental/paymentReportListPage.dart';
 import 'package:login2/screens/rental/rentIssueListPage.dart';
 import 'package:login2/screens/rental/rentalReturnList.dart';
 import 'package:login2/screens/rental/damagedListPage.dart';
+import 'package:login2/screens/rental/expiredListPage.dart';
 import 'package:login2/screens/drawerScreen.dart';
 import 'package:login2/service/service.dart';
 
@@ -391,6 +392,13 @@ class _RentalDashboardState extends State<RentalDashboard> {
                   builder: (context) => DamagedListPage(token: widget.token),
                 ),
               );
+            }else if (value == 'expired_list') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ExpiredListPage(token: widget.token),
+                ),
+              );
             }
           },
           itemBuilder: (context) => [
@@ -401,6 +409,16 @@ class _RentalDashboardState extends State<RentalDashboard> {
                   Icon(Icons.report_problem_outlined, color: Colors.red),
                   SizedBox(width: 10),
                   Text('Damaged List'),
+                ],
+              ),
+            ),
+             const PopupMenuItem(
+              value: 'expired_list',
+              child: Row(
+                children: [
+                  Icon(Icons.date_range, color: Colors.red),
+                  SizedBox(width: 10),
+                  Text('Expired List'),
                 ],
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/models/rental/rentalIssueDetailsModel.dart';
 import 'package:login2/screens/rental/addRentalIssuePage.dart';
 import 'package:login2/service/service.dart';
@@ -85,6 +86,22 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
     );
   }
 
+   String _formatDate(String dateStr, {bool includeTime = false}) {
+    if (dateStr.isEmpty) return "";
+    try {
+      DateTime dateTime;
+      if (dateStr.contains(" ")) {
+        dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").parse(dateStr);
+      } else {
+        dateTime = DateFormat("yyyy-MM-dd").parse(dateStr);
+      }
+      return DateFormat(includeTime ? "dd-MM-yyyy HH:mm" : "dd-MM-yyyy")
+          .format(dateTime);
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   Widget _buildDetailsContent() {
     final issue = _details!.data.rentIssue;
     return SingleChildScrollView(
@@ -98,8 +115,8 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
             children: [
               _buildDetailRow("Rent No", issue.rentNo),
               _buildDetailRow("Invoice No", issue.invoiceNo),
-              _buildDetailRow("Invoice Date", issue.invoiceDate),
-              _buildDetailRow(
+              _buildDetailRow("Invoice Date", _formatDate(issue.invoiceDate)),
+              _buildDetailRowSmall(
                   "Duration", "${issue.fromDate} to ${issue.toDate}"),
               _buildDetailRow("Total Days", issue.totalDays),
             ],
@@ -198,6 +215,27 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
             value,
             style: TextStyle(
               fontSize: 14,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+              color: color ?? const Color(0xFF2D3142),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+   Widget _buildDetailRowSmall(String label, String value,
+      {bool isBold = false, Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
               fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
               color: color ?? const Color(0xFF2D3142),
             ),

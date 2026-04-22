@@ -2,7 +2,10 @@
 
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:device_marketing_names/device_marketing_names.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +54,57 @@ class _SplashScreenState extends State<SplashScreen> {
   String? navigation;
   String? _debugLink; // Debug variable
   final firebaseServices = FirebaseServices();
+
+  Future<Map<String, String>> getDeviceInfo() async {
+    String deviceName = '';
+    String platform = '';
+    String osVersion = '';
+    String modelCode = '';
+
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final marketingNames = DeviceMarketingNames();
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
+        deviceName = await marketingNames.getSingleName();
+        if (deviceName.isEmpty || deviceName == androidInfo.model) {
+          deviceName =
+              androidInfo.manufacturer != null && androidInfo.model != null
+                  ? '${androidInfo.manufacturer} ${androidInfo.model}'
+                  : androidInfo.model ?? 'Unknown Android Device';
+        }
+
+        platform = 'Android';
+        osVersion = androidInfo.version.release ?? 'Unknown';
+        modelCode = androidInfo.model ?? '';
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
+        deviceName = await marketingNames.getSingleName();
+        if (deviceName.isEmpty) {
+          deviceName =
+              iosInfo.utsname.machine ?? iosInfo.model ?? 'Unknown iOS Device';
+        }
+
+        platform = 'iOS';
+        osVersion = iosInfo.systemVersion ?? 'Unknown';
+        modelCode = iosInfo.utsname.machine ?? '';
+      }
+
+      log('Device detected: $deviceName ($platform $osVersion)');
+    } catch (e) {
+      log('Error getting device info: $e');
+      deviceName = 'Unknown Device';
+      platform = Platform.isAndroid ? 'Android' : 'iOS';
+      osVersion = 'Unknown';
+    }
+
+    return {
+      'deviceName': deviceName,
+      'platform': platform,
+      'osVersion': osVersion,
+      'mobileName': modelCode,
+    };
+  }
 
   @override
   void initState() {
@@ -190,11 +244,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> initDeepLinks() async {
     log('[DEEPLINK] SplashScreen: initDeepLinks called');
-
-    // We no longer manually check initial link here because MyApp's global
-    // listener already handles the stream (including the initial link).
-    // This prevents double-handling on startup.
-
     String? token = await Common.getSharedPref("token");
     String? ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
@@ -669,6 +718,15 @@ class _SplashScreenState extends State<SplashScreen> {
             (Route<dynamic> route) => false);
         return;
       }
+      final deviceInfo = await getDeviceInfo();
+    //   HttpService.mobileDetails(
+    //  //   token: token,
+    //     deviceName: deviceInfo['deviceName'],
+    //     platform: deviceInfo['platform'],
+    //     osVersion: deviceInfo['osVersion'],
+    //     mobileName: deviceInfo['mobileName'],
+    //   );
+
       LoginCheckModel? loginCheck =
           await HttpService.loginCheck(token, firebaseToken!);
       if (loginCheck == null) {

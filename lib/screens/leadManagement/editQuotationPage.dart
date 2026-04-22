@@ -293,7 +293,7 @@ class _EditQuotationPageState extends State<EditQuotationPage> {
   Future<void> _loadMaterials() async {
     setState(() => isLoadingMaterials = true);
     final httpService = HttpService();
-    final materialList = await httpService.getMaterials();
+    final materialList = await HttpService.getMaterials();
     if (materialList != null && materialList.data != null) {
       setState(() {
         materials = materialList.data!;
