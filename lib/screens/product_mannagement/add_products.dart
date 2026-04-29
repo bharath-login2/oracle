@@ -1,7 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:login2/core/common.dart';
@@ -25,24 +22,42 @@ class _AddProductsState extends State<AddProducts> {
   TextEditingController productCode = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
   TextEditingController tax = TextEditingController();
+  TextEditingController discount = TextEditingController();
   TextEditingController totalAmount = TextEditingController();
   TextEditingController mrp = TextEditingController();
   TextEditingController contentId = TextEditingController();
+  TextEditingController hsnCode = TextEditingController();
+  TextEditingController brand = TextEditingController();
+  TextEditingController expiryDays = TextEditingController();
+  TextEditingController openingStock = TextEditingController();
+  TextEditingController currentStock = TextEditingController();
   TextEditingController noOfDays = TextEditingController();
   TextEditingController remindBefore = TextEditingController();
   TextEditingController description = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController subCategory = TextEditingController();
+
   List filteredCategories = [];
   List filteredSubCategories = [];
+  List<String> productTypeList = [];
+  String? selectedProductType;
   String? productImage;
   String categoryId = "";
   String subCategoryId = "";
+  String selectedStockStatus = "In Stock";
   bool isLoading = true;
+  bool addStock = false;
+  bool checkStock = false;
+
+  TextEditingController unitController = TextEditingController();
+  bool hasWarranty = false;
+  List<TextEditingController> pipelineControllers = [TextEditingController()];
+  bool addPublish = false;
+  String selectedStatus = "Published";
+  String selectedVisibility = "Public";
   ProductCategoriesModel? categories;
   SubCategoriesModel? subCategories;
   PostProductModel? postResponse;
-
   getProductSubCategory() async {
     subCategories = await HttpService.getProductSubCategory(categoryId);
     if (subCategories != null) {
@@ -59,6 +74,15 @@ class _AddProductsState extends State<AddProducts> {
       filteredCategories = categories!.data;
       setState(() {
         isLoading = false;
+      });
+    }
+  }
+
+  getProductTypes() async {
+    final response = await HttpService.getProductTypes();
+    if (response != null && response.status) {
+      setState(() {
+        productTypeList = response.data;
       });
     }
   }
@@ -83,19 +107,36 @@ class _AddProductsState extends State<AddProducts> {
 
   postProducts() async {
     postResponse = await HttpService.postProducts(
-        contentId.text,
-        categoryId,
-        subCategoryId,
-        productName.text,
-        productCode.text,
-        mrp.text,
-        noOfDays.text,
-        remindBefore.text,
-        sellingPrice.text,
-        tax.text,
-        totalAmount.text,
-        description.text,
-        productImage);
+      contentId.text,
+      categoryId,
+      subCategoryId,
+      productName.text,
+      productCode.text,
+      mrp.text,
+      noOfDays.text,
+      remindBefore.text,
+      sellingPrice.text,
+      tax.text,
+      totalAmount.text,
+      description.text,
+      productImage,
+      selectedProductType ?? "",
+      hsnCode.text,
+      brand.text,
+      discount.text,
+      expiryDays.text,
+      addStock ? "1" : "0",
+      checkStock ? "1" : "0",
+      openingStock.text,
+      currentStock.text,
+      selectedStockStatus,
+      unit: unitController.text,
+      hasWarranty: hasWarranty,
+      pipelines: pipelineControllers.map((e) => e.text).where((text) => text.isNotEmpty).toList(),
+      addPublish: addPublish,
+      publishStatus: selectedStatus,
+      visibility: selectedVisibility,
+    );
     if (postResponse != null && postResponse!.status == true) {
       Navigator.pop(context);
       Navigator.pop(context, true);
@@ -109,6 +150,7 @@ class _AddProductsState extends State<AddProducts> {
   @override
   void initState() {
     getProductCategory();
+    getProductTypes();
     super.initState();
   }
 
@@ -172,517 +214,392 @@ class _AddProductsState extends State<AddProducts> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                  _buildSectionCard(
+                    title: "Basic Information",
                     children: [
-                      Text(
-                        "Product Image",
-                        style: TextStyle(
-                          fontSize: 18,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDropdownField(
+                              label: "Product Type *",
+                              value: selectedProductType,
+                              items: productTypeList,
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedProductType = val;
+                                });
+                              },
+                              validator: (val) => val == null
+                                  ? "Select Product Type"
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: productName,
+                              label: "Product Name *",
+                              icon: Icons.layers_outlined,
+                              validator: (val) => val!.isEmpty
+                                  ? "Enter Product Name"
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: hsnCode,
+                              label: selectedProductType == "Service"
+                                  ? "SAC Code"
+                                  : (selectedProductType == "Material" ||
+                                          selectedProductType == "Rental")
+                                      ? "HSN/SAC Code"
+                                      : "HSN Code",
+                              icon: Icons.qr_code_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: brand,
+                              label: "Brand",
+                              icon: Icons.branding_watermark_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: productCode,
+                        label: "Product Code",
+                        icon: Icons.terminal_outlined,
                       ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      selectFile();
-                    },
-                    child: productImage == null
-                        ? Container(
-                            height: MediaQuery.of(context).size.height * .3,
-                            width: MediaQuery.of(context).size.width * .92,
-                            decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(8)),
-                            child: const Icon(
-                              Icons.add_a_photo,
-                              size: 150,
-                            ),
-                          )
-                        : Container(
-                            height: MediaQuery.of(context).size.height * .3,
-                            width: MediaQuery.of(context).size.width * .92,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: DecorationImage(
-                                fit: BoxFit.fitWidth,
-                                image: FileImage(
-                                  File(productImage!),
-                                ),
-                              ),
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: "Pricing & Tax",
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: sellingPrice,
+                              label: selectedProductType == "Rental"
+                                  ? "Rental Price *"
+                                  : "Selling Price *",
+                              icon: Icons.currency_rupee_outlined,
+                              keyboardType: TextInputType.number,
+                              onChanged: (val) => _updateTotalAmount(),
+                              validator: (val) => val!.isEmpty
+                                  ? (selectedProductType == "Rental" ? "Enter Rental Price" : "Enter Selling Price")
+                                  : null,
                             ),
                           ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  TextFormField(
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please Enter Product Name";
-                      }
-                      return null;
-                    },
-                    controller: productName,
-                    decoration: const InputDecoration(
-                      labelText: 'Product Name *',
-                      prefixIcon: Icon(Icons.layers, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: tax,
+                              label: "Tax (%)",
+                              icon: Icons.percent_outlined,
+                              keyboardType: TextInputType.number,
+                              onChanged: (val) => _updateTotalAmount(),
+                            ),
+                          ),
+                        ],
                       ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  TextFormField(
-                    controller: productCode,
-                    decoration: const InputDecoration(
-                      labelText: 'Product Code',
-                      prefixIcon: Icon(Icons.terminal, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: discount,
+                              label: "Discount (%)",
+                              icon: Icons.discount_outlined,
+                              keyboardType: TextInputType.number,
+                              onChanged: (val) => _updateTotalAmount(),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildTextField(
+                              controller: mrp,
+                              label: "MRP *",
+                              icon: Icons.price_check_outlined,
+                              keyboardType: TextInputType.number,
+                              validator: (val) {
+                                if (val!.isEmpty) return "Enter MRP";
+                                double mrpValue = double.tryParse(val) ?? 0;
+                                double totalValue =
+                                    double.tryParse(totalAmount.text) ?? 0;
+                                if (mrpValue < totalValue) {
+                                  return "MRP < Total Amount";
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: totalAmount,
+                        label: "Total Amount",
+                        icon: Icons.account_balance_wallet_outlined,
+                        readOnly: true,
+                        fillColor: Colors.grey[100],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 14.0),
-                  Row(
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: "Other Details",
                     children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: category,
-                          readOnly: true,
-                          onTap: (() {
-                            dropDialog(context, "category");
-                          }),
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Add Category";
-                            }
-                            return null;
-                          },
-                          decoration: const InputDecoration(
-                              labelText: 'Category *',
-                              prefixIcon:
-                                  Icon(Icons.category, color: Colors.grey),
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              labelStyle: TextStyle(color: Colors.grey)),
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: contentId,
+                              label: "Content ID",
+                              icon: Icons.badge_outlined,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildDynamicExpiryField(),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: () {
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: description,
+                        label: "Description",
+                        icon: Icons.description_outlined,
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: "Classification",
+                    children: [
+                      _buildSelectField(
+                        controller: category,
+                        label: "Category *",
+                        icon: Icons.category_outlined,
+                        onTap: () => dropDialog(context, "category"),
+                        validator: (val) =>
+                            val!.isEmpty ? "Select Category" : null,
+                        actionWidget: _buildAddButton(() {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
                                     const ProductCategories()),
-                          ).then((value) {
-                            getProductCategory();
-                          });
-                        },
-                        child: Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                                colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.add, color: Colors.white),
+                          ).then((value) => getProductCategory());
+                        }),
+                      ),
+                      if (categoryId != "") ...[
+                        const SizedBox(height: 16),
+                        _buildSelectField(
+                          controller: subCategory,
+                          label: "Sub Category *",
+                          icon: Icons.account_tree_outlined,
+                          onTap: () =>
+                              dropDialog(context, "sub category"),
+                          validator: (val) => val!.isEmpty
+                              ? "Select Sub Category"
+                              : null,
+                          actionWidget: _buildAddButton(() {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SubCategories(
+                                  catId: categoryId,
+                                  title: category.text,
+                                ),
+                              ),
+                            ).then((value) => getProductSubCategory());
+                          }),
                         ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (selectedProductType == "Service") ...[
+                    _buildPipelineSection(),
+                    const SizedBox(height: 16),
+                  ],
+                  _buildSectionCard(
+                    title: "Stock Management",
+                    children: [
+                      Row(
+                        children: [
+                          Text("Stock",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[700])),
+                          const Spacer(),
+                          Checkbox(
+                            value: addStock,
+                            onChanged: (val) {
+                              setState(() {
+                                addStock = val!;
+                                if (!addStock) {
+                                  openingStock.clear();
+                                  currentStock.clear();
+                                  selectedStockStatus = "In Stock";
+                                }
+                              });
+                            },
+                            activeColor: const Color(0xFF2a86c9),
+                          ),
+                          const Text("Add Stock"),
+                          const SizedBox(width: 12),
+                          Checkbox(
+                            value: checkStock,
+                            onChanged: (val) {
+                              setState(() {
+                                checkStock = val!;
+                              });
+                            },
+                            activeColor: const Color(0xFF2a86c9),
+                          ),
+                          const Text("Check Stock"),
+                        ],
+                      ),
+                      if (addStock) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: openingStock,
+                                label: "Opening Stock *",
+                                icon: Icons.inventory_2_outlined,
+                                keyboardType: TextInputType.number,
+                                validator: (val) => addStock && val!.isEmpty ? "Enter Opening Stock" : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: currentStock,
+                                label: "Current Stock *",
+                                icon: Icons.inventory_outlined,
+                                keyboardType: TextInputType.number,
+                                validator: (val) => addStock && val!.isEmpty ? "Enter Current Stock" : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdownField(
+                          label: "Stock Status",
+                          value: selectedStockStatus,
+                          items: ["In Stock", "Low Stock", "Out of Stock"],
+                          onChanged: (val) {
+                            setState(() {
+                              selectedStockStatus = val!;
+                            });
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (selectedProductType == "Ecommerce" ||
+                      selectedProductType == "Rental") ...[
+                    const SizedBox(height: 16),
+                    _buildPublishSection(),
+                  ],
+                  const SizedBox(height: 16),
+                  _buildSectionCard(
+                    title: "Product Image",
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          selectFile();
+                        },
+                        child: productImage == null
+                            ? Container(
+                                height: 180,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[50],
+                                    border: Border.all(color: Colors.grey[300]!),
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.add_a_photo_outlined,
+                                        size: 40, color: Colors.grey[400]),
+                                    const SizedBox(height: 8),
+                                    Text("Add Product Photo",
+                                        style: TextStyle(color: Colors.grey[500])),
+                                  ],
+                                ),
+                              )
+                            : Container(
+                                height: 180,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: DecorationImage(
+                                    fit: BoxFit.cover,
+                                    image: FileImage(
+                                      File(productImage!),
+                                    ),
+                                  ),
+                                ),
+                              ),
                       ),
                     ],
                   ),
-                  Visibility(
-                    visible: categoryId != "",
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 14.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: subCategory,
-                              readOnly: true,
-                              onTap: (() {
-                                dropDialog(context, "sub category");
-                              }),
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "Please Add Sub Category";
-                                }
-                                return null;
-                              },
-                              decoration: const InputDecoration(
-                                  labelText: 'Sub Category *',
-                                  prefixIcon:
-                                      Icon(Icons.category, color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
-                                  ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SubCategories(
-                                    catId: categoryId,
-                                    title: category.text,
-                                  ),
-                                ),
-                              ).then((value) {
-                                getProductSubCategory();
-                              });
-                            },
-                            child: Container(
-                              height: 50,
-                              width: 50,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(colors: [
-                                  Color(0xFF2a86c9),
-                                  Color(0xFF406dbe)
-                                ]),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(Icons.add, color: Colors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  // TextFormField(
-                  //   onChanged: ((value) {
-                  //     // if (tax.text != "") {
-                  //     setState(() {
-                  //       if (value == "") {
-                  //         totalAmount.text = "";
-                  //       }
-                  //       if (tax.text == "") {
-                  //         totalAmount.text = sellingPrice.text;
-                  //       }
-                  //       double taxVal = double.parse(tax.text);
-                  //       double val = double.parse(value);
-                  //       totalAmount.text =
-                  //           (val + val * (taxVal / 100)).toString();
-                  //     });
-                  //     // }
-                  //   }),
-                  //   keyboardType: TextInputType.number,
-                  //   validator: (value) {
-                  //     if (value!.isEmpty) {
-                  //       return "Please Enter Selling Price";
-                  //     }
-                  //     return null;
-                  //   },
-                  //   controller: sellingPrice,
-                  //   decoration: const InputDecoration(
-                  //     labelText: 'Selling Price *',
-                  //     prefixIcon:
-                  //         Icon(Icons.currency_rupee, color: Colors.grey),
-                  //     border: OutlineInputBorder(),
-                  //     focusedBorder: OutlineInputBorder(
-                  //       borderSide: BorderSide(color: Colors.grey),
-                  //     ),
-                  //     labelStyle: TextStyle(color: Colors.grey),
-                  //   ),
-                  // ),
-                  TextFormField(
-                    onChanged: ((value) {
-                      setState(() {
-                        if (value == "") {
-                          totalAmount.text = "";
-                        }
-                        if (tax.text == "") {
-                          // Round the selling price when there's no tax
-                          totalAmount.text = value == ""
-                              ? ""
-                              : (double.tryParse(value) ?? 0)
-                                  .roundToDouble()
-                                  .toString();
-                        } else {
-                          double taxVal = double.parse(tax.text);
-                          double val = double.parse(value);
-                          // Calculate and round the total amount
-                          totalAmount.text = (val + val * (taxVal / 100))
-                              .roundToDouble()
-                              .toString();
-                        }
-                      });
-                    }),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please Enter Selling Price";
-                      }
-                      return null;
-                    },
-                    controller: sellingPrice,
-                    decoration: const InputDecoration(
-                      labelText: 'Selling Price *',
-                      prefixIcon:
-                          Icon(Icons.currency_rupee, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  // TextFormField(
-                  //   onChanged: ((value) {
-                  //     setState(() {
-                  //       if (value == "") {
-                  //         totalAmount.text = sellingPrice.text;
-                  //       }
-                  //       double amt = double.parse(sellingPrice.text);
-                  //       double val = double.parse(value);
-                  //       totalAmount.text = (amt + amt * (val / 100)).toString();
-                  //     });
-                  //   }),
-                  //   keyboardType: TextInputType.number,
-                  //   controller: tax,
-                  //   decoration: const InputDecoration(
-                  //     labelText: 'Tax in (%)',
-                  //     prefixIcon: Icon(Icons.terminal, color: Colors.grey),
-                  //     border: OutlineInputBorder(),
-                  //     focusedBorder: OutlineInputBorder(
-                  //       borderSide: BorderSide(color: Colors.grey),
-                  //     ),
-                  //     labelStyle: TextStyle(color: Colors.grey),
-                  //   ),
-                  // ),
-                  TextFormField(
-                    onChanged: ((value) {
-                      setState(() {
-                        if (value == "") {
-                          // Round the selling price when tax is empty
-                          totalAmount.text = sellingPrice.text == ""
-                              ? ""
-                              : (double.tryParse(sellingPrice.text) ?? 0)
-                                  .roundToDouble()
-                                  .toString();
-                        } else {
-                          double amt = double.parse(sellingPrice.text);
-                          double val = double.parse(value);
-                          // Calculate and round the total amount
-                          totalAmount.text = (amt + amt * (val / 100))
-                              .roundToDouble()
-                              .toString();
-                        }
-                      });
-                    }),
-                    keyboardType: TextInputType.number,
-                    controller: tax,
-                    decoration: const InputDecoration(
-                      labelText: 'Tax in (%)',
-                      prefixIcon: Icon(Icons.terminal, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  TextFormField(
-                    readOnly: true,
-                    keyboardType: TextInputType.number,
-                    controller: totalAmount,
-                    decoration: const InputDecoration(
-                      labelText: 'Total Amount',
-                      prefixIcon:
-                          Icon(Icons.currency_rupee, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  // TextFormField(
-                  //   keyboardType: TextInputType.number,
-                  //   onChanged: (value) {
-                  //     if (double.parse(value) <
-                  //         double.parse(totalAmount.text)) {
-                  //       Common.toastMessaage(
-                  //           "MRP should not be lower than the selling price",
-                  //           Colors.red);
-                  //     }
-                  //   },
-                  //   controller: mrp,
-                  //   decoration: const InputDecoration(
-                  //     labelText: 'MRP *',
-                  //     prefixIcon:
-                  //         Icon(Icons.currency_rupee, color: Colors.grey),
-                  //     border: OutlineInputBorder(),
-                  //     focusedBorder: OutlineInputBorder(
-                  //       borderSide: BorderSide(color: Colors.grey),
-                  //     ),
-                  //     labelStyle: TextStyle(color: Colors.grey),
-                  //   ),
-                  // ),
-                  TextFormField(
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) {
-                      if (value.isNotEmpty && totalAmount.text.isNotEmpty) {
-                        double mrpValue = double.tryParse(value) ?? 0;
-                        double totalValue =
-                            double.tryParse(totalAmount.text) ?? 0;
-
-                        if (mrpValue < totalValue) {
-                          Common.toastMessaage(
-                              "MRP should not be lower than the selling price",
-                              Colors.red);
-                        }
-                      }
-                    },
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please Enter MRP";
-                      }
-                      double mrpValue = double.tryParse(value) ?? 0;
-                      double totalValue =
-                          double.tryParse(totalAmount.text) ?? 0;
-                      if (mrpValue < totalValue) {
-                        return "MRP should not be lower than the selling price";
-                      }
-                      return null;
-                    },
-                    controller: mrp,
-                    decoration: const InputDecoration(
-                      labelText: 'MRP *',
-                      prefixIcon:
-                          Icon(Icons.currency_rupee, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  TextFormField(
-                    controller: contentId,
-                    decoration: const InputDecoration(
-                      labelText: 'Content Id',
-                      prefixIcon: Icon(Icons.badge, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  // const SizedBox(
-                  //   height: 14,
-                  // ),
-                  // TextFormField(
-                  //   keyboardType: TextInputType.number,
-                  //   validator: (value) {
-                  //     if (value!.isEmpty) {
-                  //       return "Please Enter Number of Days";
-                  //     }
-                  //     return null;
-                  //   },
-                  //   controller: noOfDays,
-                  //   decoration: const InputDecoration(
-                  //     labelText: 'Validity*',
-                  //     prefixIcon:
-                  //         Icon(Icons.calendar_month, color: Colors.grey),
-                  //     border: OutlineInputBorder(),
-                  //     focusedBorder: OutlineInputBorder(
-                  //       borderSide: BorderSide(color: Colors.grey),
-                  //     ),
-                  //     labelStyle: TextStyle(color: Colors.grey),
-                  //   ),
-                  // ),
-                  // const SizedBox(
-                  //   height: 14,
-                  // ),
-                  // TextFormField(
-                  //   keyboardType: TextInputType.number,
-                  //   controller: remindBefore,
-                  //   decoration: const InputDecoration(
-                  //     labelText: 'Remind me before (Days)',
-                  //     prefixIcon: Icon(Icons.edit_calendar, color: Colors.grey),
-                  //     border: OutlineInputBorder(),
-                  //     focusedBorder: OutlineInputBorder(
-                  //       borderSide: BorderSide(color: Colors.grey),
-                  //     ),
-                  //     labelStyle: TextStyle(color: Colors.grey),
-                  //   ),
-                  // ),
-                  const SizedBox(
-                    height: 14,
-                  ),
-                  TextFormField(
-                    maxLines: 3,
-                    controller: description,
-                    decoration: const InputDecoration(
-                      labelText: 'Description',
-                      prefixIcon: Icon(Icons.description, color: Colors.grey),
-                      border: OutlineInputBorder(),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      labelStyle: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(height: 20.0),
+                  const SizedBox(height: 32),
                   Container(
-                    height: 40,
-                    width: double.maxFinite,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF3375e0),
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    height: 54,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF2a86c9), Color(0xFF406dbe)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF2a86c9).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: RawMaterialButton(
                       onPressed: () {
                         if (formKey.currentState!.validate()) {
-                        //  if (productImage != null) {
-                            Common.showProgressDialog(context, "Loading...");
-                            postProducts();
-                          // } else {
-                          //   Common.toastMessaage(
-                          //       "Please Add Product Image", Colors.red);
-                          // }
+                          Common.showProgressDialog(context, "Saving Product...");
+                          postProducts();
                         } else {
                           Common.toastMessaage(
-                              "Please add all the fields", Colors.red);
+                              "Please complete all required fields", Colors.red);
                         }
                       },
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       child: const Text(
-                        "Submit",
-                        style: TextStyle(color: Colors.white),
+                        "SAVE PRODUCT",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
-                  )
+                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -692,18 +609,382 @@ class _AddProductsState extends State<AddProducts> {
     );
   }
 
-  String _calculateRoundedTotal(String sellingPriceStr, String taxStr) {
-    if (sellingPriceStr.isEmpty) return "";
+  void _updateTotalAmount() {
+    double selling = double.tryParse(sellingPrice.text) ?? 0;
+    double taxVal = double.tryParse(tax.text) ?? 0;
+    double discVal = double.tryParse(discount.text) ?? 0;
 
-    double sellingPrice = double.tryParse(sellingPriceStr) ?? 0;
+    double total = (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
+    setState(() {
+      totalAmount.text = total.roundToDouble().toString();
+    });
+  }
 
-    if (taxStr.isEmpty) {
-      return sellingPrice.roundToDouble().toString();
+  Widget _buildLabel(String label) {
+    bool hasAsterisk = label.contains('*');
+    String cleanLabel = label.replaceAll('*', '').trim();
+    
+    return RichText(
+      text: TextSpan(
+        text: cleanLabel,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey[700],
+        ),
+        children: [
+          if (hasAsterisk)
+            const TextSpan(
+              text: ' *',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicExpiryField() {
+    if (selectedProductType == "Service") {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 0.0, bottom: 8.0),
+            child: _buildLabel("Warranty *"),
+          ),
+          Row(
+            children: [
+              Radio<bool>(
+                value: true,
+                groupValue: hasWarranty,
+                onChanged: (val) => setState(() => hasWarranty = val!),
+                activeColor: const Color(0xFF2a86c9),
+              ),
+              const Text("Yes", style: TextStyle(fontSize: 14)),
+              const SizedBox(width: 16),
+              Radio<bool>(
+                value: false,
+                groupValue: hasWarranty,
+                onChanged: (val) => setState(() => hasWarranty = val!),
+                activeColor: const Color(0xFF2a86c9),
+              ),
+              const Text("No", style: TextStyle(fontSize: 14)),
+            ],
+          ),
+        ],
+      );
+    } else if (selectedProductType == "Ecommerce" ||
+        selectedProductType == "Material" ||
+        selectedProductType == "Rental") {
+      return _buildTextField(
+        controller: unitController,
+        label: "Unit",
+        icon: Icons.scale_outlined,
+        actionWidget: _buildAddButton(() {
+          Common.toastMessaage("Quick Add Unit", Colors.green);
+        }),
+      );
     } else {
-      double taxPercent = double.tryParse(taxStr) ?? 0;
-      double total = sellingPrice + (sellingPrice * taxPercent / 100);
-      return total.roundToDouble().toString();
+      return _buildTextField(
+        controller: expiryDays,
+        label: "Expiry Days",
+        icon: Icons.event_busy_outlined,
+        keyboardType: TextInputType.number,
+      );
     }
+  }
+
+  Widget _buildPipelineSection() {
+    return _buildSectionCard(
+      title: "Add Pipeline",
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: pipelineControllers.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: _buildTextField(
+                controller: pipelineControllers[index],
+                label: "Pipeline Name *",
+                icon: Icons.linear_scale,
+                validator: (val) => val!.isEmpty ? "Enter Pipeline Name" : null,
+                actionWidget: index == 0
+                    ? _buildActionButton(Icons.add, const Color(0xFF26A69A), () {
+                        setState(() {
+                          pipelineControllers.add(TextEditingController());
+                        });
+                      })
+                    : _buildActionButton(Icons.delete_outline, const Color(0xFFEF5350), () {
+                        setState(() {
+                          pipelineControllers.removeAt(index);
+                        });
+                      }),
+              ),
+            );
+          },
+        )
+      ],
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        width: 50,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildPublishSection() {
+    return _buildSectionCard(
+      title: "Publish",
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Checkbox(
+            value: addPublish,
+            onChanged: (val) {
+              setState(() {
+                addPublish = val!;
+              });
+            },
+            activeColor: const Color(0xFF2a86c9),
+          ),
+          const Text("Add Publish", style: TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+      children: [
+        if (addPublish) ...[
+          _buildDropdownField(
+            label: "Status",
+            value: selectedStatus,
+            items: ["Published", "Draft"],
+            onChanged: (val) {
+              setState(() {
+                selectedStatus = val!;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildDropdownField(
+            label: "Visibility",
+            value: selectedVisibility,
+            items: ["Public", "Private"],
+            onChanged: (val) {
+              setState(() {
+                selectedVisibility = val!;
+              });
+            },
+          ),
+        ]
+      ],
+    );
+  }
+
+  Widget _buildSectionCard({required String title, required List<Widget> children, Widget? trailing}) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
+            ),
+            const Divider(height: 24),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    bool readOnly = false,
+    Color? fillColor,
+    ValueChanged<String>? onChanged,
+    FormFieldValidator<String>? validator,
+    Widget? actionWidget,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                keyboardType: keyboardType,
+                maxLines: maxLines,
+                readOnly: readOnly,
+                onChanged: onChanged,
+                validator: validator,
+                decoration: InputDecoration(
+                  hintText: label.replaceAll('*', '').trim(),
+                  prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+                  filled: fillColor != null,
+                  fillColor: fillColor,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                  ),
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            if (actionWidget != null) ...[
+              const SizedBox(width: 8),
+              actionWidget,
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    FormFieldValidator<String>? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          onChanged: onChanged,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: label.replaceAll('*', '').trim(),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 2),
+            ),
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    FormFieldValidator<String>? validator,
+    Widget? actionWidget,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                readOnly: true,
+                onTap: onTap,
+                validator: validator,
+                decoration: InputDecoration(
+                  hintText: label.replaceAll('*', '').trim(),
+                  prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+                  suffixIcon: const Icon(Icons.arrow_drop_down),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                  ),
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            if (actionWidget != null) ...[
+              const SizedBox(width: 8),
+              actionWidget,
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddButton(VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        width: 50,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2a86c9), Color(0xFF406dbe)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
   }
 
   Future<dynamic> dropDialog(BuildContext context, String title) {

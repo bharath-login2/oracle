@@ -20,7 +20,8 @@ import 'editInvoice.dart';
 
 class PendingInvoice extends StatefulWidget {
   String token;
-  PendingInvoice(this.token, {super.key});
+  String customerId;
+  PendingInvoice(this.token,this.customerId, {super.key});
   @override
   State<PendingInvoice> createState() => _PendingInvoiceState();
 }
@@ -102,7 +103,7 @@ class _PendingInvoiceState extends State<PendingInvoice>
       });
     }
 
-    invoiceResponse = await HttpService.pendingInvoiceList(widget.token);
+    invoiceResponse = await HttpService.pendingInvoiceList(widget.token,widget.customerId);
     if (invoiceResponse != null) {
       invoices = invoiceResponse!.data.lists;
       filteredInvoices.addAll(invoices);
@@ -126,7 +127,7 @@ class _PendingInvoiceState extends State<PendingInvoice>
       filteredInvoices.clear();
     });
 
-    invoiceResponse = await HttpService.pendingInvoiceList(widget.token);
+    invoiceResponse = await HttpService.pendingInvoiceList(widget.token,widget.customerId);
     if (invoiceResponse != null) {
       invoices = invoiceResponse!.data.lists;
       filteredInvoices.addAll(invoices);

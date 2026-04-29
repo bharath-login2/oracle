@@ -51,6 +51,7 @@ import 'package:login2/models/lead_management/WorkLoginAndOutModel.dart';
 import 'package:login2/models/lead_management/activityModel.dart';
 import 'package:login2/models/lead_management/addGoogleDriveResponseModel.dart';
 import 'package:login2/models/lead_management/addMileStoneModel.dart';
+import 'package:login2/models/lead_management/addModuleModel.dart';
 import 'package:login2/models/lead_management/approvedListLeaveModel.dart';
 import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
 import 'package:login2/models/lead_management/attendanceAllmodel.dart';
@@ -89,7 +90,9 @@ import 'package:login2/models/lead_management/getLeaveApprovalRejectTemplate.dar
 import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
 import 'package:login2/models/lead_management/getRecentExpenseModel.dart';
 import 'package:login2/models/lead_management/getRentReturnModel.dart';
+import 'package:login2/models/lead_management/getRentalViewModel.dart';
 import 'package:login2/models/lead_management/getStaffDocumentListModel.dart';
+import 'package:login2/models/lead_management/getTaskListModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/invoiceListHistory.dart';
 import 'package:login2/models/lead_management/leadCategoryReportOntapModel.dart';
@@ -103,6 +106,7 @@ import 'package:login2/models/lead_management/leadSourceReportOntapModel.dart';
 import 'package:login2/models/lead_management/leadSourceTableModel.dart';
 import 'package:login2/models/lead_management/lead_source_report_model.dart';
 import 'package:login2/models/lead_management/materialModel.dart';
+import 'package:login2/models/lead_management/moduleListModel.dart';
 import 'package:login2/models/lead_management/newLeadDashboardModel.dart';
 import 'package:login2/models/lead_management/pendingExpenseModel.dart';
 import 'package:login2/models/lead_management/pendingListLeaveModel.dart';
@@ -110,7 +114,10 @@ import 'package:login2/models/lead_management/pendingListModel.dart';
 import 'package:login2/models/lead_management/phoneCallReportModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/productDescriptionModel.dart';
+import 'package:login2/models/lead_management/productTypeModel.dart';
+import 'package:login2/models/lead_management/projectDetailsModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
+import 'package:login2/models/lead_management/projectTraceModel.dart';
 import 'package:login2/models/lead_management/quotationDetailsModel.dart';
 import 'package:login2/models/lead_management/quotationEditModel.dart';
 import 'package:login2/models/lead_management/quotationListModel.dart';
@@ -582,7 +589,6 @@ class HttpService {
     }
   }
 
-/* Lead Management  Starts Here..*/
   static Future leadDashboard(
       token, fromDate, toDate, fromDate1, toDate1) async {
     log(token);
@@ -2062,10 +2068,7 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}search_lead_clients",
           queryParameters: params);
-      //  t(params);
-      //t(result);
-
-      SearchModel model = SearchModel.fromJson(result.data);
+       SearchModel model = SearchModel.fromJson(result.data);
 
       return model;
     } catch (e) {
@@ -2073,20 +2076,15 @@ class HttpService {
     }
   }
 
-/* Lead Management  Ends Here..*/
-/* User Management Starts Here..*/
+
   static Future menuList(token) async {
     var params = {
       "token": token,
     };
-    //t(params);
     try {
       var result = await _dio.get("${await Config.getUrl()}get_package_menus",
           queryParameters: params);
-
       MenuModel model = MenuModel.fromJson(result.data);
-      // t(result);
-
       return model;
     } catch (e) {
       log("error: $e");
@@ -2263,7 +2261,6 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}add_staff_image",
           data: formData);
-
       AddUserImageModel model = AddUserImageModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -2275,7 +2272,6 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}update_staff_image",
           data: formData);
-
       AddUserImageModel model = AddUserImageModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -3492,9 +3488,10 @@ class HttpService {
     }
   }
 
-  static Future pendingInvoiceList(token) async {
+  static Future pendingInvoiceList(token, customerId) async {
     var formData = FormData.fromMap({
       'token': token,
+      'client_id': customerId,
     });
     try {
       var result = await _dio.post(
@@ -6282,8 +6279,24 @@ class HttpService {
     String totalAmount,
     String description,
     productImage,
-  ) async {
-    var formData = FormData.fromMap({
+    String productType,
+    String hsnCode,
+    String brand,
+    String discount,
+    String expiryDays,
+    String addStock,
+    String checkStock,
+    String openingStock,
+    String currentStock,
+    String stockStatus, {
+    String? unit,
+    bool? hasWarranty,
+    List<String>? pipelines,
+    bool? addPublish,
+    String? publishStatus,
+    String? visibility,
+  }) async {
+    Map<String, dynamic> data = {
       "token": await Common.getSharedPref('token'),
       "content_id": contentId,
       "category_id": categoryId,
@@ -6293,15 +6306,61 @@ class HttpService {
       "product_mrp": productMrp,
       "no_of_days": noOfDays,
       "remind_before": remindBefore,
-      "selling_price": sellingPrice,
       "tax_percent": taxPercent,
       "total_amount": totalAmount,
       "description": description,
-      "product_image":
-          (productImage == null || productImage == "null" || productImage == "")
-              ? ""
-              : await MultipartFile.fromFile(productImage.toString())
-    });
+      "product_type": productType,
+      "brand": brand,
+      "discount": discount,
+      "add_stock": addStock,
+      "check_stock": checkStock,
+      "opening_stock": openingStock,
+      "current_stock": currentStock,
+      "stock_status": stockStatus,
+    };
+
+    if (productImage != null && productImage != "null" && productImage != "") {
+      data["product_image"] = await MultipartFile.fromFile(productImage.toString());
+    } else {
+      data["product_image"] = "";
+    }
+
+    if (productType == "Rental") {
+      data["rentalPrice"] = sellingPrice;
+      data["hsnSacCode"] = hsnCode;
+      data["unit"] = unit ?? "";
+      data["is_publish"] = addPublish == true ? 1 : 0;
+      if (addPublish == true) {
+        data["publish_status"] = publishStatus;
+        data["visibility"] = visibility;
+      }
+    } else if (productType == "Ecommerce") {
+      data["selling_price"] = sellingPrice;
+      data["hsn_code"] = hsnCode;
+      data["unit"] = unit ?? "";
+      data["is_publish"] = addPublish == true ? 1 : 0;
+      if (addPublish == true) {
+        data["publish_status"] = publishStatus;
+        data["visibility"] = visibility;
+      }
+    } else if (productType == "Service") {
+      data["selling_price"] = sellingPrice;
+      data["sacCode"] = hsnCode;
+      data["warranty"] = hasWarranty == true ? "Yes" : "No";
+      if (pipelines != null && pipelines.isNotEmpty) {
+        data["pipelines"] = jsonEncode(pipelines);
+      }
+    } else if (productType == "Material") {
+      data["selling_price"] = sellingPrice;
+      data["hsnSacCode"] = hsnCode;
+      data["unit"] = unit ?? "";
+    } else {
+      data["selling_price"] = sellingPrice;
+      data["hsn_code"] = hsnCode;
+      data["expiry_days"] = expiryDays;
+    }
+
+    var formData = FormData.fromMap(data);
     try {
       var result = await _dio.post("${await Config.getUrl()}postProduct",
           data: formData);
@@ -9040,13 +9099,16 @@ class HttpService {
     }
   }
 
-  static Future<DocumentListModel?> getDocumentType() async {
+  static Future<DocumentListModel?> getDocumentType(String staffId) async {
     try {
       final token = await Common.getSharedPref('token');
 
       final response = await _dio.post(
         "${await Config.getUrl()}getDocumentTypes",
-        data: FormData.fromMap({'token': token}),
+        data: FormData.fromMap({
+          'token': token,
+          'staff_id': staffId,
+        }),
         options: Options(contentType: 'multipart/form-data'),
       );
 
@@ -11500,10 +11562,31 @@ class HttpService {
     return null;
   }
 
-  Future<UnverifiedTransactionModel?> getUnverifiedDetails() async {
+  Future<UnverifiedTransactionModel?> getUnverifiedDetails({
+    String? isFiltered,
+    String? type,
+    String? fromDate,
+    String? toDate,
+    String? createdBy,
+    String? accountHead,
+    String? month,
+    String? year,
+    String? status,
+  }) async {
     try {
       final token = await Common.getSharedPref("token");
-      final formData = FormData.fromMap({"token": token});
+      Map<String, dynamic> mapData = {"token": token};
+      if (isFiltered != null) mapData["is_filtered"] = isFiltered;
+      if (type != null) mapData["type"] = type;
+      if (fromDate != null) mapData["from_date"] = fromDate;
+      if (toDate != null) mapData["to_date"] = toDate;
+      if (createdBy != null) mapData["created_by"] = createdBy;
+      if (accountHead != null) mapData["account_head"] = accountHead;
+      if (month != null) mapData["month"] = month;
+      if (year != null) mapData["year"] = year;
+      if (status != null) mapData["status"] = status;
+
+      final formData = FormData.fromMap(mapData);
 
       final response = await _dio.post(
         "${await Config.getUrl()}getTransactiondiffer",
@@ -11888,14 +11971,11 @@ class HttpService {
         "end_date": endDate,
         "product_id": productId,
       });
-
       log("getRentalPaymentReport request: ${formData.fields}");
-
       final response = await _dio.post(
         "${await Config.getUrl()}payment_report_api",
         data: formData,
       );
-
       if (response.statusCode == 200) {
         final data = response.data;
         log("getRentalPaymentReport response: $data");
@@ -14151,7 +14231,7 @@ class HttpService {
     List<String> documentTypes,
     List<MultipartFile> documents,
     String staffName,
-      String staffId,
+    String staffId,
   ) async {
     try {
       final token = await Common.getSharedPref("token");
@@ -14164,7 +14244,7 @@ class HttpService {
         "token": token,
         "account_id": accountId,
         "staff_name": staffName,
-         "reference_id": staffId,
+        "reference_id": staffId,
         for (int i = 0; i < documentTypes.length; i++)
           "document_types[$i]": documentTypes[i],
         for (int i = 0; i < documents.length; i++)
@@ -14222,10 +14302,12 @@ class HttpService {
     return null;
   }
 
-
-   static Future<GetCompanyInvoiceModel?> getRecentInvoice(
+  static Future<GetCompanyInvoiceModel?> getRecentInvoice(
       String page, String pageSize,
-      {String? fDate, String? tDate, String? customerId, String? typeId}) async {
+      {String? fDate,
+      String? tDate,
+      String? customerId,
+      String? typeId}) async {
     try {
       final token = await Common.getSharedPref("token");
       if (token?.isEmpty ?? true) {
@@ -14257,10 +14339,9 @@ class HttpService {
     return null;
   }
 
-
-
-    static Future<GetRecentExpenseModel?> getRecentExpense(
-      String page, String pageSize, {String? fDate, String? tDate}) async {
+  static Future<GetRecentExpenseModel?> getRecentExpense(
+      String page, String pageSize,
+      {String? fDate, String? tDate}) async {
     try {
       final token = await Common.getSharedPref("token");
       if (token?.isEmpty ?? true) {
@@ -14290,8 +14371,7 @@ class HttpService {
     return null;
   }
 
-
-   static Future<GetArchievedInvoiceModel?> getArchievedInvoice(
+  static Future<GetArchievedInvoiceModel?> getArchievedInvoice(
       String page, String pageSize) async {
     try {
       final token = await Common.getSharedPref("token");
@@ -14303,7 +14383,6 @@ class HttpService {
         "token": token,
         "page": page,
         "pageSize": pageSize,
-        
       });
       final response = await _dio.post(
         "${await Config.getUrl()}get_archieved_invoice_list",
@@ -14321,9 +14400,7 @@ class HttpService {
     return null;
   }
 
-
-   static Future<UnhideInvoiceModel?> unhideInvoice(
-      String invoiceId) async {
+  static Future<UnhideInvoiceModel?> unhideInvoice(String invoiceId) async {
     try {
       final token = await Common.getSharedPref("token");
       if (token?.isEmpty ?? true) {
@@ -14333,8 +14410,6 @@ class HttpService {
       final formData = FormData.fromMap({
         "token": token,
         "invoice_id": invoiceId,
-       
-        
       });
       final response = await _dio.post(
         "${await Config.getUrl()}unhide_invoice",
@@ -14344,6 +14419,267 @@ class HttpService {
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
         return UnhideInvoiceModel.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetRentalViewModel?> getRentalReturnView(
+      String returnId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "return_id": returnId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}view_rent_return",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetRentalViewModel.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<ProjectDetailsResponse?> projectDetailsDashboard(
+      String projectId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "project_id": projectId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}project_detail",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ProjectDetailsResponse.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<ProjectTraceResponse?> projectTrace(
+      String projectId, String userId,
+      {String? fromDate,
+      String? toDate,
+      String? moduleId,
+      String? taskId}) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "project_id": projectId,
+        "user_id": userId,
+        if (fromDate != null) "from_date": fromDate,
+        if (toDate != null) "to_date": toDate,
+        if (moduleId != null) "module_id": moduleId,
+        if (taskId != null) "task_id": taskId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_staff_task_list",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ProjectTraceResponse.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<AddModuleResponse?> addModule(
+      String projectId, String moduleName) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "project_id": projectId,
+        "module_name": moduleName,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}insert_module",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return AddModuleResponse.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<AddModuleResponse?> updateModule(
+      String moduleId, String moduleName) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("updateModule error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "module_id": moduleId,
+        "module_name": moduleName,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_module",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return AddModuleResponse.fromJson(response.data);
+      }
+      log("updateModule error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("updateModule error: $e");
+    }
+    return null;
+  }
+
+  static Future<bool> deleteModule(String moduleId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("deleteModule error: Token not found");
+        return false;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "module_id": moduleId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_module",
+        data: formData,
+      );
+      return response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success');
+    } catch (e) {
+      log("deleteModule error: $e");
+    }
+    return false;
+  }
+
+  static Future<ModuleListResponse?> getModuleList(String projectId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "project_id": projectId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_module_list",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ModuleListResponse.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetTaskListResponse?> getTaskList(
+      String projectId, String userId, String moduleId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "project_id": projectId,
+        "user_id": userId,
+        "module_id": moduleId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_tasks_by_project",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetTaskListResponse.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+
+  
+  static Future<ProductTypeResponse?> getProductTypes() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_selected_product_types",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ProductTypeResponse.fromJson(response.data);
       }
       log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
     } catch (e) {

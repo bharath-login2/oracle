@@ -20,12 +20,10 @@ class _PaymentReportListPageState extends State<PaymentReportListPage> {
   List<CustomerExp> _customers = [];
   List<MaterialData> _materials = [];
   bool _isLoading = true;
-
-  // Filter variables
-  String _selectedCustomerId = '0';
-  String _selectedPaymentStatus = '0';
-  String _selectedPaymentMethod = '0';
-  String _selectedProductId = '0';
+  String _selectedCustomerId = '';
+  String _selectedPaymentStatus = '';
+  String _selectedPaymentMethod = '';
+  String _selectedProductId = '';
   DateTime? _fromDate;
   DateTime? _endDate;
 

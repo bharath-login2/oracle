@@ -1453,7 +1453,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             }),
 
                             // Add Task Button (only for last task)
-                            if (taskIndex == tasks.length - 1)
+                            if ((taskIndex == tasks.length - 1) && widget.Restart != 1)
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton.icon(
@@ -1590,7 +1590,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
                 const SizedBox(height: 12),
 
-                // Save Work Button (if applicable)
+              
                 if (widget.existingWork != null &&
                     widget.isPaused != 1 &&
                     widget.Restart != 1)

@@ -5,6 +5,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/rental/rentReturnModel.dart';
 import 'package:login2/screens/rental/addRentalReturnPage.dart';
+import 'package:login2/screens/rental/rentalReturnDetailsPage.dart';
 import 'package:login2/service/service.dart';
 
 class RentalReturnListPage extends StatefulWidget {
@@ -553,10 +554,7 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
 
   List<RentalReturnItem> _getFilteredList() {
     if (_rentalReturnData == null) return [];
-
     List<RentalReturnItem> filtered = _rentalReturnData!.data.list;
-
-    // Apply status filter
     if (_selectedFilter != 'All') {
       switch (_selectedFilter) {
         case 'Pending':
@@ -567,8 +565,6 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
           break;
       }
     }
-
-    // Apply search filter
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((item) {
         return item.customerName
@@ -578,10 +574,8 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
             item.invoiceNo.toLowerCase().contains(_searchQuery.toLowerCase());
       }).toList();
     }
-
     return filtered;
   }
-
   Color _getFilterColor(String filter) {
     switch (filter) {
       case 'Pending':
@@ -615,6 +609,13 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
   Widget _buildRentalReturnCard(RentalReturnItem item) {
     return InkWell(
       onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                RentalReturnDetailsPage(returnId: item.returnId.toString()),
+          ),
+        ).then((_) => _loadRentalReturns());
       },
       borderRadius: BorderRadius.circular(18),
       child: Container(
@@ -746,7 +747,21 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
                         constraints: const BoxConstraints(),
                         onSelected: (value) {
                           if (value == 'edit') {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => AddRentalReturnPage(returnId: item.returnId.toString(),customerName: item.customerName.toString()))).then((_) => _loadRentalReturns());
+                            Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => AddRentalReturnPage(
+                                          customerId: item.customerId.toString(),
+                                            returnId: item.returnId.toString(),
+                                            customerName:
+                                                item.customerName.toString(),
+                                                 invoiceNumber: item.invoiceNo.toString(),
+                                            customerStaffId:
+                                                item.customerStaffId.toString(),
+                                            customerStaffName: item
+                                                .customerStaffName
+                                                .toString())))
+                                .then((_) => _loadRentalReturns());
                           } else if (value == 'delete') {
                             _showDeleteConfirmation(item);
                           }
@@ -1162,12 +1177,15 @@ class _RentalReturnListPageState extends State<RentalReturnListPage> {
               Navigator.pop(context);
               setState(() => _isLoading = true);
               try {
-                final response = await HttpService.deleteRentReturn(item.returnId.toString());
+                final response = await HttpService.deleteRentReturn(
+                    item.returnId.toString());
                 if (response != null && response.status) {
                   Common.toastMessaage(response.message, Colors.green);
                   _loadRentalReturns();
                 } else {
-                  Common.toastMessaage(response?.message ?? 'Failed to delete rental return', Colors.red);
+                  Common.toastMessaage(
+                      response?.message ?? 'Failed to delete rental return',
+                      Colors.red);
                   setState(() => _isLoading = false);
                 }
               } catch (e) {

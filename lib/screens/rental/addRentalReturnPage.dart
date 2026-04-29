@@ -7,7 +7,6 @@ import 'package:login2/models/rental/rentalCustomerLocations.dart';
 import 'package:login2/models/rental/rentIdByCustomerReturnModel.dart';
 import 'package:login2/models/rental/rentalCollectedByStaffList.dart';
 import 'package:login2/models/rental/returnDetailsRentalModel.dart';
-import 'package:login2/models/lead_management/getRentReturnModel.dart';
 import 'package:login2/service/service.dart';
 
 class AddRentalReturnPage extends StatefulWidget {
@@ -18,7 +17,8 @@ class AddRentalReturnPage extends StatefulWidget {
   final String? customerStaffId;
   final String? customerStaffName;
   final String? returnId;
-
+  final String? issueDate;
+  final String? invoiceNumber;
   const AddRentalReturnPage({
     super.key,
     this.customerId,
@@ -28,6 +28,8 @@ class AddRentalReturnPage extends StatefulWidget {
     this.customerStaffId,
     this.customerStaffName,
     this.returnId,
+    this.issueDate,
+        this.invoiceNumber,
   });
 
   @override
@@ -75,11 +77,11 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
   @override
   void initState() {
     super.initState();
-    _loadData();
     if (widget.customerId != null) {
       _selectedCustomerId = widget.customerId;
       _selectedCustomerName = widget.customerName ?? "Customer";
       _selectedCustomerStaffName = widget.customerStaffName ?? "Customer Staff";
+      _selectedStaffId = widget.customerStaffId;
     }
     if (widget.locationId != null) {
       _selectedLocationId = widget.locationId;
@@ -90,8 +92,15 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
 
     _returnDateController.text =
         DateFormat('dd-MM-yyyy').format(DateTime.now());
-    _invoiceDateController.text =
-        DateFormat('dd-MM-yyyy').format(DateTime.now());
+
+    if (widget.issueDate != null && widget.issueDate!.isNotEmpty) {
+      _invoiceDateController.text = _formatDate(widget.issueDate!);
+    } else {
+      _invoiceDateController.text =
+          DateFormat('dd-MM-yyyy').format(DateTime.now());
+    }
+
+    _loadData();
   }
 
   Future<void> _loadData() async {
@@ -320,11 +329,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     setState(() {
       _invoiceAmount = totalAmount + otherExpenses;
       _grandTotal = totalAmount;
-      if (_selectedPaymentStatus == 'Paid') {
-        _totalPaidAmountController.text =
-            (_grandTotal - (_details?.previousAmountPaid ?? 0))
-                .toStringAsFixed(2);
-      }
     });
   }
 
@@ -382,7 +386,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
         'rent_id': _selectedRentId,
         'staff_id': _selectedStaffId,
         'return_date': _returnDateController.text,
-        'invoice_date': _returnDateController.text,
+        'invoice_date': _invoiceDateController.text,
+          'invoice_number': widget.invoiceNumber??"",
         'location': _selectedLocationId,
         'other_expenses': _otherExpensesController.text,
         'grand_total': _grandTotal.toStringAsFixed(2),
@@ -409,6 +414,8 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                 })
             .toList(),
       };
+
+      log("Submitting Rental Return FormData: $formData");
 
       if (widget.returnId != null) {
         formData['return_id'] = widget.returnId;
@@ -455,12 +462,23 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
     try {
       DateTime dateTime;
       if (dateStr.contains(" ")) {
+        // Handle yyyy-MM-dd HH:mm:ss
         dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").parse(dateStr);
+      } else if (dateStr.contains("-")) {
+        List<String> parts = dateStr.split("-");
+        if (parts[0].length == 4) {
+          // yyyy-MM-dd
+          dateTime = DateFormat("yyyy-MM-dd").parse(dateStr);
+        } else {
+          // dd-MM-yyyy
+          dateTime = DateFormat("dd-MM-yyyy").parse(dateStr);
+        }
       } else {
-        dateTime = DateFormat("yyyy-MM-dd").parse(dateStr);
+        dateTime = DateTime.parse(dateStr);
       }
       return DateFormat("dd-MM-yyyy").format(dateTime);
     } catch (e) {
+      log("Error formatting date ($dateStr): $e");
       return dateStr;
     }
   }
@@ -773,7 +791,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
-                                    value: _selectedLocationId,
+                                    value: _locations.any((l) => l.id == _selectedLocationId) ? _selectedLocationId : null,
                                     isExpanded: true,
                                     disabledHint: Text(_locations.firstWhere((l) => l.id == _selectedLocationId, orElse: () => LocationData(id: '', locationName: 'Site',customerId: "")).locationName, style: const TextStyle(fontSize: 12)),
                                     hint: const Text('Site',
@@ -819,7 +837,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
-                                    value: _selectedRentId,
+                                    value: _rentalIssues.any((issue) => issue.id == _selectedRentId) ? _selectedRentId : null,
                                     isExpanded: true,
                                     disabledHint: Text(_selectedRentId ?? 'Rent ID', style: const TextStyle(fontSize: 12)),
                                     hint: const Text('Rent ID',
@@ -856,7 +874,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
-                                    value: _selectedStaffId,
+                                    value: _customerStaff.any((staff) => staff.id == _selectedStaffId) ? _selectedStaffId : null,
                                     isExpanded: true,
                                     hint: Text(
                                         _selectedCustomerStaffName ??
@@ -872,9 +890,10 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                                                 const TextStyle(fontSize: 12)),
                                       );
                                     }).toList(),
-                                    onChanged: (value) {
-                                      setState(() => _selectedStaffId = value);
-                                    },
+                                    // onChanged: (value) {
+                                    //   setState(() => _selectedStaffId = value);
+                                    // },
+                                    onChanged: null,
                                   ),
                                 ),
                               ),
@@ -912,7 +931,50 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: _buildDateField(
-                                  'Return Date*', _returnDateController, true),
+                                'Return Date*',
+                                _returnDateController,
+                                true,
+                                onTap: () async {
+                                  DateTime firstDate = DateTime(2000);
+                                  if (widget.issueDate != null) {
+                                    try {
+                                      // Try to parse dd-MM-yyyy format
+                                      firstDate = DateFormat('dd-MM-yyyy')
+                                          .parse(widget.issueDate!);
+                                    } catch (e) {
+                                      try {
+                                        // Try to parse yyyy-MM-dd format
+                                        firstDate = DateFormat('yyyy-MM-dd')
+                                            .parse(widget.issueDate!);
+                                      } catch (e2) {
+                                        log("Error parsing issueDate: $e2");
+                                      }
+                                    }
+                                  }
+
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now().isAfter(firstDate) ? DateTime.now() : firstDate,
+                                    firstDate: firstDate,
+                                    lastDate: DateTime(2100),
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _returnDateController.text =
+                                          DateFormat('dd-MM-yyyy')
+                                              .format(picked);
+                                      // Recalculate days for all rows
+                                      for (var row in _productRows) {
+                                        row.noOfDaysController.text =
+                                            _calculateDuration(
+                                                _invoiceDateController.text);
+                                        _recalculateRowInternal(row);
+                                      }
+                                      _calculateSummary();
+                                    });
+                                  }
+                                },
+                              ),
                             ),
                           ],
                         ),
@@ -941,7 +1003,6 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                         _buildSummaryRow('Grand Total',
                             '₹${_grandTotal.toStringAsFixed(2)}'),
                         const SizedBox(height: 8),
-
                         TextFormField(
                           controller: _otherExpensesController,
                           keyboardType: TextInputType.number,
@@ -1099,12 +1160,10 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                   TextFormField(
                     controller: _totalPaidAmountController,
                     keyboardType: TextInputType.number,
-                    readOnly: _selectedPaymentStatus == 'Paid',
+                    readOnly: false,
                     style: const TextStyle(fontSize: 13),
                     decoration: _inputDecoration().copyWith(
-                        fillColor: _selectedPaymentStatus == 'Paid'
-                            ? Colors.grey.shade100
-                            : Colors.grey.shade50),
+                        fillColor: Colors.grey.shade50),
                     onChanged: (val) {
                       _calculateSummary();
                     },
@@ -1434,11 +1493,13 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
   }
 
   Widget _buildDateField(
-      String label, TextEditingController controller, bool isRequired) {
+      String label, TextEditingController controller, bool isRequired,
+      {VoidCallback? onTap}) {
     return TextFormField(
       controller: controller,
       style: const TextStyle(fontSize: 12),
       readOnly: true,
+      onTap: onTap,
       decoration: InputDecoration(
         labelText: label,
         isDense: true,

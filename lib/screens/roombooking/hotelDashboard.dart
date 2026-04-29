@@ -12,8 +12,15 @@ import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/models/dashboardModel.dart';
+import 'package:login2/models/lead_management/leadDashboardModel.dart';
+import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/roombooking/bookingListPage.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/togglebutton_start.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:app_settings/app_settings.dart';
 
 class RoomDashboard extends StatefulWidget {
   const RoomDashboard({super.key});
@@ -50,9 +57,18 @@ class _RoomDashboardState extends State<RoomDashboard>
   bool _hasError = false;
   String _errorMessage = '';
   String? token;
-  String? name;
+  String name = '';
+  String role = '';
   String? userId;
   String? phoneCallLogPermission;
+  String startAndStopWorkPermission = '';
+  bool createLeadCategory1 = false;
+  bool updateLeadCategory1 = false;
+  bool deleteLeadCategory1 = false;
+  int notificationCount = 0;
+  DashboardModel? userDashboard;
+  LeadDashboardModel? leadDashboard;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -107,7 +123,8 @@ class _RoomDashboardState extends State<RoomDashboard>
 
   Future<void> _loadUserData() async {
     token = await Common.getSharedPref("token");
-    name = await Common.getSharedPref("name");
+    name = await Common.getSharedPref("name") ?? '';
+    role = await Common.getSharedPref("role") ?? '';
     userId = await Common.getSharedPref("userId");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
@@ -121,7 +138,38 @@ class _RoomDashboardState extends State<RoomDashboard>
     NewleadDashboardPermission =
         await Common.getSharedPref("NewleadDashboardPermission");
     adminCheckPermission = await Common.getSharedPref("adminCheckPermission");
+    startAndStopWorkPermission =
+        await Common.getSharedPref("startAndStopWorkPermission") ?? '';
+    String createLP = await Common.getSharedPref("createLeadCategory") ?? '';
+    String updateLP = await Common.getSharedPref("updateLeadCategory") ?? '';
+    String deleteLP = await Common.getSharedPref("deleteLeadCategory") ?? '';
+    createLeadCategory1 = createLP == "true";
+    updateLeadCategory1 = updateLP == "true";
+    deleteLeadCategory1 = deleteLP == "true";
+    
+    if (token != null) {
+      _fetchMainDashboardData();
+    }
     setState(() {});
+  }
+
+  Future<void> _fetchMainDashboardData() async {
+    try {
+      userDashboard = await HttpService.mainDashboard(token!);
+      leadDashboard = await HttpService.leadDashboard(
+          token!, DateTime.now(), DateTime.now(), 
+          DateTime(DateTime.now().year, DateTime.now().month, 1).toString(), 
+          DateTime.now());
+      
+      if (leadDashboard != null) {
+        setState(() {
+          notificationCount = leadDashboard!.data.unreadNotification;
+        });
+      }
+      setState(() {});
+    } catch (e) {
+      print('Error fetching main dashboard data: $e');
+    }
   }
 
   Future<void> _fetchDashboardData() async {
@@ -412,6 +460,8 @@ class _RoomDashboardState extends State<RoomDashboard>
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
+        key: _scaffoldKey,
+        appBar: appBarWidget(context, "room"),
         endDrawer: DraweScreen(token ?? ''),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: FloatingActionButton(
@@ -465,15 +515,13 @@ class _RoomDashboardState extends State<RoomDashboard>
                 userId: userId!,
               )
             : null,
-        body: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: _isLoading
-                ? _buildLoadingView()
-                : _hasError
-                    ? _buildErrorView()
-                    : _buildDashboardView(currentMonth),
-          ),
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: _isLoading
+              ? _buildLoadingView()
+              : _hasError
+                  ? _buildErrorView()
+                  : _buildDashboardView(currentMonth),
         ),
       ),
     );
@@ -554,54 +602,13 @@ class _RoomDashboardState extends State<RoomDashboard>
   Widget _buildDashboardView(DateTime currentMonth) {
     final dashboardCount = _dashboardData!.data.dashboardCount;
     final floorStatusList = _dashboardData!.data.floorStatus;
-
-    return Column(
-      children: [
-        AppBar(
-          backgroundColor: const Color.fromARGB(255, 22, 145, 216),
-          foregroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
-          elevation: 4,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Room Dashboard',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.refresh_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              onPressed: _fetchDashboardData,
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            controller: _scrollController,
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      controller: _scrollController,
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -658,12 +665,205 @@ class _RoomDashboardState extends State<RoomDashboard>
                 _buildRecentBookingsSection(),
                 const SizedBox(height: 24),
                 _buildCalendarSection(currentMonth),
-                const SizedBox(height: 40),
-              ],
-            ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget appBarWidget(BuildContext context, String type) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(80),
+      child: Container(
+        decoration: const BoxDecoration(color: Color.fromARGB(255, 22, 145, 216)),
+        child: Padding(
+          padding: EdgeInsets.only(
+              left: 20, top: type == "lead" ? 55 : 35, bottom: 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () async {
+                      try {
+                        final result = await HttpService.getWorkStatus();
+                        if (result != null && result.data.isNotEmpty) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Logout Blocked'),
+                              content: const Text(
+                                  'Work is in progress. Please close all work before logging out.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          logout(context);
+                        }
+                      } catch (e) {
+                        print('Error checking work status: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Failed to check work status')),
+                        );
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 2,
+                              color: Colors.grey.shade800,
+                              offset: const Offset(0, 2.0),
+                            )
+                          ],
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF2191ce)),
+                      child: userDashboard != null
+                          ? CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                userDashboard!.data.profilePic,
+                              ),
+                            )
+                          : Shimmer.fromColors(
+                              enabled: true,
+                              baseColor: Colors.grey.shade300,
+                              highlightColor: Colors.grey.shade100,
+                              child: const CircleAvatar()),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        role,
+                        style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  // userDashboard != null && startAndStopWorkPermission == "true"
+                  //     ? StartStopToggle(
+                  //         initialStatus: userDashboard!.data.loginCheck,
+                  //         onToggle: (bool started) {
+                  //           setState(() {
+                  //             userDashboard!.data.loginCheck = started;
+                  //           });
+                  //         },
+                  //         setDashboardLoading: (bool loading) {
+                  //           setState(() {
+                  //             _isLoading = loading;
+                  //           });
+                  //         },
+                  //       )
+                  //     : const SizedBox(),
+                  // const SizedBox(width: 20),
+                  // InkWell(
+                  //   onTap: () async {
+                  //     var status = await Permission.notification.status;
+                  //     if (status.isPermanentlyDenied) {
+                  //       showDialog(
+                  //         context: context,
+                  //         builder: (context) => AlertDialog(
+                  //           title: const Text('Permission Required'),
+                  //           content: const Text(
+                  //               'Notification permission is permanently denied. Please enable it in settings to receive updates.'),
+                  //           actions: [
+                  //             TextButton(
+                  //               onPressed: () => Navigator.pop(context),
+                  //               child: const Text('Cancel'),
+                  //             ),
+                  //             TextButton(
+                  //               onPressed: () {
+                  //                 Navigator.pop(context);
+                  //                 AppSettings.openAppSettings(
+                  //                     type: AppSettingsType.notification);
+                  //               },
+                  //               child: const Text('Open Settings'),
+                  //             ),
+                  //           ],
+                  //         ),
+                  //       );
+                  //     } else {
+                  //       await Permission.notification.request();
+                  //     }
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //           builder: (context) => NotificationPage(
+                  //               token ?? '',
+                  //               createLeadCategory1,
+                  //               updateLeadCategory1,
+                  //               deleteLeadCategory1)),
+                  //     ).then((r) {
+                  //       _fetchDashboardData();
+                  //       _fetchMainDashboardData();
+                  //     });
+                  //   },
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.only(right: 20),
+                  //     child: Stack(
+                  //       children: [
+                  //         Image.asset("assets/icons/notification.png",
+                  //             width: 20, color: Colors.white),
+                  //         notificationCount > 0
+                  //             ? Positioned(
+                  //                 right: 0,
+                  //                 child: Container(
+                  //                   padding: const EdgeInsets.all(1),
+                  //                   decoration: BoxDecoration(
+                  //                     color: Colors.red,
+                  //                     borderRadius: BorderRadius.circular(6),
+                  //                   ),
+                  //                   constraints: const BoxConstraints(
+                  //                     minWidth: 12,
+                  //                     minHeight: 12,
+                  //                   ),
+                  //                 ),
+                  //               )
+                  //             : const SizedBox()
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+                  // InkWell(
+                  //   onTap: () {
+                  //     _scaffoldKey.currentState!.openEndDrawer();
+                  //   },
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.symmetric(horizontal: 20),
+                  //     child: Image.asset("assets/icons/menu.png", width: 20),
+                  //   ),
+                  // ),
+                ],
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -1637,7 +1837,7 @@ class _RoomDashboardState extends State<RoomDashboard>
     );
   }
 
-// Helper method to build detail sections
+
   Widget _buildDetailSection({
     required String title,
     required IconData icon,

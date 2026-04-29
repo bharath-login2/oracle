@@ -22,6 +22,7 @@ import 'package:login2/screens/authentication/face_detection_camera.dart';
 import 'package:login2/screens/authentication/login.dart';
 import 'package:login2/screens/fileManager/fileManagerList.dart';
 import 'package:login2/screens/leadManagement/ViewAllTargetReportPage.dart';
+import 'package:login2/screens/leadManagement/allReport_new.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNew.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
@@ -35,6 +36,7 @@ import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/staffReport.dart';
 import 'package:login2/screens/leadManagement/transferLeadReport.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
+import 'package:login2/screens/leadManagement/viewLeadsNew.dart';
 import 'package:login2/screens/leave_request_list_page.dart';
 import 'package:login2/screens/product_mannagement/product_list.dart';
 import 'package:login2/screens/rental/rentalDashboard.dart';
@@ -1369,7 +1371,7 @@ class _HomePageState extends State<HomePage> {
                                                                             Navigator.push(
                                                                               context,
                                                                               MaterialPageRoute(
-                                                                                  builder: (context) => AllReport(
+                                                                                  builder: (context) => AllReportNew(
                                                                                         widget.token!,
                                                                                         true,
                                                                                         true,
@@ -1417,12 +1419,15 @@ class _HomePageState extends State<HomePage> {
                                                                             Navigator.push(
                                                                               context,
                                                                               MaterialPageRoute(
-                                                                                  builder: (context) => TransferLeadReport(
+                                                                                  builder: (context) => ViewLeadsNew(
                                                                                         widget.token!,
                                                                                         true,
                                                                                         true,
                                                                                         true,
                                                                                         pageName: 'transferLeads',
+                                                                                        status: '0',
+                                                                                        leadType: '2',
+                                                                                        callStatus: '-2',
                                                                                       )),
                                                                             );
                                                                           },
@@ -1625,137 +1630,6 @@ class _HomePageState extends State<HomePage> {
                                                                               Navigator.push(
                                                                                 context,
                                                                                 MaterialPageRoute(
-                                                                                  builder: (context) => DetailedReportsPage(
-                                                                                    token: widget.token!,
-                                                                                    fromDate: fromdate,
-                                                                                    toDate: todate,
-                                                                                    fromDate1: fromdate1,
-                                                                                    toDate1: todate1,
-                                                                                    updateLeadPermission1: updateLeadPermission1,
-                                                                                    deleteLeadPermission1: deleteLeadPermission1,
-                                                                                    cloudCallPermission1: cloudCallPermission1,
-                                                                                    viewLeadPermission: viewLeadPermission,
-                                                                                  ),
-                                                                                ),
-                                                                              );
-                                                                            },
-                                                                            child:
-                                                                                Container(
-                                                                              width: MediaQuery.of(context).size.width * 0.38,
-                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                              child: const Padding(
-                                                                                padding: EdgeInsets.all(5),
-                                                                                child: Column(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                  children: [
-                                                                                    Icon(
-                                                                                      Icons.list_alt,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                    SizedBox(
-                                                                                      height: 5,
-                                                                                    ),
-                                                                                    Text('Detailed Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                        ]),
-                                                                    const SizedBox(
-                                                                      height: 8,
-                                                                    ),
-                                                                    Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          InkWell(
-                                                                            onTap:
-                                                                                () {
-                                                                              Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                    builder: (context) => FollowupCalendarPage(
-                                                                                        // token: widget.token
-                                                                                        //     .toString(),
-                                                                                        ),
-                                                                                  ));
-                                                                            },
-                                                                            child:
-                                                                                Container(
-                                                                              width: MediaQuery.of(context).size.width * 0.38,
-                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                              child: const Padding(
-                                                                                padding: EdgeInsets.all(5),
-                                                                                child: Column(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                  children: [
-                                                                                    Icon(
-                                                                                      Icons.calendar_month,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                    SizedBox(
-                                                                                      height: 5,
-                                                                                    ),
-                                                                                    Text('Followup Calendar', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          SizedBox(
-                                                                            width:
-                                                                                15,
-                                                                          ),
-                                                                          InkWell(
-                                                                            onTap:
-                                                                                () {
-                                                                              Navigator.push(
-                                                                                  context,
-                                                                                  MaterialPageRoute(
-                                                                                    builder: (context) => StaffWiseCallReport(),
-                                                                                  ));
-                                                                            },
-                                                                            child:
-                                                                                Container(
-                                                                              width: MediaQuery.of(context).size.width * 0.38,
-                                                                              decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
-                                                                              child: const Padding(
-                                                                                padding: EdgeInsets.all(5),
-                                                                                child: Column(
-                                                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                                                  children: [
-                                                                                    Icon(
-                                                                                      Icons.call,
-                                                                                      size: 15,
-                                                                                    ),
-                                                                                    SizedBox(
-                                                                                      height: 5,
-                                                                                    ),
-                                                                                    Text('Call Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
-                                                                                  ],
-                                                                                ),
-                                                                              ),
-                                                                            ),
-                                                                          ),
-                                                                          //  SizedBox(
-                                                                          //   width:
-                                                                          //       15,
-                                                                          // ),
-                                                                        ]),
-                                                                    const SizedBox(
-                                                                      height: 8,
-                                                                    ),
-                                                                    Row(
-                                                                        mainAxisAlignment:
-                                                                            MainAxisAlignment.spaceBetween,
-                                                                        children: [
-                                                                          InkWell(
-                                                                            onTap:
-                                                                                () {
-                                                                              Navigator.push(
-                                                                                context,
-                                                                                MaterialPageRoute(
                                                                                   builder: (context) => ViewAllTargetReportPage(id: userId),
                                                                                 ),
                                                                               );
@@ -1782,10 +1656,173 @@ class _HomePageState extends State<HomePage> {
                                                                               ),
                                                                             ),
                                                                           ),
+                                                                          // InkWell(
+                                                                          //   onTap:
+                                                                          //       () {
+                                                                          //     Navigator.push(
+                                                                          //       context,
+                                                                          //       MaterialPageRoute(
+                                                                          //         builder: (context) => DetailedReportsPage(
+                                                                          //           token: widget.token!,
+                                                                          //           fromDate: fromdate,
+                                                                          //           toDate: todate,
+                                                                          //           fromDate1: fromdate1,
+                                                                          //           toDate1: todate1,
+                                                                          //           updateLeadPermission1: updateLeadPermission1,
+                                                                          //           deleteLeadPermission1: deleteLeadPermission1,
+                                                                          //           cloudCallPermission1: cloudCallPermission1,
+                                                                          //           viewLeadPermission: viewLeadPermission,
+                                                                          //         ),
+                                                                          //       ),
+                                                                          //     );
+                                                                          //   },
+                                                                          //   child:
+                                                                          //       Container(
+                                                                          //     width: MediaQuery.of(context).size.width * 0.38,
+                                                                          //     decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                          //     child: const Padding(
+                                                                          //       padding: EdgeInsets.all(5),
+                                                                          //       child: Column(
+                                                                          //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                          //         children: [
+                                                                          //           Icon(
+                                                                          //             Icons.list_alt,
+                                                                          //             size: 15,
+                                                                          //           ),
+                                                                          //           SizedBox(
+                                                                          //             height: 5,
+                                                                          //           ),
+                                                                          //           Text('Detailed Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                          //         ],
+                                                                          //       ),
+                                                                          //     ),
+                                                                          //   ),
+                                                                          // ),
                                                                         ]),
-                                                                    const SizedBox(
-                                                                      height: 8,
-                                                                    ),
+                                                                    // const SizedBox(
+                                                                    //   height: 8,
+                                                                    // ),
+                                                                    // Row(
+                                                                    //     mainAxisAlignment:
+                                                                    //         MainAxisAlignment.spaceBetween,
+                                                                    //     children: [
+                                                                    //       InkWell(
+                                                                    //         onTap:
+                                                                    //             () {
+                                                                    //           Navigator.push(
+                                                                    //               context,
+                                                                    //               MaterialPageRoute(
+                                                                    //                 builder: (context) => FollowupCalendarPage(
+                                                                    //                     // token: widget.token
+                                                                    //                     //     .toString(),
+                                                                    //                     ),
+                                                                    //               ));
+                                                                    //         },
+                                                                    //         child:
+                                                                    //             Container(
+                                                                    //           width: MediaQuery.of(context).size.width * 0.38,
+                                                                    //           decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                    //           child: const Padding(
+                                                                    //             padding: EdgeInsets.all(5),
+                                                                    //             child: Column(
+                                                                    //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                    //               children: [
+                                                                    //                 Icon(
+                                                                    //                   Icons.calendar_month,
+                                                                    //                   size: 15,
+                                                                    //                 ),
+                                                                    //                 SizedBox(
+                                                                    //                   height: 5,
+                                                                    //                 ),
+                                                                    //                 Text('Followup Calendar', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                    //               ],
+                                                                    //             ),
+                                                                    //           ),
+                                                                    //         ),
+                                                                    //       ),
+                                                                    //       SizedBox(
+                                                                    //         width:
+                                                                    //             15,
+                                                                    //       ),
+                                                                    //       InkWell(
+                                                                    //         onTap:
+                                                                    //             () {
+                                                                    //           Navigator.push(
+                                                                    //               context,
+                                                                    //               MaterialPageRoute(
+                                                                    //                 builder: (context) => StaffWiseCallReport(),
+                                                                    //               ));
+                                                                    //         },
+                                                                    //         child:
+                                                                    //             Container(
+                                                                    //           width: MediaQuery.of(context).size.width * 0.38,
+                                                                    //           decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                    //           child: const Padding(
+                                                                    //             padding: EdgeInsets.all(5),
+                                                                    //             child: Column(
+                                                                    //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                    //               children: [
+                                                                    //                 Icon(
+                                                                    //                   Icons.call,
+                                                                    //                   size: 15,
+                                                                    //                 ),
+                                                                    //                 SizedBox(
+                                                                    //                   height: 5,
+                                                                    //                 ),
+                                                                    //                 Text('Call Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                    //               ],
+                                                                    //             ),
+                                                                    //           ),
+                                                                    //         ),
+                                                                    //       ),
+                                                                    //       //  SizedBox(
+                                                                    //       //   width:
+                                                                    //       //       15,
+                                                                    //       // ),
+                                                                    //     ]),
+                                                                    // const SizedBox(
+                                                                    //   height: 8,
+                                                                    // ),
+                                                                    // Row(
+                                                                    //     mainAxisAlignment:
+                                                                    //         MainAxisAlignment.spaceBetween,
+                                                                    //     children: [
+                                                                    //       InkWell(
+                                                                    //         onTap:
+                                                                    //             () {
+                                                                    //           Navigator.push(
+                                                                    //             context,
+                                                                    //             MaterialPageRoute(
+                                                                    //               builder: (context) => ViewAllTargetReportPage(id: userId),
+                                                                    //             ),
+                                                                    //           );
+                                                                    //         },
+                                                                    //         child:
+                                                                    //             Container(
+                                                                    //           width: MediaQuery.of(context).size.width * 0.38,
+                                                                    //           decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(10)),
+                                                                    //           child: const Padding(
+                                                                    //             padding: EdgeInsets.all(5),
+                                                                    //             child: Column(
+                                                                    //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                                    //               children: [
+                                                                    //                 Icon(
+                                                                    //                   Icons.track_changes,
+                                                                    //                   size: 15,
+                                                                    //                 ),
+                                                                    //                 SizedBox(
+                                                                    //                   height: 5,
+                                                                    //                 ),
+                                                                    //                 Text('Target Report', style: TextStyle(fontSize: 13, color: Colors.black), textAlign: TextAlign.center),
+                                                                    //               ],
+                                                                    //             ),
+                                                                    //           ),
+                                                                    //         ),
+                                                                    //       ),
+                                                                    //     ]),
+                                                                    // const SizedBox(
+                                                                    //   height: 8,
+                                                                    // ),
                                                                   ],
                                                                 ),
                                                               ),
@@ -1832,7 +1869,6 @@ class _HomePageState extends State<HomePage> {
                                                         mainAxisSize:
                                                             MainAxisSize.min,
                                                         children: [
-                                                          // Header with close button
                                                           Stack(
                                                             children: [
                                                               const Center(

@@ -1076,7 +1076,7 @@ class _AccountsDashboardState extends State<AccountsDashboard> {
                                               MaterialPageRoute(
                                                 builder: (context) =>
                                                     PendingInvoice(
-                                                        widget.token),
+                                                        widget.token,''),
                                               ));
                                         },
                                         child: gridItem(

@@ -2635,7 +2635,7 @@ class _DashboardState extends State<Dashboard> {
                                                         builder: (context) =>
                                                             PendingInvoice(widget
                                                                 .token
-                                                                .toString())),
+                                                                .toString(),'')),
                                                   );
                                                 } else if (list[i] ==
                                                     "Receipts") {
@@ -2905,7 +2905,7 @@ class _DashboardState extends State<Dashboard> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        PendingInvoice(widget.token!),
+                                        PendingInvoice(widget.token!,''),
                                   ));
                             },
                             child: gridItem(

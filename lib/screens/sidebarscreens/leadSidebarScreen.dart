@@ -117,8 +117,6 @@ class _SettingsMenuWidgetState extends State<SettingsMenuWidget> {
         prefs.getString('cloudCallPermission') ?? 'false';
     final viewLeadCategoryPermission =
         prefs.getString('viewLeadCategoryPermission') ?? 'false';
-
-    // Convert string to boolean
     accessCallRecordingPermission1 = accessCallRecordingPermission == 'true';
     createLeadCategory1 = createLeadCategory == 'true';
     updateLeadCategory1 = updateLeadCategory == 'true';

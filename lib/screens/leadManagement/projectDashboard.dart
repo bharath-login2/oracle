@@ -41,6 +41,7 @@ import 'package:login2/screens/leadManagement/pendingWorkPageNew.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/totalSummeryPage.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
+import 'package:login2/screens/leave_request_list_page.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:lottie/lottie.dart';
@@ -1321,13 +1322,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                   _buildQuickLinkCard(
                                     "Payroll",
                                     Colors.green.shade100,
-                                    () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const SalaryReportPage(),
-                                      ),
-                                    ),
+                                    () => _showPayrollOptionsPopup(context),
                                   ),
                                 ],
                               ),
@@ -2511,6 +2506,178 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     );
     return null;
   }
+
+  void _showPayrollOptionsPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  children: [
+                    const Center(
+                      child: Text(
+                        "Payroll Options",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                TweenAnimationBuilder(
+                  tween: Tween<double>(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, double value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, 20 * (1 - value)),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Column(
+                    children: [
+                      _buildOptionCard(
+                        icon: Icons.receipt_long,
+                        iconColor: Colors.blue,
+                        title: "Salary Report",
+                        subtitle: "View your salary details and history",
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SalaryReportPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildOptionCard(
+                        icon: Icons.calendar_month,
+                        iconColor: Colors.green,
+                        title: "Leave Request",
+                        subtitle: "Apply for leave or check status",
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LeaveRequestListPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: Colors.grey.shade400,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class StaffSelectionSheet extends StatefulWidget {
@@ -2624,8 +2791,6 @@ class _StaffSelectionSheetState extends State<StaffSelectionSheet> {
               ),
             );
           }
-
-          // Data loaded successfully - Initialize lists if not already
           if (_allStaff.isEmpty) {
             final attendanceData = snapshot.data!;
             _totalWorkingDays = attendanceData.data.first.totalWorkingDays ?? 0;
@@ -2635,7 +2800,6 @@ class _StaffSelectionSheetState extends State<StaffSelectionSheet> {
 
           return Column(
             children: [
-              // Header
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: const BoxDecoration(
@@ -2681,7 +2845,6 @@ class _StaffSelectionSheetState extends State<StaffSelectionSheet> {
                 ),
               ),
 
-              // Search Bar
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
@@ -2712,8 +2875,6 @@ class _StaffSelectionSheetState extends State<StaffSelectionSheet> {
                   },
                 ),
               ),
-
-              // Staff count indicator
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(

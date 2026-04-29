@@ -2038,7 +2038,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                                                     builder: (context) =>
                                                         PendingInvoice(widget
                                                             .token
-                                                            .toString())),
+                                                            .toString(),'')),
                                               );
                                             } else if (list[i] == "Receipts") {
                                               Navigator.push(
@@ -2301,7 +2301,7 @@ class _MinimalDashboardState extends State<MinimalDashboard> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    PendingInvoice(widget.token!),
+                                    PendingInvoice(widget.token!,''),
                               ));
                         },
                         child: gridItem(

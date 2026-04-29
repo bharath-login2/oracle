@@ -67,9 +67,12 @@ class RentalReturnData {
 class RentalReturnItem {
   final int slNo;
   final int returnId;
+  final String customerStaffId;
+  final String customerStaffName;
   final String returnNo;
   final String invoiceNo;
   final String returnDate;
+   final String customerId;
   final String customerName;
   final int issuedQty;
   final int returnedQty;
@@ -79,9 +82,12 @@ class RentalReturnItem {
   RentalReturnItem({
     required this.slNo,
     required this.returnId,
+    required this.customerStaffId,
+    required this.customerStaffName,
     required this.returnNo,
     required this.invoiceNo,
     required this.returnDate,
+    required this.customerId,
     required this.customerName,
     required this.issuedQty,
     required this.returnedQty,
@@ -93,9 +99,12 @@ class RentalReturnItem {
       RentalReturnItem(
         slNo: json["sl_no"] ?? 0,
         returnId: json["return_id"] ?? 0,
+        customerStaffId: json["customer_staff_id"] ?? 0,
+        customerStaffName: json["customer_staff_name"] ?? "",
         returnNo: json["return_no"] ?? "",
         invoiceNo: json["invoice_no"] ?? "",
         returnDate: json["return_date"] ?? "",
+        customerId: json["customer_id"] ?? "",
         customerName: json["customer_name"] ?? "",
         issuedQty: json["issued_qty"] ?? 0,
         returnedQty: json["returned_qty"] ?? 0,
@@ -106,29 +115,30 @@ class RentalReturnItem {
   Map<String, dynamic> toJson() => {
         "sl_no": slNo,
         "return_id": returnId,
+        "customer_staff_id": customerStaffId,
+        "customer_staff_name": customerStaffName,
         "return_no": returnNo,
         "invoice_no": invoiceNo,
         "return_date": returnDate,
+        "customer_id": customerId,
         "customer_name": customerName,
         "issued_qty": issuedQty,
         "returned_qty": returnedQty,
         "balance_qty": balanceQty,
         "status": status,
       };
-
-  // Helper methods
   bool get isCompleted => status.toLowerCase() == 'completed';
   bool get isPending => status.toLowerCase() == 'pending';
-  
+
   bool get hasExcessReturn => balanceQty < 0;
   bool get hasBalance => balanceQty > 0;
   bool get isFullyReturned => balanceQty == 0;
-  
+
   double get returnPercentage {
     if (issuedQty == 0) return 0.0;
     return (returnedQty / issuedQty * 100);
   }
-  
+
   String get returnStatusText {
     if (isCompleted) {
       if (hasExcessReturn) {
@@ -141,7 +151,7 @@ class RentalReturnItem {
     }
     return status;
   }
-  
+
   Color get statusColor {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -152,7 +162,7 @@ class RentalReturnItem {
         return Colors.grey;
     }
   }
-  
+
   IconData get statusIcon {
     switch (status.toLowerCase()) {
       case 'completed':

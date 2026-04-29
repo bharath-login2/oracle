@@ -31,6 +31,7 @@ class CustomerPaymentReportModel {
 
 class CustomerPaymentData {
   final String? accountId;
+    final String? customerId;
   final String? accountName;
   final String? paymentHidden;
   final String? hiddenBy;
@@ -41,6 +42,7 @@ class CustomerPaymentData {
   final dynamic daysAgo;
   CustomerPaymentData({
     this.accountId,
+    this.customerId,
     this.accountName,
     this.paymentHidden,
     this.hiddenBy,
@@ -54,6 +56,7 @@ class CustomerPaymentData {
   factory CustomerPaymentData.fromJson(Map<String, dynamic> json) {
     return CustomerPaymentData(
       accountId: json['account_id']?.toString(),
+      customerId: json['customer_id']?.toString(),
       accountName: json['account_name'],
       paymentHidden: json['payment_hidden']?.toString(),
       hiddenBy: json['hidden_by'],
@@ -68,6 +71,7 @@ class CustomerPaymentData {
   Map<String, dynamic> toJson() {
     return {
       'account_id': accountId,
+      'customer_id': customerId,
       'account_name': accountName,
       'payment_hidden': paymentHidden,
       'hidden_by': hiddenBy,

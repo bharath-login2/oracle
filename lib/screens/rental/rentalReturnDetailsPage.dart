@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:login2/models/rental/rentalIssueDetailsModel.dart';
-import 'package:login2/screens/rental/addRentalIssuePage.dart';
+import 'package:login2/models/lead_management/getRentalViewModel.dart';
+import 'package:login2/screens/rental/addRentalReturnPage.dart';
 import 'package:login2/service/service.dart';
 
-class RentIssueDetailsPage extends StatefulWidget {
-  final String rentId;
-  const RentIssueDetailsPage({super.key, required this.rentId});
+class RentalReturnDetailsPage extends StatefulWidget {
+  final String returnId;
+  const RentalReturnDetailsPage({super.key, required this.returnId});
 
   @override
-  State<RentIssueDetailsPage> createState() => _RentIssueDetailsPageState();
+  State<RentalReturnDetailsPage> createState() => _RentalReturnDetailsPageState();
 }
 
-class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
+class _RentalReturnDetailsPageState extends State<RentalReturnDetailsPage> {
   bool _isLoading = true;
-  RentalIssueDetailsResponse? _details;
+  GetRentalViewModel? _details;
 
   @override
   void initState() {
@@ -24,7 +24,7 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
 
   Future<void> _fetchDetails() async {
     setState(() => _isLoading = true);
-    final response = await HttpService.rentIssueDetails(widget.rentId);
+    final response = await HttpService.getRentalReturnView(widget.returnId);
     setState(() {
       _details = response;
       _isLoading = false;
@@ -36,25 +36,26 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FE),
       appBar: AppBar(
-        title: const Text('Rental Issue Details',
+        title: const Text('Rental Return Details',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          if (_details != null)
+          if (_details != null && _details!.data?.rentReturn != null)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => AddRentalIssuePage(rentId: widget.rentId),
+                    builder: (_) => AddRentalReturnPage(
+                      returnId: _details!.data!.rentReturn!.id,
+                      customerName: _details!.data!.rentReturn!.customerName,
+                    ),
                   ),
                 ).then((value) {
-                  if (value == true) {
-                    _fetchDetails();
-                  }
+                  _fetchDetails();
                 });
               },
             ),
@@ -62,7 +63,7 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _details == null || !_details!.status
+          : _details == null || _details!.status != true || _details!.data?.rentReturn == null
               ? _buildErrorView()
               : _buildDetailsContent(),
     );
@@ -86,8 +87,8 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
     );
   }
 
-   String _formatDate(String dateStr, {bool includeTime = false}) {
-    if (dateStr.isEmpty) return "";
+  String _formatDate(String? dateStr, {bool includeTime = false}) {
+    if (dateStr == null || dateStr.isEmpty) return "";
     try {
       DateTime dateTime;
       if (dateStr.contains(" ")) {
@@ -103,22 +104,20 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
   }
 
   Widget _buildDetailsContent() {
-    final issue = _details!.data.rentIssue;
+    final rentReturn = _details!.data!.rentReturn!;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildInfoCard(
-            title: "Rental Information",
+            title: "Return Information",
             icon: Icons.receipt_long_outlined,
             children: [
-              _buildDetailRow("Rent No", issue.rentNo),
-              _buildDetailRow("Invoice No", issue.invoiceNo),
-              _buildDetailRow("Invoice Date", _formatDate(issue.invoiceDate)),
-              _buildDetailRowSmall(
-                  "Duration", "${issue.fromDate} to ${issue.toDate}"),
-              _buildDetailRow("Total Days", issue.totalDays),
+              _buildDetailRow("Return No", rentReturn.returnNo ?? ""),
+              _buildDetailRow("Invoice No", rentReturn.invoiceNo ?? ""),
+              _buildDetailRow("Return Date", _formatDate(rentReturn.returnDate)),
+              _buildDetailRow("Issued Date", _formatDate(rentReturn.issuedDate)),
             ],
           ),
           const SizedBox(height: 16),
@@ -126,10 +125,8 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
             title: "Customer & Site Details",
             icon: Icons.person_outline,
             children: [
-              _buildDetailRow("Customer", issue.customerName),
-              _buildDetailRow("Work Site", issue.locationName),
-              _buildDetailRow("Collected By", issue.collectedStaffName),
-              //_buildDetailRow("Address", issue.address),
+              _buildDetailRow("Customer", rentReturn.customerName ?? ""),
+              _buildDetailRow("Work Site", rentReturn.locationName ?? ""),
             ],
           ),
           const SizedBox(height: 16),
@@ -137,24 +134,19 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
             title: "Financial Summary",
             icon: Icons.account_balance_wallet_outlined,
             children: [
-              _buildDetailRow("Sub Total", "₹ ${issue.subTotal}"),
-              _buildDetailRow("GST Total", "₹ ${issue.gstTotal}"),
-              _buildDetailRow("Discount", "₹ ${issue.discount}",
+              _buildDetailRow("Sub Total", "₹ ${rentReturn.subTotal ?? '0.00'}"),
+              _buildDetailRow("Discount", "₹ ${rentReturn.discount ?? '0.00'}",
                   color: Colors.orange),
-              _buildDetailRow("Other Expenses", "₹ ${issue.otherExpenses}"),
+              _buildDetailRow("Other Expenses", "₹ ${rentReturn.otherExpenses ?? '0.00'}"),
+              _buildDetailRow("Advance Amount", "₹ ${rentReturn.advanceAmount ?? '0.00'}"),
               const Divider(height: 24),
-              _buildDetailRow("Grand Total", "₹ ${issue.grandTotal}",
+              _buildDetailRow("Grand Total", "₹ ${rentReturn.grandTotal ?? '0.00'}",
                   isBold: true, color: const Color(0xFF2a86c9)),
-              _buildDetailRow("Paid Amount", "₹ ${issue.amountPaid}",
-                  color: Colors.green),
-              _buildDetailRow("Advance", "₹ ${issue.advanceAmount}"),
-              _buildDetailRow("Balance",
-                  "₹ ${(double.tryParse(issue.grandTotal) ?? 0) - (double.tryParse(issue.amountPaid) ?? 0)}",
-                  isBold: true, color: Colors.red),
             ],
           ),
           const SizedBox(height: 16),
-          _buildProductsSection(),
+          if (_details!.data!.items != null && _details!.data!.items!.isNotEmpty)
+            _buildProductsSection(),
         ],
       ),
     );
@@ -224,35 +216,14 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
     );
   }
 
-   Widget _buildDetailRowSmall(String label, String value,
-      {bool isBold = false, Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-              color: color ?? const Color(0xFF2D3142),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildProductsSection() {
-    final items = _details!.data.rentItems;
+    final items = _details!.data!.items!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Text("Rented Products",
+          child: Text("Returned Products",
               style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -263,7 +234,7 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: items.length,
           itemBuilder: (context, index) {
-            final item = items[index];
+            final item = items[index] as Map<String, dynamic>;
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
@@ -295,29 +266,20 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Product ID: ${item.productId}",
+                            Text(item['product_name'] ?? "Product ID: ${item['product_id'] ?? 'N/A'}",
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 14)),
-                            Text("Qty: ${item.qty} | Days: ${item.days}",
+                            Text("Returned Qty: ${item['returned_qty'] ?? '0'} | Rate: ₹${item['rate_per_day'] ?? '0.00'}",
                                 style: TextStyle(
                                     fontSize: 12, color: Colors.grey[600])),
                           ],
                         ),
                       ),
-                      Text("₹ ${item.total}",
+                      Text("₹ ${item['total'] ?? '0.00'}",
                           style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
                               color: Color(0xFF2a86c9))),
-                    ],
-                  ),
-                  const Divider(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildSmallInfo("Rate: ₹${item.ratePerDay}/d"),
-                      _buildSmallInfo("GST: ${item.gstPercent}%"),
-                      _buildSmallInfo("Gross: ₹${item.gross}"),
                     ],
                   ),
                 ],
@@ -327,13 +289,5 @@ class _RentIssueDetailsPageState extends State<RentIssueDetailsPage> {
         ),
       ],
     );
-  }
-
-  Widget _buildSmallInfo(String text) {
-    return Text(text,
-        style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[500],
-            fontWeight: FontWeight.w500));
   }
 }

@@ -1,18 +1,12 @@
 import 'dart:convert';
 import 'package:intl/intl.dart';
 
-/// --------------------
-/// JSON Helpers
-/// --------------------
 CustomerwiseProjectModel customerwiseProjectModelFromJson(String str) =>
     CustomerwiseProjectModel.fromJson(json.decode(str));
 
 String customerwiseProjectModelToJson(CustomerwiseProjectModel data) =>
     json.encode(data.toJson());
 
-/// --------------------
-/// Date Helpers
-/// --------------------
 DateTime _parseDDMMYYYY(String? date) {
   if (date == null || date.isEmpty) {
     return DateTime(1970);
@@ -28,13 +22,10 @@ String _formatDDMMYYYY(DateTime date) {
   return DateFormat('dd-MM-yyyy').format(date);
 }
 
-/// --------------------
-/// MAIN MODEL
-/// --------------------
 class CustomerwiseProjectModel {
   final bool status;
   final String message;
-  final List<ProjectData> data;
+  final CustomerProjectListData data;
 
   CustomerwiseProjectModel({
     required this.status,
@@ -46,24 +37,64 @@ class CustomerwiseProjectModel {
     return CustomerwiseProjectModel(
       status: json["status"] == true,
       message: json["message"]?.toString() ?? "",
-      data: json["data"] != null && json["data"] is List
-          ? List<ProjectData>.from(
-              json["data"].map((x) => ProjectData.fromJson(x)),
-            )
-          : [],
+      data: CustomerProjectListData.fromJson(json["data"] ?? {}),
     );
   }
 
   Map<String, dynamic> toJson() => {
         "status": status,
         "message": message,
-        "data": List<dynamic>.from(data.map((x) => x.toJson())),
+        "data": data.toJson(),
       };
 }
 
-/// --------------------
-/// PROJECT DATA MODEL
-/// --------------------
+class CustomerProjectListData {
+  final List<ProjectData> list;
+  // Permissions are usually included in the new structure
+  final CustomerProjectPermissions? permissions;
+
+  CustomerProjectListData({required this.list, this.permissions});
+
+  factory CustomerProjectListData.fromJson(Map<String, dynamic> json) {
+    return CustomerProjectListData(
+      list: json["list"] != null && json["list"] is List
+          ? List<ProjectData>.from(
+              json["list"].map((x) => ProjectData.fromJson(x)),
+            )
+          : (json["data"] != null && json["data"] is List // Fallback for old structure if needed, but the user said it changed
+              ? List<ProjectData>.from(
+                  json["data"].map((x) => ProjectData.fromJson(x)),
+                )
+              : []),
+      permissions: json["permissions"] != null ? CustomerProjectPermissions.fromJson(json["permissions"]) : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        "list": List<dynamic>.from(list.map((x) => x.toJson())),
+        "permissions": permissions?.toJson(),
+      };
+}
+
+class CustomerProjectPermissions {
+  final bool addProject;
+  final bool addWorkModule;
+
+  CustomerProjectPermissions({required this.addProject, required this.addWorkModule});
+
+  factory CustomerProjectPermissions.fromJson(Map<String, dynamic> json) {
+    return CustomerProjectPermissions(
+      addProject: json['add_project'] == "true",
+      addWorkModule: json['add_work_module'] == "true",
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    "add_project": addProject.toString(),
+    "add_work_module": addWorkModule.toString(),
+  };
+}
+
 class ProjectData {
   final String id;
   final String custId;

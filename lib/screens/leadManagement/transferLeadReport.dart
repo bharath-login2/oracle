@@ -220,7 +220,7 @@ class _TransferLeadReportState extends State<TransferLeadReport> {
     return WillPopScope(
       onWillPop: () async {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => Dashboard(widget.token)),
+          MaterialPageRoute(builder: (context) => DashboardLeadNewUpdatedTwo(widget.token)),
         );
         return true;
       },

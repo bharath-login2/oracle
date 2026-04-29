@@ -69,6 +69,10 @@ class Leads {
   int? activeMissed;
   int? closedLeads;
   int? rejectedLeads;
+  int? todaysClosed;
+  int? thisMonthClosed;
+  int? todaysLost;
+  int? thisMonthLost;
 
   Leads({
     this.newLeads,
@@ -79,6 +83,10 @@ class Leads {
     this.activeMissed,
     this.closedLeads,
     this.rejectedLeads,
+    this.todaysClosed,
+    this.thisMonthClosed,
+    this.todaysLost,
+    this.thisMonthLost,
   });
 
   factory Leads.fromJson(Map<String, dynamic> json) {
@@ -91,6 +99,10 @@ class Leads {
       activeMissed: json['activeMissed'],
       closedLeads: json['closedLeads'],
       rejectedLeads: json['rejectedLeads'],
+      todaysClosed: json['todaysClosed'],
+      thisMonthClosed: json['thisMonthClosed'],
+      todaysLost: json['todaysRejectedLeads'],
+      thisMonthLost: json['thisMonthRejectedLeads'],
     );
   }
 
@@ -104,6 +116,10 @@ class Leads {
     data['activeMissed'] = activeMissed;
     data['closedLeads'] = closedLeads;
     data['rejectedLeads'] = rejectedLeads;
+    data['todaysClosed'] = todaysClosed;
+    data['thisMonthClosed'] = thisMonthClosed;
+    data['todaysRejectedLeads'] = todaysLost;
+    data['thisMonthRejectedLeads'] = thisMonthLost;
     return data;
   }
 }

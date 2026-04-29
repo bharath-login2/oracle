@@ -3579,7 +3579,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Icon(
-                              Icons.calendar_month_rounded,
+                              Icons.filter_list_rounded,
                               color: Colors.white,
                               size: 14,
                             ),
@@ -18269,82 +18269,338 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     DateTime currentFrom =
         statusType == 'Closed' ? fromDateClosed : fromDateLost;
     DateTime currentTo = statusType == 'Closed' ? toDateClosed : toDateLost;
+    String status = statusType == 'Closed' ? '4' : '3';
+    String pageName = statusType == 'Closed' ? 'Closed Leads' : 'Lost Leads';
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text("Select Period for $statusType"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.calendar_today, color: appBarStart),
-                title: const Text("From Date"),
-                subtitle: Text(DateFormat('dd-MM-yyyy').format(currentFrom)),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: currentFrom,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    setDialogState(() => currentFrom = picked);
-                  }
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: Icon(Icons.calendar_today, color: appBarStart),
-                title: const Text("To Date"),
-                subtitle: Text(DateFormat('dd-MM-yyyy').format(currentTo)),
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: currentTo,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                  );
-                  if (picked != null) {
-                    setDialogState(() => currentTo = picked);
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: appBarStart,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+        builder: (context, setDialogState) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 25,
+                  offset: const Offset(0, 10),
                 ),
-              ),
-              onPressed: () async {
-                Navigator.pop(context);
-                setState(() {
-                  if (statusType == 'Closed') {
-                    fromDateClosed = currentFrom;
-                    toDateClosed = currentTo;
-                    isClosedDateFiltered = true;
-                  } else {
-                    fromDateLost = currentFrom;
-                    toDateLost = currentTo;
-                    isLostDateFiltered = true;
-                  }
-                });
-                _fetchStatusLeadCount(statusType);
-              },
-              child: const Text("Apply", style: TextStyle(color: Colors.white)),
+              ],
             ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with Gradient
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [appBarStart, appBarStart.withOpacity(0.85)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(28),
+                      topRight: Radius.circular(28),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          statusType == 'Closed'
+                              ? Icons.check_circle_outline_rounded
+                              : Icons.do_not_disturb_on_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "$statusType Leads",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              "Filters & Analytics",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon:
+                            const Icon(Icons.close_rounded, color: Colors.white),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "TIME PERIOD",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: textSecondary,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDialogDateButton(
+                              label: "From",
+                              date: currentFrom,
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: currentFrom,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  setDialogState(() => currentFrom = picked);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildDialogDateButton(
+                              label: "To",
+                              date: currentTo,
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: currentTo,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  setDialogState(() => currentTo = picked);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      const Text(
+                        "ANALYTICS",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: textSecondary,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDialogAnalyticsButton(
+                        icon: Icons.people_rounded,
+                        title: "Staff Wise Breakdown",
+                        subtitle: "View agent performance for this period",
+                        color: Colors.blue.shade600,
+                        onTap: () {
+                          Navigator.pop(context);
+                          _handleStaffIconTap(
+                            status,
+                            pageName,
+                            customFromDate: currentFrom,
+                            customToDate: currentTo,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDialogAnalyticsButton(
+                        icon: Icons.category_rounded,
+                        title: "Category Insights",
+                        subtitle: "See which lead categories are converting",
+                        color: Colors.purple.shade600,
+                        onTap: () {
+                          Navigator.pop(context);
+                          _handleCategoryIconTap(
+                            status,
+                            pageName,
+                            customFromDate: currentFrom,
+                            customToDate: currentTo,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Action Button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        if (statusType == 'Closed') {
+                          fromDateClosed = currentFrom;
+                          toDateClosed = currentTo;
+                          isClosedDateFiltered = true;
+                        } else {
+                          fromDateLost = currentFrom;
+                          toDateLost = currentTo;
+                          isLostDateFiltered = true;
+                        }
+                      });
+                      _fetchStatusLeadCount(statusType);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: appBarStart,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 4,
+                      shadowColor: appBarStart.withOpacity(0.4),
+                    ),
+                    child: const Text(
+                      "Apply Filter",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogDateButton({
+    required String label,
+    required DateTime date,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(color: textSecondary, fontSize: 11),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.calendar_today_rounded, size: 14, color: appBarStart),
+                const SizedBox(width: 8),
+                Text(
+                  DateFormat('dd MMM').format(date),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogAnalyticsButton({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: color.withOpacity(0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textSecondary.withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded,
+                color: color.withOpacity(0.5), size: 20),
           ],
         ),
       ),
@@ -18566,12 +18822,124 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     DateTime? customFromDate,
     DateTime? customToDate,
   }) {
+    if (boxType == 'Closed' || boxType == 'Lost') {
+      final isClosed = boxType == 'Closed';
+      final todayVal = isClosed
+          ? (dashboardCounts?.data?.leads?.todaysClosed ?? 0)
+          : (dashboardCounts?.data?.leads?.todaysLost ?? 0);
+      final monthVal = isClosed
+          ? (dashboardCounts?.data?.leads?.thisMonthClosed ?? 0)
+          : (dashboardCounts?.data?.leads?.thisMonthLost ?? 0);
+
+      return Padding(
+        padding: const EdgeInsets.only(top: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () {
+                  final now = DateTime.now();
+                  final dateStr = DateFormat('yyyy-MM-dd').format(now);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewLeadsNew(
+                        widget.token,
+                        updateLeadPermission1,
+                        deleteLeadPermission1,
+                        cloudCallPermission1,
+                        pageName: isClosed ? 'Today\'s Closed Leads' : 'Today\'s Lost Leads',
+                        fromDate: dateStr,
+                        toDate: dateStr,
+                        status: isClosed ? '4' : '3',
+                      ),
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    const Text(
+                      "Today's",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "$todayVal",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(width: 1, height: 24, color: Colors.white54),
+            Expanded(
+              child: InkWell(
+                onTap: () {
+                  final now = DateTime.now();
+                  final firstDay = DateTime(now.year, now.month, 1);
+                  final lastDay = DateTime(now.year, now.month + 1, 0);
+                  final fromStr = DateFormat('yyyy-MM-dd').format(firstDay);
+                  final toStr = DateFormat('yyyy-MM-dd').format(lastDay);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ViewLeadsNew(
+                        widget.token,
+                        updateLeadPermission1,
+                        deleteLeadPermission1,
+                        cloudCallPermission1,
+                        pageName: isClosed ? 'This Month Closed Leads' : 'This Month Lost Leads',
+                        fromDate: fromStr,
+                        toDate: toStr,
+                        status: isClosed ? '4' : '3',
+                      ),
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    const Text(
+                      "This month",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "$monthVal",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          if (boxType != 'Active')
+          if (boxType != 'Active' && boxType != 'Closed' && boxType != 'Lost')
             _buildBoxActionIcon(
               icon: Icons.people_outline,
               onTap: () => _handleStaffIconTap(
@@ -18581,7 +18949,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                 customToDate: customToDate,
               ),
             ),
-          if (boxType != 'Active')
+          if (boxType != 'Active' && boxType != 'Closed' && boxType != 'Lost')
             _buildBoxActionIcon(
               icon: Icons.category_outlined,
               onTap: () => _handleCategoryIconTap(

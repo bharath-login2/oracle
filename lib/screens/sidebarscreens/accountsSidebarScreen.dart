@@ -666,16 +666,16 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
 
   void _onMenuItemSelected(BuildContext context, int value) async {
     switch (value) {
-      case 2: // Pending Invoices
+      case 2: 
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PendingInvoice(widget.token.toString()),
+            builder: (context) => PendingInvoice(widget.token.toString(),''),
           ),
         );
         break;
 
-      case 6: // Receipts
+      case 6: 
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -684,7 +684,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         );
         break;
 
-      case 111: // Proforma Deleted
+      case 111: 
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -694,7 +694,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         );
         break;
 
-      case 112: // Deleted Invoices
+      case 112: 
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -703,7 +703,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
           ),
         );
         break;
-      case 113: // Deleted Receipts
+      case 113:
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -713,7 +713,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         );
         break;
 
-      case 114: // Deleted GST Invoices
+      case 114: 
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -723,7 +723,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         );
         break;
 
-      case 7: // Expense
+      case 7: 
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -732,7 +732,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         );
         break;
 
-      case 8: // Customers
+      case 8: 
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -800,7 +800,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         );
         break;
 
-      case 10: // Proforma Invoice
+      case 10: 
         if (proformaInvoiceMenu == "true") {
           Navigator.push(
             context,
@@ -812,7 +812,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         }
         break;
 
-      case 11: // GST Invoices
+      case 11:
         if (gstInvoiceMenu == "true") {
           Navigator.push(
             context,
@@ -823,7 +823,7 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
         }
         break;
 
-      case 12: // Account Head
+      case 12:
         if (dashboard != null && dashboard!.data.isViewAccHead == true) {
           Navigator.push(
             context,
@@ -833,9 +833,6 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
           Common.toastMessaage("No permission", Colors.red);
         }
         break;
-
-      // Remove the commented out sections from your code
-      // case 5, 7, 8, 100-107 are not needed for accounts menu
     }
   }
 
@@ -901,7 +898,6 @@ class _AccountsMenuWidgetState extends State<AccountsMenuWidget> {
   }
 
   Future<void> getSharedData() async {
-    // Implement your shared data fetching logic here
   }
   Widget _buildExpansionMenuItem({
     required IconData icon,

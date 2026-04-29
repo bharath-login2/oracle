@@ -174,7 +174,6 @@ class _InvoiceListState extends State<InvoiceList> {
         filterInvoices(invSearch.text);
       }
     }
-
     setState(() {});
   }
 
@@ -276,7 +275,7 @@ class _InvoiceListState extends State<InvoiceList> {
       }
     }
     setState(() {});
-  }
+  }            
 
   @override
   Widget build(BuildContext context) {
@@ -722,13 +721,11 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                   .width *
                                                               0.8,
                                                       child: Text(
-                                                        filteredInvoices[
-                                                                        index] // Use filteredInvoices
-                                                                    .products
-                                                                    .length !=
-                                                                1
-                                                            ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
-                                                            : "Products : ${filteredInvoices[index].products[0].productName}",
+                                                        filteredInvoices[index].products.isEmpty
+                                                            ? "Products : N/A"
+                                                            : filteredInvoices[index].products.length > 1
+                                                                ? "Products : ${filteredInvoices[index].products[0].productName} + ${filteredInvoices[index].products.length - 1} more..."
+                                                                : "Products : ${filteredInvoices[index].products[0].productName}",
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                         style: const TextStyle(

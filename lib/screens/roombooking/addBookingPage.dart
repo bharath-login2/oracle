@@ -29,6 +29,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
   final TextEditingController _checkInController = TextEditingController();
   final TextEditingController _checkOutController = TextEditingController();
   final TextEditingController _invoiceDateController = TextEditingController();
+    final TextEditingController _customerIdController = TextEditingController();
   final TextEditingController _invoiceNumberController =
       TextEditingController();
   final TextEditingController _pinCodeController = TextEditingController();
@@ -154,6 +155,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
     final products = bookingData.productDetails;
 
     _guestNameController.text = booking.name;
+     _customerIdController.text = booking.customerId;
     _phoneController.text = booking.contactNo;
     _emailController.text = booking.emailId;
     _address1Controller.text = booking.address;
@@ -950,6 +952,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
         final formData = {
           'guest': {
             'name': _guestNameController.text.trim(),
+            'customerId': _customerIdController.text.trim(),
             'phone': _phoneController.text.trim(),
             'email': _emailController.text.trim(),
             'addressLine1': _address1Controller.text.trim(),

@@ -861,8 +861,9 @@ class _CustomerPaymentReportScreenState
                                                     children: [
                                                       // Amount
                                                       Container(
-                                                        padding: const EdgeInsets
-                                                            .symmetric(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
                                                           horizontal: 12,
                                                           vertical: 6,
                                                         ),
@@ -935,12 +936,14 @@ class _CustomerPaymentReportScreenState
                                                                 Navigator.push(
                                                                   context,
                                                                   MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        CustomerDashboard(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            CustomerDashboard(
                                                                       token:
                                                                           token ??
                                                                               '',
-                                                                      name: item.accountName ??
+                                                                      name: item
+                                                                              .accountName ??
                                                                           '',
                                                                       userId:
                                                                           item.accountId ??
@@ -957,9 +960,12 @@ class _CustomerPaymentReportScreenState
                                                                 Navigator.push(
                                                                   context,
                                                                   MaterialPageRoute(
-                                                                    builder: (context) =>
-                                                                        PendingInvoice(
+                                                                    builder:
+                                                                        (context) =>
+                                                                            PendingInvoice(
                                                                       token ??
+                                                                          '',
+                                                                      item.customerId ??
                                                                           '',
                                                                     ),
                                                                   ),

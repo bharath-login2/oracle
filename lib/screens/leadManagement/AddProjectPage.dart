@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/expense/getProjectListModel.dart';
+import 'package:login2/screens/leadManagement/SingleProjectDashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/service/service.dart';
-
 class AddProjectPage extends StatefulWidget {
   const AddProjectPage({super.key});
 
@@ -16,6 +16,7 @@ class AddProjectPage extends StatefulWidget {
 class _AddProjectPageState extends State<AddProjectPage> {
   List<ProjectExp> projects = [];
   List<ProjectExp> filteredProjects = [];
+  ProjectPermissions? permissions;
   List<CustomerExp> customers = [];
   List<CustomerExp> filteredCustomers = [];
   final TextEditingController searchController = TextEditingController();
@@ -50,8 +51,9 @@ class _AddProjectPageState extends State<AddProjectPage> {
       customers = customerResponse.data;
       filteredCustomers = List.from(customers); 
     }
-    if (projectResponse != null) {
-      projects = projectResponse.data;
+    if (projectResponse != null && projectResponse.status) {
+      projects = projectResponse.data.list;
+      permissions = projectResponse.data.permissions;
       filteredProjects = List.from(projects);
     }
     setState(() => isLoading = false);
@@ -166,10 +168,10 @@ class _AddProjectPageState extends State<AddProjectPage> {
       selectedCustomerId = project.customerId;
       selectedCustomerController.text = project.customerName;
       projectNameController.text = project.projectName;
-      startDate = DateTime.tryParse(project.fromDate);
-      endDate = DateTime.tryParse(project.toDate);
-      startDateController.text = project.fromDate;
-      endDateController.text = project.toDate;
+      startDate = project.fromDate != null ? DateTime.tryParse(project.fromDate!) : null;
+      endDate = project.toDate != null ? DateTime.tryParse(project.toDate!) : null;
+      startDateController.text = project.fromDate ?? "";
+      endDateController.text = project.toDate ?? "";
     } else {
       clearForm();
     }
@@ -427,7 +429,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Projects"),
+        title:  Text("Projects"),
         backgroundColor: const Color.fromARGB(255, 81, 139, 238),
         foregroundColor: const Color.fromARGB(255, 255, 255, 255),
         actions: [
@@ -443,11 +445,12 @@ class _AddProjectPageState extends State<AddProjectPage> {
             },
             tooltip: "Project dashboard",
           ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => showAddOrEditDialog(),
-            tooltip: "Add Project",
-          ),
+          if (permissions == null || permissions!.addProject)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => showAddOrEditDialog(),
+              tooltip: "Add Project",
+            ),
         ],
       ),
       body: SafeArea(
@@ -488,6 +491,14 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                         borderRadius:
                                             BorderRadius.circular(10)),
                                     child: ListTile(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => SingleProjectDashboard(project: item,permissions:permissions),
+                                          ),
+                                        );
+                                      },
                                       leading: const Icon(
                                         Icons.work_history_outlined,
                                         color: Color.fromARGB(255, 15, 15, 15),
@@ -505,8 +516,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                               style: const TextStyle(
                                                   fontWeight: FontWeight.w500,
                                                   fontSize: 13)),
-                                          item.fromDate.isEmpty ||
-                                                  item.toDate.isEmpty
+                                          (item.fromDate == null ||
+                                                  item.toDate == null)
                                               ? const SizedBox()
                                               : Text(
                                                   "${item.fromDate} - ${item.toDate}",
@@ -518,19 +529,21 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                       trailing: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit,
-                                                color: Colors.orange),
-                                            onPressed: () =>
-                                                showAddOrEditDialog(
-                                                    project: item),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete,
-                                                color: Colors.red),
-                                            onPressed: () =>
-                                                deleteProject(item.id),
-                                          ),
+                                          if (permissions == null || permissions!.editProject)
+                                            IconButton(
+                                              icon: const Icon(Icons.edit,
+                                                  color: Colors.orange),
+                                              onPressed: () =>
+                                                  showAddOrEditDialog(
+                                                      project: item),
+                                            ),
+                                          if (permissions == null || permissions!.deleteProject)
+                                            IconButton(
+                                              icon: const Icon(Icons.delete,
+                                                  color: Colors.red),
+                                              onPressed: () =>
+                                                  deleteProject(item.id),
+                                            ),
                                         ],
                                       ),
                                     ),

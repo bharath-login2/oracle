@@ -909,6 +909,8 @@ class _RentalIssueListPageState extends State<RentalIssueListPage> {
                             customerStaffId: item.customerStaffId,
                             customerStaffName: item.customerStaffName,
                             rentId: item.rentId,
+                            issueDate: item.fromDate,
+                             invoiceNumber: item.invoiceNo,
                           ),
                         ),
                       ).then((_) {

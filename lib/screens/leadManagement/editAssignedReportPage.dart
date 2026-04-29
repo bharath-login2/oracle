@@ -116,8 +116,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
     log("- Project ID: ${widget.assignedWork.projectId}");
     log("- Project Name: ${widget.assignedWork.projectName}");
     log("- Module Name: ${widget.assignedWork.moduleName}");
-    log("- Task ID: ${widget.assignedWork.taskId}"); // Check if this exists
-    // log("- Title: ${widget.assignedWork.title}"); // Check if this exists
+    log("- Task ID: ${widget.assignedWork.taskId}"); 
+    // log("- Title: ${widget.assignedWork.title}"); 
   }
 
   void _initializeData() {
@@ -126,25 +126,16 @@ class _EditWorkPageState extends State<EditWorkPage> {
     selectedProjectId = work.projectId.toString();
     selectedProjectName = work.projectName;
     selectedProjectController.text = work.projectName;
-
-    // IMPORTANT: We only have moduleName, not moduleId
-    // So we start with empty ID - will find it later
-    selectedTitleId = ''; // Start empty, will find by name
-
-    // Set the text from moduleName
+    selectedTitleId = ''; 
     titleController.text = work.moduleName ?? '';
-
-    // Debug log
     log("🔍 Initializing Title Data:");
     log("- Module Name from API: ${work.moduleName}");
     log("- Selected Title ID (initial): $selectedTitleId");
-
-    // Log work sessions for debugging task IDs
     log("🔍 Work Sessions (${work.workSessions.length}):");
     for (var i = 0; i < work.workSessions.length; i++) {
       var session = work.workSessions[i];
       log("  - Session $i: ${session.taskName}");
-      log("    Task ID: ${session.taskId}"); // Check if this exists
+      log("    Task ID: ${session.taskId}"); 
     }
 
     if (work.dueDate.isNotEmpty) {

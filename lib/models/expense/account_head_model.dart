@@ -1,30 +1,20 @@
-// To parse this JSON data, do
-//
-//     final accountHeadModel = accountHeadModelFromJson(jsonString);
-
 import 'dart:convert';
-
 AccountHeadModel accountHeadModelFromJson(String str) => AccountHeadModel.fromJson(json.decode(str));
-
 String accountHeadModelToJson(AccountHeadModel data) => json.encode(data.toJson());
-
 class AccountHeadModel {
     Data data;
     bool status;
     String message;
-
     AccountHeadModel({
         required this.data,
         required this.status,
         required this.message,
     });
-
     factory AccountHeadModel.fromJson(Map<String, dynamic> json) => AccountHeadModel(
         data: Data.fromJson(json["data"]),
         status: json["status"],
         message: json["message"],
     );
-
     Map<String, dynamic> toJson() => {
         "data": data.toJson(),
         "status": status,
@@ -35,12 +25,10 @@ class AccountHeadModel {
 class Data {
     List<ListElement> lists;
     bool isReadAccHead;
-
     Data({
         required this.lists,
         required this.isReadAccHead,
     });
-
     factory Data.fromJson(Map<String, dynamic> json) => Data(
         lists: List<ListElement>.from(json["lists"].map((x) => ListElement.fromJson(x))),
         isReadAccHead: json["is_read_acc_head"],

@@ -113,6 +113,7 @@ class ReturnDetailsData {
 
 class ReturnItem {
   final String id;
+   final String productId;
   final String productName;
   final int qty;
   final String unitPrice;
@@ -121,6 +122,7 @@ class ReturnItem {
 
   ReturnItem({
     required this.id,
+    required this.productId,
     required this.productName,
     required this.qty,
     required this.unitPrice,
@@ -131,6 +133,7 @@ class ReturnItem {
   factory ReturnItem.fromJson(Map<String, dynamic> json) {
     return ReturnItem(
       id: json['id']?.toString() ?? '',
+      productId: json['product_id']?.toString() ?? '',
       productName: json['product_name']?.toString() ?? '',
       qty: json['qty'] as int? ?? 0,
       unitPrice: json['rent_price']?.toString() ?? '',
@@ -142,6 +145,7 @@ class ReturnItem {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'product_id': productId,
       'product_name': productName,
       'qty': qty,
       'rent_price': unitPrice,

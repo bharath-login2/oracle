@@ -85,7 +85,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
   Future<void> _loadEditData() async {
     setState(() => _isLoading = true);
     try {
-      await _loadData(); // Base data like customers, staff, materials
+      await _loadData(); 
       final response = await HttpService.rentIssueDetails(widget.rentId!);
       if (response != null && response.status) {
         final issue = response.data.rentIssue;
@@ -191,7 +191,6 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
     }
 
     setState(() {
-      // Check if already added
       bool exists =
           _productRows.any((row) => row.selectedProductId == mat.materialId);
       if (!exists) {
@@ -207,7 +206,6 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
         newRow.fromDateController.text = _fromDateController.text;
         newRow.toDateController.text = _toDateController.text;
         newRow.quantityController.text = "1";
-        // If the first row is empty, replace it, otherwise add new
         if (_productRows.length == 1 &&
             _productRows[0].selectedProductId == null) {
           _productRows[0] = newRow;

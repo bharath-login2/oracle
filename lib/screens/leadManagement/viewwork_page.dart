@@ -675,7 +675,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                     .ellipsis,
                                                           )
                                                         : item.is_paused == "1"
-                                                            ? (userId != null &&
+                                                            ? (isInProgress == false && userId != null &&
                                                                     widget.staffId ==
                                                                         userId
                                                                 ? GestureDetector(
@@ -761,7 +761,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                     ),
                                                                   )
                                                                 : Text(
-                                                                    "Paused",
+                                                                    "Working...",
                                                                     style:
                                                                         TextStyle(
                                                                       fontSize:

@@ -20,7 +20,7 @@ class UnverifiedTransactionModel {
   factory UnverifiedTransactionModel.fromJson(Map<String, dynamic> json) =>
       UnverifiedTransactionModel(
         status: json["status"],
-        message: json["message"],
+        message: json["message"] ?? "",
         data: Data.fromJson(json["data"]),
       );
 
@@ -32,27 +32,33 @@ class UnverifiedTransactionModel {
 }
 
 class Data {
-  List<Receipt> unverifiedReceipt;
-  List<Expense> unverifiedExpense;
-  List<Receipt> verifiedReceipt;
-  List<Expense> verifiedExpense;
+  List<UnverifiedReceipt> unverifiedReceipt;
+  List<UnverifiedExpense> unverifiedExpense;
+  List<VerifiedReceipt> verifiedReceipt;
+  List<VerifiedExpense> verifiedExpense;
+  List<VerifiedSalary>? verifiedSalary; // Added new field
 
   Data({
     required this.unverifiedReceipt,
     required this.unverifiedExpense,
     required this.verifiedReceipt,
     required this.verifiedExpense,
+    this.verifiedSalary,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-        unverifiedReceipt: List<Receipt>.from(
-            json["unverified_receipt"].map((x) => Receipt.fromJson(x))),
-        unverifiedExpense: List<Expense>.from(
-            json["unverified_expense"].map((x) => Expense.fromJson(x))),
-        verifiedReceipt: List<Receipt>.from(
-            json["verified_receipt"].map((x) => Receipt.fromJson(x))),
-        verifiedExpense: List<Expense>.from(
-            json["verified_expense"].map((x) => Expense.fromJson(x))),
+        unverifiedReceipt: List<UnverifiedReceipt>.from(
+            json["unverified_receipt"].map((x) => UnverifiedReceipt.fromJson(x))),
+        unverifiedExpense: List<UnverifiedExpense>.from(
+            json["unverified_expense"].map((x) => UnverifiedExpense.fromJson(x))),
+        verifiedReceipt: List<VerifiedReceipt>.from(
+            json["verified_receipt"].map((x) => VerifiedReceipt.fromJson(x))),
+        verifiedExpense: List<VerifiedExpense>.from(
+            json["verified_expense"].map((x) => VerifiedExpense.fromJson(x))),
+        verifiedSalary: json["verified_salary"] != null
+            ? List<VerifiedSalary>.from(
+                json["verified_salary"].map((x) => VerifiedSalary.fromJson(x)))
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -64,105 +70,365 @@ class Data {
             List<dynamic>.from(verifiedReceipt.map((x) => x.toJson())),
         "verified_expense":
             List<dynamic>.from(verifiedExpense.map((x) => x.toJson())),
+        if (verifiedSalary != null)
+          "verified_salary":
+              List<dynamic>.from(verifiedSalary!.map((x) => x.toJson())),
       };
 }
 
-class Receipt {
+// Updated Receipt class for unverified receipts
+class UnverifiedReceipt {
   String id;
+  String clientId;
+  String masterId;
+  String receiptNumber;
   String receiptDate;
-  String receiptNo;
-  String invoiceNo;
-  String customerName;
-  String paidAmount;
-  String accountHead;
-  String createdBy;
+  String recieptAmount;
   String createdAt;
-  String? remarks;
+  String customerName;
+  String staffName;
+  String invoiceSerial;
+  String invoiceNumber;
+  String invType;
+  String createdName;
 
-  Receipt({
+  UnverifiedReceipt({
     required this.id,
+    required this.clientId,
+    required this.masterId,
+    required this.receiptNumber,
     required this.receiptDate,
-    required this.receiptNo,
-    required this.invoiceNo,
-    required this.customerName,
-    required this.paidAmount,
-    required this.accountHead,
-    required this.createdBy,
+    required this.recieptAmount,
     required this.createdAt,
-    this.remarks,
+    required this.customerName,
+    required this.staffName,
+    required this.invoiceSerial,
+    required this.invoiceNumber,
+    required this.invType,
+    required this.createdName,
   });
 
-  factory Receipt.fromJson(Map<String, dynamic> json) => Receipt(
-        id: json["id"],
+  factory UnverifiedReceipt.fromJson(Map<String, dynamic> json) => UnverifiedReceipt(
+        id: json["id"].toString(),
+        clientId: json["client_id"].toString(),
+        masterId: json["master_id"].toString(),
+        receiptNumber: json["receipt_number"].toString(),
         receiptDate: json["receipt_date"],
-        receiptNo: json["receipt_no"],
-        invoiceNo: json["invoice_no"],
-        customerName: json["customer_name"],
-        paidAmount: json["paid_amount"],
-        accountHead: json["account_head"],
-        createdBy: json["created_by"],
+        recieptAmount: json["reciept_amount"].toString(),
         createdAt: json["created_at"],
-        remarks: json["remarks"] ?? "",
+        customerName: json["customer_name"],
+        staffName: json["staff_name"],
+        invoiceSerial: json["invoice_serial"],
+        invoiceNumber: json["invoice_number"].toString(),
+        invType: json["inv_type"].toString(),
+        createdName: json["created_name"],
       );
 
   Map<String, dynamic> toJson() => {
         "id": id,
+        "client_id": clientId,
+        "master_id": masterId,
+        "receipt_number": receiptNumber,
         "receipt_date": receiptDate,
-        "receipt_no": receiptNo,
-        "invoice_no": invoiceNo,
-        "customer_name": customerName,
-        "paid_amount": paidAmount,
-        "account_head": accountHead,
-        "created_by": createdBy,
+        "reciept_amount": recieptAmount,
         "created_at": createdAt,
-        "remarks": remarks ?? "",
+        "customer_name": customerName,
+        "staff_name": staffName,
+        "invoice_serial": invoiceSerial,
+        "invoice_number": invoiceNumber,
+        "inv_type": invType,
+        "created_name": createdName,
       };
 }
 
-class Expense {
+// Verified Receipt class (same structure as UnverifiedReceipt for now)
+class VerifiedReceipt {
   String id;
-  String date;
-  String fromAccount;
-  String accountHead;
-  String amount;
-  String category;
-  String createdBy;
+  String clientId;
+  String masterId;
+  String receiptNumber;
+  String receiptDate;
+  String recieptAmount;
   String createdAt;
-  String? remarks;
+  String customerName;
+  String staffName;
+  String invoiceSerial;
+  String invoiceNumber;
+  String invType;
+  String createdName;
 
-  Expense({
+  VerifiedReceipt({
     required this.id,
-    required this.date,
-    required this.fromAccount,
-    required this.accountHead,
-    required this.amount,
-    required this.category,
-    required this.createdBy,
+    required this.clientId,
+    required this.masterId,
+    required this.receiptNumber,
+    required this.receiptDate,
+    required this.recieptAmount,
     required this.createdAt,
-    this.remarks,
+    required this.customerName,
+    required this.staffName,
+    required this.invoiceSerial,
+    required this.invoiceNumber,
+    required this.invType,
+    required this.createdName,
   });
 
-  factory Expense.fromJson(Map<String, dynamic> json) => Expense(
-        id: json["id"],
-        date: json["date"],
-        fromAccount: json["from_account"],
-        accountHead: json["account_head"],
-        amount: json["amount"],
-        category: json["category"],
-        createdBy: json["created_by"],
+  factory VerifiedReceipt.fromJson(Map<String, dynamic> json) => VerifiedReceipt(
+        id: json["id"].toString(),
+        clientId: json["client_id"].toString(),
+        masterId: json["master_id"].toString(),
+        receiptNumber: json["receipt_number"].toString(),
+        receiptDate: json["receipt_date"],
+        recieptAmount: json["reciept_amount"].toString(),
         createdAt: json["created_at"],
-        remarks: json["remarks"] ?? "",
+        customerName: json["customer_name"],
+        staffName: json["staff_name"],
+        invoiceSerial: json["invoice_serial"],
+        invoiceNumber: json["invoice_number"].toString(),
+        invType: json["inv_type"].toString(),
+        createdName: json["created_name"],
       );
 
   Map<String, dynamic> toJson() => {
         "id": id,
-        "date": date,
-        "from_account": fromAccount,
-        "account_head": accountHead,
-        "amount": amount,
-        "category": category,
-        "created_by": createdBy,
+        "client_id": clientId,
+        "master_id": masterId,
+        "receipt_number": receiptNumber,
+        "receipt_date": receiptDate,
+        "reciept_amount": recieptAmount,
         "created_at": createdAt,
-        "remarks": remarks ?? "",
+        "customer_name": customerName,
+        "staff_name": staffName,
+        "invoice_serial": invoiceSerial,
+        "invoice_number": invoiceNumber,
+        "inv_type": invType,
+        "created_name": createdName,
+      };
+}
+
+// Updated Expense class for unverified expenses
+class UnverifiedExpense {
+  String cmpnyExId;
+  String expCatid;
+  String fromAccount;
+  String tothePerson;
+  String amount;
+  String trnDate;
+  String company;
+  String remarks;
+  String fromAccountPerson;
+  String toAccountPerson;
+  String expCatName;
+  String staffName;
+  String createdAt;
+
+  UnverifiedExpense({
+    required this.cmpnyExId,
+    required this.expCatid,
+    required this.fromAccount,
+    required this.tothePerson,
+    required this.amount,
+    required this.trnDate,
+    required this.company,
+    required this.remarks,
+    required this.fromAccountPerson,
+    required this.toAccountPerson,
+    required this.expCatName,
+    required this.staffName,
+    required this.createdAt,
+  });
+
+  factory UnverifiedExpense.fromJson(Map<String, dynamic> json) => UnverifiedExpense(
+        cmpnyExId: json["CmpnyExId"].toString(),
+        expCatid: json["ExpCatid"].toString(),
+        fromAccount: json["from_account"].toString(),
+        tothePerson: json["TothePerson"].toString(),
+        amount: json["Amount"].toString(),
+        trnDate: json["TrnDate"],
+        company: json["company"].toString(),
+        remarks: json["Remarks"] ?? "",
+        fromAccountPerson: json["from_account_person"],
+        toAccountPerson: json["to_account_person"],
+        expCatName: json["ExpCatName"],
+        staffName: json["staff_name"],
+        createdAt: json["created_at"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "CmpnyExId": cmpnyExId,
+        "ExpCatid": expCatid,
+        "from_account": fromAccount,
+        "TothePerson": tothePerson,
+        "Amount": amount,
+        "TrnDate": trnDate,
+        "company": company,
+        "Remarks": remarks,
+        "from_account_person": fromAccountPerson,
+        "to_account_person": toAccountPerson,
+        "ExpCatName": expCatName,
+        "staff_name": staffName,
+        "created_at": createdAt,
+      };
+}
+
+// Verified Expense class (same structure as UnverifiedExpense)
+class VerifiedExpense {
+  String cmpnyExId;
+  String expCatid;
+  String fromAccount;
+  String tothePerson;
+  String amount;
+  String trnDate;
+  String company;
+  String remarks;
+  String fromAccountPerson;
+  String toAccountPerson;
+  String expCatName;
+  String staffName;
+  String createdAt;
+
+  VerifiedExpense({
+    required this.cmpnyExId,
+    required this.expCatid,
+    required this.fromAccount,
+    required this.tothePerson,
+    required this.amount,
+    required this.trnDate,
+    required this.company,
+    required this.remarks,
+    required this.fromAccountPerson,
+    required this.toAccountPerson,
+    required this.expCatName,
+    required this.staffName,
+    required this.createdAt,
+  });
+
+  factory VerifiedExpense.fromJson(Map<String, dynamic> json) => VerifiedExpense(
+        cmpnyExId: json["CmpnyExId"].toString(),
+        expCatid: json["ExpCatid"].toString(),
+        fromAccount: json["from_account"].toString(),
+        tothePerson: json["TothePerson"].toString(),
+        amount: json["Amount"].toString(),
+        trnDate: json["TrnDate"],
+        company: json["company"].toString(),
+        remarks: json["Remarks"] ?? "",
+        fromAccountPerson: json["from_account_person"],
+        toAccountPerson: json["to_account_person"],
+        expCatName: json["ExpCatName"],
+        staffName: json["staff_name"],
+        createdAt: json["created_at"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "CmpnyExId": cmpnyExId,
+        "ExpCatid": expCatid,
+        "from_account": fromAccount,
+        "TothePerson": tothePerson,
+        "Amount": amount,
+        "TrnDate": trnDate,
+        "company": company,
+        "Remarks": remarks,
+        "from_account_person": fromAccountPerson,
+        "to_account_person": toAccountPerson,
+        "ExpCatName": expCatName,
+        "staff_name": staffName,
+        "created_at": createdAt,
+      };
+}
+
+// New Salary class for verified salary data
+class VerifiedSalary {
+  String id;
+  String userId;
+  String month;
+  String workingDays;
+  String fullDays;
+  String halfDays;
+  String workedDays;
+  String availableLeave;
+  String casualLeaveTaken;
+  String saturdayLeaveTaken;
+  String totalLeave;
+  String lopDays;
+  String salaryCreditDays;
+  String totalSalary;
+  String perDaySalary;
+  String incentives;
+  String deductions;
+  String netSalary;
+  String staffName;
+  String verifiedByName;
+  String createdAt;
+
+  VerifiedSalary({
+    required this.id,
+    required this.userId,
+    required this.month,
+    required this.workingDays,
+    required this.fullDays,
+    required this.halfDays,
+    required this.workedDays,
+    required this.availableLeave,
+    required this.casualLeaveTaken,
+    required this.saturdayLeaveTaken,
+    required this.totalLeave,
+    required this.lopDays,
+    required this.salaryCreditDays,
+    required this.totalSalary,
+    required this.perDaySalary,
+    required this.incentives,
+    required this.deductions,
+    required this.netSalary,
+    required this.staffName,
+    required this.verifiedByName,
+    required this.createdAt,
+  });
+
+  factory VerifiedSalary.fromJson(Map<String, dynamic> json) => VerifiedSalary(
+        id: json["id"].toString(),
+        userId: json["user_id"].toString(),
+        month: json["month"],
+        workingDays: json["working_days"].toString(),
+        fullDays: json["full_days"].toString(),
+        halfDays: json["half_days"].toString(),
+        workedDays: json["worked_days"].toString(),
+        availableLeave: json["available_leave"].toString(),
+        casualLeaveTaken: json["casual_leave_taken"].toString(),
+        saturdayLeaveTaken: json["saturday_leave_taken"].toString(),
+        totalLeave: json["total_leave"].toString(),
+        lopDays: json["lop_days"].toString(),
+        salaryCreditDays: json["salary_credit_days"].toString(),
+        totalSalary: json["total_salary"].toString(),
+        perDaySalary: json["per_day_salary"].toString(),
+        incentives: json["incentives"].toString(),
+        deductions: json["deductions"].toString(),
+        netSalary: json["net_salary"].toString(),
+        staffName: json["staff_name"],
+        verifiedByName: json["verified_by_name"],
+        createdAt: json["created_at"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "user_id": userId,
+        "month": month,
+        "working_days": workingDays,
+        "full_days": fullDays,
+        "half_days": halfDays,
+        "worked_days": workedDays,
+        "available_leave": availableLeave,
+        "casual_leave_taken": casualLeaveTaken,
+        "saturday_leave_taken": saturdayLeaveTaken,
+        "total_leave": totalLeave,
+        "lop_days": lopDays,
+        "salary_credit_days": salaryCreditDays,
+        "total_salary": totalSalary,
+        "per_day_salary": perDaySalary,
+        "incentives": incentives,
+        "deductions": deductions,
+        "net_salary": netSalary,
+        "staff_name": staffName,
+        "verified_by_name": verifiedByName,
+        "created_at": createdAt,
       };
 }

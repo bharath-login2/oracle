@@ -28,6 +28,7 @@ class _CustomerProjectPageState extends State<CustomerProjectPage> {
   List<ProjectData> _projects = [];
   List<ProjectExp> projects = [];
   List<ProjectExp> filteredProjects = [];
+  ProjectPermissions? permissions;
   List<CustomerExp> customers = [];
   List<CustomerExp> filteredCustomers = [];
   bool _isLoading = true;
@@ -71,7 +72,7 @@ class _CustomerProjectPageState extends State<CustomerProjectPage> {
         setState(() {
           _isLoading = false;
           if (response != null && response.status) {
-            _projects = response.data;
+            _projects = response.data.list;
           } else {
             _errorMessage = response?.message ?? 'Failed to load projects';
           }
@@ -541,18 +542,19 @@ class _CustomerProjectPageState extends State<CustomerProjectPage> {
               ),
             ),
             SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: showAddOrEditDialog,
-              icon: Icon(Icons.add),
-              label: Text('Create First Project'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            if (permissions == null || permissions!.addProject)
+              ElevatedButton.icon(
+                onPressed: showAddOrEditDialog,
+                icon: Icon(Icons.add),
+                label: Text('Create First Project'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -682,8 +684,8 @@ class _CustomerProjectPageState extends State<CustomerProjectPage> {
   }
 
   Widget _buildFloatingButton() {
-    if (_isLoading) return SizedBox.shrink();
-
+    if (_isLoading || (permissions != null && !permissions!.addProject)) return SizedBox.shrink();
+    
     return FloatingActionButton(
       onPressed: showAddOrEditDialog,
       child: Icon(Icons.add),
@@ -821,8 +823,9 @@ class _CustomerProjectPageState extends State<CustomerProjectPage> {
         customers = customerResponse.data;
         filteredCustomers = List.from(customers);
       }
-      if (projectResponse != null) {
-        projects = projectResponse.data;
+      if (projectResponse != null && projectResponse.status) {
+        projects = projectResponse.data.list;
+        permissions = projectResponse.data.permissions;
         filteredProjects = List.from(projects);
       }
       setState(() => isLoading = false);
@@ -840,10 +843,10 @@ class _CustomerProjectPageState extends State<CustomerProjectPage> {
       selectedCustomerId = project.customerId;
       selectedCustomerController.text = project.customerName;
       projectNameController.text = project.projectName;
-      startDate = DateTime.tryParse(project.fromDate);
-      endDate = DateTime.tryParse(project.toDate);
-      startDateController.text = project.fromDate;
-      endDateController.text = project.toDate;
+      startDate = project.fromDate != null ? DateTime.tryParse(project.fromDate!) : null;
+      endDate = project.toDate != null ? DateTime.tryParse(project.toDate!) : null;
+      startDateController.text = project.fromDate ?? "";
+      endDateController.text = project.toDate ?? "";
     } else {
       clearForm();
     }

@@ -15,10 +15,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../../widgets/inputTextFeildWidget.dart';
-
-// ignore: must_be_immutable
 class AddUser extends StatefulWidget {
   String token;
 
@@ -89,7 +86,7 @@ class _AddUserState extends State<AddUser> {
   }
 
   getDocumentTypes() async {
-    DocumentListModel? documentList = await HttpService.getDocumentType();
+    DocumentListModel? documentList = await HttpService.getDocumentType("");
     if (documentList != null && documentList.status == true) {
       setState(() {
         documentTypes = documentList.data;

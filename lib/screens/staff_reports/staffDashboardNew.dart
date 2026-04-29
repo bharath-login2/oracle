@@ -69,18 +69,14 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   bool updateLeadPermission1 = false;
   bool deleteLeadPermission1 = false;
   bool cloudCallPermission1 = false;
-
   UserDashboardModel? staffDetails;
   StaffCalldetailsModel? callDetails;
   SalaryDetailsModel? salaryDetails;
   bool isLoading = true;
-
-  // File Manager State
   String selectedDocumentType = 's3';
   List<DocumentData> documentTypes = [];
   String? selectedDocumentTypeId;
   String selectedDocumentTypeName = 'Select Document';
-
   List<DriveAccount> googleDriveAccounts = [];
   List<StaffDocument> googleDriveFiles = [];
   DriveAccount? selectedDriveAccount;
@@ -93,7 +89,6 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   ];
   String path = '';
   TabController? _tabController;
-
   getStaffDetails() async {
     staffDetails = await HttpService.getStaffDashboardNew(
         widget.id, targetFromDate, targetToDate);
@@ -101,7 +96,6 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
       setState(() {});
     }
   }
-
   getCallDetails() async {
     callDetails =
         await HttpService.getStaffCallDetails(widget.id, fromDate, toDate);
@@ -116,7 +110,6 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
       setState(() {});
     }
   }
-
   initData() async {
     setState(() {
       isLoading = true;
@@ -132,11 +125,9 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
     cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
     updateLeadPermission = await Common.getSharedPref("updateLeadPermission");
     deleteLeadPermission = await Common.getSharedPref("deleteLeadPermission");
-
     updateLeadPermission1 = updateLeadPermission == 'true';
     deleteLeadPermission1 = deleteLeadPermission == 'true';
     cloudCallPermission1 = cloudCallPermission == 'true';
-
     _tabController = TabController(length: 3, vsync: this);
     await getDocumentTypes();
     await _fetchGoogleDriveAccounts();
@@ -153,7 +144,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   }
 
   getDocumentTypes() async {
-    DocumentListModel? documentList = await HttpService.getDocumentType();
+    DocumentListModel? documentList = await HttpService.getDocumentType(widget.id);
     if (documentList != null && documentList.status == true) {
       documentTypes = documentList.data;
       if (documentTypes.isNotEmpty) {
@@ -1796,7 +1787,6 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   }
 
   Widget _buildS3Documents() {
-    // Basic S3 view, can be expanded like in FileManagerList
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1942,6 +1932,14 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 10),
                   maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                 const SizedBox(height: 4),
+                Text(
+                  'Updated At:${file.uploadedAt ?? ""}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 8),
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
