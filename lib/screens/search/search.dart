@@ -418,6 +418,8 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
         child: TextField(
           controller: searchController,
           focusNode: _searchFocusNode,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -443,6 +445,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
                         onPressed: () {
                           searchController.clear();
                           setState(() => response = null);
+                          _searchFocusNode.requestFocus();
                         },
                       ),
                     Container(

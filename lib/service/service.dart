@@ -75,6 +75,7 @@ import 'package:login2/models/lead_management/damagedListApiModel.dart';
 import 'package:login2/models/lead_management/dashboardLeadsCountsModel.dart';
 import 'package:login2/models/lead_management/deletRentalReturnModel.dart';
 import 'package:login2/models/lead_management/deleteGoogleDriveFileModel.dart';
+import 'package:login2/models/lead_management/deleteModelOpenstock.dart';
 import 'package:login2/models/lead_management/deleteQuotationModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/documentListModel.dart';
@@ -88,15 +89,21 @@ import 'package:login2/models/lead_management/getCompanyInvoiceModel.dart';
 import 'package:login2/models/lead_management/getLeadSourceModel.dart';
 import 'package:login2/models/lead_management/getLeaveApprovalRejectTemplate.dart';
 import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
+import 'package:login2/models/lead_management/getMaterialForStockCunsuptionModel.dart';
+import 'package:login2/models/lead_management/getOpeningModel.dart';
+import 'package:login2/models/lead_management/getOpenstockForEditModel.dart';
 import 'package:login2/models/lead_management/getRecentExpenseModel.dart';
 import 'package:login2/models/lead_management/getRentReturnModel.dart';
 import 'package:login2/models/lead_management/getRentalViewModel.dart';
 import 'package:login2/models/lead_management/getStaffDocumentListModel.dart';
+import 'package:login2/models/lead_management/getStockRegisterListModel.dart';
+import 'package:login2/models/lead_management/getStockRequestModel.dart';
 import 'package:login2/models/lead_management/getTaskListModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/invoiceListHistory.dart';
 import 'package:login2/models/lead_management/leadCategoryReportOntapModel.dart';
 import 'package:login2/models/lead_management/leadDashboardCountNewModel.dart';
+import 'package:login2/models/lead_management/getOpeningModel.dart';
 import 'package:login2/models/lead_management/leadExtraSettings.dart';
 import 'package:login2/models/lead_management/leadFollowupAdd.dart';
 import 'package:login2/models/lead_management/leadProductsModel.dart';
@@ -114,6 +121,7 @@ import 'package:login2/models/lead_management/pendingListModel.dart';
 import 'package:login2/models/lead_management/phoneCallReportModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/productDescriptionModel.dart';
+import 'package:login2/models/lead_management/productHistoryRental.dart';
 import 'package:login2/models/lead_management/productTypeModel.dart';
 import 'package:login2/models/lead_management/projectDetailsModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
@@ -145,6 +153,8 @@ import 'package:login2/models/lead_management/stagewiseReportModel.dart';
 import 'package:login2/models/lead_management/stagewiseReportOntap.dart';
 import 'package:login2/models/lead_management/stagewiseTableModel.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
+import 'package:login2/models/lead_management/stockCounsumptionListModel.dart';
+import 'package:login2/models/lead_management/stockRequestEditDetails.dart';
 import 'package:login2/models/lead_management/tagListForFilterModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/unhideInvoiceModel.dart';
@@ -2068,14 +2078,13 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}search_lead_clients",
           queryParameters: params);
-       SearchModel model = SearchModel.fromJson(result.data);
+      SearchModel model = SearchModel.fromJson(result.data);
 
       return model;
     } catch (e) {
       log("error: $e");
     }
   }
-
 
   static Future menuList(token) async {
     var params = {
@@ -4885,10 +4894,6 @@ class HttpService {
     }
   }
 
-  ////// complaints ends  ///////
-
-  ///// Staff Dashboard //////
-
   static Future<UserDashboardModel?> getStaffDashboard(
       String userId, String fDate, String tDate) async {
     var params = {
@@ -6320,7 +6325,8 @@ class HttpService {
     };
 
     if (productImage != null && productImage != "null" && productImage != "") {
-      data["product_image"] = await MultipartFile.fromFile(productImage.toString());
+      data["product_image"] =
+          await MultipartFile.fromFile(productImage.toString());
     } else {
       data["product_image"] = "";
     }
@@ -14659,8 +14665,6 @@ class HttpService {
     return null;
   }
 
-
-  
   static Future<ProductTypeResponse?> getProductTypes() async {
     try {
       final token = await Common.getSharedPref("token");
@@ -14670,7 +14674,6 @@ class HttpService {
       }
       final formData = FormData.fromMap({
         "token": token,
-        
       });
       final response = await _dio.post(
         "${await Config.getUrl()}get_selected_product_types",
@@ -14680,6 +14683,577 @@ class HttpService {
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
         return ProductTypeResponse.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<PostProductModel?> postStocks(
+      List<Map<String, dynamic>> products) async {
+    final token = await Common.getSharedPref("token");
+    Map<String, dynamic> data = {
+      "token": token,
+      "add_stock": "1",
+    };
+
+    for (int i = 0; i < products.length; i++) {
+      data["product_id[$i]"] = products[i]["product_id"];
+      data["quantity[$i]"] = products[i]["quantity"];
+      data["unit_price[$i]"] = products[i]["unit_price"];
+      data["unit[$i]"] = products[i]["unit"];
+      data["product_name[$i]"] = products[i]["product_name"];
+    }
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_stock_register",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200) {
+        return PostProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("🔥 postStocks error: $e");
+    }
+    return null;
+  }
+
+  // static Future<PostProductModel?> postStock(
+  //   String productName,
+  //   String purchasePrice,
+  //   String sellingPrice,
+  //   String mrp,
+  //   String productType,
+  //   String quantity,
+  //   String status, {
+  //   String? productId,
+  //   String? unit,
+  // }) async {
+  //   final token = await Common.getSharedPref("token");
+  //   Map<String, dynamic> data = {
+  //     "token": token,
+  //     "product_name": productName,
+  //     "purchase_price": purchasePrice,
+  //     "selling_price": sellingPrice,
+  //     "product_mrp": mrp,
+  //     "product_type": productType,
+  //     "quantity": quantity,
+  //     "stock_status": status,
+  //     "add_stock": "1",
+  //     if (productId != null) "product_id": productId,
+  //     if (unit != null) "unit": unit,
+  //   };
+
+  //   try {
+  //     final response = await _dio.post(
+  //       "${await Config.getUrl()}post_stock_register",
+  //       data: FormData.fromMap(data),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       return PostProductModel.fromJson(response.data);
+  //     }
+  //   } catch (e) {
+  //     log("🔥 postStock error: $e");
+  //   }
+  //   return null;
+  // }
+  static Future<PostProductModel?> postStock(
+    String productName,
+    String purchasePrice,
+    String sellingPrice,
+    String mrp,
+    String productType,
+    String quantity,
+    String status, {
+    String? productId,
+    String? unit,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    Map<String, dynamic> data = {
+      "token": token,
+      "product_name": productName,
+      "purchase_price": purchasePrice,
+      "selling_price": sellingPrice,
+      "product_mrp": mrp,
+      "product_type": productType,
+      "quantity": quantity,
+      "stock_status": status,
+      "add_stock": "1",
+      if (productId != null) "product_id": productId,
+      if (unit != null) "unit": unit,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_stock_register",
+        data: data,
+        options: Options(
+          headers: {
+            "Content-Type": "application/json",
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return PostProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("🔥 postStock error: $e");
+    }
+
+    return null;
+  }
+
+  static Future<GetStockRegisterListModel?> getStockRegisterList(
+      String productId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "product_id": productId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_stock_register",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetStockRegisterListModel.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<ProductHistoryRentalModel?> getStockHistoryRental(
+      String productId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "product_id": productId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_product_history",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ProductHistoryRentalModel.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetOpeningModel?> getOpeningStockList(
+      {String? productId, String? locationId}) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getOpeningStockList error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        if (productId != null) "product_id": productId,
+        if (locationId != null) "location_id": locationId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_opening_stock",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetOpeningModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getOpeningStockList error: $e");
+    }
+    return null;
+  }
+
+  static Future<PostProductModel?> postOpeningStocks(String date,
+      String locationId, List<Map<String, dynamic>> products) async {
+    final token = await Common.getSharedPref("token");
+    Map<String, dynamic> data = {
+      "token": token,
+      "date": date,
+      "location_id": locationId,
+      "is_opening_stock": "1",
+    };
+
+    for (int i = 0; i < products.length; i++) {
+      data["product_id[$i]"] = products[i]["product_id"];
+      data["quantity[$i]"] = products[i]["quantity"];
+      data["unit_price[$i]"] = products[i]["unit_price"];
+      data["unit[$i]"] = products[i]["unit"];
+      data["product_name[$i]"] = products[i]["product_name"];
+      data["description[$i]"] = products[i]["description"];
+    }
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_stock_opening",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200) {
+        return PostProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("🔥 postOpeningStocks error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetStockRequestModel?> getRequestStockList(
+      {String? productId,
+      String? locationId,
+      String? fromDate,
+      String? toDate}) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getOpeningStockList error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        if (productId != null) "product_id": productId,
+        if (locationId != null) "location_id": locationId,
+        if (fromDate != null) "from_date": fromDate,
+        if (toDate != null) "to_date": toDate,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_stock_request",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetStockRequestModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getOpeningStockList error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetOpenstockForEditModel?> getOpenStockForEdit(
+      String stockId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "id": stockId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_opening_stock",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetOpenstockForEditModel.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<DeleteModelOpenstock?> deleteOpenStock(String stockId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "item_id": stockId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_opening_stock",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return DeleteModelOpenstock.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<PostProductModel?> updateOpeningStock({
+    required String id,
+    required String date,
+    required String locationId,
+    required String productId,
+    required String quantity,
+    required String unitPrice,
+    required String unit,
+    required String description,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final formData = FormData.fromMap({
+      "token": token,
+      "id": id,
+      "date": date,
+      "location_id": locationId,
+      "product_id": productId,
+      "quantity": quantity,
+      "unit_price": unitPrice,
+      "unit": unit,
+      "description": description,
+    });
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_opening_stock",
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        return PostProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("🔥 postOpeningStocks error: $e");
+    }
+    return null;
+  }
+
+  static Future<StockConsumptionListModel?> getProductStockConsumedList(
+      String productId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "product_id": productId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_stock_consumed",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return StockConsumptionListModel.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<DeleteModelOpenstock?> deleteStockConsumed(
+      String stockId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "id": stockId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_stock_consumption",
+        data: formData,
+      );
+      if (response.statusCode == 200) {
+        return DeleteModelOpenstock.fromJson(response.data);
+      }
+    } catch (e) {
+      log("deleteStockConsumed error: $e");
+    }
+    return null;
+  }
+
+  static Future<PostProductModel?> addStockConsumption({
+    required String date,
+    required String locationId,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      Map<String, dynamic> data = {
+        "token": token,
+        "date": date,
+        "location_id": locationId,
+      };
+
+      for (int i = 0; i < items.length; i++) {
+        data["product_id[$i]"] = items[i]["product_id"];
+        data["quantity[$i]"] = items[i]["quantity"];
+        data["unit_price[$i]"] = items[i]["unit_price"];
+        data["unit[$i]"] = items[i]["unit"];
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_consumed_stock",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return PostProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("addStockConsumption error: $e");
+    }
+    return null;
+  }
+
+  static Future<StockRequestEditDetails?> getStockRequestEditDetails(
+      String stockId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "id": stockId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_stock_request",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return StockRequestEditDetails.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<DeleteModelOpenstock?> deleteStockRequest(
+      String stockId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "id": stockId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_stock_request",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return DeleteModelOpenstock.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<PostProductModel?> postStockRequest(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_stock_request",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return PostProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("postStockRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<PostProductModel?> updateStockRequest(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_stock_request",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return PostProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("updateStockRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetMaterialForStockConsumptionModel?> getMaterialForConsumption(
+      String consumedDate, String productId, String locationId) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+        "consumed_date": consumedDate,
+        "product_id": productId,
+        "location_id": locationId,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_material_stock",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return GetMaterialForStockConsumptionModel.fromJson(response.data);
       }
       log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
     } catch (e) {

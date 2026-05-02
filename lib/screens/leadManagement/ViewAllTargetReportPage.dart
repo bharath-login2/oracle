@@ -6,6 +6,7 @@ import 'package:login2/screens/leadManagement/setTargetPage.dart';
 import 'package:login2/screens/staff_reports/achievementDetailspage.dart';
 import 'package:login2/service/service.dart';
 
+// ignore: must_be_immutable
 class ViewAllTargetReportPage extends StatefulWidget {
   String id;
   ViewAllTargetReportPage({super.key, required this.id});
@@ -25,12 +26,22 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
   UserDashboardModel? staffDetails;
   bool isLoading = true;
 
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _initializeDates();
+  //   _fetchTargetReportData();
+  //   getStaffDetails();
+  // }
   @override
   void initState() {
     super.initState();
     _initializeDates();
-    _fetchTargetReportData();
-    getStaffDetails();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchTargetReportData();
+      getStaffDetails();
+    });
   }
 
   void _initializeDates() {
@@ -101,6 +112,8 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
         }
       });
       _fetchTargetReportData();
+      await _fetchTargetReportData();
+      await getStaffDetails();
     }
   }
 

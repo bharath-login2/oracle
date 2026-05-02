@@ -43,6 +43,7 @@ import 'package:login2/screens/rental/rentalDashboard.dart';
 import 'package:login2/screens/roombooking/hotelDashboard.dart';
 import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/serviceman/dashboard_page.dart';
+import 'package:login2/screens/stock/stockDashboard.dart';
 import 'package:login2/screens/staff_reports/followupCalendarPage.dart';
 import 'package:login2/screens/staff_reports/staffwiseCallReports.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
@@ -994,6 +995,22 @@ class _HomePageState extends State<HomePage> {
                                                 MaterialPageRoute(
                                                     builder: (context) =>
                                                         RentalDashboard(
+                                                            name: name,
+                                                            token:
+                                                                widget.token!,
+                                                            userId: userId,
+                                                            phoneCallLogPermission:
+                                                                phoneCallLogPermission,
+                                                            custId: "")),
+                                              );
+                                            }else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'Stock') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        StockDashboard(
                                                             name: name,
                                                             token:
                                                                 widget.token!,

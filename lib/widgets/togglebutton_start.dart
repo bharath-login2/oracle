@@ -417,7 +417,7 @@ class _StartStopToggleState extends State<StartStopToggle> {
               ),
             );
           } else {
-            toggleSwitch;
+               toggleSwitch(skipConfirmation: true);
           }
         } catch (e) {
           print('Error checking work status: $e');
