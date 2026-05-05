@@ -412,7 +412,21 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     if (mounted) {
       setState(() {});
     }
+    _clearListTabFilters(); // Clear filters when switching main tabs
     _fetchDataForTab(_tabController.index);
+  }
+
+  void _clearListTabFilters() {
+    _listTabSelectedStatusIds.clear();
+    _listTabSelectedStaffIds.clear();
+    _listTabSelectedCategoryIds.clear();
+    _listTabSelectedPriorityIds.clear();
+    _listTabSelectedProductIds.clear();
+    _listTabSelectedTagIds.clear();
+    _isListTabFilterApplied = false;
+    _isListTabDateFiltered = false;
+    searchController.clear();
+    setState(() {});
   }
 
   int _getTabCount() {
@@ -12604,11 +12618,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               setState(() {
                 _listTabFilter = label;
                 if (labelChanged) {
-                  _listTabSelectedStatusIds.clear();
-                  _listTabSelectedStaffIds.clear();
-                  _listTabSelectedCategoryIds.clear();
-                  _listTabSelectedPriorityIds.clear();
-                  _isListTabFilterApplied = false;
+                  _clearListTabFilters();
                 }
                 _listTabCurrentStatus = status;
                 _listTabCurrentLeadType = leadType ?? "";
@@ -12815,11 +12825,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
               setState(() {
                 _listTabFilter = label;
                 if (labelChanged) {
-                  _listTabSelectedStatusIds.clear();
-                  _listTabSelectedStaffIds.clear();
-                  _listTabSelectedCategoryIds.clear();
-                  _listTabSelectedPriorityIds.clear();
-                  _isListTabFilterApplied = false;
+                  _clearListTabFilters();
                 }
                 _listTabCurrentStatus = status;
                 _listTabCurrentLeadType = leadType ?? "";
@@ -13029,11 +13035,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     toDate = DateTime.now();
                   }
                   if (labelChanged) {
-                    _listTabSelectedStatusIds.clear();
-                    _listTabSelectedStaffIds.clear();
-                    _listTabSelectedCategoryIds.clear();
-                    _listTabSelectedPriorityIds.clear();
-                    _isListTabFilterApplied = false;
+                    _clearListTabFilters();
                   }
                   _listTabCurrentStatus = status;
                   _listTabCurrentLeadType = leadType ?? "";
@@ -13247,11 +13249,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     toDate = DateTime.now();
                   }
                   if (labelChanged) {
-                    _listTabSelectedStatusIds.clear();
-                    _listTabSelectedStaffIds.clear();
-                    _listTabSelectedCategoryIds.clear();
-                    _listTabSelectedPriorityIds.clear();
-                    _isListTabFilterApplied = false;
+                    _clearListTabFilters();
                   }
                   _listTabCurrentStatus = status;
                   _listTabCurrentLeadType = leadType ?? "";

@@ -1988,7 +1988,7 @@ class _AssignReportState extends State<AssignReport> {
                             const SizedBox(width: 4),
                             Text(
                               item.status == "Running"
-                                  ? "Running"
+                                  ? "Working"
                                   : item.startStatus == "Started"
                                       ? "Restart"
                                       : "Start",

@@ -131,10 +131,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String? contactPermission;
   String? transferPermission;
   String? cloudCallPermission;
-   String? createRenewalPermission;
-     String? customerAddInvoicePermission;
-       String? createCustomerInvoice;
-       String? voiceListerningPermission;
+  String? createRenewalPermission;
+  String? customerAddInvoicePermission;
+  String? createCustomerInvoice;
+  String? voiceListerningPermission;
   String? whatsappOfficial;
   String? name;
   String? userId;
@@ -293,6 +293,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       }
     }
   }
+
   final List<TextEditingController> _additionalCtrls = [];
   final List<Map<String, dynamic>> _additionalValues = [];
 
@@ -375,6 +376,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       },
     );
   }
+
   List<DriveAccount> googleDriveAccounts = [];
   DriveAccount? selectedDriveAccount;
   bool isDriveAccountsLoading = false;
@@ -473,10 +475,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     contactPermission = await Common.getSharedPref("getContactPermission");
     transferPermission = await Common.getSharedPref("transferPermission");
     cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
-     createRenewalPermission = await Common.getSharedPref("createRenewalPermission");
-       customerAddInvoicePermission = await Common.getSharedPref("customerAddInvoicePermission");
-       createCustomerInvoice = await Common.getSharedPref("createCustomerInvoice");
-        voiceListerningPermission = await Common.getSharedPref("voiceListerningPermission");
+    createRenewalPermission =
+        await Common.getSharedPref("createRenewalPermission");
+    customerAddInvoicePermission =
+        await Common.getSharedPref("customerAddInvoicePermission");
+    createCustomerInvoice = await Common.getSharedPref("createCustomerInvoice");
+    voiceListerningPermission =
+        await Common.getSharedPref("voiceListerningPermission");
     whatsappOfficial = await Common.getSharedPref("officialWhatsapp");
     name = await Common.getSharedPref("name");
     userId = await Common.getSharedPref("userId");
@@ -824,7 +829,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     });
     try {
       final response = await HttpService.getGoogleDriveFiles(
-          widget.callMasterId, accountId, parentId);
+          (callMasterId ?? widget.callMasterId), accountId, parentId);
       if (mounted && response != null && response.status) {
         setState(() {
           googleDriveFiles = response.data;
@@ -2301,9 +2306,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           leadTypeId,
           leadSubTypeId,
           remarks.text,
-          widget.callMasterId,
+          callMasterId ?? (callMasterId ?? widget.callMasterId),
           calledDate1.text,
-          '', // callHistoryId
+          '', 
           priorityId,
           checked,
           timeBefore.text,
@@ -2334,14 +2339,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           createCustomer: createCustomer,
           whatsappLead: whatsappLead.text,
           emailLead: emailLead.text);
-
       if (context.mounted) {
-        Navigator.pop(context); // Close progress dialog
-
+        Navigator.pop(context);
         if (result.status == true) {
           Common.toastMessaage(result.message, Colors.green);
           widget.onDataChanged();
-          _refreshData(widget.callMasterId);
+          _refreshData(callMasterId ?? widget.callMasterId);
           setState(() {
             remarks.clear();
             isExpand = false;
@@ -3044,10 +3047,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                     horizontal: 12, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: Colors.blue.shade50,
-                                  borderRadius:
-                                      BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: Colors.blue.shade100),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border:
+                                      Border.all(color: Colors.blue.shade100),
                                 ),
                                 child: Row(
                                   children: [
@@ -3060,8 +3062,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                       ),
                                     ),
                                     GestureDetector(
-                                      onTap: () =>
-                                          _removeFollowupProduct(p),
+                                      onTap: () => _removeFollowupProduct(p),
                                       child: const Icon(Icons.cancel,
                                           size: 20, color: Colors.red),
                                     ),
@@ -3080,14 +3081,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                     bottom: 12, left: 4, right: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.grey.shade50,
-                                  borderRadius:
-                                      BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: Colors.grey.shade200),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border:
+                                      Border.all(color: Colors.grey.shade200),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
                                       "Product Description",
@@ -3100,8 +3099,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                     _descriptionLoading[p.id] == true
                                         ? const Center(
                                             child: Padding(
-                                              padding:
-                                                  EdgeInsets.all(8.0),
+                                              padding: EdgeInsets.all(8.0),
                                               child: SizedBox(
                                                 height: 20,
                                                 width: 20,
@@ -3113,8 +3111,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                             ),
                                           )
                                         : Text(
-                                            _productDescriptions[p.id] ??
-                                                "",
+                                            _productDescriptions[p.id] ?? "",
                                             style: const TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey),
@@ -3601,16 +3598,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   if ((leadSettings != null
                           ? leadSettings!.createInvoiceBool
                           : (callResultId == '4' &&
-                              customerAddInvoicePermission ==
-                                  true)) ||
+                              customerAddInvoicePermission == true)) ||
                       (leadSettings?.createCustomerBool ?? false))
                     Row(
                       children: [
                         if (leadSettings != null
                             ? leadSettings!.createInvoiceBool
                             : (callResultId == '4' &&
-                                customerAddInvoicePermission ==
-                                    true))
+                                customerAddInvoicePermission == true))
                           Expanded(
                             child: CheckboxListTile(
                               contentPadding: EdgeInsets.zero,
@@ -3653,8 +3648,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       (leadSettings != null
                           ? leadSettings!.createInvoiceBool
                           : (callResultId == '4' &&
-                              customerAddInvoicePermission ==
-                                  true)))
+                              customerAddInvoicePermission == true)))
                     _buildOrderSection(),
 
                   // Create Renewal Checkbox (Conditional)
@@ -3830,7 +3824,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           renProducts.clear();
           _recalculateTotals();
         });
-        await _refreshData(widget.callMasterId);
+        await _refreshData(callMasterId ?? widget.callMasterId);
         widget.onDataChanged();
       } else {
         Common.toastMessaage(
@@ -4556,7 +4550,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-
   void _addFollowupProduct(LeadProduct p) {
     setState(() {
       if (!_selectedProducts.any((item) => item.id == p.id)) {
@@ -4881,8 +4874,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   ),
                                 ),
                               ),
-                            if (createCustomerInvoice ==
-                                    true &&
+                            if (createCustomerInvoice == true &&
                                 (leadDetailsFollowup
                                         ?.data?.followUpData?.isNotEmpty ??
                                     false) &&
@@ -4897,7 +4889,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                     isCreatingOrderOnly = true;
                                     createOrder = true;
                                     creatingOrderFollowupId =
-                                        widget.callMasterId;
+                                        (callMasterId ?? widget.callMasterId);
                                     _fetchRenewalDetails();
                                   });
                                 },
@@ -4926,7 +4918,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                             .data.customerId
                                             .toString(),
                                       ))?.then((r) {
-                                    _refreshData(widget.callMasterId);
+                                    _refreshData(
+                                        callMasterId ?? widget.callMasterId);
                                     widget.onDataChanged();
                                   });
                                 },
@@ -4950,7 +4943,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                                 widget.editLead,
                                                 widget.deleteLead,
                                                 widget.cloudCall,
-                                                widget.callMasterId,
+                                                (callMasterId ??
+                                                    widget.callMasterId),
                                                 followup.callDetailsId
                                                     .toString(),
                                                 pageName: widget.pageName,
@@ -4961,7 +4955,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                                 toDate: widget.toDate,
                                                 category: widget.category,
                                               )))?.then((r) {
-                                    _refreshData(widget.callMasterId);
+                                    _refreshData(
+                                        callMasterId ?? widget.callMasterId);
                                     widget.onDataChanged();
                                   });
                                 },
@@ -5380,7 +5375,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   //                                   isCreatingOrderOnly = true;
   //                                   createOrder = true;
   //                                   creatingOrderFollowupId =
-  //                                       widget.callMasterId;
+  //                                       (callMasterId ?? widget.callMasterId);
   //                                   _fetchRenewalDetails();
   //                                 });
   //                               },
@@ -5404,7 +5399,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   //                                           .data.customerId
   //                                           .toString(),
   //                                     ))?.then((r) {
-  //                                   _refreshData(widget.callMasterId);
+  //                                   _refreshData(callMasterId ?? widget.callMasterId);
   //                                   widget.onDataChanged();
   //                                 });
   //                               },
@@ -5423,7 +5418,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   //                                               widget.editLead,
   //                                               widget.deleteLead,
   //                                               widget.cloudCall,
-  //                                               widget.callMasterId,
+  //                                               (callMasterId ?? widget.callMasterId),
   //                                               followup.callDetailsId
   //                                                   .toString(),
   //                                               pageName: widget.pageName,
@@ -5434,7 +5429,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   //                                               toDate: widget.toDate,
   //                                               category: widget.category,
   //                                             )))?.then((r) {
-  //                                   _refreshData(widget.callMasterId);
+  //                                   _refreshData(callMasterId ?? widget.callMasterId);
   //                                   widget.onDataChanged();
   //                                 });
   //                               },
@@ -5809,8 +5804,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   Future<void> _deleteLead(BuildContext context) async {
     Common.showProgressDialog(context, "Deleting Lead..");
-    DeleteLeadModel delete =
-        await HttpService.deleteLead(widget.token, widget.callMasterId);
+    DeleteLeadModel delete = await HttpService.deleteLead(
+        widget.token, (callMasterId ?? widget.callMasterId));
     if (delete.data == true) {
       Common.toastMessaage(delete.message, Colors.green);
       if (mounted) {
@@ -5829,12 +5824,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   Future<void> _deleteFollowup(BuildContext context, String followupId) async {
     Common.showProgressDialog(context, "Deleting..");
     DeleteLeadFollowModel delete = await HttpService.deleteLeadFollowup(
-        widget.token, followupId, widget.callMasterId);
+        widget.token, followupId, (callMasterId ?? widget.callMasterId));
     if (delete.data == true) {
       Common.toastMessaage(delete.message, Colors.green);
       if (mounted) {
         Navigator.pop(context); // Close progress dialog
-        _refreshData(widget.callMasterId);
+        _refreshData(callMasterId ?? widget.callMasterId);
         widget.onDataChanged();
       }
     } else {
@@ -6146,7 +6141,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     Common.showProgressDialog(context, "Uploading...");
                     final result = await HttpService.leadVoiceUpload(
                       widget.token,
-                      widget.callMasterId,
+                      (callMasterId ?? widget.callMasterId),
                       callDetailsId,
                       audioCreateController.audioPath.value,
                     );
@@ -6158,7 +6153,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       audioCreateController.resetTimer();
                       Common.toastMessaage(result.message, Colors.green);
                       Navigator.pop(context); // Close dialog
-                      _refreshData(widget.callMasterId);
+                      _refreshData(callMasterId ?? widget.callMasterId);
                     } else {
                       Common.toastMessaage(result.message, Colors.red);
                     }
@@ -6212,14 +6207,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     Common.showProgressDialog(context, "Deleting...");
     final result = await HttpService.deleteLeadVoice(
       widget.token,
-      widget.callMasterId,
+      (callMasterId ?? widget.callMasterId),
       callDetailsId,
     );
     if (context.mounted) Navigator.pop(context); // Close progress
 
     if (result.status == true) {
       Common.toastMessaage(result.message, Colors.green);
-      _refreshData(widget.callMasterId);
+      _refreshData(callMasterId ?? widget.callMasterId);
     } else {
       Common.toastMessaage(result.message, Colors.red);
     }
@@ -6294,7 +6289,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   if (context.mounted) Navigator.pop(context);
 
                                   if (unsetReminder.data == true) {
-                                    _refreshData(widget.callMasterId);
+                                    _refreshData(
+                                        callMasterId ?? widget.callMasterId);
                                     widget.onDataChanged();
                                   } else {
                                     Common.toastMessaage(
@@ -6336,7 +6332,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                 if (updateReminder.status == true) {
                                   Common.toastMessaage(
                                       updateReminder.message, Colors.green);
-                                  _refreshData(widget.callMasterId);
+                                  _refreshData(
+                                      callMasterId ?? widget.callMasterId);
                                   widget.onDataChanged();
                                 } else {
                                   Common.toastMessaage(
@@ -7025,7 +7022,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               widget.editLead,
               widget.deleteLead,
               widget.cloudCall,
-              widget.callMasterId,
+              (callMasterId ?? widget.callMasterId),
               widget.token,
               name,
               userId,
@@ -8103,8 +8100,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 leading:
                     const Icon(Icons.delete_outline_rounded, color: Colors.red),
                 title: const Text('Delete',
-                    style:
-                        TextStyle(color: Colors.red, fontWeight: FontWeight.w500)),
+                    style: TextStyle(
+                        color: Colors.red, fontWeight: FontWeight.w500)),
                 onTap: () {
                   Navigator.pop(context);
                   _showDeleteDriveFileConfirm(file);
@@ -8169,7 +8166,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Rename', style: TextStyle(color: Colors.white)),
+              child:
+                  const Text('Rename', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -8221,7 +8219,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 Navigator.pop(context);
                 _deleteDriveFile(file.fileId ?? file.id);
               },
-              child: const Text('Delete', style: TextStyle(color: Colors.white)),
+              child:
+                  const Text('Delete', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -8328,7 +8327,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
                                     final res =
                                         await HttpService.createGoogleFolders(
-                                      widget.callMasterId,
+                                      (callMasterId ?? widget.callMasterId),
                                       selectedDriveAccount!.id,
                                       selectedFolderId ?? "",
                                       folderNameCtrl.text,
@@ -8408,8 +8407,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         listPath = newPath;
                         backPath = newBack;
                       });
-                      listFolderList(
-                          widget.token, widget.callMasterId, listPath);
+                      listFolderList(widget.token,
+                          (callMasterId ?? widget.callMasterId), listPath);
                     }
                   },
                   child: Text(p,
@@ -9139,7 +9138,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
                             if (selectedDocumentType == 'drive') {
                               var res = await HttpService.uploadGoogleFiles(
-                                widget.callMasterId,
+                                (callMasterId ?? widget.callMasterId),
                                 selectedDriveAccount!.id,
                                 selectedFolderId ?? "",
                                 audioCreateController.audioPath.value,
@@ -9161,7 +9160,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               UploadAudioRecord res =
                                   await HttpService.uploadRecord(
                                 widget.token,
-                                widget.callMasterId,
+                                (callMasterId ?? widget.callMasterId),
                                 listPath,
                                 audioCreateController.audioPath.value,
                                 fileNameStr,
@@ -9171,8 +9170,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               if (res.data == true) {
                                 Common.toastMessaage(
                                     res.message ?? "Success", Colors.green);
-                                listFolderList(widget.token,
-                                    widget.callMasterId, listPath);
+                                listFolderList(
+                                    widget.token,
+                                    (callMasterId ?? widget.callMasterId),
+                                    listPath);
                                 if (context.mounted)
                                   Navigator.pop(context); // Close Dialog
                               } else {
@@ -9303,7 +9304,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
                             if (selectedDocumentType == 'drive') {
                               var res = await HttpService.uploadGoogleFiles(
-                                widget.callMasterId,
+                                (callMasterId ?? widget.callMasterId),
                                 selectedDriveAccount!.id,
                                 selectedFolderId ?? "",
                                 imageUploadController.file.value,
@@ -9323,7 +9324,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               UploadAudioRecord res =
                                   await HttpService.uploadRecord(
                                 widget.token,
-                                widget.callMasterId,
+                                (callMasterId ?? widget.callMasterId),
                                 listPath,
                                 imageUploadController.file.value,
                                 name,
@@ -9332,8 +9333,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               if (res.data == true) {
                                 Common.toastMessaage(
                                     res.message ?? "Success", Colors.green);
-                                listFolderList(widget.token,
-                                    widget.callMasterId, listPath);
+                                listFolderList(
+                                    widget.token,
+                                    (callMasterId ?? widget.callMasterId),
+                                    listPath);
                                 if (context.mounted) Navigator.pop(context);
                               } else {
                                 Common.toastMessaage(
@@ -9427,7 +9430,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           try {
                             if (selectedDocumentType == 'drive') {
                               var res = await HttpService.uploadGoogleFiles(
-                                widget.callMasterId,
+                                (callMasterId ?? widget.callMasterId),
                                 selectedDriveAccount!.id,
                                 selectedFolderId ?? "",
                                 file!.path!,
@@ -9446,7 +9449,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               UploadAudioRecord res =
                                   await HttpService.uploadRecord(
                                 widget.token,
-                                widget.callMasterId,
+                                (callMasterId ?? widget.callMasterId),
                                 listPath,
                                 file!.path!,
                                 file!.name,
@@ -9455,8 +9458,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               if (res.data == true) {
                                 Common.toastMessaage(
                                     res.message ?? "Success", Colors.green);
-                                listFolderList(widget.token,
-                                    widget.callMasterId, listPath);
+                                listFolderList(
+                                    widget.token,
+                                    (callMasterId ?? widget.callMasterId),
+                                    listPath);
                                 if (context.mounted) Navigator.pop(context);
                               } else {
                                 Common.toastMessaage(
@@ -9681,7 +9686,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
                   final result = await HttpService.addCloudCall(
                     widget.token,
-                    widget.callMasterId,
+                    (callMasterId ?? widget.callMasterId),
                     leadDetails!.data!.contactNumber1,
                   );
 
@@ -9747,7 +9752,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   ),
                 ).then((_) {
                   widget.onDataChanged();
-                  _refreshData(widget.callMasterId);
+                  _refreshData(callMasterId ?? widget.callMasterId);
                 });
               },
               child: const Text('Followup'),
@@ -10048,7 +10053,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   LeadTransferModel? result =
                                       await HttpService.leadTransfer(
                                     widget.token,
-                                    widget.callMasterId,
+                                    (callMasterId ?? widget.callMasterId),
                                     selectedStaff!,
                                     remarkController.text,
                                     transferFresh,

@@ -92,12 +92,18 @@ import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
 import 'package:login2/models/lead_management/getMaterialForStockCunsuptionModel.dart';
 import 'package:login2/models/lead_management/getOpeningModel.dart';
 import 'package:login2/models/lead_management/getOpenstockForEditModel.dart';
+import 'package:login2/models/lead_management/getPurchaseRequestListModel.dart';
+import 'package:login2/models/lead_management/getPurchaseReturnAddListMode.dart';
+import 'package:login2/models/lead_management/getPurchaseReturnModel.dart';
+import 'package:login2/models/lead_management/getPurchseOrderModel.dart';
 import 'package:login2/models/lead_management/getRecentExpenseModel.dart';
 import 'package:login2/models/lead_management/getRentReturnModel.dart';
 import 'package:login2/models/lead_management/getRentalViewModel.dart';
 import 'package:login2/models/lead_management/getStaffDocumentListModel.dart';
+import 'package:login2/models/lead_management/getStaffSalaryDetailsModel.dart';
 import 'package:login2/models/lead_management/getStockRegisterListModel.dart';
 import 'package:login2/models/lead_management/getStockRequestModel.dart';
+import 'package:login2/models/lead_management/getSupplierListMode.dart';
 import 'package:login2/models/lead_management/getTaskListModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
 import 'package:login2/models/lead_management/invoiceListHistory.dart';
@@ -126,6 +132,7 @@ import 'package:login2/models/lead_management/productTypeModel.dart';
 import 'package:login2/models/lead_management/projectDetailsModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/projectTraceModel.dart';
+import 'package:login2/models/lead_management/purchaseBillModel.dart';
 import 'package:login2/models/lead_management/quotationDetailsModel.dart';
 import 'package:login2/models/lead_management/quotationEditModel.dart';
 import 'package:login2/models/lead_management/quotationListModel.dart';
@@ -6300,6 +6307,12 @@ class HttpService {
     bool? addPublish,
     String? publishStatus,
     String? visibility,
+    String? expiryDate,
+    String? warrantyNumber,
+    String? serviceCycle,
+    String? freeService,
+    String? paidService,
+    List<Map<String, dynamic>>? complaints,
   }) async {
     Map<String, dynamic> data = {
       "token": await Common.getSharedPref('token'),
@@ -6353,8 +6366,18 @@ class HttpService {
       data["selling_price"] = sellingPrice;
       data["sacCode"] = hsnCode;
       data["warranty"] = hasWarranty == true ? "Yes" : "No";
+      if (hasWarranty == true) {
+        data["expiry_date"] = expiryDate;
+        data["warranty_number"] = warrantyNumber;
+        data["service_cycle"] = serviceCycle;
+      }
+      data["free_service"] = freeService;
+      data["paid_service"] = paidService;
       if (pipelines != null && pipelines.isNotEmpty) {
         data["pipelines"] = jsonEncode(pipelines);
+      }
+      if (complaints != null && complaints.isNotEmpty) {
+        data["complaints"] = jsonEncode(complaints);
       }
     } else if (productType == "Material") {
       data["selling_price"] = sellingPrice;
@@ -8198,7 +8221,7 @@ class HttpService {
     }
   }
 
-  static Future<bool> addSalaryDetails({
+  static Future<bool> saveStaffAccounts({
     required String userId,
     required String salary,
     required String openingBalance,
@@ -8208,7 +8231,7 @@ class HttpService {
     final token = await Common.getSharedPref('token');
     try {
       final response = await _dio.post(
-        "${await Config.getUrl()}add_salary_summary",
+        "${await Config.getUrl()}saveStaffAccounts",
         data: FormData.fromMap({
           "token": token,
           "id": userId,
@@ -15260,5 +15283,308 @@ class HttpService {
       log("getRecentExpense error: $e");
     }
     return null;
+  }
+
+  static Future<GetPurchaseRequestListModel?> purchaseRequestList(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_all_purchase_requests",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseRequestListModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("updateStockRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetPurchaseOrderModel?> purchaseOrderList(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_purchase_orders",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseOrderModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("updateStockRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<PurchaseBillModel?> purchaseBillList(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_purchase_bill_data",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return PurchaseBillModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("updateStockRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> postPurchaseRequest(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_purchase_request",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("postPurchaseRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> postPurchaseOrder(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_purchase_order",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("postPurchaseOrder error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> postPurchaseBill(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_purchase_bill",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("postPurchaseBill error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> deletePurchaseBill(String billId) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_purchase_bill",
+        data: FormData.fromMap({
+          "token": token,
+          "bill_id": billId,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("deletePurchaseBill error: $e");
+    }
+    return null;
+  }
+
+
+  static Future<GetSupplierListModel?> getSupplierList(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_suppliers",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetSupplierListModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getSupplierList error: $e");
+    }
+    return null;
+  }
+
+
+  static Future<GetPurchaseReturnModel?> purchaseReturnList(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_all_return_purchase",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseReturnModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("updateStockRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> postPurchaseReturn(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_purchase_return",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("postPurchaseReturn error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> updatePurchaseReturn(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_purchase_return",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("updatePurchaseReturn error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> deletePurchaseReturn(String returnId) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_purchase_return",
+        data: FormData.fromMap({
+          "token": token,
+          "return_id": returnId,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("deletePurchaseReturn error: $e");
+    }
+    return null;
+  }
+
+
+   static Future<GetPurchaseReturnAddListModel?> purchaseReturngetForAdd(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_purchase_stock_list",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseReturnAddListModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("updateStockRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetStaffSalaryDetailsModel?> getStaffSalaryDetails(
+      String staffId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {'staff_id': staffId};
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}getSalaryDetails",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetStaffSalaryDetailsModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getStaffSalaryDetails error: $e");
+    }
+    return null;
+  }
+
+  static Future<bool> saveSalary({
+    String? salaryId,
+    required String staffId,
+    required String amount,
+    required String fromDate,
+    required String toDate,
+    String? remark,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+      'staff_id': staffId,
+      'amount': amount,
+      'from_date': fromDate,
+      'to_date': toDate,
+      'remark': remark ?? '',
+    };
+    if (salaryId != null) {
+      data['salary_id'] = salaryId;
+    }
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}saveSalary",
+        data: FormData.fromMap(data),
+      );
+      return response.statusCode == 200 && response.data['status'] == true;
+    } catch (e) {
+      log("saveSalary error: $e");
+      return false;
+    }
+  }
+
+  static Future<bool> deleteSalaryDetails(String salaryId) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}deleteSalary",
+        data: FormData.fromMap({
+          'token': token,
+          'id': salaryId,
+        }),
+      );
+      return response.statusCode == 200 && response.data['status'] == true;
+    } catch (e) {
+      log("deleteSalaryDetails error: $e");
+      return false;
+    }
   }
 }

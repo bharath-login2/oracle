@@ -292,10 +292,12 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
   Widget _buildCompanyReportCard(TargetGroupAll report) {
     final targetAmount = _parseAmount(report.targetAmount);
     final achievedAmount = _parseAmount(report.totalAchieved);
-    final pendingAmount = targetAmount - achievedAmount;
-    final progress =
-        _calculateProgress(report.targetAmount, report.totalAchieved);
-    final progressPercent = (progress * 100).toStringAsFixed(1);
+    final isOverAchieved = achievedAmount > targetAmount;
+    final pendingOrExtraAmount = (targetAmount - achievedAmount).abs();
+    
+    final progress = _calculateProgress(report.targetAmount, report.totalAchieved);
+    final realProgress = targetAmount > 0 ? (achievedAmount / targetAmount) : (achievedAmount > 0 ? 1.0 : 0.0);
+    final progressPercent = (realProgress * 100).toStringAsFixed(1);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -408,9 +410,9 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
                   Colors.green,
                 ),
                 _buildAmountColumn(
-                  "Pending",
-                  "₹${NumberFormat("#,##0.00").format(pendingAmount)}",
-                  Colors.orange,
+                  isOverAchieved ? "Over Achieved" : "Pending",
+                  "₹${NumberFormat("#,##0.00").format(pendingOrExtraAmount)}",
+                  isOverAchieved ? Colors.green : Colors.orange,
                 ),
               ],
             ),
@@ -479,10 +481,12 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
   Widget _buildIndividualReportCard(TargetGroupAll report) {
     final targetAmount = _parseAmount(report.targetAmount);
     final achievedAmount = _parseAmount(report.totalAchieved);
-    final pendingAmount = targetAmount - achievedAmount;
-    final progress =
-        _calculateProgress(report.targetAmount, report.totalAchieved);
-    final progressPercent = (progress * 100).toStringAsFixed(1);
+    final isOverAchieved = achievedAmount > targetAmount;
+    final pendingOrExtraAmount = (targetAmount - achievedAmount).abs();
+
+    final progress = _calculateProgress(report.targetAmount, report.totalAchieved);
+    final realProgress = targetAmount > 0 ? (achievedAmount / targetAmount) : (achievedAmount > 0 ? 1.0 : 0.0);
+    final progressPercent = (realProgress * 100).toStringAsFixed(1);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -567,9 +571,9 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
                     Colors.green,
                   ),
                   _buildAmountColumn(
-                    "Pending",
-                    "₹${NumberFormat("#,##0").format(pendingAmount)}",
-                    Colors.orange,
+                    isOverAchieved ? "Over Achieved" : "Pending",
+                    "₹${NumberFormat("#,##0").format(pendingOrExtraAmount)}",
+                    isOverAchieved ? Colors.green : Colors.orange,
                   ),
                 ],
               ),
@@ -583,10 +587,12 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
   Widget _buildGroupReportCard(TargetGroupAll report) {
     final targetAmount = _parseAmount(report.targetAmount);
     final achievedAmount = _parseAmount(report.totalAchieved);
-    final pendingAmount = targetAmount - achievedAmount;
-    final progress =
-        _calculateProgress(report.targetAmount, report.totalAchieved);
-    final progressPercent = (progress * 100).toStringAsFixed(1);
+    final isOverAchieved = achievedAmount > targetAmount;
+    final pendingOrExtraAmount = (targetAmount - achievedAmount).abs();
+
+    final progress = _calculateProgress(report.targetAmount, report.totalAchieved);
+    final realProgress = targetAmount > 0 ? (achievedAmount / targetAmount) : (achievedAmount > 0 ? 1.0 : 0.0);
+    final progressPercent = (realProgress * 100).toStringAsFixed(1);
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -683,9 +689,9 @@ class _ViewAllTargetReportPageState extends State<ViewAllTargetReportPage> {
                     Colors.green,
                   ),
                   _buildAmountColumn(
-                    "Pending",
-                    "₹${NumberFormat("#,##0").format(pendingAmount)}",
-                    Colors.orange,
+                    isOverAchieved ? "Over Achieved" : "Pending",
+                    "₹${NumberFormat("#,##0").format(pendingOrExtraAmount)}",
+                    isOverAchieved ? Colors.green : Colors.orange,
                   ),
                 ],
               ),

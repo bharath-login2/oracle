@@ -7,6 +7,7 @@ import 'package:login2/models/product_mannagement/product_categories.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
 import 'package:login2/screens/product_mannagement/categories.dart';
 import 'package:login2/screens/product_mannagement/subcategories.dart';
+import 'package:intl/intl.dart';
 import 'package:login2/service/service.dart';
 
 class AddProducts extends StatefulWidget {
@@ -26,7 +27,6 @@ class _AddProductsState extends State<AddProducts> {
   TextEditingController totalAmount = TextEditingController();
   TextEditingController mrp = TextEditingController();
   TextEditingController contentId = TextEditingController();
-  TextEditingController hsnCode = TextEditingController();
   TextEditingController brand = TextEditingController();
   TextEditingController expiryDays = TextEditingController();
   TextEditingController openingStock = TextEditingController();
@@ -36,11 +36,33 @@ class _AddProductsState extends State<AddProducts> {
   TextEditingController description = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController subCategory = TextEditingController();
+  TextEditingController expiryDate = TextEditingController();
+  TextEditingController warrantyNumber = TextEditingController();
+  TextEditingController freeService = TextEditingController();
+  TextEditingController paidService = TextEditingController();
+  List<TextEditingController> complaintControllers = [TextEditingController()];
+  List<String?> selectedComplaintTypes = ["Complaint Type"];
+  List<String> complaintTypeOptions = [
+    "Complaint Type",
+    "Product Issue",
+    "Payment Issue",
+    "Warranty Issue",
+    "Technical Issue"
+  ];
 
   List filteredCategories = [];
   List filteredSubCategories = [];
   List<String> productTypeList = [];
   String? selectedProductType;
+  String? selectedServiceCycle;
+  List<String> serviceCycles = [
+    "Daily",
+    "N Days",
+    "Weekly",
+    "Monthly",
+    "Yearly"
+  ];
+
   String? productImage;
   String categoryId = "";
   String subCategoryId = "";
@@ -121,7 +143,7 @@ class _AddProductsState extends State<AddProducts> {
       description.text,
       productImage,
       selectedProductType ?? "",
-      hsnCode.text,
+      "",
       brand.text,
       discount.text,
       expiryDays.text,
@@ -132,10 +154,24 @@ class _AddProductsState extends State<AddProducts> {
       selectedStockStatus,
       unit: unitController.text,
       hasWarranty: hasWarranty,
-      pipelines: pipelineControllers.map((e) => e.text).where((text) => text.isNotEmpty).toList(),
+      pipelines: pipelineControllers
+          .map((e) => e.text)
+          .where((text) => text.isNotEmpty)
+          .toList(),
       addPublish: addPublish,
       publishStatus: selectedStatus,
       visibility: selectedVisibility,
+      expiryDate: expiryDate.text,
+      warrantyNumber: warrantyNumber.text,
+      serviceCycle: selectedServiceCycle,
+      freeService: freeService.text,
+      paidService: paidService.text,
+      complaints: List.generate(complaintControllers.length, (index) {
+        return {
+          "type": selectedComplaintTypes[index],
+          "remark": complaintControllers[index].text
+        };
+      }).where((element) => element["remark"]!.isNotEmpty).toList(),
     );
     if (postResponse != null && postResponse!.status == true) {
       Navigator.pop(context);
@@ -229,9 +265,8 @@ class _AddProductsState extends State<AddProducts> {
                                   selectedProductType = val;
                                 });
                               },
-                              validator: (val) => val == null
-                                  ? "Select Product Type"
-                                  : null,
+                              validator: (val) =>
+                                  val == null ? "Select Product Type" : null,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -240,9 +275,8 @@ class _AddProductsState extends State<AddProducts> {
                               controller: productName,
                               label: "Product Name *",
                               icon: Icons.layers_outlined,
-                              validator: (val) => val!.isEmpty
-                                  ? "Enter Product Name"
-                                  : null,
+                              validator: (val) =>
+                                  val!.isEmpty ? "Enter Product Name" : null,
                             ),
                           ),
                         ],
@@ -252,7 +286,7 @@ class _AddProductsState extends State<AddProducts> {
                         children: [
                           Expanded(
                             child: _buildTextField(
-                              controller: hsnCode,
+                              controller: productCode,
                               label: selectedProductType == "Service"
                                   ? "SAC Code"
                                   : (selectedProductType == "Material" ||
@@ -272,12 +306,6 @@ class _AddProductsState extends State<AddProducts> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildTextField(
-                        controller: productCode,
-                        label: "Product Code",
-                        icon: Icons.terminal_outlined,
-                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -296,7 +324,9 @@ class _AddProductsState extends State<AddProducts> {
                               keyboardType: TextInputType.number,
                               onChanged: (val) => _updateTotalAmount(),
                               validator: (val) => val!.isEmpty
-                                  ? (selectedProductType == "Rental" ? "Enter Rental Price" : "Enter Selling Price")
+                                  ? (selectedProductType == "Rental"
+                                      ? "Enter Rental Price"
+                                      : "Enter Selling Price")
                                   : null,
                             ),
                           ),
@@ -374,6 +404,52 @@ class _AddProductsState extends State<AddProducts> {
                           ),
                         ],
                       ),
+                      if (selectedProductType == "Service" && hasWarranty) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildSelectField(
+                                controller: expiryDate,
+                                label: "Expiry Date",
+                                icon: Icons.calendar_month,
+                                onTap: () async {
+                                  DateTime? pickedDate = await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2101));
+                                  if (pickedDate != null) {
+                                    setState(() {
+                                      expiryDate.text = DateFormat('yyyy-MM-dd')
+                                          .format(pickedDate);
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildTextField(
+                                controller: warrantyNumber,
+                                label: "Warranty Number",
+                                icon: Icons.numbers,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildDropdownField(
+                          label: "Service Cycle",
+                          value: selectedServiceCycle,
+                          items: serviceCycles,
+                          onChanged: (val) {
+                            setState(() {
+                              selectedServiceCycle = val;
+                            });
+                          },
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: description,
@@ -409,11 +485,9 @@ class _AddProductsState extends State<AddProducts> {
                           controller: subCategory,
                           label: "Sub Category *",
                           icon: Icons.account_tree_outlined,
-                          onTap: () =>
-                              dropDialog(context, "sub category"),
-                          validator: (val) => val!.isEmpty
-                              ? "Select Sub Category"
-                              : null,
+                          onTap: () => dropDialog(context, "sub category"),
+                          validator: (val) =>
+                              val!.isEmpty ? "Select Sub Category" : null,
                           actionWidget: _buildAddButton(() {
                             Navigator.push(
                               context,
@@ -482,7 +556,9 @@ class _AddProductsState extends State<AddProducts> {
                                 label: "Opening Stock *",
                                 icon: Icons.inventory_2_outlined,
                                 keyboardType: TextInputType.number,
-                                validator: (val) => addStock && val!.isEmpty ? "Enter Opening Stock" : null,
+                                validator: (val) => addStock && val!.isEmpty
+                                    ? "Enter Opening Stock"
+                                    : null,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -492,7 +568,9 @@ class _AddProductsState extends State<AddProducts> {
                                 label: "Current Stock *",
                                 icon: Icons.inventory_outlined,
                                 keyboardType: TextInputType.number,
-                                validator: (val) => addStock && val!.isEmpty ? "Enter Current Stock" : null,
+                                validator: (val) => addStock && val!.isEmpty
+                                    ? "Enter Current Stock"
+                                    : null,
                               ),
                             ),
                           ],
@@ -511,6 +589,12 @@ class _AddProductsState extends State<AddProducts> {
                       ],
                     ],
                   ),
+                  if (selectedProductType == "Service" && hasWarranty) ...[
+                    const SizedBox(height: 16),
+                    _buildServiceCountSection(),
+                    const SizedBox(height: 16),
+                    _buildComplaintsSection(),
+                  ],
                   if (selectedProductType == "Ecommerce" ||
                       selectedProductType == "Rental") ...[
                     const SizedBox(height: 16),
@@ -530,7 +614,8 @@ class _AddProductsState extends State<AddProducts> {
                                 width: double.infinity,
                                 decoration: BoxDecoration(
                                     color: Colors.grey[50],
-                                    border: Border.all(color: Colors.grey[300]!),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
                                     borderRadius: BorderRadius.circular(12)),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -539,7 +624,8 @@ class _AddProductsState extends State<AddProducts> {
                                         size: 40, color: Colors.grey[400]),
                                     const SizedBox(height: 8),
                                     Text("Add Product Photo",
-                                        style: TextStyle(color: Colors.grey[500])),
+                                        style:
+                                            TextStyle(color: Colors.grey[500])),
                                   ],
                                 ),
                               )
@@ -579,11 +665,13 @@ class _AddProductsState extends State<AddProducts> {
                     child: RawMaterialButton(
                       onPressed: () {
                         if (formKey.currentState!.validate()) {
-                          Common.showProgressDialog(context, "Saving Product...");
+                          Common.showProgressDialog(
+                              context, "Saving Product...");
                           postProducts();
                         } else {
                           Common.toastMessaage(
-                              "Please complete all required fields", Colors.red);
+                              "Please complete all required fields",
+                              Colors.red);
                         }
                       },
                       shape: RoundedRectangleBorder(
@@ -614,7 +702,8 @@ class _AddProductsState extends State<AddProducts> {
     double taxVal = double.tryParse(tax.text) ?? 0;
     double discVal = double.tryParse(discount.text) ?? 0;
 
-    double total = (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
+    double total =
+        (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
     setState(() {
       totalAmount.text = total.roundToDouble().toString();
     });
@@ -623,7 +712,7 @@ class _AddProductsState extends State<AddProducts> {
   Widget _buildLabel(String label) {
     bool hasAsterisk = label.contains('*');
     String cleanLabel = label.replaceAll('*', '').trim();
-    
+
     return RichText(
       text: TextSpan(
         text: cleanLabel,
@@ -714,12 +803,14 @@ class _AddProductsState extends State<AddProducts> {
                 icon: Icons.linear_scale,
                 validator: (val) => val!.isEmpty ? "Enter Pipeline Name" : null,
                 actionWidget: index == 0
-                    ? _buildActionButton(Icons.add, const Color(0xFF26A69A), () {
+                    ? _buildActionButton(Icons.add, const Color(0xFF26A69A),
+                        () {
                         setState(() {
                           pipelineControllers.add(TextEditingController());
                         });
                       })
-                    : _buildActionButton(Icons.delete_outline, const Color(0xFFEF5350), () {
+                    : _buildActionButton(
+                        Icons.delete_outline, const Color(0xFFEF5350), () {
                         setState(() {
                           pipelineControllers.removeAt(index);
                         });
@@ -762,7 +853,8 @@ class _AddProductsState extends State<AddProducts> {
             },
             activeColor: const Color(0xFF2a86c9),
           ),
-          const Text("Add Publish", style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text("Add Publish",
+              style: TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
       children: [
@@ -793,7 +885,10 @@ class _AddProductsState extends State<AddProducts> {
     );
   }
 
-  Widget _buildSectionCard({required String title, required List<Widget> children, Widget? trailing}) {
+  Widget _buildSectionCard(
+      {required String title,
+      required List<Widget> children,
+      Widget? trailing}) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -860,17 +955,20 @@ class _AddProductsState extends State<AddProducts> {
                   prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
                   filled: fillColor != null,
                   fillColor: fillColor,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF2a86c9), width: 2),
                   ),
                   hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ),
@@ -898,7 +996,9 @@ class _AddProductsState extends State<AddProducts> {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: value,
-          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items: items
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
           onChanged: onChanged,
           validator: validator,
           decoration: InputDecoration(
@@ -913,7 +1013,8 @@ class _AddProductsState extends State<AddProducts> {
               borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 2),
             ),
             hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],
@@ -946,17 +1047,20 @@ class _AddProductsState extends State<AddProducts> {
                   hintText: label.replaceAll('*', '').trim(),
                   prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
                   suffixIcon: const Icon(Icons.arrow_drop_down),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF2a86c9), width: 2),
                   ),
                   hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ),
@@ -1146,6 +1250,148 @@ class _AddProductsState extends State<AddProducts> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildServiceCountSection() {
+    return _buildSectionCard(
+      title: "Service Count",
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                controller: freeService,
+                label: "Free Service",
+                icon: Icons.sync,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildTextField(
+                controller: paidService,
+                label: "Paid Service",
+                icon: Icons.payments_outlined,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildComplaintsSection() {
+    return _buildSectionCard(
+      title: "Add Complaints",
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: complaintControllers.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () => _showComplaintTypeDialog(index),
+                    child: Container(
+                      height: 50,
+                      width: 100, // Fixed width for the type box
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        selectedComplaintTypes[index] ?? "Type",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: complaintControllers[index],
+                      decoration: InputDecoration(
+                        hintText: "Enter Remarks",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: Color(0xFF2a86c9), width: 2),
+                        ),
+                        hintStyle:
+                            TextStyle(color: Colors.grey[400], fontSize: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  index == 0
+                      ? _buildActionButton(Icons.add, const Color(0xFF26A69A),
+                          () {
+                          setState(() {
+                            complaintControllers.add(TextEditingController());
+                            selectedComplaintTypes.add("Complaint Type");
+                          });
+                        })
+                      : _buildActionButton(
+                          Icons.delete_outline, const Color(0xFFEF5350), () {
+                          setState(() {
+                            complaintControllers.removeAt(index);
+                            selectedComplaintTypes.removeAt(index);
+                          });
+                        }),
+                ],
+              ),
+            );
+          },
+        )
+      ],
+    );
+  }
+
+  void _showComplaintTypeDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select Complaint Type"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: complaintTypeOptions.length,
+              itemBuilder: (context, i) {
+                return ListTile(
+                  title: Text(complaintTypeOptions[i]),
+                  onTap: () {
+                    setState(() {
+                      selectedComplaintTypes[index] = complaintTypeOptions[i];
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

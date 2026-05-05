@@ -28,8 +28,7 @@ class _AchievementDetailsPageState extends State<AchievementDetailsPage> {
   List<ListElement> items = [];
   ReceiptListModel? receiptList;
   String token = "";
-  Set<int> expandedIndexes = {}; // <-- added
-
+  Set<int> expandedIndexes = {}; 
   @override
   void initState() {
     super.initState();
@@ -130,13 +129,21 @@ class _AchievementDetailsPageState extends State<AchievementDetailsPage> {
                         style: const TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 8),
-                      Text(
-                        "💰 Pending: ₹${NumberFormat("#,##0.00").format((double.tryParse(widget.targetData.targetAmount.toString().replaceAll(',', '')) ?? 0.0) - (double.tryParse(widget.targetData.achieved.toString().replaceAll(',', '')) ?? 0.0))}",
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange),
-                      ),
+                      () {
+                        double target = double.tryParse(widget.targetData.targetAmount.toString().replaceAll(',', '')) ?? 0.0;
+                        double achieved = double.tryParse(widget.targetData.achieved.toString().replaceAll(',', '')) ?? 0.0;
+                        bool isOverAchieved = achieved > target;
+                        double pendingOrExtra = (target - achieved).abs();
+                        return Text(
+                          isOverAchieved 
+                            ? "🏆 Over Achieved: ₹${NumberFormat("#,##0.00").format(pendingOrExtra)}" 
+                            : "💰 Pending: ₹${NumberFormat("#,##0.00").format(pendingOrExtra)}",
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: isOverAchieved ? Colors.green : Colors.orange),
+                        );
+                      }(),
                       // Padding(
                       //   padding: const EdgeInsets.only(left: 22),
                       //   child: Text(

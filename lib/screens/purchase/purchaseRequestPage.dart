@@ -1,0 +1,1505 @@
+import 'package:flutter/material.dart';
+import 'package:login2/core/common.dart';
+import 'package:login2/models/lead_management/getPurchaseRequestListModel.dart';
+import 'package:login2/models/lead_management/materialModel.dart';
+import 'package:login2/service/service.dart';
+import 'package:intl/intl.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+
+class PurchaseRequestPage extends StatefulWidget {
+  final String token;
+  final String name;
+  final String userId;
+
+  const PurchaseRequestPage({
+    super.key,
+    required this.token,
+    required this.name,
+    required this.userId,
+  });
+
+  @override
+  State<PurchaseRequestPage> createState() => _PurchaseRequestPageState();
+}
+
+class CartItem {
+  MaterialData material;
+  double quantity;
+  String description;
+
+  CartItem(
+      {required this.material, this.quantity = 1.0, this.description = ""});
+}
+
+class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
+  bool isLoading = true;
+  List<PurchaseRequestData> requests = [];
+  List<PurchaseRequestData> filteredRequests = [];
+  String searchQuery = "";
+
+  // Materials for dropdown
+  List<MaterialData> materials = [];
+
+  // Filters
+  DateTime? fromDate;
+  DateTime? toDate;
+  String? selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRequests();
+    _fetchMaterials();
+  }
+
+  Future<void> _fetchMaterials() async {
+    try {
+      final response = await HttpService.getMaterials();
+      if (response != null && response.data != null) {
+        setState(() {
+          materials = response.data!;
+        });
+      }
+    } catch (e) {
+      print("Error fetching materials: $e");
+    }
+  }
+
+  Future<void> _fetchRequests() async {
+    setState(() => isLoading = true);
+    try {
+      Map<String, dynamic> data = {};
+      if (fromDate != null)
+        data['from_date'] = DateFormat('yyyy-MM-dd').format(fromDate!);
+      if (toDate != null)
+        data['to_date'] = DateFormat('yyyy-MM-dd').format(toDate!);
+      if (selectedStatus != null && selectedStatus != "All")
+        data['status'] = selectedStatus;
+
+      final response = await HttpService.purchaseRequestList(data);
+      if (response != null && response.data != null) {
+        setState(() {
+          requests = response.data!;
+          _applySearch();
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          requests = [];
+          filteredRequests = [];
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Error fetching purchase requests: $e");
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _applySearch() {
+    setState(() {
+      filteredRequests = requests.where((req) {
+        final query = searchQuery.toLowerCase();
+        return (req.requestId?.toLowerCase().contains(query) ?? false) ||
+            (req.requestedBy?.toLowerCase().contains(query) ?? false) ||
+            (req.remarks?.toLowerCase().contains(query) ?? false);
+      }).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: const Color(0xFF2a86c9),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Purchase Requests',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: Colors.white),
+            onPressed: _showFilterSheet,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredRequests.isEmpty
+                    ? _buildEmptyState()
+                    : RefreshIndicator(
+                        onRefresh: _fetchRequests,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          itemCount: filteredRequests.length,
+                          itemBuilder: (context, index) {
+                            return _buildRequestCard(filteredRequests[index]);
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddRequestDialog,
+        backgroundColor: const Color(0xFF2a86c9),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('NEW REQUEST',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  void _showAddRequestDialog() {
+    String requestId = "REQ-${DateFormat('HHmmss').format(DateTime.now())}";
+    DateTime requestDate = DateTime.now();
+    List<CartItem> cartItems = [];
+    MaterialData? selectedMaterial;
+    final TextEditingController remarksController = TextEditingController();
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "AddPurchaseRequest",
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+            ),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, anim1, anim2) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Center(
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.95,
+                  height: MediaQuery.of(context).size.height * 0.9,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Column(
+                      children: [
+                        // Premium Gradient Header
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 25),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF2a86c9), Color(0xFF1e6091)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded,
+                                    color: Colors.white),
+                                onPressed: () => Navigator.pop(dialogContext),
+                              ),
+                              const Expanded(
+                                child: Text(
+                                  "Purchase Request",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 48), // Spacer for balance
+                            ],
+                          ),
+                        ),
+
+                        Expanded(
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Info Section: ID and Date
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildGlassCard(
+                                        title: "Request ID",
+                                        value: requestId,
+                                        icon: Icons.tag,
+                                        color: const Color(0xFF2a86c9),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final date = await showDatePicker(
+                                            context: dialogContext,
+                                            initialDate: requestDate,
+                                            firstDate: DateTime(2020),
+                                            lastDate: DateTime(2030),
+                                            builder: (context, child) {
+                                              return Theme(
+                                                data:
+                                                    Theme.of(context).copyWith(
+                                                  colorScheme:
+                                                      const ColorScheme.light(
+                                                    primary: Color(0xFF2a86c9),
+                                                  ),
+                                                ),
+                                                child: child!,
+                                              );
+                                            },
+                                          );
+                                          if (date != null)
+                                            setDialogState(
+                                                () => requestDate = date);
+                                        },
+                                        child: _buildGlassCard(
+                                          title: "Request Date",
+                                          value: DateFormat('dd MMM yyyy')
+                                              .format(requestDate),
+                                          icon: Icons.calendar_today_rounded,
+                                          color: const Color(0xFF43e97b),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+
+                                // Material Selection Header
+                                _buildSectionHeader("Material Selection",
+                                    Icons.inventory_2_outlined),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.03),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade50,
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          border: Border.all(
+                                              color: Colors.grey.shade200),
+                                        ),
+                                        child: DropdownSearch<MaterialData>(
+                                          items: (filter, loadProps) =>
+                                              materials
+                                                  .where((m) =>
+                                                      m.materialName
+                                                          ?.toLowerCase()
+                                                          .contains(filter
+                                                              .toLowerCase()) ??
+                                                      true)
+                                                  .toList(),
+                                          itemAsString: (MaterialData m) =>
+                                              m.materialName ?? "",
+                                          compareFn: (i, s) =>
+                                              i.materialId == s?.materialId,
+                                          decoratorProps:
+                                              DropDownDecoratorProps(
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  "Search and select a material",
+                                              hintStyle: TextStyle(
+                                                  color: Colors.grey.shade500,
+                                                  fontSize: 14),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 8),
+                                              border: InputBorder.none,
+                                            ),
+                                          ),
+                                          popupProps: PopupProps.menu(
+                                            showSearchBox: true,
+                                            searchFieldProps: TextFieldProps(
+                                              decoration: InputDecoration(
+                                                hintText: "Search material...",
+                                                prefixIcon: const Icon(
+                                                    Icons.search,
+                                                    size: 20),
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 16),
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                              ),
+                                            ),
+                                            menuProps: const MenuProps(
+                                              elevation: 10,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(20)),
+                                              ),
+                                            ),
+                                          ),
+                                          onChanged: (val) => setDialogState(
+                                              () => selectedMaterial = val),
+                                          selectedItem: selectedMaterial,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 50,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            if (selectedMaterial != null) {
+                                              setDialogState(() {
+                                                cartItems.add(CartItem(
+                                                    material:
+                                                        selectedMaterial!));
+                                                selectedMaterial = null;
+                                              });
+                                            } else {
+                                              Common.toastMessaage(
+                                                  "Please select a material",
+                                                  Colors.orange);
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFF2a86c9),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(15)),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text(
+                                            "Add Item to Cart",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+
+                                // Cart Items Section
+                                _buildSectionHeader(
+                                    "Cart Overview (${cartItems.length})",
+                                    Icons.shopping_cart_outlined),
+                                const SizedBox(height: 16),
+                                if (cartItems.isEmpty)
+                                  _buildEmptyCart()
+                                else
+                                  ...cartItems.asMap().entries.map((entry) {
+                                    return _buildCartItemCard(
+                                        entry.value, entry.key, setDialogState,
+                                        () {
+                                      setDialogState(
+                                          () => cartItems.removeAt(entry.key));
+                                    });
+                                  }).toList(),
+
+                                const SizedBox(height: 32),
+
+                                // Remarks Section
+                                _buildSectionHeader("Additional Remarks",
+                                    Icons.edit_note_rounded),
+                                const SizedBox(height: 16),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.03),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: TextField(
+                                    controller: remarksController,
+                                    maxLines: 4,
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          "Type any specific instructions or remarks here...",
+                                      hintStyle: TextStyle(
+                                          color: Colors.grey.shade400,
+                                          fontSize: 14),
+                                      contentPadding: const EdgeInsets.all(20),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      fillColor: Colors.white,
+                                      filled: true,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                    height: 100), // Padding for bottom button
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Bottom Action Bar
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, -5),
+                              ),
+                            ],
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 60,
+                            child: ElevatedButton(
+                              onPressed: () => _submitRequest(
+                                  dialogContext,
+                                  cartItems,
+                                  requestDate,
+                                  remarksController.text),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2a86c9),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18)),
+                                elevation: 0,
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.send_rounded,
+                                      color: Colors.white, size: 20),
+                                  SizedBox(width: 12),
+                                  Text(
+                                    "SUBMIT REQUEST",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGlassCard(
+      {required String title,
+      required String value,
+      required IconData icon,
+      required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: color.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 8),
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF2a86c9)),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyCart() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(25),
+        border:
+            Border.all(color: Colors.grey.shade200, style: BorderStyle.solid),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.shopping_cart_outlined,
+              size: 48, color: Colors.grey.shade300),
+          const SizedBox(height: 16),
+          Text(
+            "Your cart is empty",
+            style: TextStyle(
+                color: Colors.grey.shade400, fontWeight: FontWeight.w500),
+          ),
+          Text(
+            "Add materials to get started",
+            style: TextStyle(color: Colors.grey.shade300, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartItemCard(CartItem item, int index,
+      StateSetter setDialogState, VoidCallback onDelete) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2a86c9).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.inventory_2_outlined,
+                      color: Color(0xFF2a86c9), size: 18),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.material.materialName ?? "Unknown Item",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      Text(
+                        "Unit: ${item.material.unitName ?? 'N/A'}",
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded,
+                      color: Colors.redAccent),
+                  onPressed: onDelete,
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            Row(
+              children: [
+                const Text("Quantity:",
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const Spacer(),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildStepperBtn(Icons.remove, () {
+                        if (item.quantity > 1)
+                          setDialogState(() => item.quantity--);
+                      }),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          item.quantity.toInt().toString(),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      _buildStepperBtn(Icons.add, () {
+                        setDialogState(() => item.quantity++);
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TextField(
+                onChanged: (val) => item.description = val,
+                style: const TextStyle(fontSize: 13),
+                decoration: const InputDecoration(
+                  hintText: "Add specific item description...",
+                  hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepperBtn(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, size: 18, color: const Color(0xFF2a86c9)),
+      ),
+    );
+  }
+
+  Widget _buildInputLabelField({required String label, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: Colors.black87)),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+
+  Future<void> _submitRequest(BuildContext dialogContext,
+      List<CartItem> cartItems, DateTime date, String remarks) async {
+    if (cartItems.isEmpty) {
+      Common.toastMessaage(
+          "Please add at least one item to the cart", Colors.red);
+      return;
+    }
+
+    Common.showProgressDialog(dialogContext, "Submitting...");
+
+    try {
+      // Prepare items for API
+      List<Map<String, dynamic>> itemsList = cartItems.map((item) {
+        return {
+          "material_id": item.material.materialId,
+          "quantity": item.quantity.toString(),
+          "description": item.description,
+        };
+      }).toList();
+
+      Map<String, dynamic> data = {
+        "request_date": DateFormat('yyyy-MM-dd').format(date),
+        "remarks": remarks,
+        "items":
+            itemsList, // backend should handle json array or encoded string
+      };
+
+      final response = await HttpService.postPurchaseRequest(data);
+      Navigator.pop(dialogContext); // Close progress dialog
+
+      if (response != null && response['status'] == true) {
+        Common.toastMessaage(
+            response['message'] ?? "Request submitted successfully",
+            Colors.green);
+        Navigator.pop(dialogContext); // Close Add dialog
+        _fetchRequests();
+      } else {
+        Common.toastMessaage(
+            response?['message'] ?? "Submission failed", Colors.red);
+      }
+    } catch (e) {
+      Navigator.pop(dialogContext);
+      Common.toastMessaage("Error: $e", Colors.red);
+    }
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 25),
+      decoration: const BoxDecoration(
+        color: Color(0xFF2a86c9),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+      ),
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: TextField(
+          onChanged: (value) {
+            searchQuery = value;
+            _applySearch();
+          },
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Search requests...',
+            hintStyle:
+                TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+            prefixIcon: const Icon(Icons.search, color: Colors.white),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRequestCard(PurchaseRequestData request) {
+    Color statusColor = _getStatusColor(request.requestStatus ?? '');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => _showViewDrawer(request),
+        borderRadius: BorderRadius.circular(20),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  color: statusColor,
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            if (request.orderStatus != null &&
+                                request.orderStatus!.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  request.orderStatus!,
+                                  style: const TextStyle(
+                                    color: Colors.orange,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            Row(
+                              children: [
+                                _buildStatusBadge(
+                                    request.requestStatus ?? 'Pending'),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(Icons.more_vert,
+                                      size: 20, color: Colors.grey),
+                                  onSelected: (value) {
+                                    if (value == 'edit') {
+                                      // Edit logic
+                                    } else if (value == 'delete') {
+                                      _deleteRequest(request.id ?? "");
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.edit,
+                                              size: 18, color: Colors.blue),
+                                          SizedBox(width: 8),
+                                          Text("Edit"),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.delete,
+                                              size: 18, color: Colors.red),
+                                          SizedBox(width: 8),
+                                          Text("Delete"),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 16,
+                              backgroundColor: Color(0xFFF0F2F5),
+                              child: Icon(Icons.person,
+                                  size: 18, color: Color(0xFF2a86c9)),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    request.requestedBy ?? 'Unknown',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  Text(
+                                    request.requestedDate ?? 'N/A',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Text('Est. Amount',
+                                    style: TextStyle(
+                                        color: Colors.grey, fontSize: 10)),
+                                Text(
+                                  '₹${request.estimatedAmount ?? '0'}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Color(0xFF2a86c9),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        Row(
+                          children: [
+                            Icon(Icons.notes,
+                                size: 14, color: Colors.grey.shade400),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                request.remarks ?? 'No remarks provided',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _FilterBottomSheet(
+        initialFromDate: fromDate,
+        initialToDate: toDate,
+        initialStatus: selectedStatus,
+        onApply: (from, to, status) {
+          setState(() {
+            fromDate = from;
+            toDate = to;
+            selectedStatus = status;
+          });
+          _fetchRequests();
+        },
+      ),
+    );
+  }
+
+  void _showViewDrawer(PurchaseRequestData request) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _RequestDetailsDrawer(request: request),
+    );
+  }
+
+  Future<void> _deleteRequest(String id) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Delete"),
+        content: const Text(
+            "Are you sure you want to delete this purchase request?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      // HttpService.deletePurchaseRequest(id)
+      Common.toastMessaage("Request deleted successfully", Colors.green);
+      _fetchRequests();
+    }
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.assignment_late_outlined,
+              size: 80, color: Colors.grey.shade200),
+          const SizedBox(height: 16),
+          Text(
+            'No Purchase Requests Found',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    final lowerStatus = status.toLowerCase();
+
+    if (lowerStatus.contains('approved')) {
+      return Colors.green;
+    } else if (lowerStatus.contains('pending')) {
+      return Colors.orange;
+    } else if (lowerStatus.contains('rejected')) {
+      return Colors.red;
+    } else {
+      return Colors.grey;
+    }
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color color = _getStatusColor(status);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style:
+            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
+class _FilterBottomSheet extends StatefulWidget {
+  final DateTime? initialFromDate;
+  final DateTime? initialToDate;
+  final String? initialStatus;
+  final Function(DateTime?, DateTime?, String?) onApply;
+
+  const _FilterBottomSheet({
+    this.initialFromDate,
+    this.initialToDate,
+    this.initialStatus,
+    required this.onApply,
+  });
+
+  @override
+  State<_FilterBottomSheet> createState() => _FilterBottomSheetState();
+}
+
+class _FilterBottomSheetState extends State<_FilterBottomSheet> {
+  DateTime? fromDate;
+  DateTime? toDate;
+  String? selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    fromDate = widget.initialFromDate;
+    toDate = widget.initialToDate;
+    selectedStatus = widget.initialStatus ?? "All";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      padding: const EdgeInsets.all(25),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Filter Requests',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text('Date Range',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDatePicker(
+                  'From',
+                  fromDate,
+                  (date) => setState(() => fromDate = date),
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: _buildDatePicker(
+                  'To',
+                  toDate,
+                  (date) => setState(() => toDate = date),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 25),
+          const Text('Approval Status',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            children: ["All", "Pending", "Approved", "Rejected"].map((status) {
+              bool isSelected = selectedStatus == status;
+              return ChoiceChip(
+                label: Text(status),
+                selected: isSelected,
+                onSelected: (val) => setState(() => selectedStatus = status),
+                selectedColor: const Color(0xFF2a86c9).withOpacity(0.1),
+                labelStyle: TextStyle(
+                  color: isSelected ? const Color(0xFF2a86c9) : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                side: BorderSide(
+                    color: isSelected
+                        ? const Color(0xFF2a86c9)
+                        : Colors.grey.shade300),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 30),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      fromDate = null;
+                      toDate = null;
+                      selectedStatus = "All";
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)),
+                  ),
+                  child: const Text('Reset'),
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    widget.onApply(fromDate, toDate, selectedStatus);
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2a86c9),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)),
+                  ),
+                  child: const Text('Apply Filter',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDatePicker(
+      String label, DateTime? value, Function(DateTime) onSelect) {
+    return InkWell(
+      onTap: () async {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: value ?? DateTime.now(),
+          firstDate: DateTime(2020),
+          lastDate: DateTime.now().add(const Duration(days: 365)),
+        );
+        if (date != null) onSelect(date);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
+            const SizedBox(width: 10),
+            Text(
+              value != null ? DateFormat('dd/MM/yy').format(value) : label,
+              style: TextStyle(
+                  color: value != null ? Colors.black87 : Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RequestDetailsDrawer extends StatelessWidget {
+  final PurchaseRequestData request;
+
+  const _RequestDetailsDrawer({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      padding: const EdgeInsets.all(25),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          const SizedBox(height: 25),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2a86c9).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.assignment, color: Color(0xFF2a86c9)),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Request #${request.requestId ?? 'N/A'}',
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Purchase Requisition Details',
+                      style:
+                          TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              _buildStatusBadge(request.requestStatus ?? 'Pending'),
+            ],
+          ),
+          const SizedBox(height: 30),
+          _buildDetailRow(Icons.person_outline, 'Requested By',
+              request.requestedBy ?? 'Unknown'),
+          _buildDetailRow(Icons.calendar_today_outlined, 'Requested Date',
+              request.requestedDate ?? 'N/A'),
+          _buildDetailRow(Icons.currency_rupee, 'Estimated Amount',
+              '₹${request.estimatedAmount ?? '0'}'),
+          _buildDetailRow(Icons.shopping_cart_outlined, 'Order Status',
+              request.orderStatus ?? 'Not Ordered'),
+          _buildDetailRow(Icons.event_available_outlined, 'Approved Date',
+              request.approvedDate ?? 'Not Approved'),
+          const Divider(height: 40),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Remarks',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Text(
+              request.remarks ?? 'No remarks provided',
+              style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic),
+            ),
+          ),
+          const SizedBox(height: 30),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2a86c9),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+              ),
+              child: const Text('Close',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade400),
+          const SizedBox(width: 15),
+          Text('$label:',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color color = Colors.grey;
+
+    final lowerStatus = status.toLowerCase();
+
+    if (lowerStatus.contains('approved')) {
+      color = Colors.green;
+    } else if (lowerStatus.contains('pending')) {
+      color = Colors.orange;
+    } else if (lowerStatus.contains('rejected')) {
+      color = Colors.red;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style:
+            TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}

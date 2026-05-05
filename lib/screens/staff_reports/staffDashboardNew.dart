@@ -4,6 +4,7 @@ import 'dart:developer';
 
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/common.dart';
@@ -22,6 +23,7 @@ import '../../models/lead_management/documentListModel.dart';
 import '../../models/lead_management/salaryDetailsModel.dart';
 import '../authentication/googleDriveAccountsModel.dart';
 import '../../models/lead_management/getStaffDocumentListModel.dart';
+import '../../models/lead_management/getStaffSalaryDetailsModel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -72,6 +74,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   UserDashboardModel? staffDetails;
   StaffCalldetailsModel? callDetails;
   SalaryDetailsModel? salaryDetails;
+  GetStaffSalaryDetailsModel? staffSalaryDetails;
   bool isLoading = true;
   String selectedDocumentType = 's3';
   List<DocumentData> documentTypes = [];
@@ -140,6 +143,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
 
   getSalaryDetails() async {
     salaryDetails = await HttpService.getSalaryDetails(widget.id);
+    staffSalaryDetails = await HttpService.getStaffSalaryDetails(widget.id);
     if (mounted) setState(() {});
   }
 
@@ -2057,102 +2061,720 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   }
 
   Widget _buildSalaryTab() {
-    if (salaryDetails == null) {
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                shape: BoxShape.circle,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  "Add Salary",
+                  Icons.add_circle_outline,
+                  const Color(0xFF2a86c9),
+                  () => _showAddSalaryDialog(),
+                ),
               ),
-              child: Icon(LucideIcons.banknote,
-                  size: 64, color: Colors.grey.shade400),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildActionButton(
+                  "Add Staff A/C",
+                  Icons.account_balance_wallet_outlined,
+                  const Color(0xFF406dbe),
+                  () => _showAddStaffAccountDialog(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Current Salary Highlight
+          if (staffSalaryDetails != null)
+            _buildCurrentSalaryCard(
+                staffSalaryDetails!.data.currentSalary),
+
+          const SizedBox(height: 24),
+
+          // Salary History Section
+          const Text(
+            "Salary History",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-            const SizedBox(height: 24),
+          ),
+          const SizedBox(height: 12),
+
+          if (staffSalaryDetails == null ||
+              staffSalaryDetails!.data.history.isEmpty)
+            _buildEmptyHistory()
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: staffSalaryDetails!.data.history.length,
+              itemBuilder: (context, index) {
+                return _buildSalaryHistoryCard(
+                    staffSalaryDetails!.data.history[index]);
+              },
+            ),
+
+          const SizedBox(height: 20),
+          if (salaryDetails != null) ...[
+            const Divider(),
+            const SizedBox(height: 12),
             const Text(
-              "No Salary Data Found",
+              "Monthly Breakdown",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              "Add salary details for this staff member to get started.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 32),
-            _buildAddSalaryButton(),
-          ],
-        ),
-      );
-    }
-
-    final data = salaryDetails!.data;
-    final salary = data.salaryDetails;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildSalaryTotalCard(salary.netSalary.toStringAsFixed(2)),
-          const SizedBox(height: 20),
-          _buildSalaryDetailCard("Monthly Salary", "₹${salary.monthlySalary}",
-              LucideIcons.banknote, Colors.blue),
-          _buildSalaryDetailCard("Per Day Salary", "₹${salary.perDaySalary}",
-              LucideIcons.calendarDays, Colors.green),
-          _buildSalaryDetailCard("Incentives", "₹${salary.incentives}",
-              LucideIcons.plusCircle, Colors.orange),
-          _buildSalaryDetailCard("Deductions", "₹${salary.deductions}",
-              LucideIcons.minusCircle, Colors.red),
-          const SizedBox(height: 30),
-          _buildAddSalaryButton(),
+            const SizedBox(height: 12),
+            _buildSalaryDetailCard(
+                "Monthly Salary",
+                "₹${salaryDetails!.data.salaryDetails.monthlySalary}",
+                LucideIcons.banknote,
+                Colors.blue),
+            _buildSalaryDetailCard(
+                "Incentives",
+                "₹${salaryDetails!.data.salaryDetails.incentives}",
+                LucideIcons.plusCircle,
+                Colors.orange),
+            _buildSalaryDetailCard(
+                "Deductions",
+                "₹${salaryDetails!.data.salaryDetails.deductions}",
+                LucideIcons.minusCircle,
+                Colors.red),
+            _buildSalaryDetailCard(
+                "Net Salary",
+                "₹${salaryDetails!.data.salaryDetails.netSalary}",
+                LucideIcons.wallet,
+                Colors.green),
+          ]
         ],
       ),
     );
   }
 
-  Widget _buildSalaryTotalCard(String netSalary) {
+  Widget _buildActionButton(
+      String label, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentSalaryCard(String salary) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+          colors: [Color(0xFF2a86c9), Color(0xFF406dbe)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF667eea).withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: const Color(0xFF2a86c9).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
           const Text(
-            "Current Net Salary",
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            "Staff Current Salary",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            "₹ $netSalary",
+            "₹ $salary",
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 32,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyHistory() {
+    return Container(
+      padding: const EdgeInsets.all(30),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(LucideIcons.history, size: 40, color: Colors.grey.shade300),
+          const SizedBox(height: 12),
+          Text(
+            "No salary history found",
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSalaryHistoryCard(SalaryHistory history) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "₹ ${history.amount}",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2a86c9),
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined,
+                        color: Colors.blue, size: 20),
+                    onPressed: () => _showAddSalaryDialog(history: history),
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline,
+                        color: Colors.red, size: 20),
+                    onPressed: () => _deleteSalaryDialog(history.id),
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.all(4),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined,
+                  size: 14, color: Colors.grey),
+              const SizedBox(width: 6),
+              Text(
+                "${history.fromDate}  -  ${history.toDate.isEmpty ? 'Present' : history.toDate}",
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+            ],
+          ),
+            const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.person,
+                  size: 14, color: Color.fromARGB(255, 8, 8, 8)),
+              const SizedBox(width: 6),
+              Text(
+                "Created By: ${history.createdByName}",
+                style: TextStyle(color: const Color.fromARGB(255, 19, 18, 18), fontSize: 13),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined,
+                  size: 14, color: Color.fromARGB(255, 27, 27, 27)),
+              const SizedBox(width: 6),
+              Text(
+                "Created At: ${history.createdAt}",
+                style: TextStyle(color: const Color.fromARGB(255, 36, 35, 35), fontSize: 13),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddSalaryDialog({SalaryHistory? history}) {
+    final TextEditingController amountController =
+        TextEditingController(text: history?.amount ?? "");
+    final TextEditingController fromDateController =
+        TextEditingController(text: history?.fromDate ?? "");
+    final TextEditingController toDateController =
+        TextEditingController(text: history?.toDate ?? "");
+    final TextEditingController remarkController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(history == null ? "Add Salary" : "Edit Salary",
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDialogLabel("Amount *"),
+                _buildDialogTextField(
+                  controller: amountController,
+                  hint: "Enter Amount",
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                _buildDialogLabel("From Date *"),
+                _buildDatePickerField(
+                  context,
+                  fromDateController,
+                  "Select From Date",
+                ),
+                const SizedBox(height: 16),
+                _buildDialogLabel("To Date"),
+                _buildDatePickerField(
+                  context,
+                  toDateController,
+                  "Select To Date",
+                ),
+                const SizedBox(height: 16),
+                _buildDialogLabel("Remark"),
+                _buildDialogTextField(
+                  controller: remarkController,
+                  hint: "Enter Remark",
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (amountController.text.isEmpty ||
+                          fromDateController.text.isEmpty) {
+                        Common.toastMessaage(
+                            "Please fill required fields", Colors.red);
+                        return;
+                      }
+
+                      Common.showProgressDialog(context, "Saving Salary...");
+                      final success = await HttpService.saveSalary(
+                        salaryId: history?.id,
+                        staffId: widget.id,
+                        amount: amountController.text,
+                        fromDate: fromDateController.text,
+                        toDate: toDateController.text,
+                        remark: remarkController.text,
+                      );
+                      Navigator.pop(context); // Close progress
+
+                      if (success) {
+                        Navigator.pop(context); // Close dialog
+                        getSalaryDetails(); // Refresh
+                        Common.toastMessaage(
+                            "Salary saved successfully", Colors.green);
+                      } else {
+                        Common.toastMessaage("Failed to save salary", Colors.red);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00bfa5),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text("Save"),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF406dbe),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text("Cancel"),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddStaffAccountDialog() {
+    final TextEditingController openingBalanceController =
+        TextEditingController(text: "0");
+    final TextEditingController dateController = TextEditingController(
+        text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
+    final TextEditingController pettyOpeningBalanceController =
+        TextEditingController();
+    final TextEditingController pettyDateController = TextEditingController();
+
+    String salaryType = "Advance";
+    bool isPettyCash = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Staff Accounts",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Salary A/C",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDialogLabel("Opening Balance"),
+                          _buildDialogTextField(
+                            controller: openingBalanceController,
+                            hint: "0",
+                            keyboardType: TextInputType.number,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDialogLabel("Date"),
+                          _buildDatePickerField(
+                              context, dateController, "Select Date"),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Row(
+                      children: [
+                        Radio<String>(
+                          value: "Advance",
+                          groupValue: salaryType,
+                          onChanged: (val) =>
+                              setDialogState(() => salaryType = val!),
+                          activeColor: Colors.blue,
+                        ),
+                        const Text("Advance"),
+                      ],
+                    ),
+                    const SizedBox(width: 20),
+                    Row(
+                      children: [
+                        Radio<String>(
+                          value: "Pending",
+                          groupValue: salaryType,
+                          onChanged: (val) =>
+                              setDialogState(() => salaryType = val!),
+                          activeColor: Colors.blue,
+                        ),
+                        const Text("Pending"),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: isPettyCash,
+                      onChanged: (val) =>
+                          setDialogState(() => isPettyCash = val!),
+                      activeColor: const Color(0xFF406dbe),
+                    ),
+                    const Text("Petty Cash A/C",
+                        style:
+                            TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+                if (isPettyCash) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDialogLabel("Opening Balance"),
+                            _buildDialogTextField(
+                              controller: pettyOpeningBalanceController,
+                              hint: "0",
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDialogLabel("Date"),
+                            _buildDatePickerField(
+                                context, pettyDateController, "Select Date"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Radio<String>(
+                        value: "Advance",
+                        groupValue: "Advance", // Petty cash only advance in image
+                        onChanged: (val) {},
+                        activeColor: Colors.blue,
+                      ),
+                      const Text("Advance"),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey.shade100,
+                      foregroundColor: Colors.black87,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                    child: const Text("Close"),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Common.showProgressDialog(context, "Saving Account...");
+                      final success = await HttpService.saveStaffAccounts(
+                        userId: widget.id,
+                        salary: "0", // Monthly salary not in this form
+                        openingBalance: openingBalanceController.text,
+                        type: salaryType,
+                        isPettyCash: isPettyCash ? "1" : "0",
+                        // Note: Backend might need petty cash details too,
+                        // but current HttpService.saveStaffAccounts only takes these.
+                      );
+                      Navigator.pop(context);
+
+                      if (success) {
+                        Navigator.pop(context);
+                        getSalaryDetails();
+                        Common.toastMessaage("Account saved", Colors.green);
+                      } else {
+                        Common.toastMessaage("Failed to save account", Colors.red);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00bfa5),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle_outline, size: 18),
+                        SizedBox(width: 8),
+                        Text("Save"),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.black54,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogTextField({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        hintText: hint,
+        isDense: true,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+    );
+  }
+
+  Widget _buildDatePickerField(
+      BuildContext context, TextEditingController controller, String hint) {
+    return TextField(
+      controller: controller,
+      readOnly: true,
+      onTap: () async {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (date != null) {
+          controller.text = DateFormat('yyyy-MM-dd').format(date);
+        }
+      },
+      decoration: InputDecoration(
+        hintText: hint,
+        isDense: true,
+        suffixIcon: const Icon(Icons.calendar_month, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+    );
+  }
+
+  void _deleteSalaryDialog(String salaryId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Salary"),
+        content:
+            const Text("Are you sure you want to delete this salary record?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Common.showProgressDialog(context, "Deleting...");
+              final success = await HttpService.deleteSalaryDetails(salaryId);
+              Navigator.pop(context);
+              if (success) {
+                Navigator.pop(context);
+                getSalaryDetails();
+                Common.toastMessaage("Deleted successfully", Colors.green);
+              } else {
+                Common.toastMessaage("Failed to delete", Colors.red);
+              }
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -2195,355 +2817,6 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                   const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ],
       ),
-    );
-  }
-
-  Widget _buildAddSalaryButton() {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          _showSalaryAddDialog();
-        },
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text("Salary Add",
-            style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromARGB(255, 47, 131, 180),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 4,
-        ),
-      ),
-    );
-  }
-
-  void _showSalaryAddDialog() {
-    final TextEditingController salaryAmountController =
-        TextEditingController();
-    final TextEditingController openingBalanceController =
-        TextEditingController();
-    String salaryType = "Advance";
-    bool isPettyCash = false;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-              elevation: 0,
-              backgroundColor: Colors.white,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  color: Colors.white,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Colors.blue, Colors.blueAccent],
-                            ),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Icon(LucideIcons.banknote,
-                              color: Colors.white, size: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            "Add Salary Details",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.close, color: Colors.grey),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Salary Amount Field
-                    TextField(
-                      controller: salaryAmountController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 16),
-                      decoration: InputDecoration(
-                        labelText: "Salary Amount",
-                        hintText: "Enter salary amount",
-                        prefixIcon: const Icon(Icons.currency_rupee,
-                            size: 20, color: Colors.blue),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide:
-                              const BorderSide(color: Colors.blue, width: 2),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 16),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Opening Balance Field
-                    TextField(
-                      controller: openingBalanceController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 16),
-                      decoration: InputDecoration(
-                        labelText: "Opening Balance",
-                        hintText: "Enter opening balance",
-                        prefixIcon: const Icon(LucideIcons.wallet,
-                            size: 20, color: Colors.blue),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide:
-                              const BorderSide(color: Colors.blue, width: 2),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade50,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 16),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Salary Type",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () =>
-                                  setDialogState(() => salaryType = "Advance"),
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: salaryType == "Advance"
-                                      ? Colors.blue.withOpacity(0.1)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Radio<String>(
-                                      value: "Advance",
-                                      groupValue: salaryType,
-                                      onChanged: (val) => setDialogState(
-                                          () => salaryType = val!),
-                                      activeColor: Colors.blue,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    const Text("Advance",
-                                        style: TextStyle(fontSize: 14)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () =>
-                                  setDialogState(() => salaryType = "Pending"),
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: salaryType == "Pending"
-                                      ? Colors.blue.withOpacity(0.1)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Radio<String>(
-                                      value: "Pending",
-                                      groupValue: salaryType,
-                                      onChanged: (val) => setDialogState(
-                                          () => salaryType = val!),
-                                      activeColor: Colors.blue,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    const Text("Pending",
-                                        style: TextStyle(fontSize: 14)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () =>
-                            setDialogState(() => isPettyCash = !isPettyCash),
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
-                          child: Row(
-                            children: [
-                              Checkbox(
-                                value: isPettyCash,
-                                onChanged: (val) =>
-                                    setDialogState(() => isPettyCash = val!),
-                                activeColor: Colors.blue,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6)),
-                              ),
-                              const Text(
-                                "Petty Cash Transaction",
-                                style: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.w500),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: BorderSide(color: Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            child: const Text(
-                              "Cancel",
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 15),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (salaryAmountController.text.isEmpty) {
-                                Common.toastMessaage(
-                                    "Please enter salary amount", Colors.red);
-                                return;
-                              }
-
-                              Common.showProgressDialog(
-                                  context, "Adding Salary...");
-
-                              final success =
-                                  await HttpService.addSalaryDetails(
-                                userId: widget.id,
-                                salary: salaryAmountController.text,
-                                openingBalance: openingBalanceController.text,
-                                type: salaryType,
-                                isPettyCash: isPettyCash ? "1" : "0",
-                              );
-                              Navigator.pop(context);
-
-                              if (success) {
-                                Navigator.pop(context);
-                                Common.premiumToast(
-                                  context,
-                                  "Salary details added successfully",
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                );
-                                getSalaryDetails();
-                              } else {
-                                Common.toastMessaage(
-                                    "Failed to add salary details", Colors.red);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Text(
-                              "Add Salary",
-                              style: TextStyle(
-                                  fontSize: 15, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
   }
 

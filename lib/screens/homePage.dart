@@ -44,6 +44,7 @@ import 'package:login2/screens/roombooking/hotelDashboard.dart';
 import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/serviceman/dashboard_page.dart';
 import 'package:login2/screens/stock/stockDashboard.dart';
+import 'package:login2/screens/purchase/purchaseDashboard.dart';
 import 'package:login2/screens/staff_reports/followupCalendarPage.dart';
 import 'package:login2/screens/staff_reports/staffwiseCallReports.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
@@ -133,7 +134,6 @@ class _HomePageState extends State<HomePage> {
   DateTime? createdAt;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getData();
     _loadWorkStatus();
@@ -1003,7 +1003,7 @@ class _HomePageState extends State<HomePage> {
                                                                 phoneCallLogPermission,
                                                             custId: "")),
                                               );
-                                            }else if (userDashboard!
+                                            } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Stock') {
                                               Navigator.push(
@@ -1018,6 +1018,22 @@ class _HomePageState extends State<HomePage> {
                                                             phoneCallLogPermission:
                                                                 phoneCallLogPermission,
                                                             custId: "")),
+                                              );
+                                            } else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'Purchase') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        PurchaseDashboard(
+                                                          name: name,
+                                                          token: widget.token!,
+                                                          userId: userId,
+                                                          phoneCallLogPermission:
+                                                              phoneCallLogPermission,
+                                                          // custId: ""
+                                                        )),
                                               );
                                             }
                                             //  else if (userDashboard!.data!
@@ -1388,13 +1404,25 @@ class _HomePageState extends State<HomePage> {
                                                                             Navigator.push(
                                                                               context,
                                                                               MaterialPageRoute(
-                                                                                  builder: (context) => AllReportNew(
-                                                                                        widget.token!,
-                                                                                        true,
-                                                                                        true,
-                                                                                        true,
-                                                                                        pageName: 'AllLeads',
-                                                                                      )),
+                                                                                builder: (context) => ViewLeadsNew(
+                                                                                  widget.token,
+                                                                                  updateLeadPermission1,
+                                                                                  deleteLeadPermission1,
+                                                                                  cloudCallPermission1,
+                                                                                  pageName: 'All Leads',
+                                                                                  isAllLeads: "1",
+                                                                                  fromDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                                                                  toDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                                                                ),
+                                                                              ),
+                                                                              // MaterialPageRoute(
+                                                                              //     builder: (context) => AllReportNew(
+                                                                              //           widget.token!,
+                                                                              //           true,
+                                                                              //           true,
+                                                                              //           true,
+                                                                              //           pageName: 'AllLeads',
+                                                                              //         )),
                                                                             );
                                                                             // Navigator.of(
                                                                             //     context)
