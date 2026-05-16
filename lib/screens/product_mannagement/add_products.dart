@@ -296,10 +296,19 @@ class _AddProductsState extends State<AddProducts> {
                               label: "Product Type *",
                               value: selectedProductType,
                               items: productTypeList,
-                              onChanged: (val) {
+                              onChanged: (val) async {
                                 setState(() {
                                   selectedProductType = val;
                                 });
+                                if (val != null) {
+                                  final response = await HttpService.getContentId(
+                                      productType: val);
+                                  if (response != null && response.status) {
+                                    setState(() {
+                                      contentId.text = response.data;
+                                    });
+                                  }
+                                }
                               },
                               validator: (val) =>
                                   val == null ? "Select Product Type" : null,

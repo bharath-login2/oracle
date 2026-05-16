@@ -67,6 +67,7 @@ import 'package:login2/models/lead_management/categoryReportTableModel.dart';
 import 'package:login2/models/lead_management/categoryWiseLeadBarModel.dart';
 import 'package:login2/models/lead_management/cloudCallReportModel.dart';
 import 'package:login2/models/lead_management/companyLocationModel.dart';
+import 'package:login2/models/lead_management/contentIdModel.dart';
 import 'package:login2/models/lead_management/createGoogleFoldersModel.dart';
 import 'package:login2/models/lead_management/customerDetailsModel.dart';
 import 'package:login2/models/lead_management/customerModel.dart';
@@ -16068,6 +16069,30 @@ class HttpService {
       }
     } catch (e) {
       log("deletePurchaseOrderProduct error: $e");
+    }
+    return null;
+  }
+
+  static Future<ContentIdModel?> getContentId({
+    required String productType,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'product_type': productType,
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_content_id",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200) {
+        return ContentIdModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getContentId error: $e");
     }
     return null;
   }
