@@ -123,14 +123,14 @@ class _PendingInvoiceState extends State<PendingInvoice>
   }
 
   void refreshInvoiceList() async {
-    setState(() {
-      filteredInvoices.clear();
-    });
+    // setState(() {
+    //   filteredInvoices.clear();
+    // });
 
     invoiceResponse = await HttpService.pendingInvoiceList(widget.token,widget.customerId);
     if (invoiceResponse != null) {
       invoices = invoiceResponse!.data.lists;
-      filteredInvoices.addAll(invoices);
+      filteredInvoices = List.from(invoices);
 
       if (invSearch.text.isNotEmpty) {
         filterInvoices(invSearch.text);
@@ -1204,7 +1204,11 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                                               );
 
                                                                               Navigator.of(ctx).pop();
-                                                                              refreshInvoiceList();
+                                                                              setState(() {
+                                                                                var itemToRemove = filteredInvoices[index];
+                                                                                invoices.removeWhere((item) => item.id == itemToRemove.id);
+                                                                                filteredInvoices.removeAt(index);
+                                                                              });
                                                                             } else {
                                                                               Common.toastMessaage(
                                                                                 hideInvoice?.message ?? "Failed to hide invoice",
@@ -1257,7 +1261,11 @@ class _PendingInvoiceState extends State<PendingInvoice>
                                                                                 Navigator.pop(context);
                                                                                 Navigator.pop(context);
                                                                               }
-                                                                              getData();
+                                                                              setState(() {
+                                                                                var itemToRemove = filteredInvoices[index];
+                                                                                invoices.removeWhere((item) => item.id == itemToRemove.id);
+                                                                                filteredInvoices.removeAt(index);
+                                                                              });
                                                                             } else {
                                                                               Common.toastMessaage(deleteInvoice.message, Colors.red);
                                                                               if (context.mounted) {

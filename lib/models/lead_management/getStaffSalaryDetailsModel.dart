@@ -68,6 +68,7 @@ class SalaryHistory {
   final String amount;
   final String fromDate;
   final String toDate;
+    final String remark;
   final String createdBy;
   final String createdAt;
   final String updatedBy;
@@ -80,6 +81,7 @@ class SalaryHistory {
     required this.amount,
     required this.fromDate,
     required this.toDate,
+    required this.remark,
     required this.createdBy,
     required this.createdAt,
     required this.updatedBy,
@@ -94,6 +96,7 @@ class SalaryHistory {
       amount: json['amount']?.toString() ?? '0',
       fromDate: json['from_date']?.toString() ?? '',
       toDate: json['to_date']?.toString() ?? '',
+      remark: json['remark']?.toString() ?? '',
       createdBy: json['created_by']?.toString() ?? '',
       createdAt: json['created_at']?.toString() ?? '',
       updatedBy: json['updated_by']?.toString() ?? '',
@@ -109,6 +112,7 @@ class SalaryHistory {
       'amount': amount,
       'from_date': fromDate,
       'to_date': toDate,
+      'remark': remark,
       'created_by': createdBy,
       'created_at': createdAt,
       'updated_by': updatedBy,

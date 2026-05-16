@@ -188,7 +188,8 @@ class _NewLeadsState extends State<NewLeads>
   final Set<String> _expandedLeadIds = {};
   String? StateId;
   String? DistrictId;
-
+  String viewLeadCategoryOnly = '';
+  String viewAllCategory = '';
   final List<Color> _colors = [
     const Color(0xFF2196F3), // Vibrant Blue (index 0)
     const Color(0xFF2196F3), // Blue at index 1 for "New"
@@ -491,6 +492,9 @@ class _NewLeadsState extends State<NewLeads>
     transferPermission = await Common.getSharedPref("transferLeads") ?? "";
     userId = await Common.getSharedPref("userId") ?? "";
     name = await Common.getSharedPref("name") ?? "";
+     viewLeadCategoryOnly =
+        await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
+    viewAllCategory = await Common.getSharedPref("viewAllCategory") ?? '';
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission") ?? "";
 
@@ -704,8 +708,16 @@ class _NewLeadsState extends State<NewLeads>
   bool get wantKeepAlive => true;
 
   Future<void> _showLeadDetailsPopup(int index,
-      {bool autoExpandFollowup = false}) async {
-    if (index >= items.length) return;
+      {bool autoExpandFollowup = false, String? customCallMasterId}) async {
+    final String targetCallMasterId;
+    if (customCallMasterId != null) {
+      targetCallMasterId = customCallMasterId;
+    } else {
+      if (index < 0 || index >= items.length) return;
+      targetCallMasterId =
+          (_searchQuery.isEmpty ? items[index] : _filteredItems[index])
+              .callMasterId;
+    }
 
     final displayItem =
         _searchQuery.isEmpty ? items[index] : _filteredItems[index];
@@ -729,12 +741,12 @@ class _NewLeadsState extends State<NewLeads>
 
     try {
       final results = await Future.wait([
-        HttpService.leadDetails(widget.token!, displayItem.callMasterId),
-        HttpService.listAddonDet(widget.token!, displayItem.callMasterId),
+        HttpService.leadDetails(widget.token!, targetCallMasterId),
+        HttpService.listAddonDet(widget.token!, targetCallMasterId),
         HttpService.listFolderAndFiles(
-            widget.token!, displayItem.callMasterId, ''),
-        HttpService.leadMileStone(widget.token!, displayItem.callMasterId),
-        HttpService.leadFollowupData(widget.token!, displayItem.callMasterId),
+            widget.token!, targetCallMasterId, ''),
+        HttpService.leadMileStone(widget.token!, targetCallMasterId),
+        HttpService.leadFollowupData(widget.token!, targetCallMasterId),
       ]);
 
       if (!mounted) return;
@@ -761,7 +773,7 @@ class _NewLeadsState extends State<NewLeads>
           editLead: widget.editLead,
           deleteLead: widget.deleteLead,
           cloudCall: widget.cloudCall,
-          callMasterId: displayItem.callMasterId,
+          callMasterId: targetCallMasterId,
           leadDetails: leadDetails,
           leadDetailsAdditional: leadDetailsAdditional,
           listFolder: listFolder,
@@ -788,6 +800,199 @@ class _NewLeadsState extends State<NewLeads>
       Navigator.pop(context);
       Common.toastMessaage(
           "Error loading lead details: ${e.toString()}", accentRed);
+    }
+  }
+
+  Future<void> _showCategoryPopup(Detail lead, int index) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final leadDetails = await HttpService.leadDetails(
+        widget.token!,
+        lead.callMasterId,
+      );
+
+      if (mounted) Navigator.pop(context);
+
+      if (leadDetails != null && leadDetails.data?.leadCategories != null) {
+        final categories = leadDetails.data!.leadCategories!;
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.6,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              builder: (_, scrollController) => Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Lead Categories",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: appBarStart,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Expanded(
+                      child: ListView.separated(
+                        controller: scrollController,
+                        itemCount: categories.length,
+                        separatorBuilder: (context, _) =>
+                            const Divider(color: borderLight, height: 8),
+                        itemBuilder: (context, i) {
+                          final category = categories[i];
+                          return InkWell(
+                            onTap: () {
+                              if (viewLeadCategoryOnly == "true") return;
+
+                              Navigator.pop(context);
+                              _showLeadDetailsPopup(
+                                index,
+                                customCallMasterId: category.callMasterId,
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: borderLight),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        category.isSelected == true
+                                            ? Icons.check_circle
+                                            : Icons.circle_outlined,
+                                        size: 18,
+                                        color: category.isSelected == true
+                                            ? callGreen
+                                            : textSecondary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          category.leadCategory ?? "-",
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: (category.leadStatus ?? "") ==
+                                                  "New"
+                                              ? appBarStart.withOpacity(0.1)
+                                              : (category.leadStatus ?? "") ==
+                                                      "Follow Up"
+                                                  ? accentOrange
+                                                      .withOpacity(0.1)
+                                                  : (category.leadStatus ??
+                                                              "") ==
+                                                          "Rejected"
+                                                      ? accentRed
+                                                          .withOpacity(0.1)
+                                                      : accentOrange
+                                                          .withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          category.leadStatus ?? "-",
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w500,
+                                            color: (category.leadStatus ??
+                                                        "") ==
+                                                    "New"
+                                                ? appBarStart
+                                                : (category.leadStatus ?? "") ==
+                                                        "Follow Up"
+                                                    ? accentOrange
+                                                    : (category.leadStatus ??
+                                                                "") ==
+                                                            "Rejected"
+                                                        ? accentRed
+                                                        : accentOrange,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "👤 ${category.staffName ?? "-"}",
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: textSecondary,
+                                        ),
+                                      ),
+                                      Text(
+                                        "📅 ${category.createdDate ?? "-"}",
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
+    } catch (error) {
+      if (mounted) Navigator.pop(context);
+      Common.toastMessaage("Failed to load categories", accentRed);
     }
   }
 
@@ -1780,20 +1985,23 @@ class _NewLeadsState extends State<NewLeads>
                                 int.parse(displayItem.categoryCount) > 1)
                               Padding(
                                 padding: const EdgeInsets.only(left: 4),
-                                child: Container(
-                                  height: 18,
-                                  width: 18,
-                                  decoration: const BoxDecoration(
-                                    color: accentOrange,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      displayItem.categoryCount.toString(),
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                                child: InkWell(
+                                  onTap: () => _showCategoryPopup(displayItem, index),
+                                  child: Container(
+                                    height: 18,
+                                    width: 18,
+                                    decoration: const BoxDecoration(
+                                      color: accentOrange,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        displayItem.categoryCount.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -2028,257 +2236,8 @@ class _NewLeadsState extends State<NewLeads>
                       int.parse(displayItem.categoryCount) > 1)
                     Padding(
                       padding: const EdgeInsets.only(left: 4),
-                      child: GestureDetector(
-                        onTap: () async {
-                          Common.showProgressDialog(
-                              context, "Loading categories...");
-                          try {
-                            await _loadLeadDetails(
-                                displayItem.callMasterId.toString());
-                            if (context.mounted) Navigator.pop(context);
-                            if (leadDetails == null ||
-                                leadDetails!.data?.leadCategories == null) {
-                              if (context.mounted) {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text("No Data"),
-                                      content: const Text(
-                                          "Lead categories are not available yet."),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: const Text("OK"),
-                                        )
-                                      ],
-                                    );
-                                  },
-                                );
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  final categories =
-                                      leadDetails!.data!.leadCategories!;
-                                  return Dialog(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    insetPadding: const EdgeInsets.all(20),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      constraints: BoxConstraints(
-                                        maxHeight:
-                                            MediaQuery.of(context).size.height *
-                                                0.7,
-                                        maxWidth:
-                                            MediaQuery.of(context).size.width *
-                                                0.9,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              const Text(
-                                                "Lead Categories",
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: appBarStart,
-                                                ),
-                                              ),
-                                              IconButton(
-                                                icon: const Icon(Icons.close,
-                                                    color: textSecondary,
-                                                    size: 20),
-                                                onPressed: () =>
-                                                    Navigator.pop(context),
-                                              ),
-                                            ],
-                                          ),
-                                          const Divider(
-                                              thickness: 1, height: 12),
-                                          Expanded(
-                                            child: ListView.separated(
-                                              itemCount: categories.length,
-                                              separatorBuilder: (context, _) =>
-                                                  const Divider(
-                                                      color: borderLight,
-                                                      height: 8),
-                                              itemBuilder: (context, i) {
-                                                final category = categories[i];
-                                                return InkWell(
-                                                  onTap: () {
-                                                    Navigator.pop(context);
-                                                    callMasterId = category
-                                                        .callMasterId
-                                                        .toString();
-                                                    getData(
-                                                        'desc', true, status);
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            10),
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                          color: borderLight),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              6),
-                                                    ),
-                                                    child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Row(
-                                                          children: [
-                                                            Icon(
-                                                              category.isSelected ==
-                                                                      true
-                                                                  ? Icons
-                                                                      .check_circle
-                                                                  : Icons
-                                                                      .circle_outlined,
-                                                              size: 18,
-                                                              color: category
-                                                                          .isSelected ==
-                                                                      true
-                                                                  ? callGreen
-                                                                  : textSecondary,
-                                                            ),
-                                                            const SizedBox(
-                                                                width: 6),
-                                                            Expanded(
-                                                              child: Text(
-                                                                category.leadCategory ??
-                                                                    "-",
-                                                                style:
-                                                                    const TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
-                                                                ),
-                                                                maxLines: 1,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                              ),
-                                                            ),
-                                                            Container(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                      .symmetric(
-                                                                      horizontal:
-                                                                          6,
-                                                                      vertical:
-                                                                          2),
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: (category.leadStatus ??
-                                                                            "") ==
-                                                                        "New"
-                                                                    ? appBarStart
-                                                                        .withOpacity(
-                                                                            0.1)
-                                                                    : (category.leadStatus ??
-                                                                                "") ==
-                                                                            "Follow Up"
-                                                                        ? accentOrange.withOpacity(
-                                                                            0.1)
-                                                                        : (category.leadStatus ?? "") ==
-                                                                                "Rejected"
-                                                                            ? accentRed.withOpacity(0.1)
-                                                                            : accentOrange.withOpacity(0.1),
-                                                                borderRadius:
-                                                                    BorderRadius
-                                                                        .circular(
-                                                                            4),
-                                                              ),
-                                                              child: Text(
-                                                                category.leadStatus ??
-                                                                    "-",
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w500,
-                                                                  color: (category.leadStatus ??
-                                                                              "") ==
-                                                                          "New"
-                                                                      ? appBarStart
-                                                                      : (category.leadStatus ?? "") ==
-                                                                              "Follow Up"
-                                                                          ? accentOrange
-                                                                          : (category.leadStatus ?? "") == "Rejected"
-                                                                              ? accentRed
-                                                                              : accentOrange,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 6),
-                                                        Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          children: [
-                                                            Text(
-                                                              "👤 ${category.staffName ?? "-"}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 11,
-                                                                color:
-                                                                    textSecondary,
-                                                              ),
-                                                            ),
-                                                            Text(
-                                                              "📅 ${category.createdDate ?? "-"}",
-                                                              style:
-                                                                  const TextStyle(
-                                                                fontSize: 11,
-                                                                color:
-                                                                    textSecondary,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-                          } catch (error) {
-                            if (context.mounted) Navigator.pop(context);
-                            if (context.mounted) {
-                              Common.toastMessaage(
-                                  "Failed to load categories", accentRed);
-                            }
-                          }
-                        },
+                      child: InkWell(
+                        onTap: () => _showCategoryPopup(displayItem, index),
                         child: Container(
                           height: 18,
                           width: 18,

@@ -22,7 +22,7 @@ class RecentReceiptModel {
 
 class Data {
   List<ReceiptItem>? list;
-  int? totalAmount;
+  String? totalAmount;
   int? totalRecords;
 
   Data({this.list, this.totalAmount, this.totalRecords});
@@ -34,8 +34,10 @@ class Data {
         list!.add(ReceiptItem.fromJson(v));
       });
     }
-    totalAmount = json['total_amount'];
-    totalRecords = json['total_records'];
+    totalAmount = json['total_amount']?.toString();
+    totalRecords = json['total_records'] is int
+        ? json['total_records']
+        : int.tryParse(json['total_records']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {

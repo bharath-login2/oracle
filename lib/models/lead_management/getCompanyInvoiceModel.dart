@@ -45,7 +45,9 @@ class Data {
     totalInvoiceAmount = json['total_invoice_amount'];
     totalInvoicePaid = json['total_invoice_paid'];
     balanceAmount = json['balance_amount'];
-    totalRecords = json['total_records'];
+    totalRecords = json['total_records'] is int
+        ? json['total_records']
+        : int.tryParse(json['total_records']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {

@@ -44,6 +44,26 @@ class BillItem {
   }
 }
 
+class PaymentItem {
+  DateTime paidDate;
+  double paidAmount;
+  String debitAccount;
+  String paymentMode;
+  String trRefNo;
+  DateTime? trRefDate;
+  String remarks;
+
+  PaymentItem({
+    required this.paidDate,
+    required this.paidAmount,
+    required this.debitAccount,
+    required this.paymentMode,
+    this.trRefNo = "",
+    this.trRefDate,
+    this.remarks = "",
+  });
+}
+
 class PurchaseBillPage extends StatefulWidget {
   final String token;
   final String name;
@@ -611,15 +631,11 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
 
   void _showAddBillDialog({PurchaseBillData? editBill}) {
     List<BillItem> cartItems = [];
+    List<PaymentItem> paymentItems = [];
     DateTime billDate = DateTime.now();
     DateTime invoiceDate = DateTime.now();
-    DateTime? paidDate = DateTime.now();
-    DateTime? trRefDate = DateTime.now();
-
-    MaterialData? selectedMaterial;
     Supplier? selectedSupplier;
-    ListElement? selectedAccount;
-    String paymentMode = "Cash";
+    MaterialData? selectedMaterial;
     PlatformFile? billCopyFile;
 
     final TextEditingController billIdController = TextEditingController(
@@ -649,6 +665,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
         List<ListElement> accountHeads = [];
         bool isFetching = false;
         bool isFetchingAccounts = false;
+        bool isDetailsFetched = false;
 
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
@@ -676,6 +693,51 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
               });
             }
 
+            if (editBill != null && !isDetailsFetched) {
+              isDetailsFetched = true;
+              HttpService.getPurchaseBillDetailsEdit(editBill.id!).then((val) {
+                if (val != null && val.data != null && dialogContext.mounted) {
+                  setDialogState(() {
+                    final d = val.data!;
+                    if (d.billDetails != null) {
+                      billIdController.text = d.billDetails!.billId ?? "";
+                      try {
+                        billDate = DateFormat('dd-MM-yyyy')
+                            .parse(d.billDetails!.billDate ?? "");
+                      } catch (e) {
+                        billDate = DateTime.now();
+                      }
+                      if (suppliers.any(
+                          (s) => s.supplierId == d.billDetails!.supplierId)) {
+                        selectedSupplier = suppliers.firstWhere(
+                            (s) => s.supplierId == d.billDetails!.supplierId);
+                      }
+                    }
+                    if (d.items != null) {
+                      cartItems = d.items!
+                          .map((item) => BillItem(
+                                material: MaterialData(
+                                    materialId: item.materialId,
+                                    materialName: item.materialName,
+                                    unitName: item.unitName,
+                                    unitPrice: item.unitPrice,
+                                    gstPercentage: item.gst),
+                                quantity:
+                                    double.tryParse(item.quantity ?? "1") ??
+                                        1.0,
+                                unitPrice:
+                                    double.tryParse(item.unitPrice ?? "0") ??
+                                        0.0,
+                                gstPercentage:
+                                    double.tryParse(item.gst ?? "0") ?? 0.0,
+                              ))
+                          .toList();
+                    }
+                  });
+                }
+              });
+            }
+
             double totalSubtotal =
                 cartItems.fold(0, (sum, item) => sum + item.subTotal);
             double totalGst =
@@ -685,7 +747,8 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
             double discount = double.tryParse(discountController.text) ?? 0.0;
             double payableAmount =
                 totalSubtotal + totalGst + tds + others - discount;
-            double totalPaid = double.tryParse(paidAmtController.text) ?? 0.0;
+            double totalPaid =
+                paymentItems.fold(0.0, (sum, p) => sum + p.paidAmount);
             double balanceAmount = payableAmount - totalPaid;
 
             return Scaffold(
@@ -796,7 +859,8 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                               border: Border.all(
                                                   color: Colors.grey.shade300)),
                                           child: DropdownSearch<Supplier>(
-                                            items: (filter, loadProps) => suppliers,
+                                            items: (filter, loadProps) =>
+                                                suppliers,
                                             itemAsString: (s) => s.supplierName,
                                             compareFn: (item, selectedItem) =>
                                                 item?.supplierId ==
@@ -959,8 +1023,10 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                       DataColumn(label: Text("Unit Price")),
                                       DataColumn(label: Text("Sub Total")),
                                       DataColumn(label: Text("GST %")),
+                                      DataColumn(label: Text("CGST")),
+                                      DataColumn(label: Text("SGST")),
+                                      DataColumn(label: Text("IGST")),
                                       DataColumn(label: Text("GST Amt")),
-                                      DataColumn(label: Text("Total Amt")),
                                       DataColumn(label: Text("Action")),
                                     ],
                                     rows: List.generate(cartItems.length,
@@ -977,18 +1043,32 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               IconButton(
-                                                icon: const Icon(Icons.remove_circle_outline, size: 18, color: Colors.red),
+                                                icon: const Icon(
+                                                    Icons.remove_circle_outline,
+                                                    size: 18,
+                                                    color: Colors.red),
                                                 onPressed: () {
                                                   if (item.quantity > 1) {
-                                                    setDialogState(() => item.quantity--);
+                                                    setDialogState(
+                                                        () => item.quantity--);
                                                   }
                                                 },
                                               ),
-                                              Text(item.quantity.toInt().toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                              Text(
+                                                  item.quantity
+                                                      .toInt()
+                                                      .toString(),
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
                                               IconButton(
-                                                icon: const Icon(Icons.add_circle_outline, size: 18, color: Colors.green),
+                                                icon: const Icon(
+                                                    Icons.add_circle_outline,
+                                                    size: 18,
+                                                    color: Colors.green),
                                                 onPressed: () {
-                                                  setDialogState(() => item.quantity++);
+                                                  setDialogState(
+                                                      () => item.quantity++);
                                                 },
                                               ),
                                             ],
@@ -997,28 +1077,224 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                         DataCell(SizedBox(
                                             width: 80,
                                             child: TextField(
-                                                controller: item.unitPriceController,
-                                                keyboardType: TextInputType.number,
-                                                onChanged: (v) => setDialogState(() => item.unitPrice = double.tryParse(v) ?? 0.0),
-                                                decoration: const InputDecoration(isDense: true, border: OutlineInputBorder())))),
-                                        DataCell(Text(item.subTotal.toStringAsFixed(2))),
+                                                controller:
+                                                    item.unitPriceController,
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (v) =>
+                                                    setDialogState(() => item
+                                                            .unitPrice =
+                                                        double.tryParse(v) ??
+                                                            0.0),
+                                                decoration: const InputDecoration(
+                                                    isDense: true,
+                                                    border:
+                                                        OutlineInputBorder())))),
+                                        DataCell(Text(
+                                            item.subTotal.toStringAsFixed(2))),
                                         DataCell(SizedBox(
                                             width: 60,
                                             child: TextField(
                                                 controller: item.gstController,
-                                                keyboardType: TextInputType.number,
-                                                onChanged: (v) => setDialogState(() => item.gstPercentage = double.tryParse(v) ?? 0.0),
-                                                decoration: const InputDecoration(isDense: true, border: OutlineInputBorder())))),
-                                        DataCell(Text(item.gstAmount.toStringAsFixed(2))),
-                                        DataCell(Text(item.total.toStringAsFixed(2))),
+                                                keyboardType:
+                                                    TextInputType.number,
+                                                onChanged: (v) =>
+                                                    setDialogState(() => item
+                                                            .gstPercentage =
+                                                        double.tryParse(v) ??
+                                                            0.0),
+                                                decoration: const InputDecoration(
+                                                    isDense: true,
+                                                    border:
+                                                        OutlineInputBorder())))),
+                                        DataCell(Text(
+                                            (item.gstPercentage / 2)
+                                                .toStringAsFixed(2),
+                                            style:
+                                                const TextStyle(fontSize: 12))),
+                                        DataCell(Text(
+                                            (item.gstPercentage / 2)
+                                                .toStringAsFixed(2),
+                                            style:
+                                                const TextStyle(fontSize: 12))),
+                                        DataCell(const Text("0.00",
+                                            style: TextStyle(fontSize: 12))),
+                                        DataCell(Text(
+                                            item.gstAmount.toStringAsFixed(2))),
                                         DataCell(IconButton(
-                                            icon: const Icon(Icons.delete, color: Colors.red, size: 18),
-                                            onPressed: () {
+                                          icon: const Icon(Icons.delete,
+                                              color: Colors.red, size: 18),
+                                          onPressed: () async {
+                                            // For edit mode with existing bill, call API
+                                            if (editBill != null &&
+                                                editBill.billId != null) {
+                                              bool? confirm = await showDialog(
+                                                context: dialogContext,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                  title: const Text(
+                                                      'Delete Product'),
+                                                  content: Text(
+                                                      'Delete "${item.material.materialName}" from this bill?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                              context, false),
+                                                      child:
+                                                          const Text('Cancel'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                              context, true),
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                              foregroundColor:
+                                                                  Colors.red),
+                                                      child:
+                                                          const Text('Delete'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+
+                                              if (confirm == true) {
+                                                showDialog(
+                                                  context: dialogContext,
+                                                  barrierDismissible: false,
+                                                  builder: (context) =>
+                                                      const Center(
+                                                          child:
+                                                              CircularProgressIndicator()),
+                                                );
+                                                final response = await HttpService
+                                                    .deletePurchaseOrderBillProduct(
+                                                  productId:
+                                                      item.material.materialId!,
+                                                  billId: editBill.id!,
+                                                );
+                                                Navigator.pop(
+                                                    dialogContext); 
+                                                if (response?.status == true) {
+                                                  Common.toastMessaage(
+                                                      'Product deleted successfully',
+                                                      Colors.green);
+                                                  setDialogState(() {
+                                                    item.dispose();
+                                                    cartItems.removeAt(index);
+                                                  });
+                                                  if (editBill.id != null) {
+                                                    final refreshData =
+                                                        await HttpService
+                                                            .getPurchaseBillDetailsEdit(
+                                                                editBill.id!);
+                                                    if (refreshData
+                                                                ?.data?.items !=
+                                                            null &&
+                                                        dialogContext.mounted) {
+                                                      setDialogState(() {
+                                                        cartItems.clear();
+                                                        cartItems.addAll(
+                                                            refreshData!
+                                                                .data!.items!
+                                                                .map((item) =>
+                                                                    BillItem(
+                                                                      material:
+                                                                          MaterialData(
+                                                                        materialId:
+                                                                            item.materialId,
+                                                                        materialName:
+                                                                            item.materialName,
+                                                                        unitName:
+                                                                            item.unitName,
+                                                                        unitPrice:
+                                                                            item.unitPrice,
+                                                                        gstPercentage:
+                                                                            item.gst,
+                                                                      ),
+                                                                      quantity:
+                                                                          double.tryParse(item.quantity ?? "1") ??
+                                                                              1.0,
+                                                                      unitPrice:
+                                                                          double.tryParse(item.unitPrice ?? "0") ??
+                                                                              0.0,
+                                                                      gstPercentage:
+                                                                          double.tryParse(item.gst ?? "0") ??
+                                                                              0.0,
+                                                                    ))
+                                                                .toList());
+                                                      });
+                                                    }
+                                                  }
+                                                } else {
+                                                  Common.toastMessaage(
+                                                      response?.message ??
+                                                          'Delete failed',
+                                                      Colors.red);
+                                                }
+                                              }
+                                            } else {
+                                              // For new bill, just remove from cart without API call
                                               setDialogState(() {
                                                 item.dispose();
                                                 cartItems.removeAt(index);
                                               });
-                                            })),
+                                            }
+                                          },
+                                        )),
+                                        //                       DataCell(IconButton(
+                                        //                           icon: const Icon(Icons.delete,
+                                        //                               color: Colors.red, size: 18),
+                                        //                           onPressed: () async {
+
+                                        //                             setDialogState(() {
+                                        //                               item.dispose();
+                                        //                               cartItems.removeAt(index);
+                                        //                             });
+                                        //                                 bool? confirm = await showDialog(
+                                        //   context: dialogContext,
+                                        //   builder: (context) => AlertDialog(
+                                        //     title: const Text('Delete Product'),
+                                        //     content: Text('Delete "${item.material.materialName}"?'),
+                                        //     actions: [
+                                        //       TextButton(
+                                        //         onPressed: () => Navigator.pop(context, false),
+                                        //         child: const Text('Cancel'),
+                                        //       ),
+                                        //       TextButton(
+                                        //         onPressed: () => Navigator.pop(context, true),
+                                        //         style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                        //         child: const Text('Delete'),
+                                        //       ),
+                                        //     ],
+                                        //   ),
+                                        // );
+
+                                        // if (confirm == true) {
+                                        //   // Show loading
+                                        //   showDialog(
+                                        //     context: dialogContext,
+                                        //     barrierDismissible: false,
+                                        //     builder: (context) => const Center(child: CircularProgressIndicator()),
+                                        //   );
+
+                                        //   // Call API
+                                        //   final response = await HttpService.deletePurchaseOrderBillProduct(
+                                        //     productId: item.material.materialId!,
+                                        //     billId: item.billId!, // Assuming you have a billId property
+                                        //   );
+
+                                        //   Navigator.pop(dialogContext); // Close loading
+
+                                        //   if (response?.status == true) {
+                                        //     Common.toastMessaage('Product deleted', Colors.green);
+                                        //  //  onDelete(); // Remove from cart
+                                        //   } else {
+                                        //     Common.toastMessaage(response?.message ?? 'Delete failed', Colors.red);
+                                        //   }
+                                        // }
+                                        //                           })),
                                       ]);
                                     }),
                                   ),
@@ -1066,422 +1342,99 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 30),
-                                const Text("Advance Payment Details",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16)),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                        value: deductFromAdvance,
-                                        onChanged: (v) => setDialogState(() =>
-                                            deductFromAdvance = v ?? false)),
-                                    const Text(
-                                        "Deduct from Advance Paid to supplier"),
-                                  ],
-                                ),
-                                if (deductFromAdvance) ...[
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                          child: _buildInputLabelField(
-                                              label: "Available Advance amount",
-                                              child: _buildReadOnlyField(
-                                                  "₹ 0.00"))),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                          child: _buildInputLabelField(
-                                              label: "Payment amount",
-                                              child: TextField(
-                                                  decoration: _inputDecoration(
-                                                      "₹ 0.00")))),
-                                      // const SizedBox(width: 12),
-                                      // Expanded(
-                                      //     child: _buildInputLabelField(
-                                      //         label: "Balance amount",
-                                      //         child: _buildReadOnlyField(
-                                      //             "₹ 0.00"))),
-                                    ],
-                                  ),
-                                ],
-                                if (deductFromAdvance) ...[
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      // Expanded(
-                                      //     child: _buildInputLabelField(
-                                      //         label: "Available Advance amount",
-                                      //         child: _buildReadOnlyField(
-                                      //             "₹ 0.00"))),
-                                      // const SizedBox(width: 12),
-                                      // Expanded(
-                                      //     child: _buildInputLabelField(
-                                      //         label: "Payment amount",
-                                      //         child: TextField(
-                                      //             decoration: _inputDecoration(
-                                      //                 "₹ 0.00")))),
-                                      // const SizedBox(width: 12),
-                                      Expanded(
-                                          child: _buildInputLabelField(
-                                              label: "Balance amount",
-                                              child: _buildReadOnlyField(
-                                                  "₹ 0.00"))),
-                                    ],
-                                  ),
-                                ],
                                 const SizedBox(height: 30),
-                                const Text("Payment Details",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16)),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                        child: _buildInputLabelField(
-                                            label:
-                                                "Paid Amount on Purchase Bill",
-                                            child: TextField(
-                                                controller: paidAmtController,
-                                                keyboardType:
-                                                    TextInputType.number,
-                                                onChanged: (v) =>
-                                                    setDialogState(() {}),
-                                                decoration: _inputDecoration(
-                                                    "₹ 0.00")))),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildInputLabelField(
-                                        label: "Paid Date",
-                                        child: InkWell(
-                                          onTap: () async {
-                                            final picked = await showDatePicker(
-                                                context: context,
-                                                initialDate: paidDate!,
-                                                firstDate: DateTime(2000),
-                                                lastDate: DateTime(2100));
-                                            if (picked != null)
-                                              setDialogState(
-                                                  () => paidDate = picked);
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 12),
-                                            decoration: BoxDecoration(
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF2a86c9)
+                                        .withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text("Payment Details",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16)),
+                                      ElevatedButton.icon(
+                                        onPressed: () => _showAddPaymentPopup(
+                                            context, accountHeads,
+                                            (PaymentItem newItem) {
+                                          setDialogState(() {
+                                            paymentItems.add(newItem);
+                                          });
+                                        }),
+                                        icon: const Icon(Icons.add,
+                                            size: 16, color: Colors.white),
+                                        label: const Text("Add Payment",
+                                            style: TextStyle(
                                                 color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                border: Border.all(
-                                                    color:
-                                                        Colors.grey.shade300)),
-                                            child: Row(
-                                              children: [
-                                                const Icon(Icons.calendar_today,
-                                                    size: 14,
-                                                    color: Colors.grey),
-                                                const SizedBox(width: 8),
-                                                Text(DateFormat('dd-MM-yyyy')
-                                                    .format(paidDate!)),
-                                              ],
-                                            ),
-                                          ),
+                                                fontSize: 12)),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              const Color(0xFF2a86c9),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8)),
                                         ),
                                       ),
-                                    ),
-                                    // const SizedBox(width: 12),
-                                    // Expanded(
-                                    //   child: _buildInputLabelField(
-                                    //     label: "Paid From Account",
-                                    //     child: Container(
-                                    //       decoration: BoxDecoration(
-                                    //           color: Colors.white,
-                                    //           borderRadius:
-                                    //               BorderRadius.circular(10),
-                                    //           border: Border.all(
-                                    //               color: Colors.grey.shade300)),
-                                    //       child: DropdownSearch<ListElement>(
-                                    //         items: (f, p) => accountHeads,
-                                    //         itemAsString: (a) => a.accountName,
-                                    //         compareFn: (item, selectedItem) =>
-                                    //             item.accountId ==
-                                    //             selectedItem.accountId,
-                                    //         onChanged: (val) => setDialogState(
-                                    //             () => selectedAccount = val),
-                                    //         decoratorProps:
-                                    //             const DropDownDecoratorProps(
-                                    //           decoration: InputDecoration(
-                                    //               contentPadding:
-                                    //                   EdgeInsets.symmetric(
-                                    //                       horizontal: 12),
-                                    //               border: InputBorder.none,
-                                    //               hintText: "Select Account"),
-                                    //         ),
-                                    //       ),
-                                    //     ),
-                                    //   ),
-                                    // ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    // Expanded(
-                                    //     child: _buildInputLabelField(
-                                    //         label:
-                                    //             "Paid Amount on Purchase Bill",
-                                    //         child: TextField(
-                                    //             controller: paidAmtController,
-                                    //             keyboardType:
-                                    //                 TextInputType.number,
-                                    //             onChanged: (v) =>
-                                    //                 setDialogState(() {}),
-                                    //             decoration: _inputDecoration(
-                                    //                 "₹ 0.00")))),
-                                    // const SizedBox(width: 12),
-                                    // Expanded(
-                                    //   child: _buildInputLabelField(
-                                    //     label: "Paid Date",
-                                    //     child: InkWell(
-                                    //       onTap: () async {
-                                    //         final picked = await showDatePicker(
-                                    //             context: context,
-                                    //             initialDate: paidDate!,
-                                    //             firstDate: DateTime(2000),
-                                    //             lastDate: DateTime(2100));
-                                    //         if (picked != null)
-                                    //           setDialogState(
-                                    //               () => paidDate = picked);
-                                    //       },
-                                    //       child: Container(
-                                    //         padding: const EdgeInsets.symmetric(
-                                    //             horizontal: 12, vertical: 12),
-                                    //         decoration: BoxDecoration(
-                                    //             color: Colors.white,
-                                    //             borderRadius:
-                                    //                 BorderRadius.circular(10),
-                                    //             border: Border.all(
-                                    //                 color:
-                                    //                     Colors.grey.shade300)),
-                                    //         child: Row(
-                                    //           children: [
-                                    //             const Icon(Icons.calendar_today,
-                                    //                 size: 14,
-                                    //                 color: Colors.grey),
-                                    //             const SizedBox(width: 8),
-                                    //             Text(DateFormat('dd-MM-yyyy')
-                                    //                 .format(paidDate!)),
-                                    //           ],
-                                    //         ),
-                                    //       ),
-                                    //     ),
-                                    //   ),
-                                    // ),
-                                    //  const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildInputLabelField(
-                                        label: "Paid From Account",
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                  color: Colors.grey.shade300)),
-                                          child: DropdownSearch<ListElement>(
-                                            items: (filter, loadProps) =>
-                                                accountHeads,
-                                            itemAsString: (a) => a.accountName,
-                                            compareFn: (item, selectedItem) =>
-                                                item.accountId ==
-                                                selectedItem?.accountId,
-                                            onChanged: (val) => setDialogState(
-                                                () => selectedAccount = val),
-                                            decoratorProps:
-                                                const DropDownDecoratorProps(
-                                              decoration: InputDecoration(
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 12),
-                                                  border: InputBorder.none,
-                                                  hintText: "Select Account"),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildInputLabelField(
-                                        label: "Payment Mode",
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                  color: Colors.grey.shade300)),
-                                          child: DropdownButtonHideUnderline(
-                                            child: DropdownButton<String>(
-                                              value: paymentMode,
-                                              isExpanded: true,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 12),
-                                              items: [
-                                                "Cash",
-                                                "Bank",
-                                                "Cheque",
-                                                "Online"
-                                              ]
-                                                  .map((e) => DropdownMenuItem(
-                                                      value: e, child: Text(e)))
-                                                  .toList(),
-                                              onChanged: (v) => setDialogState(
-                                                  () => paymentMode = v!),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                        child: _buildInputLabelField(
-                                            label: "TR Reference No",
-                                            child: TextField(
-                                                controller: trRefNoController,
-                                                decoration: _inputDecoration(
-                                                    "TR Reference No")))),
-                                    // const SizedBox(width: 12),
-                                    // Expanded(
-                                    //   child: _buildInputLabelField(
-                                    //     label: "TR Reference Date",
-                                    //     child: InkWell(
-                                    //       onTap: () async {
-                                    //         final picked = await showDatePicker(
-                                    //             context: context,
-                                    //             initialDate: trRefDate!,
-                                    //             firstDate: DateTime(2000),
-                                    //             lastDate: DateTime(2100));
-                                    //         if (picked != null)
-                                    //           setDialogState(
-                                    //               () => trRefDate = picked);
-                                    //       },
-                                    //       child: Container(
-                                    //         padding: const EdgeInsets.symmetric(
-                                    //             horizontal: 12, vertical: 12),
-                                    //         decoration: BoxDecoration(
-                                    //             color: Colors.white,
-                                    //             borderRadius:
-                                    //                 BorderRadius.circular(10),
-                                    //             border: Border.all(
-                                    //                 color:
-                                    //                     Colors.grey.shade300)),
-                                    //         child: Row(
-                                    //           children: [
-                                    //             const Icon(Icons.calendar_today,
-                                    //                 size: 14,
-                                    //                 color: Colors.grey),
-                                    //             const SizedBox(width: 8),
-                                    //             Text(DateFormat('dd-MM-yyyy')
-                                    //                 .format(trRefDate!)),
-                                    //           ],
-                                    //         ),
-                                    //       ),
-                                    //     ),
-                                    //   ),
-                                    // ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    // Expanded(
-                                    //   child: _buildInputLabelField(
-                                    //     label: "Payment Mode",
-                                    //     child: Container(
-                                    //       decoration: BoxDecoration(
-                                    //           color: Colors.white,
-                                    //           borderRadius:
-                                    //               BorderRadius.circular(10),
-                                    //           border: Border.all(
-                                    //               color: Colors.grey.shade300)),
-                                    //       child: DropdownButtonHideUnderline(
-                                    //         child: DropdownButton<String>(
-                                    //           value: paymentMode,
-                                    //           isExpanded: true,
-                                    //           padding:
-                                    //               const EdgeInsets.symmetric(
-                                    //                   horizontal: 12),
-                                    //           items: [
-                                    //             "Cash",
-                                    //             "Bank",
-                                    //             "Cheque",
-                                    //             "Online"
-                                    //           ]
-                                    //               .map((e) => DropdownMenuItem(
-                                    //                   value: e, child: Text(e)))
-                                    //               .toList(),
-                                    //           onChanged: (v) => setDialogState(
-                                    //               () => paymentMode = v!),
-                                    //         ),
-                                    //       ),
-                                    //     ),
-                                    //   ),
-                                    // ),
-                                    // const SizedBox(width: 12),
-                                    // Expanded(
-                                    //     child: _buildInputLabelField(
-                                    //         label: "TR Reference No",
-                                    //         child: TextField(
-                                    //             controller: trRefNoController,
-                                    //             decoration: _inputDecoration(
-                                    //                 "TR Reference No")))),
-                                    // const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildInputLabelField(
-                                        label: "TR Reference Date",
-                                        child: InkWell(
-                                          onTap: () async {
-                                            final picked = await showDatePicker(
-                                                context: context,
-                                                initialDate: trRefDate!,
-                                                firstDate: DateTime(2000),
-                                                lastDate: DateTime(2100));
-                                            if (picked != null)
-                                              setDialogState(
-                                                  () => trRefDate = picked);
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    columnSpacing: 20,
+                                    headingRowHeight: 40,
+                                    dataRowHeight: 50,
+                                    headingRowColor: WidgetStateProperty.all(
+                                        Colors.grey.shade100),
+                                    columns: const [
+                                      DataColumn(label: Text("#")),
+                                      DataColumn(label: Text("Paid Date")),
+                                      DataColumn(label: Text("Paid Amount")),
+                                      DataColumn(label: Text("Debit Acc")),
+                                      DataColumn(label: Text("Payment Mode")),
+                                      DataColumn(label: Text("TR Ref No")),
+                                      DataColumn(label: Text("TR Ref Date")),
+                                      DataColumn(label: Text("Remarks")),
+                                      DataColumn(label: Text("Action")),
+                                    ],
+                                    rows: List.generate(paymentItems.length,
+                                        (index) {
+                                      final p = paymentItems[index];
+                                      return DataRow(cells: [
+                                        DataCell(Text("${index + 1}")),
+                                        DataCell(Text(DateFormat('dd-MM-yyyy')
+                                            .format(p.paidDate))),
+                                        DataCell(Text(
+                                            p.paidAmount.toStringAsFixed(2))),
+                                        DataCell(Text(p.debitAccount)),
+                                        DataCell(Text(p.paymentMode)),
+                                        DataCell(Text(p.trRefNo)),
+                                        DataCell(Text(p.trRefDate != null
+                                            ? DateFormat('dd-MM-yyyy')
+                                                .format(p.trRefDate!)
+                                            : "-")),
+                                        DataCell(Text(p.remarks)),
+                                        DataCell(IconButton(
+                                          icon: const Icon(Icons.delete,
+                                              color: Colors.red, size: 16),
+                                          onPressed: () {
+                                            setDialogState(() {
+                                              paymentItems.removeAt(index);
+                                            });
                                           },
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 12),
-                                            decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                border: Border.all(
-                                                    color:
-                                                        Colors.grey.shade300)),
-                                            child: Row(
-                                              children: [
-                                                const Icon(Icons.calendar_today,
-                                                    size: 14,
-                                                    color: Colors.grey),
-                                                const SizedBox(width: 8),
-                                                Text(DateFormat('dd-MM-yyyy')
-                                                    .format(trRefDate!)),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                        )),
+                                      ]);
+                                    }),
+                                  ),
                                 ),
                                 const SizedBox(height: 30),
                                 Table(
@@ -1623,22 +1576,29 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                         "tds": tdsController.text,
                                         "others": othersController.text,
                                         "discount": discountController.text,
-                                        "payment_mode": paymentMode,
-                                        "account_id":
-                                            selectedAccount?.accountId,
-                                        "tr_ref_no": trRefNoController.text,
-                                        "tr_ref_date": DateFormat('yyyy-MM-dd')
-                                            .format(trRefDate!),
+                                        "bill_no": billIdController.text,
+                                        "item_total":
+                                            totalSubtotal.toStringAsFixed(2),
+                                        "gst_total":
+                                            totalGst.toStringAsFixed(2),
+                                        "tds_amount": tds.toStringAsFixed(2),
+                                        "other_charges":
+                                            others.toStringAsFixed(2),
+                                        "discount_amount":
+                                            discount.toStringAsFixed(2),
+                                        "grand_total":
+                                            payableAmount.toStringAsFixed(2),
                                         "remarks": remarkController.text,
                                       };
 
-                                      if (billCopyFile != null &&
-                                          billCopyFile!.path != null) {
+                                      if (editBill != null) {
+                                        body["bill_id"] = editBill.billId;
+                                      }
+
+                                      if (billCopyFile != null) {
                                         body["bill_copy"] =
                                             await dio.MultipartFile.fromFile(
-                                          billCopyFile!.path!,
-                                          filename: billCopyFile!.name,
-                                        );
+                                                billCopyFile!.path!);
                                       }
 
                                       for (int i = 0;
@@ -1654,9 +1614,34 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                             cartItems[i].gstPercentage;
                                       }
 
-                                      final res =
-                                          await HttpService.postPurchaseBill(
-                                              body);
+                                      for (int i = 0;
+                                          i < paymentItems.length;
+                                          i++) {
+                                        body["paid_date[$i]"] =
+                                            DateFormat('yyyy-MM-dd').format(
+                                                paymentItems[i].paidDate);
+                                        body["paid_amount[$i]"] =
+                                            paymentItems[i].paidAmount;
+                                        body["debit_account[$i]"] =
+                                            paymentItems[i].debitAccount;
+                                        body["payment_mode[$i]"] =
+                                            paymentItems[i].paymentMode;
+                                        body["tr_ref_no[$i]"] =
+                                            paymentItems[i].trRefNo;
+                                        if (paymentItems[i].trRefDate != null) {
+                                          body["tr_ref_date[$i]"] =
+                                              DateFormat('yyyy-MM-dd').format(
+                                                  paymentItems[i].trRefDate!);
+                                        }
+                                        body["payment_remarks[$i]"] =
+                                            paymentItems[i].remarks;
+                                      }
+
+                                      final res = editBill == null
+                                          ? await HttpService.postPurchaseBill(
+                                              body)
+                                          : await HttpService
+                                              .updatePurchaseBill(body);
                                       if (res != null) {
                                         Common.toastMessaage(
                                             "Bill saved successfully",
@@ -1797,6 +1782,333 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
       ],
     );
   }
+
+  void _showAddPaymentPopup(BuildContext context, List<ListElement> accounts,
+      Function(PaymentItem) onAdd) {
+    DateTime paidDate = DateTime.now();
+    DateTime? trRefDate = DateTime.now();
+    String paymentMode = "Cash";
+    ListElement? selectedAccount;
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController trRefNoController = TextEditingController();
+    final TextEditingController remarksController = TextEditingController();
+    Supplier? selectedSupplierPopup;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2a86c9),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Add Transaction",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18)),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                // Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInputLabelField(
+                          label: "Supplier Name*",
+                          child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border:
+                                    Border.all(color: Colors.grey.shade300)),
+                            child: DropdownSearch<Supplier>(
+                              items: (f, p) => suppliers,
+                              itemAsString: (s) => s.supplierName ?? "",
+                              compareFn: (item, selectedItem) =>
+                                  item.supplierId == selectedItem?.supplierId,
+                              onChanged: (val) =>
+                                  setState(() => selectedSupplierPopup = val),
+                              decoratorProps: const DropDownDecoratorProps(
+                                decoration: InputDecoration(
+                                  contentPadding:
+                                      EdgeInsets.symmetric(horizontal: 12),
+                                  border: InputBorder.none,
+                                  hintText: "Select Supplier",
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInputLabelField(
+                          label: "Paid Amount*",
+                          child: TextField(
+                            controller: amountController,
+                            keyboardType: TextInputType.number,
+                            decoration: _inputDecoration("₹ 0.00"),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                      context: context,
+                                      initialDate: paidDate,
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100));
+                                  if (picked != null)
+                                    setState(() => paidDate = picked);
+                                },
+                                child: _buildInputLabelField(
+                                  label: "Paid Date*",
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300)),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.calendar_today,
+                                            size: 14, color: Colors.grey),
+                                        const SizedBox(width: 8),
+                                        Text(DateFormat('dd-MM-yyyy')
+                                            .format(paidDate)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildInputLabelField(
+                                label: "Paid From Account",
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300)),
+                                  child: DropdownSearch<ListElement>(
+                                    items: (f, p) => accounts,
+                                    itemAsString: (a) => a.accountName,
+                                    compareFn: (item, selectedItem) =>
+                                        item.accountId ==
+                                        selectedItem?.accountId,
+                                    onChanged: (val) =>
+                                        setState(() => selectedAccount = val),
+                                    decoratorProps:
+                                        const DropDownDecoratorProps(
+                                      decoration: InputDecoration(
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12),
+                                        border: InputBorder.none,
+                                        hintText: "Select Account",
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildInputLabelField(
+                                label: "Payment Mode*",
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300)),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: paymentMode,
+                                      isExpanded: true,
+                                      items: [
+                                        "Cash",
+                                        "Bank",
+                                        "Cheque",
+                                        "Online"
+                                      ]
+                                          .map((e) => DropdownMenuItem(
+                                              value: e, child: Text(e)))
+                                          .toList(),
+                                      onChanged: (v) =>
+                                          setState(() => paymentMode = v!),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildInputLabelField(
+                                label: "TR Reference No",
+                                child: TextField(
+                                  controller: trRefNoController,
+                                  decoration: _inputDecoration("TR #"),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                                context: context,
+                                initialDate: trRefDate ?? DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2100));
+                            if (picked != null)
+                              setState(() => trRefDate = picked);
+                          },
+                          child: _buildInputLabelField(
+                            label: "TR Reference Date",
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300)),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.calendar_today,
+                                      size: 14, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Text(trRefDate != null
+                                      ? DateFormat('dd-MM-yyyy')
+                                          .format(trRefDate!)
+                                      : "Select Date"),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildInputLabelField(
+                          label: "Transaction Remark",
+                          child: TextField(
+                            controller: remarksController,
+                            maxLines: 2,
+                            decoration: _inputDecoration("Enter remark..."),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Actions
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius:
+                        BorderRadius.vertical(bottom: Radius.circular(20)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text("Close"),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (amountController.text.isNotEmpty) {
+                            onAdd(PaymentItem(
+                              paidDate: paidDate,
+                              paidAmount:
+                                  double.tryParse(amountController.text) ?? 0.0,
+                              debitAccount:
+                                  selectedAccount?.accountName ?? "N/A",
+                              paymentMode: paymentMode,
+                              trRefNo: trRefNoController.text,
+                              trRefDate: trRefDate,
+                              remarks: remarksController.text,
+                            ));
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2a86c9),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text("Submit",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget _buildReadOnlyField(String value) {
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: const EdgeInsets.all(12),
+  //     decoration: BoxDecoration(
+  //       color: Colors.grey.shade100,
+  //       borderRadius: BorderRadius.circular(10),
+  //       border: Border.all(color: Colors.grey.shade300),
+  //     ),
+  //     child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+  //   );
+  // }
 
   Widget _buildEmptyState() {
     return Center(

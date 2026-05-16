@@ -30,6 +30,7 @@ class PurchaseBillModel {
 }
 
 class PurchaseBillData {
+   final String? id;
   final String? billId;
   final String? billNo;
   final String? billDate;
@@ -43,6 +44,7 @@ class PurchaseBillData {
   final String? grandTotal;
 
   PurchaseBillData({
+     this.id,
     this.billId,
     this.billNo,
     this.billDate,
@@ -58,6 +60,7 @@ class PurchaseBillData {
 
   factory PurchaseBillData.fromJson(Map<String, dynamic> json) {
     return PurchaseBillData(
+      id: json['id'],
       billId: json['bill_id'],
       billNo: json['bill_no'],
       billDate: json['bill_date'],
@@ -74,6 +77,7 @@ class PurchaseBillData {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'bill_id': billId,
       'bill_no': billNo,
       'bill_date': billDate,

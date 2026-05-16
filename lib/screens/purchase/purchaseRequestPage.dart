@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/getPurchaseRequestListModel.dart';
 import 'package:login2/models/lead_management/materialModel.dart';
+import 'package:login2/screens/purchase/showPopupReject.dart';
 import 'package:login2/service/service.dart';
 import 'package:intl/intl.dart';
 import 'package:dropdown_search/dropdown_search.dart';
@@ -26,9 +27,19 @@ class CartItem {
   MaterialData material;
   double quantity;
   String description;
+  late TextEditingController descriptionController;
 
-  CartItem(
-      {required this.material, this.quantity = 1.0, this.description = ""});
+  CartItem({
+    required this.material,
+    this.quantity = 1.0,
+    this.description = "",
+  }) {
+    descriptionController = TextEditingController(text: description);
+  }
+
+  void dispose() {
+    descriptionController.dispose();
+  }
 }
 
 class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
@@ -166,17 +177,130 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
 
+  Future<void> _submitRequest(BuildContext dialogContext,
+      List<CartItem> cartItems, DateTime date, String remarks,
+      {String? editId}) async {
+    if (cartItems.isEmpty) {
+      Common.toastMessaage(
+          "Please add at least one item to the cart", Colors.red);
+      return;
+    }
+    Common.showProgressDialog(
+        dialogContext, editId == null ? "Submitting..." : "Updating...");
+    try {
+      List<Map<String, dynamic>> itemsList = cartItems.map((item) {
+        return {
+          "material_id": item.material.materialId,
+          "unit_amount": item.material.unitPrice,
+          "quantity": item.quantity.toString(),
+          "description": item.descriptionController.text,
+        };
+      }).toList();
+      Map<String, dynamic> data = {
+        "request_date": DateFormat('yyyy-MM-dd').format(date),
+        "remarks": remarks,
+        "items": itemsList,
+      };
+      dynamic response;
+      if (editId != null) {
+        data['id'] = editId;
+        response = await HttpService.updatePurchaseRequest(data);
+      } else {
+        response = await HttpService.postPurchaseRequest(data);
+      }
+      Navigator.pop(dialogContext);
+      if (response != null && response['status'] == true) {
+        Common.toastMessaage(
+            response['message'] ??
+                (editId == null
+                    ? "Request submitted successfully"
+                    : "Request updated successfully"),
+            Colors.green);
+        Navigator.pop(dialogContext);
+        _fetchRequests();
+      } else {
+        Common.toastMessaage(
+            response?['message'] ?? "Operation failed", Colors.red);
+      }
+    } catch (e) {
+      Navigator.pop(dialogContext);
+      Common.toastMessaage("Error: $e", Colors.red);
+    }
+  }
+
+  void _showEditRequestDialog(PurchaseRequestData request) async {
+    Common.showProgressDialog(context, "Fetching details...");
+    final detailsResponse =
+        await HttpService.getPurchaseRequestDetails(request.id ?? "");
+    Navigator.pop(context);
+
+    if (detailsResponse == null || !detailsResponse.status) {
+      Common.toastMessaage("Failed to fetch details", Colors.red);
+      return;
+    }
+
+    String requestId = request.requestId ?? "";
+    DateTime requestDate = request.requestedDate != null
+        ? DateFormat('dd-MM-yyyy').parse(request.requestedDate!)
+        : DateTime.now();
+    final TextEditingController remarksController =
+        TextEditingController(text: request.remarks);
+
+    List<CartItem> cartItems = detailsResponse.data.map((detail) {
+      MaterialData mat = materials.firstWhere(
+        (m) => m.materialId.toString() == detail.materialId,
+        orElse: () => MaterialData(
+          materialId: detail.materialId,
+          materialName: detail.materialName,
+          unitName: detail.unitName,
+        ),
+      );
+      return CartItem(
+        material: mat,
+        quantity: double.tryParse(detail.quantity) ?? 1.0,
+        description: detail.description,
+      );
+    }).toList();
+
+    _showRequestDialog(
+      requestId: requestId,
+      requestDate: requestDate,
+      cartItems: cartItems,
+      remarksController: remarksController,
+      isEdit: true,
+      editId: request.id,
+    );
+  }
+
   void _showAddRequestDialog() {
     String requestId = "REQ-${DateFormat('HHmmss').format(DateTime.now())}";
     DateTime requestDate = DateTime.now();
     List<CartItem> cartItems = [];
-    MaterialData? selectedMaterial;
     final TextEditingController remarksController = TextEditingController();
+
+    _showRequestDialog(
+      requestId: requestId,
+      requestDate: requestDate,
+      cartItems: cartItems,
+      remarksController: remarksController,
+    );
+  }
+
+  void _showRequestDialog({
+    required String requestId,
+    required DateTime requestDate,
+    required List<CartItem> cartItems,
+    required TextEditingController remarksController,
+    bool isEdit = false,
+    String? editId,
+  }) {
+    MaterialData? selectedMaterial;
+    DateTime internalRequestDate = requestDate;
 
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "AddPurchaseRequest",
+      barrierLabel: isEdit ? "EditPurchaseRequest" : "AddPurchaseRequest",
       barrierColor: Colors.black.withOpacity(0.6),
       transitionDuration: const Duration(milliseconds: 400),
       transitionBuilder: (context, anim1, anim2, child) {
@@ -214,7 +338,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                     borderRadius: BorderRadius.circular(30),
                     child: Column(
                       children: [
-                        // Premium Gradient Header
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 20, vertical: 25),
@@ -232,11 +355,13 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     color: Colors.white),
                                 onPressed: () => Navigator.pop(dialogContext),
                               ),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
-                                  "Purchase Request",
+                                  isEdit
+                                      ? "Edit Purchase Request"
+                                      : "Purchase Request",
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
@@ -244,11 +369,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 48), // Spacer for balance
+                              const SizedBox(width: 48),
                             ],
                           ),
                         ),
-
                         Expanded(
                           child: SingleChildScrollView(
                             physics: const BouncingScrollPhysics(),
@@ -256,24 +380,23 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Info Section: ID and Date
                                 Row(
                                   children: [
-                                    Expanded(
-                                      child: _buildGlassCard(
-                                        title: "Request ID",
-                                        value: requestId,
-                                        icon: Icons.tag,
-                                        color: const Color(0xFF2a86c9),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
+                                    // Expanded(
+                                    //   child: _buildGlassCard(
+                                    //     title: "Request ID",
+                                    //     value: requestId,
+                                    //     icon: Icons.tag,
+                                    //     color: const Color(0xFF2a86c9),
+                                    //   ),
+                                    // ),
+                                    //const SizedBox(width: 16),
                                     Expanded(
                                       child: InkWell(
                                         onTap: () async {
                                           final date = await showDatePicker(
                                             context: dialogContext,
-                                            initialDate: requestDate,
+                                            initialDate: internalRequestDate,
                                             firstDate: DateTime(2020),
                                             lastDate: DateTime(2030),
                                             builder: (context, child) {
@@ -289,14 +412,15 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                               );
                                             },
                                           );
-                                          if (date != null)
-                                            setDialogState(
-                                                () => requestDate = date);
+                                          if (date != null) {
+                                            setDialogState(() =>
+                                                internalRequestDate = date);
+                                          }
                                         },
                                         child: _buildGlassCard(
                                           title: "Request Date",
                                           value: DateFormat('dd MMM yyyy')
-                                              .format(requestDate),
+                                              .format(internalRequestDate),
                                           icon: Icons.calendar_today_rounded,
                                           color: const Color(0xFF43e97b),
                                         ),
@@ -305,8 +429,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                   ],
                                 ),
                                 const SizedBox(height: 32),
-
-                                // Material Selection Header
                                 _buildSectionHeader("Material Selection",
                                     Icons.inventory_2_outlined),
                                 const SizedBox(height: 16),
@@ -445,9 +567,12 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     return _buildCartItemCard(
                                         entry.value, entry.key, setDialogState,
                                         () {
-                                      setDialogState(
-                                          () => cartItems.removeAt(entry.key));
-                                    });
+                                      setDialogState(() {
+                                        cartItems[entry.key].dispose();
+                                        cartItems.removeAt(entry.key);
+                                      });
+                                    },
+                                    dialogContext,);
                                   }).toList(),
 
                                 const SizedBox(height: 32),
@@ -512,25 +637,29 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                             height: 60,
                             child: ElevatedButton(
                               onPressed: () => _submitRequest(
-                                  dialogContext,
-                                  cartItems,
-                                  requestDate,
-                                  remarksController.text),
+                                dialogContext,
+                                cartItems,
+                                internalRequestDate,
+                                remarksController.text,
+                                editId: editId,
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF2a86c9),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(18)),
                                 elevation: 0,
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.send_rounded,
+                                  const Icon(Icons.send_rounded,
                                       color: Colors.white, size: 20),
-                                  SizedBox(width: 12),
+                                  const SizedBox(width: 12),
                                   Text(
-                                    "SUBMIT REQUEST",
-                                    style: TextStyle(
+                                    isEdit
+                                        ? "UPDATE REQUEST"
+                                        : "SUBMIT REQUEST",
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
@@ -653,7 +782,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   }
 
   Widget _buildCartItemCard(CartItem item, int index,
-      StateSetter setDialogState, VoidCallback onDelete) {
+      StateSetter setDialogState, VoidCallback onDelete,BuildContext dialogContext,) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -703,7 +832,51 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                 IconButton(
                   icon: const Icon(Icons.delete_outline_rounded,
                       color: Colors.redAccent),
-                  onPressed: onDelete,
+                 // onPressed: onDelete,
+                 onPressed: () async {
+                  // Show confirmation dialog
+                  bool? confirm = await showDialog(
+                    context: dialogContext,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Delete Product'),
+                      content: Text('Delete "${item.material.materialName}"?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  
+                  if (confirm == true) {
+                    // Show loading
+                    showDialog(
+                      context: dialogContext,
+                      barrierDismissible: false,
+                      builder: (context) => const Center(child: CircularProgressIndicator()),
+                    );
+                    
+                    // Call API
+                    final response = await HttpService.deletePurchaseOrderProduct(
+                      productId: item.material.materialId!,
+                    );
+                    
+                    Navigator.pop(dialogContext); // Close loading
+                    
+                    if (response?.status == true) {
+                      Common.toastMessaage('Product deleted', Colors.green);
+                      onDelete(); // Remove from cart
+                    } else {
+                      Common.toastMessaage(response?.message ?? 'Delete failed', Colors.red);
+                    }
+                  }
+                },
                 ),
               ],
             ),
@@ -750,6 +923,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextField(
+                controller: item.descriptionController,
                 onChanged: (val) => item.description = val,
                 style: const TextStyle(fontSize: 13),
                 decoration: const InputDecoration(
@@ -790,51 +964,51 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
 
-  Future<void> _submitRequest(BuildContext dialogContext,
-      List<CartItem> cartItems, DateTime date, String remarks) async {
-    if (cartItems.isEmpty) {
-      Common.toastMessaage(
-          "Please add at least one item to the cart", Colors.red);
-      return;
-    }
+  // Future<void> _submitRequest(BuildContext dialogContext,
+  //     List<CartItem> cartItems, DateTime date, String remarks) async {
+  //   if (cartItems.isEmpty) {
+  //     Common.toastMessaage(
+  //         "Please add at least one item to the cart", Colors.red);
+  //     return;
+  //   }
 
-    Common.showProgressDialog(dialogContext, "Submitting...");
+  //   Common.showProgressDialog(dialogContext, "Submitting...");
 
-    try {
-      // Prepare items for API
-      List<Map<String, dynamic>> itemsList = cartItems.map((item) {
-        return {
-          "material_id": item.material.materialId,
-          "quantity": item.quantity.toString(),
-          "description": item.description,
-        };
-      }).toList();
+  //   try {
+  //     // Prepare items for API
+  //     List<Map<String, dynamic>> itemsList = cartItems.map((item) {
+  //       return {
+  //         "material_id": item.material.materialId,
+  //         "quantity": item.quantity.toString(),
+  //         "description": item.description,
+  //       };
+  //     }).toList();
 
-      Map<String, dynamic> data = {
-        "request_date": DateFormat('yyyy-MM-dd').format(date),
-        "remarks": remarks,
-        "items":
-            itemsList, // backend should handle json array or encoded string
-      };
+  //     Map<String, dynamic> data = {
+  //       "request_date": DateFormat('yyyy-MM-dd').format(date),
+  //       "remarks": remarks,
+  //       "items":
+  //           itemsList, // backend should handle json array or encoded string
+  //     };
 
-      final response = await HttpService.postPurchaseRequest(data);
-      Navigator.pop(dialogContext); // Close progress dialog
+  //     final response = await HttpService.postPurchaseRequest(data);
+  //     Navigator.pop(dialogContext); // Close progress dialog
 
-      if (response != null && response['status'] == true) {
-        Common.toastMessaage(
-            response['message'] ?? "Request submitted successfully",
-            Colors.green);
-        Navigator.pop(dialogContext); // Close Add dialog
-        _fetchRequests();
-      } else {
-        Common.toastMessaage(
-            response?['message'] ?? "Submission failed", Colors.red);
-      }
-    } catch (e) {
-      Navigator.pop(dialogContext);
-      Common.toastMessaage("Error: $e", Colors.red);
-    }
-  }
+  //     if (response != null && response['status'] == true) {
+  //       Common.toastMessaage(
+  //           response['message'] ?? "Request submitted successfully",
+  //           Colors.green);
+  //       Navigator.pop(dialogContext); // Close Add dialog
+  //       _fetchRequests();
+  //     } else {
+  //       Common.toastMessaage(
+  //           response?['message'] ?? "Submission failed", Colors.red);
+  //     }
+  //   } catch (e) {
+  //     Navigator.pop(dialogContext);
+  //     Common.toastMessaage("Error: $e", Colors.red);
+  //   }
+  // }
 
   Widget _buildHeader() {
     return Container(
@@ -932,7 +1106,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                       size: 20, color: Colors.grey),
                                   onSelected: (value) {
                                     if (value == 'edit') {
-                                      // Edit logic
+                                      _showEditRequestDialog(request);
                                     } else if (value == 'delete') {
                                       _deleteRequest(request.id ?? "");
                                     }
@@ -1099,9 +1273,15 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
 
     if (confirm == true) {
-      // HttpService.deletePurchaseRequest(id)
-      Common.toastMessaage("Request deleted successfully", Colors.green);
-      _fetchRequests();
+      final response = await HttpService.deletePurchaseRequest(id);
+      if (response != null && response.status == true) {
+        Common.toastMessaage(
+            response.message ?? "Request deleted successfully", Colors.green);
+        _fetchRequests();
+      } else {
+        Common.toastMessaage(
+            response?.message ?? "Failed to delete request", Colors.red);
+      }
     }
   }
 
@@ -1349,106 +1529,299 @@ class _RequestDetailsDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasProducts =
+        request.products != null && request.products!.isNotEmpty;
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       padding: const EdgeInsets.all(25),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 25),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2a86c9).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.assignment, color: Color(0xFF2a86c9)),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Request #${request.requestId ?? 'N/A'}',
+                        style: const TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Purchase Requisition Details',
+                        style: TextStyle(
+                            color: Colors.grey.shade500, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildStatusBadge(request.requestStatus ?? 'Pending'),
+              ],
+            ),
+            const SizedBox(height: 30),
+            _buildDetailRow(Icons.person_outline, 'Requested By',
+                request.requestedBy ?? 'Unknown'),
+            _buildDetailRow(Icons.calendar_today_outlined, 'Requested Date',
+                request.requestedDate ?? 'N/A'),
+            _buildDetailRow(Icons.currency_rupee, 'Estimated Amount',
+                '₹${request.estimatedAmount ?? '0'}'),
+            _buildDetailRow(Icons.shopping_cart_outlined, 'Order Status',
+                request.orderStatus ?? 'Not Ordered'),
+            if (request.requestStatus != "Pending")
+              _buildDetailRow(Icons.event_available_outlined, 'Approved Date',
+                  request.approvedDate ?? 'Not Approved'),
+
+            const Divider(height: 40),
+
+            // Products Section
+            if (hasProducts) ...[
+              Row(
+                children: [
+                  const Icon(Icons.inventory_2_outlined,
+                      size: 20, color: Color(0xFF2a86c9)),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Products',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2a86c9).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${request.products?.length}',
+                      style: const TextStyle(
+                        color: Color(0xFF2a86c9),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: request.products!.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final product = request.products![index];
+                  return _buildProductCard(product);
+                },
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 20),
+            ],
+
+            // Remarks Section
+            const Text(
+              'Remarks',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Text(
+                request.remarks ?? 'No remarks provided',
+                style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic),
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (BuildContext context) {
+                          return ApprovalDialog(request: request);
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2a86c9),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: const Text('Approve/Reject',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2a86c9),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: const Text('Close',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductCard(Product product) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade100,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 40,
-            height: 5,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          const SizedBox(height: 25),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2a86c9).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.assignment, color: Color(0xFF2a86c9)),
+              color: const Color(0xFF2a86c9).withOpacity(0.05),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(15),
+                topRight: Radius.circular(15),
               ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Request #${request.requestId ?? 'N/A'}',
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      'Purchase Requisition Details',
-                      style:
-                          TextStyle(color: Colors.grey.shade500, fontSize: 13),
-                    ),
-                  ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2a86c9).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.shopping_bag_outlined,
+                      size: 18, color: Color(0xFF2a86c9)),
                 ),
-              ),
-              _buildStatusBadge(request.requestStatus ?? 'Pending'),
-            ],
-          ),
-          const SizedBox(height: 30),
-          _buildDetailRow(Icons.person_outline, 'Requested By',
-              request.requestedBy ?? 'Unknown'),
-          _buildDetailRow(Icons.calendar_today_outlined, 'Requested Date',
-              request.requestedDate ?? 'N/A'),
-          _buildDetailRow(Icons.currency_rupee, 'Estimated Amount',
-              '₹${request.estimatedAmount ?? '0'}'),
-          _buildDetailRow(Icons.shopping_cart_outlined, 'Order Status',
-              request.orderStatus ?? 'Not Ordered'),
-          _buildDetailRow(Icons.event_available_outlined, 'Approved Date',
-              request.approvedDate ?? 'Not Approved'),
-          const Divider(height: 40),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text('Remarks',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Text(
-              request.remarks ?? 'No remarks provided',
-              style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    product.productName ?? 'Unnamed Product',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 30),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                _buildProductDetailRow('Quantity',
+                    '${product.quantity ?? '0'} ${product.unitName?.isNotEmpty == true ? '(' + product.unitName! + ')' : ''}'),
+                if (product.unitAmount != null && product.unitAmount != '0')
+                  _buildProductDetailRow(
+                      'Unit Price', '₹${product.unitAmount}'),
+                _buildProductDetailRow(
+                    'Estimated Amount', '₹${product.estimatedAmount ?? '0'}',
+                    isHighlighted: true),
+                if (product.description != null &&
+                    product.description!.isNotEmpty)
+                  _buildProductDetailRow('Description', product.description!),
+                if (product.remarks != null && product.remarks!.isNotEmpty)
+                  _buildProductDetailRow('Product Remarks', product.remarks!),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductDetailRow(String label, String value,
+      {bool isHighlighted = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2a86c9),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15)),
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
               ),
-              child: const Text('Close',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+                color: isHighlighted ? const Color(0xFF2a86c9) : Colors.black87,
+              ),
+            ),
+          ),
         ],
       ),
     );

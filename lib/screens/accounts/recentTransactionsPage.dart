@@ -304,62 +304,111 @@ class _RecentInvoiceTabState extends State<RecentInvoiceTab> {
     );
   }
 
-  _showCustomerPicker(StateSetter setModalState) {
+  void _showSearchableSelection({
+    required BuildContext context,
+    required String title,
+    required List<Map<String, String>> items,
+    required Function(Map<String, String>) onSelect,
+  }) {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Select Customer"),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: customers.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(customers[index].name),
-                  onTap: () {
-                    setModalState(() {
-                      customerId = customers[index].id.toString();
-                      customerName = customers[index].name;
+        String searchQuery = "";
+        return StatefulBuilder(builder: (context, setStateSB) {
+          List<Map<String, String>> filteredItems = items
+              .where((element) => element['name']!
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase()))
+              .toList();
+
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            title: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                  ),
+                  onChanged: (val) {
+                    setStateSB(() {
+                      searchQuery = val;
                     });
-                    Navigator.pop(context);
                   },
-                );
-              },
+                ),
+              ],
             ),
-          ),
-        );
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 400,
+              child: filteredItems.isEmpty
+                  ? const Center(child: Text("No items found"))
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filteredItems.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(filteredItems[index]['name']!),
+                          onTap: () {
+                            onSelect(filteredItems[index]);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  _showCustomerPicker(StateSetter setModalState) {
+    _showSearchableSelection(
+      context: context,
+      title: "Select Customer",
+      items: customers
+          .map((e) => {'id': e.id.toString(), 'name': e.name})
+          .toList(),
+      onSelect: (val) {
+        setModalState(() {
+          customerId = val['id']!;
+          customerName = val['name']!;
+        });
       },
     );
   }
 
   _showTypePicker(StateSetter setModalState) {
-    showDialog(
+    _showSearchableSelection(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Select Type"),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: types.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(types[index].typeName),
-                  onTap: () {
-                    setModalState(() {
-                      typeId = types[index].id.toString();
-                      typeName = types[index].typeName;
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              },
-            ),
-          ),
-        );
+      title: "Select Type",
+      items: types
+          .map((e) => {'id': e.id.toString(), 'name': e.typeName})
+          .toList(),
+      onSelect: (val) {
+        setModalState(() {
+          typeId = val['id']!;
+          typeName = val['name']!;
+        });
       },
     );
   }
@@ -703,62 +752,111 @@ class _RecentReceiptTabState extends State<RecentReceiptTab> {
     );
   }
 
-  _showStaffPicker(StateSetter setModalState) {
+  void _showSearchableSelection({
+    required BuildContext context,
+    required String title,
+    required List<Map<String, String>> items,
+    required Function(Map<String, String>) onSelect,
+  }) {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Select Staff"),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: staffs.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(staffs[index].accountName),
-                  onTap: () {
-                    setModalState(() {
-                      createdById = staffs[index].accountId.toString();
-                      createdByName = staffs[index].accountName;
+        String searchQuery = "";
+        return StatefulBuilder(builder: (context, setStateSB) {
+          List<Map<String, String>> filteredItems = items
+              .where((element) => element['name']!
+                  .toLowerCase()
+                  .contains(searchQuery.toLowerCase()))
+              .toList();
+
+          return AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            title: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                  ),
+                  onChanged: (val) {
+                    setStateSB(() {
+                      searchQuery = val;
                     });
-                    Navigator.pop(context);
                   },
-                );
-              },
+                ),
+              ],
             ),
-          ),
-        );
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 400,
+              child: filteredItems.isEmpty
+                  ? const Center(child: Text("No items found"))
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filteredItems.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(filteredItems[index]['name']!),
+                          onTap: () {
+                            onSelect(filteredItems[index]);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  _showStaffPicker(StateSetter setModalState) {
+    _showSearchableSelection(
+      context: context,
+      title: "Select Staff",
+      items: staffs
+          .map((e) => {'id': e.accountId.toString(), 'name': e.accountName})
+          .toList(),
+      onSelect: (val) {
+        setModalState(() {
+          createdById = val['id']!;
+          createdByName = val['name']!;
+        });
       },
     );
   }
 
   _showHeadPicker(StateSetter setModalState) {
-    showDialog(
+    _showSearchableSelection(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Select Account Head"),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: heads.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(heads[index].accountName),
-                  onTap: () {
-                    setModalState(() {
-                      headId = heads[index].accountId;
-                      headName = heads[index].accountName;
-                    });
-                    Navigator.pop(context);
-                  },
-                );
-              },
-            ),
-          ),
-        );
+      title: "Select Account Head",
+      items: heads
+          .map((e) => {'id': e.accountId, 'name': e.accountName})
+          .toList(),
+      onSelect: (val) {
+        setModalState(() {
+          headId = val['id']!;
+          headName = val['name']!;
+        });
       },
     );
   }

@@ -22,6 +22,7 @@ import '../../screens/authentication/login.dart';
 import '../../screens/changePassword.dart';
 import '../../screens/homePage.dart';
 import '../../service/service.dart';
+import 'package:login2/models/lead_management/profile_response_model.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -40,6 +41,8 @@ class _DraweScreenState extends State<DraweScreen> {
   bool? result = true;
   bool? result1 = true;
   CommonSettingsModel? commmon;
+  ProfileResponseModel? _profileData;
+  bool _isLoadingProfile = false;
   String name = '';
   String role = '';
   String roleId = '';
@@ -342,6 +345,19 @@ class _DraweScreenState extends State<DraweScreen> {
                                   );
                                 },
                               ),
+                              ListTile(
+                                leading: SizedBox(
+                                  width: 25,
+                                  child: Center(
+                                    child: Image.asset('assets/main/user.png',
+                                        height: 24, fit: BoxFit.contain),
+                                  ),
+                                ),
+                                title: const Text('Profile'),
+                                onTap: () {
+                                  _showProfileView();
+                                },
+                              ),
                               if (roleId == "2")
                                 ListTile(
                                   leading: SizedBox(
@@ -628,6 +644,213 @@ class _DraweScreenState extends State<DraweScreen> {
     );
   }
 
+  void _showProfileView() async {
+    setState(() {
+      _isLoadingProfile = true;
+    });
+
+    final profile = await HttpService.getProfileView();
+
+    setState(() {
+      _profileData = profile;
+      _isLoadingProfile = false;
+    });
+
+    if (!mounted) return;
+
+    if (profile == null || profile.data == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load profile data')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Handle Bar
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Header with Gradient
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [Colors.blue.shade400, Colors.blue.shade900],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        profile.data?.staffName?.isNotEmpty == true
+                            ? profile.data!.staffName![0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    profile.data?.staffName ?? 'User Name',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  Text(
+                    role,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: [
+                  _buildProfileItem(
+                    icon: Icons.email_outlined,
+                    title: 'Email',
+                    value: profile.data?.email ?? 'N/A',
+                    color: Colors.orange,
+                  ),
+                  _buildProfileItem(
+                    icon: Icons.phone_android_outlined,
+                    title: 'Phone',
+                    value: profile.data?.phoneNo ?? 'N/A',
+                    color: Colors.green,
+                  ),
+                  _buildProfileItem(
+                    icon: Icons.location_on_outlined,
+                    title: 'Address',
+                    value: profile.data?.address1 ?? 'N/A',
+                    color: Colors.blue,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.blue.shade900,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileItem({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFF1A1A1A),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   _launchURL(String url) async {
     launchUrl(Uri.parse(url));
   }
@@ -695,8 +918,6 @@ void logout(BuildContext context) {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-
-              // Buttons
               Row(
                 children: [
                   Expanded(

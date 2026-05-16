@@ -89,9 +89,9 @@ class _AddBookingPageState extends State<AddBookingPage> {
     _isEditMode = widget.bookingId != null;
     final now = DateTime.now();
     _bookingDateController.text = DateFormat('dd-MM-yyyy').format(now);
-    _checkInController.text = DateFormat('dd-MM-yyyy').format(now);
+    _checkInController.text = DateFormat('dd-MM-yyyy HH:mm').format(now);
     _checkOutController.text =
-        DateFormat('dd-MM-yyyy').format(now.add(const Duration(days: 1)));
+        DateFormat('dd-MM-yyyy HH:mm').format(now.add(const Duration(days: 1)));
     _invoiceDateController.text = DateFormat('dd-MM-yyyy').format(now);
     _selectedCustomerType = _customerTypes.first;
     _selectedBookingType = _bookingTypes.first;
@@ -178,7 +178,10 @@ class _AddBookingPageState extends State<AddBookingPage> {
         : DateFormat('dd-MM-yyyy').format(DateTime.now());
     _checkInController.text = booking.checkInDate.isNotEmpty
         ? booking.checkInDate
-        : DateFormat('dd-MM-yyyy').format(DateTime.now());
+        : DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now());
+    _checkOutController.text = (rooms.isNotEmpty && rooms.first.checkOutDate.isNotEmpty)
+        ? rooms.first.checkOutDate
+        : DateFormat('dd-MM-yyyy HH:mm').format(DateTime.now().add(const Duration(days: 1)));
     _invoiceNumberController.text = booking.invoiceNumber;
     _invoiceDateController.text = booking.invoiceDate.isNotEmpty
         ? booking.invoiceDate
@@ -194,8 +197,6 @@ class _AddBookingPageState extends State<AddBookingPage> {
     double totalPaid = double.tryParse(booking.totalAmountPaid) ?? 0;
     _balanceAmount = totalAmount - totalPaid;
     _balanceController.text = _balanceAmount.toStringAsFixed(2);
-
-    // Clear existing room rows and add based on rooms data
     _roomRows.clear();
     if (rooms.isNotEmpty) {
       for (var room in rooms) {
@@ -222,12 +223,9 @@ class _AddBookingPageState extends State<AddBookingPage> {
       }
     }
 
-    // If no rooms were added (empty or invalid), add one default room
     if (_roomRows.isEmpty) {
       _roomRows.add(RoomRowData(isHourly: booking.stayType == 'Hourly'));
     }
-
-    // Handle product details (add-ons)
     if (products.isNotEmpty) {
       _showAddOns = true;
       _productRows.clear();
@@ -748,15 +746,32 @@ class _AddBookingPageState extends State<AddBookingPage> {
   void _updateCheckoutDate() {
     if (_checkInController.text.isNotEmpty) {
       try {
-        final checkInDate =
-            DateFormat('dd-MM-yyyy').parse(_checkInController.text);
-        int maxDays = 1;
+        final checkInDate = _checkInController.text.contains(' ')
+            ? DateFormat('dd-MM-yyyy HH:mm').parse(_checkInController.text)
+            : DateFormat('dd-MM-yyyy').parse(_checkInController.text);
+        int maxDays = 0;
+        int maxHours = 0;
+        
+        bool isHourly = _selectedStayType == 'Hourly';
+        
         for (var row in _roomRows) {
-          if (row.days > maxDays) maxDays = row.days;
+          if (isHourly) {
+            if (row.hours > maxHours) maxHours = row.hours;
+          } else {
+            if (row.days > maxDays) maxDays = row.days;
+          }
         }
-        final checkoutDate = checkInDate.add(Duration(days: maxDays));
+        
+        // Ensure at least 1 day or 1 hour
+        if (!isHourly && maxDays == 0) maxDays = 1;
+        if (isHourly && maxHours == 0) maxHours = 1;
+
+        final checkoutDate = isHourly 
+            ? checkInDate.add(Duration(hours: maxHours))
+            : checkInDate.add(Duration(days: maxDays));
+            
         _checkOutController.text =
-            DateFormat('dd-MM-yyyy').format(checkoutDate);
+            DateFormat('dd-MM-yyyy HH:mm').format(checkoutDate);
       } catch (e) {
         print('Error updating checkout date: $e');
       }
@@ -1280,6 +1295,13 @@ class _AddBookingPageState extends State<AddBookingPage> {
                                 label: 'Check-in Date *',
                                 controller: _checkInController,
                                 icon: Icons.login,
+                                selectTime: true,
+                              ),
+                              _buildDateField(
+                                label: 'Check-out Date *',
+                                controller: _checkOutController,
+                                icon: Icons.logout,
+                                selectTime: true,
                               ),
                             ]),
                             const SizedBox(height: 12),
@@ -1310,7 +1332,6 @@ class _AddBookingPageState extends State<AddBookingPage> {
                               final row = _roomRows[index];
                               final isHourly = _selectedStayType == 'Hourly';
                               row.isHourly = isHourly;
-
                               return Container(
                                 padding: const EdgeInsets.all(16),
                                 margin: const EdgeInsets.only(bottom: 12),
@@ -1442,6 +1463,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
                                             controller: _checkOutController,
                                             icon: Icons.logout,
                                             readOnly: true,
+                                            selectTime: true,
                                           ),
                                         ]),
                                       const SizedBox(height: 12),
@@ -2170,7 +2192,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'State',
+          'State*',
           style: TextStyle(
             color: Colors.grey.shade600,
             fontSize: 12,
@@ -2226,7 +2248,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'District',
+          'District*',
           style: TextStyle(
             color: Colors.grey.shade600,
             fontSize: 12,
@@ -2581,6 +2603,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
     required TextEditingController controller,
     IconData? icon,
     bool readOnly = false,
+    bool selectTime = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2601,7 +2624,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
             prefixIcon: icon != null
                 ? Icon(icon, size: 18, color: Colors.grey.shade500)
                 : null,
-            suffixIcon: Icon(Icons.calendar_today,
+            suffixIcon: Icon(selectTime ? Icons.access_time : Icons.calendar_today,
                 size: 18, color: Colors.grey.shade500),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -2622,7 +2645,7 @@ class _AddBookingPageState extends State<AddBookingPage> {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
           onTap: () async {
-            final DateTime? picked = await showDatePicker(
+            final DateTime? pickedDate = await showDatePicker(
               context: context,
               initialDate: DateTime.now(),
               firstDate: DateTime(2000),
@@ -2642,8 +2665,37 @@ class _AddBookingPageState extends State<AddBookingPage> {
                 );
               },
             );
-            if (picked != null) {
-              controller.text = DateFormat('dd-MM-yyyy').format(picked);
+            if (pickedDate != null) {
+              if (selectTime) {
+                final TimeOfDay? pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: ThemeData.light().copyWith(
+                        primaryColor: const Color.fromARGB(255, 22, 145, 216),
+                        colorScheme: const ColorScheme.light(
+                          primary: Color.fromARGB(255, 22, 145, 216),
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (pickedTime != null) {
+                  final dateTime = DateTime(
+                    pickedDate.year,
+                    pickedDate.month,
+                    pickedDate.day,
+                    pickedTime.hour,
+                    pickedTime.minute,
+                  );
+                  controller.text = DateFormat('dd-MM-yyyy HH:mm').format(dateTime);
+                }
+              } else {
+                controller.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+              }
+
               if (label.contains('Check-in')) {
                 _updateCheckoutDate();
               }

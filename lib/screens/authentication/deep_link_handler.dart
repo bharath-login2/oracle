@@ -3,13 +3,21 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:login2/core/common.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login2/key.dart';
 import 'package:login2/screens/leadManagement/AssignReport.dart';
 import 'package:get/get.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/screens/leadManagement/leadDetails.dart';
+import 'package:login2/screens/leadManagement/lead_details_popup.dart';
 import 'package:login2/screens/leave_request_list_page.dart';
+import 'package:login2/models/lead_management/leadDetailsModel.dart';
+import 'package:login2/models/lead_management/leadDetailsModelAdd.dart';
+import 'package:login2/models/lead_management/listFolderName.dart';
+import 'package:login2/models/lead_management/leadMileStoneListModel.dart';
+import 'package:login2/models/lead_management/leadFollowupAdd.dart' as af;
+import 'package:login2/models/lead_management/addLeadCommonDataModel.dart';
 
 enum DeepLinkType { task, lead, leave_request, unknown }
 
@@ -116,10 +124,10 @@ class DeepLinkHandler {
         }
       }
 
-      print('No matching deep link pattern found');
+      print('[DEEPLINK] No matching deep link pattern found for path: $path');
       return null;
     } catch (e) {
-      print('Error parsing deep link URL "$url": $e');
+      print('[DEEPLINK] ERROR parsing deep link URL "$url": $e');
       return null;
     }
   }
@@ -244,14 +252,14 @@ class DeepLinkHandler {
       log('[DEEPLINK] DeepLinkHandler: Found pending deep link: $data');
       final context = NoomiKeys.navKey.currentContext;
       if (context != null) {
+        log('[DEEPLINK] DeepLinkHandler: Context available, navigating...');
         // Wait a bit for the dashboard to be ready
         Future.delayed(const Duration(milliseconds: 500), () {
           validateAndNavigate(context, data);
         });
       } else {
-        log('[DEEPLINK] DeepLinkHandler: No context available for pending deep link');
-        // Put it back if we really can't handle it now? Or just handle via Get
-        handleDeepLinkNavigation(data);
+        log('[DEEPLINK] DeepLinkHandler: No context available for pending deep link, trying Get.to');
+        validateAndNavigate(null, data);
       }
     }
   }
@@ -300,13 +308,15 @@ class DeepLinkHandler {
   }
 
   Future<void> validateAndNavigate(
-      BuildContext context, DeepLinkData data) async {
-    print('Validating deep link: $data');
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+      BuildContext? context, DeepLinkData data) async {
+    log('[DEEPLINK] DeepLinkHandler: Validating deep link: $data');
+    if (context != null && context.mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+    }
     bool isValid = false;
     try {
       if (data.type == DeepLinkType.task) {
@@ -331,19 +341,23 @@ class DeepLinkHandler {
       print('Error validating deep link: $e');
     }
 
-    if (context.mounted && Navigator.canPop(context)) {
+    if (context != null && context.mounted && Navigator.canPop(context)) {
       Navigator.pop(context);
     }
 
     if (isValid) {
+      log('[DEEPLINK] DeepLinkHandler: Deep link valid, navigating');
       handleDeepLinkNavigation(data);
-    } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Url is not valid for the current login'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } else {
+      log('[DEEPLINK] DeepLinkHandler: Deep link invalid or validation failed');
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Url is not valid for the current login'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -385,50 +399,90 @@ class DeepLinkHandler {
   Future<void> _handleLeadNavigation(DeepLinkData data) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('token');
-      String? editLead = prefs.getString("updateLeadPermission");
-      String? deleteLead = prefs.getString("deleteLeadPermission");
-      String? cloudCall = prefs.getString("cloudCallPermission");
-
+      final token = prefs.getString('token');
       if (token == null) {
-        print('Cannot navigate to lead: Token is null');
+        log('[DEEPLINK] DeepLinkHandler: Cannot navigate to lead: Token is null');
         return;
       }
 
-      bool canEdit = (editLead?.toLowerCase() == "true");
-      bool canDelete = (deleteLead?.toLowerCase() == "true");
-      bool canCloudCall = (cloudCall?.toLowerCase() == "true");
+      // Get permissions
+      final editLead = (await Common.getSharedPref("updateLeadPermission")) == "true";
+      final deleteLead = (await Common.getSharedPref("deleteLeadPermission")) == "true";
+      final cloudCall = (await Common.getSharedPref("cloudCallPermission")) == "true";
 
       final context = NoomiKeys.navKey.currentContext;
-      if (context != null) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => LeadDetails(
-              token,
-              canEdit,
-              canDelete,
-              canCloudCall,
-              data.decodedId,
-              fromDate: DateTime.now().toString(),
-              toDate: DateTime.now().toString(),
-              pageName: "notification",
-            ),
+      if (context == null) {
+        log('[DEEPLINK] DeepLinkHandler: Context is null in _handleLeadNavigation');
+        return;
+      }
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Fetch all required data for the popup
+      final results = await Future.wait([
+        HttpService.leadDetails(token, data.decodedId),
+        HttpService.listAddonDet(token, data.decodedId),
+        HttpService.listFolderAndFiles(token, data.decodedId, ''),
+        HttpService.leadMileStone(token, data.decodedId),
+        HttpService.leadFollowupData(token, data.decodedId),
+        HttpService.addLeadCommonData(token),
+      ]);
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
+
+      final leadDetails = results[0] as LeadDeatailsModel?;
+      if (leadDetails == null || leadDetails.data == null) {
+        log('[DEEPLINK] DeepLinkHandler: Lead details not found for ID: ${data.decodedId}');
+        return;
+      }
+
+      final leadDetailsAdditional = results[1] as LeadDeatailsModelAdd?;
+      final listFolder = results[2] as ListFolderNameModel?;
+      final mileStone = results[3] as LeadMileStoneListModel?;
+      final leadDetailsFollowup = results[4] as af.LeadFollowupData?;
+      final commonDetails = results[5] as AddLeadCommonDataModel?;
+
+      if (context.mounted) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => LeadDetailsPopup(
+            token: token,
+            editLead: editLead,
+            deleteLead: deleteLead,
+            cloudCall: cloudCall,
+            callMasterId: data.decodedId,
+            leadDetails: leadDetails,
+            leadDetailsAdditional: leadDetailsAdditional,
+            listFolder: listFolder,
+            mileStone: mileStone,
+            leadDetailsFollowup: leadDetailsFollowup,
+            commonDetails: commonDetails,
+            pageName: 'DeepLink',
+            onDataChanged: () {
+              log('[DEEPLINK] LeadDetailsPopup: Data changed via deep link');
+            },
           ),
         );
-      } else {
-        Get.to(() => LeadDetails(
-              token,
-              canEdit,
-              canDelete,
-              canCloudCall,
-              data.decodedId,
-              fromDate: DateTime.now().toString(),
-              toDate: DateTime.now().toString(),
-              pageName: "notification",
-            ));
       }
     } catch (e) {
-      print('Error navigating to lead details: $e');
+      log('[DEEPLINK] ERROR in _handleLeadNavigation: $e');
+      // If dialog is still showing, try to pop it
+      final context = NoomiKeys.navKey.currentContext;
+      if (context != null && context.mounted) {
+        if (Navigator.canPop(context)) Navigator.pop(context);
+      }
     }
   }
 

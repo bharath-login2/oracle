@@ -233,6 +233,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   String? AccountsDashboardPermission;
   String? MenuDashboard;
   String? RenewalDashboardPermission;
+  String? viewLeadCategoryOnly;
+  String? viewAllCategory;
   String? NewleadDashboardPermission;
   bool updateLeadPermission1 = false;
   bool deleteLeadPermission1 = false;
@@ -471,6 +473,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       leadSourceToDate = DateTime.parse(lsTo);
     }
     String? catFrom = await Common.getSharedPref("categoryFromDate");
+
+    String? viewLeadCategoryOnly =
+        await Common.getSharedPref("viewLeadCategoryOnly");
+    String? viewAllCategory = await Common.getSharedPref("viewAllCategory");
     String? catTo = await Common.getSharedPref("categoryToDate");
     if (catFrom != null) categoryFromDate = DateTime.parse(catFrom);
     if (catTo != null) categoryToDate = DateTime.parse(catTo);
@@ -756,6 +762,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     role = await Common.getSharedPref("role") ?? '';
     userId = await Common.getSharedPref("userId") ?? '';
     staffId = await Common.getSharedPref("staffId") ?? '';
+    viewLeadCategoryOnly =
+        await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
+    viewAllCategory = await Common.getSharedPref("viewAllCategory") ?? '';
     createLeadPermission =
         await Common.getSharedPref("createLeadPermission") ?? '';
     viewLeadPermission = await Common.getSharedPref("viewLeadPermission") ?? '';
@@ -4583,10 +4592,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                     onApplyFilters: (filters) {
                                       setState(() {
                                         _isListTabLoading = true;
-                                        listTabLeads =
-                                            []; // Immediate visual reset
-
-                                        // Reset to now if filters are null (cleared from widget)
+                                        listTabLeads = [];
                                         fromDate = filters['fromDate'] ??
                                             DateTime.now();
                                         toDate =
@@ -4831,10 +4837,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   Future<void> _showLeadDetailsPopup(
     int index, {
     bool autoExpandFollowup = false,
+    String? customCallMasterId,
   }) async {
-    if (index >= listTabLeads.length) return;
-
-    final displayItem = listTabLeads[index];
+    final String targetCallMasterId;
+    if (customCallMasterId != null) {
+      targetCallMasterId = customCallMasterId;
+    } else {
+      if (index < 0 || index >= listTabLeads.length) return;
+      targetCallMasterId = listTabLeads[index].callMasterId;
+    }
 
     showDialog(
       context: context,
@@ -4855,15 +4866,15 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     try {
       final results = await Future.wait([
-        HttpService.leadDetails(widget.token!, displayItem.callMasterId),
-        HttpService.listAddonDet(widget.token!, displayItem.callMasterId),
+        HttpService.leadDetails(widget.token!, targetCallMasterId),
+        HttpService.listAddonDet(widget.token!, targetCallMasterId),
         HttpService.listFolderAndFiles(
           widget.token!,
-          displayItem.callMasterId,
+          targetCallMasterId,
           '',
         ),
-        HttpService.leadMileStone(widget.token!, displayItem.callMasterId),
-        HttpService.leadFollowupData(widget.token!, displayItem.callMasterId),
+        HttpService.leadMileStone(widget.token!, targetCallMasterId),
+        HttpService.leadFollowupData(widget.token!, targetCallMasterId),
         if (commonDetails == null) HttpService.addLeadCommonData(widget.token!),
       ]);
 
@@ -4893,7 +4904,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           editLead: updateLeadPermission1,
           deleteLead: deleteLeadPermission1,
           cloudCall: cloudCallPermission1,
-          callMasterId: displayItem.callMasterId,
+          callMasterId: targetCallMasterId,
           leadDetails: leadDetails,
           leadDetailsAdditional: leadDetailsAdditional,
           listFolder: listFolder,
@@ -4903,7 +4914,11 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           pageName: 'Dashboard',
           autoExpandFollowup: autoExpandFollowup,
           onDataChanged: () {
-            getData(widget.token, fromDate, toDate, isRefresh: true);
+            if (customCallMasterId == null) {
+              _refreshLeadData(index);
+            } else {
+              getData(widget.token, fromDate, toDate, isRefresh: true);
+            }
           },
         ),
       );
@@ -4911,6 +4926,46 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       if (mounted) Navigator.pop(context);
       log("Error loading lead details: $e");
       Common.toastMessaage("Error loading details", accentRed);
+    }
+  }
+
+  Future<void> _refreshLeadData(int index) async {
+    if (index < 0 || index >= listTabLeads.length) return;
+    String cmId = listTabLeads[index].callMasterId;
+    try {
+      final response = await HttpService.leadDetails(widget.token!, cmId);
+      if (response != null && response.data != null) {
+        final d = response.data!;
+        if (mounted) {
+          setState(() {
+            var lead = listTabLeads[index];
+            lead.clientName = d.clientName ?? lead.clientName;
+            lead.contactNumber1 = d.contactNumber1 ?? lead.contactNumber1;
+            lead.calledDate = d.calledDate ?? lead.calledDate;
+            lead.lastCalledDate = d.calledDate ?? lead.lastCalledDate;
+            lead.nextFollowupDate = d.nextFollowupDate ?? lead.nextFollowupDate;
+            lead.callResult = d.callResult ?? lead.callResult;
+            lead.callResultId =
+                int.tryParse(d.callResultId ?? "0") ?? lead.callResultId;
+            lead.leadCategory = d.leadCategory ?? lead.leadCategory;
+            lead.leadCategoryId = d.leadCategoryId ?? lead.leadCategoryId;
+            lead.leadSubCategory = d.leadSubCategory ?? lead.leadSubCategory;
+            lead.leadSubCategoryId =
+                d.leadSubCategoryId ?? lead.leadSubCategoryId;
+            lead.priority = d.priorityId ?? lead.priority;
+            lead.priorityName = d.priority ?? lead.priorityName;
+            lead.cost = d.cost ?? lead.cost;
+            lead.address = d.address ?? lead.address;
+            lead.staffName = d.staffName ?? lead.staffName;
+            lead.isCalled = true;
+            lead.isNewCall = false;
+          });
+          // Update counts in background to keep dashboard consistent
+          _fetchDashboardTabContent();
+        }
+      }
+    } catch (e) {
+      log("Error refreshing single lead: $e");
     }
   }
 
@@ -5029,11 +5084,18 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "token": widget.token,
       "callResultId": isFollowupFiltering
           ? ""
-          : (_listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? "")),
+          : (_listTabCurrentIsCalled == true
+              ? (_listTabSelectedStatusIds?.join(',') ?? "")
+              : (_listTabCurrentStatus == "0"
+                  ? ""
+                  : (_listTabCurrentStatus ?? ""))),
       "leadCategoryId": _listTabSelectedCategoryIds,
       "leadSubcategoryId": [],
-      "callResponseId":
-          isFollowupFiltering ? [] : (_listTabSelectedStatusIds ?? []),
+      "callResponseId": isFollowupFiltering
+          ? []
+          : (_listTabCurrentIsCalled == true
+              ? []
+              : (_listTabSelectedStatusIds ?? [])),
       "callStatus": _listTabCurrentCallStatus ?? "",
       "staffId": _listTabSelectedStaffIds,
       "isCalled": _listTabCurrentIsCalled ?? true,
@@ -5124,11 +5186,14 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     Map<String, dynamic> body = {
       "token": widget.token,
-      "callResultId":
-          _listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? ""),
+      "callResultId": (_listTabCurrentIsCalled == true)
+          ? (_listTabSelectedStatusIds?.join(',') ?? "")
+          : (_listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? "")),
       "leadCategoryId": _listTabSelectedCategoryIds,
       "leadSubcategoryId": [],
-      "callResponseId": _listTabSelectedStatusIds,
+      "callResponseId": (_listTabCurrentIsCalled == true)
+          ? []
+          : (_listTabSelectedStatusIds ?? []),
       "callStatus": _listTabCurrentCallStatus ?? "",
       "staffId": _listTabSelectedStaffIds,
       "isCalled": _listTabCurrentIsCalled ?? true,
@@ -6038,9 +6103,18 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         itemBuilder: (context, i) {
                           final category = categories[i];
                           return InkWell(
+                            // onTap: () {
+                            //   Navigator.pop(context);
+                            //   _fetchTabLeads();
+                            // },
                             onTap: () {
+                              if (viewLeadCategoryOnly == "true") return;
+
                               Navigator.pop(context);
-                              _fetchTabLeads();
+                              _showLeadDetailsPopup(
+                                listTabLeads.indexOf(lead),
+                                customCallMasterId: category.callMasterId,
+                              );
                             },
                             child: Container(
                               padding: const EdgeInsets.all(10),
@@ -18351,8 +18425,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon:
-                            const Icon(Icons.close_rounded, color: Colors.white),
+                        icon: const Icon(Icons.close_rounded,
+                            color: Colors.white),
                         visualDensity: VisualDensity.compact,
                       ),
                     ],
@@ -18528,7 +18602,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.calendar_today_rounded, size: 14, color: appBarStart),
+                Icon(Icons.calendar_today_rounded,
+                    size: 14, color: appBarStart),
                 const SizedBox(width: 8),
                 Text(
                   DateFormat('dd MMM').format(date),
@@ -18846,7 +18921,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         updateLeadPermission1,
                         deleteLeadPermission1,
                         cloudCallPermission1,
-                        pageName: isClosed ? 'Today\'s Closed Leads' : 'Today\'s Lost Leads',
+                        pageName:
+                            isClosed ? 'Today\'s Closed' : 'Today\'s Lost',
                         fromDate: dateStr,
                         toDate: dateStr,
                         status: isClosed ? '4' : '3',
@@ -18895,7 +18971,8 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                         updateLeadPermission1,
                         deleteLeadPermission1,
                         cloudCallPermission1,
-                        pageName: isClosed ? 'This Month Closed Leads' : 'This Month Lost Leads',
+                        pageName:
+                            isClosed ? 'This Month Closed' : 'This Month Lost',
                         fromDate: fromStr,
                         toDate: toStr,
                         status: isClosed ? '4' : '3',

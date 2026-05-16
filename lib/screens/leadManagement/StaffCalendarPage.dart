@@ -107,8 +107,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
       isLoadingStaffs = true;
     });
 
-    final result = await HttpService.getStaffs();
-
+    final result = await HttpService.getStaffsAccessible();
     if (result != null && result.status) {
       setState(() {
         staffListModel = result;

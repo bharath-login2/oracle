@@ -152,6 +152,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
             ..unitPrice = double.tryParse(item.ratePerDay) ?? 0.0
             ..returningQty = int.tryParse(item.returning) ?? 0
             ..damagedQty = int.tryParse(item.damaged) ?? 0
+            ..maxQty = int.tryParse(item.qtyRented) ?? 0
             ..isReturning = (int.tryParse(item.returning) ?? 0) > 0
             ..isDamaged = (int.tryParse(item.damaged) ?? 0) > 0
             ..ratePerDayController.text = item.ratePerDay
@@ -554,7 +555,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                   _buildQuantitySelector(
                     'Returning Qty *',
                     row.returningQty,
-                    widget.returnId != null ? 999 : (row.maxQty - row.damagedQty),
+                    (row.maxQty - row.damagedQty),
                     (val) => setState(() {
                       row.returningQty = val;
                       _recalculateRowInternal(row);
@@ -566,7 +567,7 @@ class _AddRentalReturnPageState extends State<AddRentalReturnPage> {
                   _buildQuantitySelector(
                     'Damaged Qty',
                     row.damagedQty,
-                    widget.returnId != null ? 999 : (row.maxQty - row.returningQty),
+                    (row.maxQty - row.returningQty),
                     (val) => setState(() {
                       row.damagedQty = val;
                       _recalculateRowInternal(row);

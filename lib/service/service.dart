@@ -76,6 +76,8 @@ import 'package:login2/models/lead_management/dashboardLeadsCountsModel.dart';
 import 'package:login2/models/lead_management/deletRentalReturnModel.dart';
 import 'package:login2/models/lead_management/deleteGoogleDriveFileModel.dart';
 import 'package:login2/models/lead_management/deleteModelOpenstock.dart';
+import 'package:login2/models/lead_management/deletePurchaseOrderEditProductModel.dart';
+import 'package:login2/models/lead_management/deletePurchaseRequestModel.dart';
 import 'package:login2/models/lead_management/deleteQuotationModel.dart';
 import 'package:login2/models/lead_management/districtModel.dart';
 import 'package:login2/models/lead_management/documentListModel.dart';
@@ -92,6 +94,9 @@ import 'package:login2/models/lead_management/getLeaveBalanceModel.dart';
 import 'package:login2/models/lead_management/getMaterialForStockCunsuptionModel.dart';
 import 'package:login2/models/lead_management/getOpeningModel.dart';
 import 'package:login2/models/lead_management/getOpenstockForEditModel.dart';
+import 'package:login2/models/lead_management/getPurchaseBillDetailsEditModel.dart';
+import 'package:login2/models/lead_management/getPurchaseOrderDetailsModel.dart';
+import 'package:login2/models/lead_management/getPurchaseRequestDetailsModel.dart';
 import 'package:login2/models/lead_management/getPurchaseRequestListModel.dart';
 import 'package:login2/models/lead_management/getPurchaseReturnAddListMode.dart';
 import 'package:login2/models/lead_management/getPurchaseReturnModel.dart';
@@ -129,6 +134,7 @@ import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/productDescriptionModel.dart';
 import 'package:login2/models/lead_management/productHistoryRental.dart';
 import 'package:login2/models/lead_management/productTypeModel.dart';
+import 'package:login2/models/lead_management/profile_response_model.dart';
 import 'package:login2/models/lead_management/projectDetailsModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/projectTraceModel.dart';
@@ -147,6 +153,7 @@ import 'package:login2/models/lead_management/requestDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryDetailsModel.dart';
 import 'package:login2/models/lead_management/salaryListModel.dart';
 import 'package:login2/models/lead_management/showTransferHideorShowModel.dart';
+import 'package:login2/models/lead_management/staffAccountDetailsModel.dart';
 import 'package:login2/models/lead_management/staffCallSummaryModel.dart';
 import 'package:login2/models/lead_management/staffDocumentUploadModel.dart';
 import 'package:login2/models/lead_management/staffReportModel.dart';
@@ -5074,6 +5081,24 @@ class HttpService {
     return null;
   }
 
+  // static Future<AssignedWorkStatusModel?> getAssinedWorkStatus(
+  //     workId, sectionId) async {
+  //   var formData = FormData.fromMap({
+  //     "token": await Common.getSharedPref('token'),
+  //     "work_id": workId,
+  //     "section_id": sectionId,
+  //   });
+  //   try {
+  //     var result = await _dio.post("${await Config.getUrl()}get_assigned_works",
+  //         data: formData);
+  //     if (result.statusCode == 200) {
+  //       return AssignedWorkStatusModel.fromJson(result.data);
+  //     }
+  //   } catch (e) {
+  //     log("error: $e");
+  //   }
+  //   return null;
+  // }
   static Future<AssignedWorkStatusModel?> getAssinedWorkStatus(
       workId, sectionId) async {
     var formData = FormData.fromMap({
@@ -5085,10 +5110,21 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}get_assigned_works",
           data: formData);
       if (result.statusCode == 200) {
-        return AssignedWorkStatusModel.fromJson(result.data);
+        print('getAssinedWorkStatus Response: ${result.data}');
+        if (result.data != null &&
+            result.data['data'] != null &&
+            result.data['data'] is List &&
+            result.data['data'].isNotEmpty) {
+          return AssignedWorkStatusModel.fromJson(result.data);
+        }
+        return AssignedWorkStatusModel(
+          data: [],
+          status: result.data['status'] ?? false,
+          message: result.data['message'] ?? "No data",
+        );
       }
     } catch (e) {
-      log("error: $e");
+      log("error in getAssinedWorkStatus: $e");
     }
     return null;
   }
@@ -6313,6 +6349,11 @@ class HttpService {
     String? freeService,
     String? paidService,
     List<Map<String, dynamic>>? complaints,
+    String? serviceNoOfDays,
+    String? serviceWeeks,
+    String? serviceMonthDays,
+    String? serviceYearDays,
+    String? serviceYearMonth,
   }) async {
     Map<String, dynamic> data = {
       "token": await Common.getSharedPref('token'),
@@ -6373,6 +6414,16 @@ class HttpService {
       }
       data["free_service"] = freeService;
       data["paid_service"] = paidService;
+      if (serviceCycle == "N Days") {
+        data["no_of_days"] = serviceNoOfDays;
+      } else if (serviceCycle == "Weekly") {
+        data["weeks"] = serviceWeeks;
+      } else if (serviceCycle == "Monthly") {
+        data["month_days"] = serviceMonthDays;
+      } else if (serviceCycle == "Yearly") {
+        data["year_days"] = serviceYearDays;
+        data["year_month"] = serviceYearMonth;
+      }
       if (pipelines != null && pipelines.isNotEmpty) {
         data["pipelines"] = jsonEncode(pipelines);
       }
@@ -6418,21 +6469,48 @@ class HttpService {
   }
 
   static Future updateProduct(
-      String contentId,
-      String categoryId,
-      String subCategoryId,
-      String productName,
-      String productCode,
-      String productMrp,
-      String noOfDays,
-      String remindBefore,
-      String sellingPrice,
-      String taxPercent,
-      String totalAmount,
-      String description,
-      productImage,
-      String productId) async {
-    var formData = FormData.fromMap({
+    String contentId,
+    String categoryId,
+    String subCategoryId,
+    String productName,
+    String productCode,
+    String productMrp,
+    String noOfDays,
+    String remindBefore,
+    String sellingPrice,
+    String taxPercent,
+    String totalAmount,
+    String description,
+    productImage,
+    String productId, {
+    String productType = "",
+    String brand = "",
+    String discount = "",
+    String expiryDays = "",
+    String addStock = "0",
+    String checkStock = "0",
+    String openingStock = "",
+    String currentStock = "",
+    String stockStatus = "In Stock",
+    String unit = "",
+    bool hasWarranty = false,
+    List<String>? pipelines,
+    bool addPublish = false,
+    String publishStatus = "Published",
+    String visibility = "Public",
+    String? expiryDate,
+    String? warrantyNumber,
+    String? serviceCycle,
+    String? freeService,
+    String? paidService,
+    List<Map<String, dynamic>>? complaints,
+    String? serviceNoOfDays,
+    String? serviceWeeks,
+    String? serviceMonthDays,
+    String? serviceYearDays,
+    String? serviceYearMonth,
+  }) async {
+    Map<String, dynamic> data = {
       "token": await Common.getSharedPref('token'),
       "content_id": contentId,
       "category_id": categoryId,
@@ -6442,15 +6520,84 @@ class HttpService {
       "product_mrp": productMrp,
       "no_of_days": noOfDays,
       "remind_before": remindBefore,
-      "selling_price": sellingPrice,
       "tax_percent": taxPercent,
       "total_amount": totalAmount,
       "description": description,
-      "product_image": productImage == null
-          ? ""
-          : await MultipartFile.fromFile(productImage.toString()),
-      "row_id": productId
-    });
+      "product_type": productType,
+      "brand": brand,
+      "discount": discount,
+      "add_stock": addStock,
+      "check_stock": checkStock,
+      "opening_stock": openingStock,
+      "current_stock": currentStock,
+      "stock_status": stockStatus,
+      "row_id": productId,
+    };
+
+    if (productImage != null &&
+        productImage != "null" &&
+        productImage != "" &&
+        !productImage.toString().startsWith("http")) {
+      data["product_image"] =
+          await MultipartFile.fromFile(productImage.toString());
+    }
+
+    if (productType == "Rental") {
+      data["rentalPrice"] = sellingPrice;
+      data["hsnSacCode"] = productCode;
+      data["unit"] = unit;
+      data["is_publish"] = addPublish ? 1 : 0;
+      if (addPublish) {
+        data["publish_status"] = publishStatus;
+        data["visibility"] = visibility;
+      }
+    } else if (productType == "Ecommerce") {
+      data["selling_price"] = sellingPrice;
+      data["hsn_code"] = productCode;
+      data["unit"] = unit;
+      data["is_publish"] = addPublish ? 1 : 0;
+      if (addPublish) {
+        data["publish_status"] = publishStatus;
+        data["visibility"] = visibility;
+      }
+    } else if (productType == "Service") {
+      data["selling_price"] = sellingPrice;
+      data["sacCode"] = productCode;
+      data["warranty"] = hasWarranty ? "Yes" : "No";
+      if (hasWarranty) {
+        data["expiry_date"] = expiryDate;
+        data["warranty_number"] = warrantyNumber;
+        data["service_cycle"] = serviceCycle;
+      }
+      data["free_service"] = freeService;
+      data["paid_service"] = paidService;
+      if (serviceCycle == "N Days") {
+        data["no_of_days"] = serviceNoOfDays;
+      } else if (serviceCycle == "Weekly") {
+        data["weeks"] = serviceWeeks;
+      } else if (serviceCycle == "Monthly") {
+        data["month_days"] = serviceMonthDays;
+      } else if (serviceCycle == "Yearly") {
+        data["year_days"] = serviceYearDays;
+        data["year_month"] = serviceYearMonth;
+      }
+      if (pipelines != null && pipelines.isNotEmpty) {
+        data["pipelines"] = jsonEncode(pipelines);
+      }
+      if (complaints != null && complaints.isNotEmpty) {
+        data["complaints"] = jsonEncode(complaints);
+      }
+    } else if (productType == "Material") {
+      data["selling_price"] = sellingPrice;
+      data["hsnSacCode"] = productCode;
+      data["unit"] = unit;
+    } else {
+      data["selling_price"] = sellingPrice;
+      data["hsn_code"] = productCode;
+      data["expiry_days"] = expiryDays;
+    }
+
+    var formData = FormData.fromMap(data);
     try {
       var result = await _dio.post("${await Config.getUrl()}updateProduct",
           data: formData);
@@ -7547,6 +7694,28 @@ class HttpService {
     return null;
   }
 
+  static Future<StaffListModel?> getStaffsAccessible() async {
+    var token = await Common.getSharedPref('token');
+    try {
+      FormData formData = FormData.fromMap({
+        'token': token,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_staffs_accessible",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return StaffListModel.fromJson(response.data);
+      } else {
+        log("getStaffs failed: ${response.data}");
+      }
+    } catch (e) {
+      log("getStaffs error: $e");
+    }
+    return null;
+  }
+
   static Future<StaffListModel?> getStaffsTelecaller() async {
     var token = await Common.getSharedPref('token');
     try {
@@ -8225,8 +8394,13 @@ class HttpService {
     required String userId,
     required String salary,
     required String openingBalance,
+    required String openingDate,
     required String type,
+    required String isSalary,
     required String isPettyCash,
+    String? pettyOpeningBalance,
+    String? pettyOpeningDate,
+    String? pettyType,
   }) async {
     final token = await Common.getSharedPref('token');
     try {
@@ -8234,11 +8408,16 @@ class HttpService {
         "${await Config.getUrl()}saveStaffAccounts",
         data: FormData.fromMap({
           "token": token,
-          "id": userId,
+          "staff_id": userId,
           "salary": salary,
+          "is_salary": isSalary,
           "opening_balance": openingBalance,
+          "opening_date": openingDate,
           "type": type,
           "is_petty_cash": isPettyCash,
+          if (isPettyCash == "1") "petty_opening_balance": pettyOpeningBalance,
+          if (isPettyCash == "1") "petty_opening_date": pettyOpeningDate,
+          if (isPettyCash == "1") "petty_type": pettyType,
         }),
       );
       return response.statusCode == 200 && response.data['status'] == true;
@@ -9373,15 +9552,12 @@ class HttpService {
   Future<QuotationTemplateModel?> getTemplateList() async {
     try {
       final token = await Common.getSharedPref("token");
-
       final response = await _dio.post(
         "${await Config.getUrl()}getTemplateName_api",
         data: FormData.fromMap({"token": token}),
         options: Options(contentType: "multipart/form-data"),
       );
-
       print("🟢 Template Response: ${response.data}");
-
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
 
@@ -9397,7 +9573,6 @@ class HttpService {
       log("🔥 getTemplateList error: $e");
       log("Stack trace: $stack");
     }
-
     return null;
   }
 
@@ -9447,8 +9622,6 @@ class HttpService {
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
-
-        // Debug log to see what the API returns
         log("getCustomerDetails API Response: ${jsonEncode(data)}");
 
         if (data is Map<String, dynamic>) {
@@ -9530,7 +9703,6 @@ class HttpService {
       log("🔥 getQuotationEdit error: $e");
       log("StackTrace: $stackTrace");
     }
-
     return null;
   }
 
@@ -9539,18 +9711,14 @@ class HttpService {
       final token = await Common.getSharedPref("token");
       formData.fields.removeWhere((field) => field.key == "token");
       formData.fields.add(MapEntry("token", token ?? ""));
-
       final response = await _dio.post(
         "${await Config.getUrl()}updateQuotation_api",
         data: formData,
         options: Options(contentType: "multipart/form-data"),
       );
-
       print("🟢 Update Quotation Response: ${response.data}");
-
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
-
         if (data is Map<String, dynamic>) {
           return data;
         } else {
@@ -9563,7 +9731,6 @@ class HttpService {
       log("🔥 updateQuotation error: $e");
       log("StackTrace: $stackTrace");
     }
-
     return null;
   }
 
@@ -9656,7 +9823,6 @@ class HttpService {
       log("🔥 getQuotationDashboard error: $e");
       log("StackTrace: $stackTrace");
     }
-
     return null;
   }
 
@@ -15373,6 +15539,23 @@ class HttpService {
     return null;
   }
 
+  static Future<dynamic> updatePurchaseOrder(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_purchase_order",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("updatePurchaseOrder error: $e");
+    }
+    return null;
+  }
+
   static Future<dynamic> postPurchaseBill(Map<String, dynamic> data) async {
     final token = await Common.getSharedPref("token");
     data['token'] = token;
@@ -15386,6 +15569,23 @@ class HttpService {
       }
     } catch (e) {
       log("postPurchaseBill error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> updatePurchaseBill(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_purchase_bill",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("updatePurchaseBill error: $e");
     }
     return null;
   }
@@ -15409,7 +15609,6 @@ class HttpService {
     return null;
   }
 
-
   static Future<GetSupplierListModel?> getSupplierList(
       Map<String, dynamic> data) async {
     final token = await Common.getSharedPref("token");
@@ -15427,7 +15626,6 @@ class HttpService {
     }
     return null;
   }
-
 
   static Future<GetPurchaseReturnModel?> purchaseReturnList(
       Map<String, dynamic> data) async {
@@ -15500,8 +15698,7 @@ class HttpService {
     return null;
   }
 
-
-   static Future<GetPurchaseReturnAddListModel?> purchaseReturngetForAdd(
+  static Future<GetPurchaseReturnAddListModel?> purchaseReturngetForAdd(
       Map<String, dynamic> data) async {
     final token = await Common.getSharedPref("token");
     data['token'] = token;
@@ -15556,7 +15753,7 @@ class HttpService {
       'remark': remark ?? '',
     };
     if (salaryId != null) {
-      data['salary_id'] = salaryId;
+      data['id'] = salaryId;
     }
 
     try {
@@ -15586,5 +15783,292 @@ class HttpService {
       log("deleteSalaryDetails error: $e");
       return false;
     }
+  }
+
+  static Future<StaffAccountDetailsModel?> getStaffAccountDetails(
+      String staffId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {'staff_id': staffId};
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}getStaffAccounts",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return StaffAccountDetailsModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getStaffAccountDetails error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetPurchaseRequestDetailsResponse?> getPurchaseRequestDetails(
+      String requestId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {'id': requestId};
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_request_with_materials",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseRequestDetailsResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getPurchaseRequestDetails error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> updatePurchaseRequest(
+      Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_purchase_request",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("updatePurchaseRequest error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetPurchaseOrderDetailsModel?> getPurchaseOrderDetails(
+      String requestId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {'id': requestId};
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_purchase_order",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseOrderDetailsModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getPurchaseOrderDetails error: $e");
+    }
+    return null;
+  }
+
+  static Future<DeletePurchaseRequestModel?> deletePurchaseRequest(
+      String requestId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {'id': requestId};
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_purchase_request",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return DeletePurchaseRequestModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getPurchaseOrderDetails error: $e");
+    }
+    return null;
+  }
+
+  static Future<GetPurchaseBillDetailsModel?> getPurchaseBillDetailsEdit(
+      String requestId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {'id': requestId};
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_purchase_bill",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseBillDetailsModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getPurchaseOrderDetails error: $e");
+    }
+    return null;
+  }
+
+//  static Future<ProfileResponseModel?> getProfileView(
+//       Map<String, dynamic> data) async {
+//     final token = await Common.getSharedPref("token");
+//     data['token'] = token;
+//     try {
+//       final response = await _dio.post(
+//         "${await Config.getUrl()}profView",
+//         data: FormData.fromMap(data),
+//       );
+//       if (response.statusCode == 200) {
+//         return ProfileResponseModel.fromJson(response.data);
+//       }
+//     } catch (e) {
+//       log("updateStockRequest error: $e");
+//     }
+//     return null;
+//   }
+
+  static Future<ProfileResponseModel?> getProfileView() async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("getRecentExpense error: Token not found");
+        return null;
+      }
+      final formData = FormData.fromMap({
+        "token": token,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}profView",
+        data: formData,
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return ProfileResponseModel.fromJson(response.data);
+      }
+      log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
+    } catch (e) {
+      log("getRecentExpense error: $e");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> verifyReceipt(String receiptId,
+      {String? title, bool isRevert = false}) async {
+    try {
+      final token = await Common.getSharedPref("token");
+      if (token?.isEmpty ?? true) {
+        log("${isRevert ? 'revert' : 'verify'}Receipt error: Token not found");
+        return null;
+      }
+
+      final formData = FormData.fromMap({
+        "token": token,
+        "receipt_id": receiptId,
+        "title": title,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}${'verify_receipt'}",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
+        return response.data;
+      }
+
+      log("${isRevert ? 'revert' : 'verify'}Receipt error: ${response.data?['message'] ?? 'Unknown error'}");
+      return null;
+    } catch (e) {
+      log("${isRevert ? 'revert' : 'verify'}Receipt error: $e");
+      return null;
+    }
+  }
+
+  static Future<GetPurchaseRequestListModel?> purchaseReqAprovalOrReject(
+      String requestId, String requestStatus) async {
+    final token = await Common.getSharedPref("token");
+    final data = {'id': requestId, 'request_status': requestStatus};
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}approve_reject_purchase_request",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetPurchaseRequestListModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getPurchaseOrderDetails error: $e");
+    }
+    return null;
+  }
+
+  static Future<DeletePurchaseOrderEditProductModel?>
+      deletePurchaseOrderProduct({
+    required String productId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'id': productId,
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_purchase_material_request",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200) {
+        return DeletePurchaseOrderEditProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("deletePurchaseOrderProduct error: $e");
+    }
+    return null;
+  }
+
+  static Future<DeletePurchaseOrderEditProductModel?>
+      deletePurchaseOrderRealProduct({
+    required String productId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'item_id': productId,
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_purchase_order_material",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200) {
+        return DeletePurchaseOrderEditProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("deletePurchaseOrderProduct error: $e");
+    }
+    return null;
+  }
+
+  static Future<DeletePurchaseOrderEditProductModel?>
+      deletePurchaseOrderBillProduct({
+    required String productId,
+    required String billId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'item_id': productId,
+      'bill_id': billId,
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_billed_item",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200) {
+        return DeletePurchaseOrderEditProductModel.fromJson(response.data);
+      }
+    } catch (e) {
+      log("deletePurchaseOrderProduct error: $e");
+    }
+    return null;
   }
 }

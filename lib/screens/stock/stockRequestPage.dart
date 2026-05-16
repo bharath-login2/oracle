@@ -326,11 +326,13 @@ class _StockRequestPageState extends State<StockRequestPage> {
                           ),
                         ],
                       ),
-                      item.requestedBy !=""?
-                      const SizedBox(height: 12):SizedBox(),
-                          item.requestedBy !=""?
-                      _buildInfoRow(Icons.person_outline, "Requested By",
-                          item.requestedBy ?? "Unknown"):SizedBox(),
+                      item.requestedBy != ""
+                          ? const SizedBox(height: 12)
+                          : SizedBox(),
+                      item.requestedBy != ""
+                          ? _buildInfoRow(Icons.person_outline, "Requested By",
+                              item.requestedBy ?? "Unknown")
+                          : SizedBox(),
                       const SizedBox(height: 6),
                       _buildInfoRow(Icons.calendar_today_outlined,
                           "Required Date", item.requiredDate ?? "-"),
@@ -412,12 +414,12 @@ class _StockRequestPageState extends State<StockRequestPage> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => _FilterBottomSheet(
-        onApply: (from, to, locId, locName) {
+        products: _products,
+        onApply: (from, to, productId, productName) {
           setState(() {
             _fromDate = from;
             _toDate = to;
-            _selectedLocationId = locId;
-            _selectedLocationName = locName;
+            _selectedProductId = productId;
           });
           _fetchRequests();
         },
@@ -425,15 +427,19 @@ class _StockRequestPageState extends State<StockRequestPage> {
           setState(() {
             _fromDate = null;
             _toDate = null;
-            _selectedLocationId = null;
-            _selectedLocationName = null;
+            _selectedProductId = null;
           });
           _fetchRequests();
         },
         initialFrom: _fromDate,
         initialTo: _toDate,
-        initialLocationId: _selectedLocationId,
-        initialLocationName: _selectedLocationName,
+        initialProductId: _selectedProductId,
+        initialProductName: _products
+            .firstWhere(
+              (p) => p.materialId == _selectedProductId,
+              orElse: () => MaterialData(),
+            )
+            .materialName,
       ),
     );
   }
@@ -511,8 +517,8 @@ class _StockRequestPageState extends State<StockRequestPage> {
         TextEditingController(text: editData?.quantity ?? "");
     final TextEditingController remarkController =
         TextEditingController(text: editData?.remarks ?? "");
-    final TextEditingController requestedByController =
-        TextEditingController(text: editData?.requestedBy ?? _currentUserName ?? "");
+    final TextEditingController requestedByController = TextEditingController(
+        text: editData?.requestedBy ?? _currentUserName ?? "");
 
     showGeneralDialog(
       context: context,
@@ -616,7 +622,8 @@ class _StockRequestPageState extends State<StockRequestPage> {
                                       )
                                     : SizedBox(),
                                 item != null
-                                    ?  const SizedBox(width: 16) : SizedBox(),
+                                    ? const SizedBox(width: 16)
+                                    : SizedBox(),
                                 Expanded(
                                   child: _buildFormField(
                                     label: "Required Date*",
@@ -1132,20 +1139,22 @@ class _StockRequestPageState extends State<StockRequestPage> {
 }
 
 class _FilterBottomSheet extends StatefulWidget {
+  final List<MaterialData> products;
   final Function(DateTime?, DateTime?, String?, String?) onApply;
   final VoidCallback onReset;
   final DateTime? initialFrom;
   final DateTime? initialTo;
-  final String? initialLocationId;
-  final String? initialLocationName;
+  final String? initialProductId;
+  final String? initialProductName;
 
   const _FilterBottomSheet({
+    required this.products,
     required this.onApply,
     required this.onReset,
     this.initialFrom,
     this.initialTo,
-    this.initialLocationId,
-    this.initialLocationName,
+    this.initialProductId,
+    this.initialProductName,
   });
 
   @override
@@ -1155,29 +1164,16 @@ class _FilterBottomSheet extends StatefulWidget {
 class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   DateTime? _from;
   DateTime? _to;
-  String? _locId;
-  String? _locName;
-  List<loc.RetailLocation> _locations = [];
-  bool _isLoadingLocs = true;
+  String? _productId;
+  String? _productName;
 
   @override
   void initState() {
     super.initState();
     _from = widget.initialFrom;
     _to = widget.initialTo;
-    _locId = widget.initialLocationId;
-    _locName = widget.initialLocationName;
-    _loadLocations();
-  }
-
-  Future<void> _loadLocations() async {
-    final response = await HttpService.getRentalLocation();
-    if (mounted) {
-      setState(() {
-        if (response != null) _locations = response.data;
-        _isLoadingLocs = false;
-      });
-    }
+    _productId = widget.initialProductId;
+    _productName = widget.initialProductName;
   }
 
   @override
@@ -1250,36 +1246,34 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
             ],
           ),
           const SizedBox(height: 24),
-          const Text("Location",
+          const Text("Product",
               style: TextStyle(
                   fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
           const SizedBox(height: 12),
-          _isLoadingLocs
-              ? const LinearProgressIndicator()
-              : InkWell(
-                  onTap: _showLocationPicker,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_locName ?? "Select Location",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _locName == null
-                                    ? Colors.grey[400]
-                                    : const Color(0xFF1E293B))),
-                        const Icon(Icons.keyboard_arrow_down,
-                            color: Color(0xFF94A3B8)),
-                      ],
-                    ),
-                  ),
-                ),
+          InkWell(
+            onTap: _showProductPicker,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_productName ?? "Select Product",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _productName == null
+                              ? Colors.grey[400]
+                              : const Color(0xFF1E293B))),
+                  const Icon(Icons.keyboard_arrow_down,
+                      color: Color(0xFF94A3B8)),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 32),
           Row(
             children: [
@@ -1302,7 +1296,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    widget.onApply(_from, _to, _locId, _locName);
+                    widget.onApply(_from, _to, _productId, _productName);
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
@@ -1324,36 +1318,60 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
     );
   }
 
-  void _showLocationPicker() {
+  void _showProductPicker() {
+    final products = widget.products;
+    print("Products count: ${products.length}");
+    if (products.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No products available")),
+      );
+      return;
+    }
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Select Location",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            Flexible(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _locations.length,
-                itemBuilder: (context, index) => ListTile(
-                  title: Text(_locations[index].locationName),
-                  onTap: () {
-                    setState(() {
-                      _locId = _locations[index].id;
-                      _locName = _locations[index].locationName;
-                    });
-                    Navigator.pop(context);
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(25),
+        ),
+      ),
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Text(
+                "Select Product",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+
+                    return ListTile(
+                      title: Text(
+                        product.materialName ?? "Unnamed Product",
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _productId = product.materialId;
+                          _productName = product.materialName;
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
                   },
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

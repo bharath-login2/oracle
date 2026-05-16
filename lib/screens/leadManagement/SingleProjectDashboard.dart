@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/getProjectListModel.dart';
 import 'package:login2/models/lead_management/addModuleModel.dart';
 import 'package:login2/models/lead_management/projectDetailsModel.dart';
@@ -11,21 +12,32 @@ import 'package:login2/service/service.dart';
 class SingleProjectDashboard extends StatefulWidget {
   final ProjectExp project;
   final ProjectPermissions? permissions;
-  const SingleProjectDashboard({super.key, required this.project, this.permissions});
+  const SingleProjectDashboard(
+      {super.key, required this.project, this.permissions});
 
   @override
   State<SingleProjectDashboard> createState() => _SingleProjectDashboardState();
 }
 
-class _SingleProjectDashboardState extends State<SingleProjectDashboard> with SingleTickerProviderStateMixin {
+class _SingleProjectDashboardState extends State<SingleProjectDashboard>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   int _selectedTabIndex = 0;
   String _searchQuery = "";
-  
+
   bool _isLoading = true;
   String? _errorMessage;
   ProjectData? _projectData;
+
+  // Real modules from API
+  List<ml.Module> _realModules = [];
+  bool _isLoadingModules = false;
+  String? _modulesError;
+  
+  // Cache for task counts per module
+  Map<String, int> _taskCountCache = {};
+  Map<String, int> _progressCache = {};
 
   // Trace Filters
   DateTime? _fromDate;
@@ -34,15 +46,6 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
   String? _selectedTaskId;
   bool _showAll = true;
   VoidCallback? _refreshTraceList;
-
-  // Temporary dummy data for modules until API is ready
-  final List<ModuleItem> _modules = [
-    ModuleItem(id: "1", name: "User Authentication", progress: 85, status: "Active", tasks: 12),
-    ModuleItem(id: "2", name: "Payment Integration", progress: 45, status: "In Progress", tasks: 8),
-    ModuleItem(id: "3", name: "Admin Dashboard", progress: 95, status: "Review", tasks: 6),
-    ModuleItem(id: "4", name: "Mobile API", progress: 30, status: "Planning", tasks: 15),
-    ModuleItem(id: "5", name: "Analytics Module", progress: 60, status: "Active", tasks: 10),
-  ];
 
   @override
   void initState() {
@@ -54,6 +57,7 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
       });
     });
     _fetchProjectDetails();
+    _fetchModules();
   }
 
   Future<void> _fetchProjectDetails() async {
@@ -63,7 +67,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
     });
 
     try {
-      final response = await HttpService.projectDetailsDashboard(widget.project.id);
+      final response =
+          await HttpService.projectDetailsDashboard(widget.project.id);
       if (response != null && response.status) {
         setState(() {
           _projectData = response.data;
@@ -79,6 +84,72 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
       setState(() {
         _errorMessage = "An error occurred: $e";
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchModules() async {
+    setState(() {
+      _isLoadingModules = true;
+      _modulesError = null;
+    });
+
+    try {
+      final response = await HttpService.getModuleList(widget.project.id);
+      if (response != null && response.status) {
+        setState(() {
+          _realModules = response.data.moduleList;
+          _isLoadingModules = false;
+        });
+        // Fetch task counts for each module
+        await _fetchTaskCountsForModules();
+      } else {
+        setState(() {
+          _modulesError = response?.message ?? "Failed to load modules";
+          _isLoadingModules = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _modulesError = "Error loading modules: $e";
+        _isLoadingModules = false;
+      });
+    }
+  }
+
+  Future<void> _fetchTaskCountsForModules() async {
+    final userId = _projectData?.getCustomerList.id ?? await Common.getSharedPref("userId");
+    
+    for (var module in _realModules) {
+      await _fetchTaskCountAndProgress(module.moduleId, userId ?? '');
+    }
+    setState(() {});
+  }
+
+  Future<void> _fetchTaskCountAndProgress(String moduleId, String userId) async {
+    try {
+      final response = await HttpService.getTaskList(
+        widget.project.id, 
+        userId, 
+        moduleId
+      );
+      
+      if (response != null && response.status) {
+        final tasks = response.data;
+        final totalTasks = tasks.length;
+     //   final completedTasks = tasks.where((task) => task.status == "1").length;
+       // final progress = totalTasks > 0 ? (completedTasks * 100 ~/ totalTasks) : 0;
+        
+        setState(() {
+          _taskCountCache[moduleId] = totalTasks;
+      //    _progressCache[moduleId] = progress;
+        });
+      }
+    } catch (e) {
+      print("Error fetching tasks for module $moduleId: $e");
+      setState(() {
+        _taskCountCache[moduleId] = 0;
+        _progressCache[moduleId] = 0;
       });
     }
   }
@@ -132,8 +203,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                     const SizedBox(height: 20),
                     _buildSearchBar(),
                     const SizedBox(height: 20),
-                    _selectedTabIndex == 0 
-                        ? _buildWorksGrid() 
+                    _selectedTabIndex == 0
+                        ? _buildWorksGrid()
                         : _buildModulesGrid(),
                   ],
                 ),
@@ -174,22 +245,23 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
-                    child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-                  ),
-                  // Container(
-                  //   padding: const EdgeInsets.all(10),
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.white.withOpacity(0.1),
-                  //     borderRadius: BorderRadius.circular(16),
-                  //   ),
-                  //   child: const Icon(Icons.more_horiz, color: Colors.white, size: 20),
-                  // ),
+                  )
                 ],
               ),
               const SizedBox(height: 20),
@@ -201,7 +273,10 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                     height: 70,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [const Color.fromARGB(255, 49, 161, 212), const Color.fromARGB(255, 49, 161, 212)],
+                        colors: [
+                          const Color.fromARGB(255, 49, 161, 212),
+                          const Color.fromARGB(255, 49, 161, 212)
+                        ],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
@@ -213,7 +288,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                       ],
                     ),
                     child: const Center(
-                      child: Icon(Icons.business, color: Colors.white, size: 32),
+                      child:
+                          Icon(Icons.business, color: Colors.white, size: 32),
                     ),
                   ),
                   const SizedBox(width: 20),
@@ -232,7 +308,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.person_outline, size: 14, color: Colors.white.withOpacity(0.7)),
+                            Icon(Icons.person_outline,
+                                size: 14, color: Colors.white.withOpacity(0.7)),
                             const SizedBox(width: 6),
                             Text(
                               widget.project.customerName,
@@ -260,17 +337,28 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                   children: [
                     Row(
                       children: [
-                        _buildHeaderInfo(Icons.phone, _projectData?.getCustomerList.contactNo ?? "Not provided"),
+                        _buildHeaderInfo(
+                            Icons.phone,
+                            _projectData?.getCustomerList.contactNo ??
+                                "Not provided"),
                         const SizedBox(width: 12),
-                        _buildHeaderInfo(Icons.calendar_today, _projectData?.getCustomerList.createdAt ?? widget.project.fromDate ?? "N/A"),
+                        _buildHeaderInfo(
+                            Icons.calendar_today,
+                            _projectData?.getCustomerList.createdAt ??
+                                widget.project.fromDate ??
+                                "N/A"),
                       ],
                     ),
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        _buildHeaderInfo(Icons.location_on, _projectData?.getCustomerList.address ?? "No address"),
+                        _buildHeaderInfo(
+                            Icons.location_on,
+                            _projectData?.getCustomerList.address ??
+                                "No address"),
                         const SizedBox(width: 12),
-                        _buildHeaderInfo(Icons.access_time, _projectData?.totalProjectHours ?? "0 hrs"),
+                        _buildHeaderInfo(Icons.access_time,
+                            _projectData?.totalProjectHours ?? "0 hrs"),
                       ],
                     ),
                   ],
@@ -311,7 +399,10 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -332,8 +423,13 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
             radius: 20,
             backgroundColor: Colors.white.withOpacity(0.2),
             child: Text(
-              staffs.first.staffName.isNotEmpty ? staffs.first.staffName[0].toUpperCase() : '?',
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              staffs.first.staffName.isNotEmpty
+                  ? staffs.first.staffName[0].toUpperCase()
+                  : '?',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 12),
@@ -343,7 +439,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
               color: Colors.white.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
+            child: const Icon(Icons.arrow_forward_ios,
+                color: Colors.white, size: 14),
           ),
         ],
       ),
@@ -367,7 +464,11 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
               return ListTile(
                 leading: CircleAvatar(
                   backgroundColor: const Color.fromARGB(255, 49, 161, 212),
-                  child: Text(staff.staffName.isNotEmpty ? staff.staffName[0].toUpperCase() : '?', style: const TextStyle(color: Colors.white)),
+                  child: Text(
+                      staff.staffName.isNotEmpty
+                          ? staff.staffName[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(color: Colors.white)),
                 ),
                 title: Text(staff.staffName),
                 subtitle: Text("${staff.totalHours} hours assigned"),
@@ -376,34 +477,41 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close")),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close")),
         ],
       ),
     );
   }
 
-  void _showAddModuleDialog({ModuleItem? module}) {
-    final nameController = TextEditingController(text: module?.name);
+  void _showAddModuleDialog({ml.Module? module}) {
+    final nameController = TextEditingController(text: module?.module);
     showDialog(
-      context: context,
-      builder: (context) {
-        bool isSaving = false;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
+        context: context,
+        builder: (context) {
+          bool isSaving = false;
+          return StatefulBuilder(builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               title: Text(module != null ? "Edit Module" : "Add New Module"),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Module Name", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                  const Text("Module Name",
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B))),
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameController,
                     decoration: InputDecoration(
                       hintText: "Enter module name",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       filled: true,
                       fillColor: Colors.grey.shade100,
                     ),
@@ -411,54 +519,68 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel")),
                 ElevatedButton(
-                  onPressed: isSaving ? null : () async {
-                    if (nameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a module name")));
-                      return;
-                    }
-                    
-                    setDialogState(() => isSaving = true);
-                    dynamic response;
-                    if (module == null) {
-                      response = await HttpService.addModule(widget.project.id, nameController.text.trim());
-                    } else {
-                      response = await HttpService.updateModule(module.id, nameController.text.trim());
-                    }
-                    
-                    if (response != null && response.status) {
-                      Navigator.pop(context);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(response.message),
-                        backgroundColor: Colors.green,
-                      ));
-                      _fetchProjectDetails(); // Refresh project details
-                    } else {
-                      setDialogState(() => isSaving = false);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(response?.message ?? "Failed to save module"),
-                        backgroundColor: Colors.red,
-                      ));
-                    }
-                  },
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          if (nameController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content:
+                                        Text("Please enter a module name")));
+                            return;
+                          }
+
+                          setDialogState(() => isSaving = true);
+                          dynamic response;
+                          if (module == null) {
+                            response = await HttpService.addModule(
+                                widget.project.id, nameController.text.trim());
+                          } else {
+                            response = await HttpService.updateModule(
+                                module.moduleId, nameController.text.trim());
+                          }
+
+                          if (response != null && response.status) {
+                            Navigator.pop(context);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(response.message),
+                              backgroundColor: Colors.green,
+                            ));
+                            _fetchModules(); // Refresh modules list
+                            _fetchProjectDetails(); // Refresh project details
+                          } else {
+                            setDialogState(() => isSaving = false);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(
+                                  response?.message ?? "Failed to save module"),
+                              backgroundColor: Colors.red,
+                            ));
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 49, 161, 212),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: isSaving 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(module != null ? "Update" : "Add"),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : Text(module != null ? "Update" : "Add"),
                 ),
               ],
             );
-          }
-        );
-      }
-    );
+          });
+        });
   }
 
   void _deleteModule(String moduleId) async {
@@ -468,7 +590,9 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
         title: const Text("Delete Module"),
         content: const Text("Are you sure you want to delete this module?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel")),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -486,6 +610,7 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
           content: Text("Module deleted successfully"),
           backgroundColor: Colors.green,
         ));
+        _fetchModules();
         _fetchProjectDetails();
       } else {
         if (!mounted) return;
@@ -496,8 +621,6 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
       }
     }
   }
-
-
 
   Widget _buildModernTabs() {
     return Container(
@@ -535,7 +658,9 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
           duration: const Duration(milliseconds: 300),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? const Color.fromARGB(255, 49, 161, 212) : Colors.transparent,
+            color: isSelected
+                ? const Color.fromARGB(255, 49, 161, 212)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -647,13 +772,18 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
             height: 50,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color.fromARGB(255, 49, 161, 212), const Color.fromARGB(255, 49, 161, 212)],
+                colors: [
+                  const Color.fromARGB(255, 49, 161, 212),
+                  const Color.fromARGB(255, 49, 161, 212)
+                ],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
               child: Text(
-                work.staffName.isNotEmpty ? work.staffName[0].toUpperCase() : "?",
+                work.staffName.isNotEmpty
+                    ? work.staffName[0].toUpperCase()
+                    : "?",
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -702,7 +832,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.visibility_outlined, size: 16, color: Color(0xFF6366F1)),
+                  Icon(Icons.visibility_outlined,
+                      size: 16, color: Color(0xFF6366F1)),
                   SizedBox(width: 6),
                   Text(
                     "View",
@@ -722,9 +853,35 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
   }
 
   Widget _buildModulesGrid() {
-    final filteredModules = _modules.where((module) {
-      return module.name.toLowerCase().contains(_searchQuery) ||
-          module.status.toLowerCase().contains(_searchQuery);
+    if (_isLoadingModules) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_modulesError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+            const SizedBox(height: 16),
+            Text(_modulesError!, style: TextStyle(color: Colors.red[300])),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _fetchModules,
+              child: const Text("Retry"),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final filteredModules = _realModules.where((module) {
+      return module.module.toLowerCase().contains(_searchQuery);
     }).toList();
 
     return Column(
@@ -740,7 +897,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 49, 161, 212),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ],
@@ -755,14 +913,17 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
             itemCount: filteredModules.length,
             itemBuilder: (context, index) {
               final module = filteredModules[index];
-              return _buildModuleCard(module);
+              return _buildRealModuleCard(module);
             },
           ),
       ],
     );
   }
 
-  Widget _buildModuleCard(ModuleItem module) {
+  Widget _buildRealModuleCard(ml.Module module) {
+    final taskCount = _taskCountCache[module.moduleId] ?? 0;
+    final progress = _progressCache[module.moduleId] ?? 0;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -790,8 +951,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                       width: 45,
                       height: 45,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [const Color(0xFF10B981), const Color(0xFF059669)],
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF10B981), Color(0xFF059669)],
                         ),
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -805,7 +966,7 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            module.name,
+                            module.module,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -815,38 +976,14 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Icon(Icons.task_alt, size: 12, color: Color(0xFF94A3B8)),
+                              Icon(Icons.task_alt,
+                                  size: 12, color: const Color(0xFF94A3B8)),
                               const SizedBox(width: 4),
                               Text(
-                                "${module.tasks} tasks",
+                                "$taskCount tasks",
                                 style: const TextStyle(
                                   fontSize: 11,
                                   color: Color(0xFF64748B),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF94A3B8),
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _getModuleStatusColor(module.status).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  module.status,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: _getModuleStatusColor(module.status),
-                                  ),
                                 ),
                               ),
                             ],
@@ -857,7 +994,9 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                   ],
                 ),
               ),
-              if (widget.permissions == null || widget.permissions!.editModule || widget.permissions!.deleteModule)
+              if (widget.permissions == null ||
+                  widget.permissions!.editModule ||
+                  widget.permissions!.deleteModule)
                 PopupMenuButton<String>(
                   icon: Container(
                     padding: const EdgeInsets.all(8),
@@ -865,17 +1004,19 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.more_vert, size: 18, color: Color(0xFF64748B)),
+                    child: const Icon(Icons.more_vert,
+                        size: 18, color: Color(0xFF64748B)),
                   ),
                   onSelected: (value) {
                     if (value == 'edit') {
                       _showAddModuleDialog(module: module);
                     } else if (value == 'delete') {
-                      _deleteModule(module.id);
+                      _deleteModule(module.moduleId);
                     }
                   },
                   itemBuilder: (context) => [
-                    if (widget.permissions == null || widget.permissions!.editModule)
+                    if (widget.permissions == null ||
+                        widget.permissions!.editModule)
                       const PopupMenuItem(
                         value: 'edit',
                         child: Row(
@@ -886,7 +1027,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                           ],
                         ),
                       ),
-                    if (widget.permissions == null || widget.permissions!.deleteModule)
+                    if (widget.permissions == null ||
+                        widget.permissions!.deleteModule)
                       const PopupMenuItem(
                         value: 'delete',
                         child: Row(
@@ -916,12 +1058,14 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: LinearProgressIndicator(
-                        value: module.progress / 100,
+                        value: progress / 100,
                         backgroundColor: const Color(0xFFE2E8F0),
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          module.progress > 70 ? const Color(0xFF10B981) : 
-                          module.progress > 30 ? const Color(0xFFF59E0B) : 
-                          const Color(0xFFEF4444),
+                          progress > 70
+                              ? const Color(0xFF10B981)
+                              : progress > 30
+                                  ? const Color(0xFFF59E0B)
+                                  : const Color(0xFFEF4444),
                         ),
                         minHeight: 8,
                       ),
@@ -937,7 +1081,7 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  "${module.progress}%",
+                  "$progress%",
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -981,14 +1125,16 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
     );
   }
 
-  void _showTraceFilterDialog(String userId, Function(void Function()) onUpdate) {
+  void _showTraceFilterDialog(
+      String userId, Function(void Function()) onUpdate) {
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
               title: const Row(
                 children: [
                   Icon(Icons.filter_alt_outlined, color: Color(0xFF6366F1)),
@@ -1001,7 +1147,9 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Date Range", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    const Text("Date Range",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -1014,7 +1162,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2100),
                               );
-                              if (picked != null) setDialogState(() => _fromDate = picked);
+                              if (picked != null)
+                                setDialogState(() => _fromDate = picked);
                             },
                             child: Container(
                               padding: const EdgeInsets.all(12),
@@ -1023,8 +1172,15 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                _fromDate == null ? "From Date" : DateFormat('dd-MM-yyyy').format(_fromDate!),
-                                style: TextStyle(fontSize: 12, color: _fromDate == null ? Colors.grey : Colors.black),
+                                _fromDate == null
+                                    ? "From Date"
+                                    : DateFormat('dd-MM-yyyy')
+                                        .format(_fromDate!),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: _fromDate == null
+                                        ? Colors.grey
+                                        : Colors.black),
                               ),
                             ),
                           ),
@@ -1039,7 +1195,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2100),
                               );
-                              if (picked != null) setDialogState(() => _toDate = picked);
+                              if (picked != null)
+                                setDialogState(() => _toDate = picked);
                             },
                             child: Container(
                               padding: const EdgeInsets.all(12),
@@ -1048,8 +1205,14 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                _toDate == null ? "To Date" : DateFormat('dd-MM-yyyy').format(_toDate!),
-                                style: TextStyle(fontSize: 12, color: _toDate == null ? Colors.grey : Colors.black),
+                                _toDate == null
+                                    ? "To Date"
+                                    : DateFormat('dd-MM-yyyy').format(_toDate!),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: _toDate == null
+                                        ? Colors.grey
+                                        : Colors.black),
                               ),
                             ),
                           ),
@@ -1057,15 +1220,14 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text("Module", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    const Text("Module",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     FutureBuilder<ml.ModuleListResponse?>(
                       future: HttpService.getModuleList(widget.project.id),
                       builder: (context, snapshot) {
                         final modules = snapshot.data?.data.moduleList ?? [];
-                        if (_selectedModuleId != null && !modules.any((m) => m.moduleId == _selectedModuleId)) {
-                         }
-
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
@@ -1076,17 +1238,21 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                             child: DropdownButton<String>(
                               isExpanded: true,
                               hint: const Text("Select Module"),
-                              value: (_selectedModuleId != null && modules.any((m) => m.moduleId == _selectedModuleId)) 
-                                  ? _selectedModuleId 
+                              value: (_selectedModuleId != null &&
+                                      modules.any((m) =>
+                                          m.moduleId == _selectedModuleId))
+                                  ? _selectedModuleId
                                   : null,
-                              items: modules.map((m) => DropdownMenuItem<String>(
-                                value: m.moduleId,
-                                child: Text(m.module),
-                              )).toList(),
+                              items: modules
+                                  .map((m) => DropdownMenuItem<String>(
+                                        value: m.moduleId,
+                                        child: Text(m.module),
+                                      ))
+                                  .toList(),
                               onChanged: (val) {
                                 setDialogState(() {
                                   _selectedModuleId = val;
-                                  _selectedTaskId = null; 
+                                  _selectedTaskId = null;
                                 });
                               },
                             ),
@@ -1095,15 +1261,18 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                       },
                     ),
                     const SizedBox(height: 20),
-                    const Text("Task", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    const Text("Task",
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     FutureBuilder<tl.GetTaskListResponse?>(
-                      future: _selectedModuleId == null 
-                        ? Future.value(null) 
-                        : HttpService.getTaskList(widget.project.id, userId, _selectedModuleId!),
+                      future: _selectedModuleId == null
+                          ? Future.value(null)
+                          : HttpService.getTaskList(
+                              widget.project.id, userId, _selectedModuleId!),
                       builder: (context, snapshot) {
                         final tasks = snapshot.data?.data ?? [];
-                        
+
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
@@ -1113,17 +1282,25 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               isExpanded: true,
-                              hint: Text(_selectedModuleId == null ? "Select a module first" : "Select Task"),
-                              value: (_selectedTaskId != null && tasks.any((t) => t.id == _selectedTaskId))
+                              hint: Text(_selectedModuleId == null
+                                  ? "Select a module first"
+                                  : "Select Task"),
+                              value: (_selectedTaskId != null &&
+                                      tasks.any((t) => t.id == _selectedTaskId))
                                   ? _selectedTaskId
                                   : null,
-                              items: tasks.map((t) => DropdownMenuItem<String>(
-                                value: t.id,
-                                child: Text(t.taskName),
-                              )).toList(),
-                              onChanged: _selectedModuleId == null ? null : (val) {
-                                setDialogState(() => _selectedTaskId = val);
-                              },
+                              items: tasks
+                                  .map((t) => DropdownMenuItem<String>(
+                                        value: t.id,
+                                        child: Text(t.taskName),
+                                      ))
+                                  .toList(),
+                              onChanged: _selectedModuleId == null
+                                  ? null
+                                  : (val) {
+                                      setDialogState(
+                                          () => _selectedTaskId = val);
+                                    },
                             ),
                           ),
                         );
@@ -1134,10 +1311,13 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                       children: [
                         Checkbox(
                           value: _showAll,
-                          onChanged: (val) => setDialogState(() => _showAll = val ?? true),
+                          onChanged: (val) =>
+                              setDialogState(() => _showAll = val ?? true),
                           activeColor: const Color.fromARGB(255, 48, 125, 189),
                         ),
-                        const Text("Show All", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                        const Text("Show All",
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w500)),
                       ],
                     ),
                   ],
@@ -1154,7 +1334,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                       _showAll = true;
                     });
                   },
-                  child: const Text("Reset", style: TextStyle(color: Colors.red)),
+                  child:
+                      const Text("Reset", style: TextStyle(color: Colors.red)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1164,7 +1345,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 48, 125, 189),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: const Text("Apply Filter"),
                 ),
@@ -1214,7 +1396,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                         color: const Color(0xFF6366F1).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Icon(Icons.analytics_outlined, color: Color(0xFF6366F1)),
+                      child: const Icon(Icons.analytics_outlined,
+                          color: Color(0xFF6366F1)),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -1231,28 +1414,30 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                           ),
                           const Text(
                             "Work history & task timeline",
-                            style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+                            style: TextStyle(
+                                fontSize: 14, color: Color(0xFF64748B)),
                           ),
                         ],
                       ),
                     ),
-                    StatefulBuilder(
-                      builder: (context, setIconState) {
-                        return IconButton(
-                          onPressed: () => _showTraceFilterDialog(userId, (fn) {
-                            fn(); // Update local dialog state
-                            setIconState(() {}); // Trigger icon/header refresh if needed
-                            if (_refreshTraceList != null) _refreshTraceList!();
-                          }),
-                          icon: Icon(
-                            Icons.filter_list,
-                            color: (_fromDate != null || _toDate != null || _selectedModuleId != null || _selectedTaskId != null)
-                                ? const Color(0xFF6366F1)
-                                : const Color(0xFF64748B),
-                          ),
-                        );
-                      }
-                    ),
+                    StatefulBuilder(builder: (context, setIconState) {
+                      return IconButton(
+                        onPressed: () => _showTraceFilterDialog(userId, (fn) {
+                          fn();
+                          setIconState(() {});
+                          if (_refreshTraceList != null) _refreshTraceList!();
+                        }),
+                        icon: Icon(
+                          Icons.filter_list,
+                          color: (_fromDate != null ||
+                                  _toDate != null ||
+                                  _selectedModuleId != null ||
+                                  _selectedTaskId != null)
+                              ? const Color(0xFF6366F1)
+                              : const Color(0xFF64748B),
+                        ),
+                      );
+                    }),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close, color: Color(0xFF64748B)),
@@ -1262,46 +1447,50 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
               ),
               const SizedBox(height: 24),
               Expanded(
-                child: StatefulBuilder(
-                  builder: (context, setListState) {
-                    _refreshTraceList = () => setListState(() {});
-                    return FutureBuilder<ProjectTraceResponse?>(
-                      future: HttpService.projectTrace(
-                        widget.project.id, 
-                        userId,
-                        fromDate: _fromDate != null ? DateFormat('yyyy-MM-dd').format(_fromDate!) : null,
-                        toDate: _toDate != null ? DateFormat('yyyy-MM-dd').format(_toDate!) : null,
-                        moduleId: _selectedModuleId,
-                        taskId: _selectedTaskId,
-                      ),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError || snapshot.data == null) {
-                      return _buildEmptyState("Error fetching trace", "Please try again later");
-                    }
-                    
-                    final traceData = snapshot.data!.data;
-                    if (traceData.list.isEmpty) {
-                      return _buildEmptyState("No trace found", "No work logs available for the selected filters");
-                    }
+                child: StatefulBuilder(builder: (context, setListState) {
+                  _refreshTraceList = () => setListState(() {});
+                  return FutureBuilder<ProjectTraceResponse?>(
+                    future: HttpService.projectTrace(
+                      widget.project.id,
+                      userId,
+                      fromDate: _fromDate != null
+                          ? DateFormat('yyyy-MM-dd').format(_fromDate!)
+                          : null,
+                      toDate: _toDate != null
+                          ? DateFormat('yyyy-MM-dd').format(_toDate!)
+                          : null,
+                      moduleId: _selectedModuleId,
+                      taskId: _selectedTaskId,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError || snapshot.data == null) {
+                        return _buildEmptyState(
+                            "Error fetching trace", "Please try again later");
+                      }
 
-                    return ListView.builder(
-                      controller: controller,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: traceData.list.length,
-                      itemBuilder: (context, index) {
-                        String dateKey = traceData.list.keys.elementAt(index);
-                        StaffTaskGroup group = traceData.list[dateKey]!;
-                        return _buildTraceGroup(dateKey, group);
-                      },
-                    );
-                  },
-                );
-              }
-            ),
-          ),
+                      final traceData = snapshot.data!.data;
+                      if (traceData.list.isEmpty) {
+                        return _buildEmptyState("No trace found",
+                            "No work logs available for the selected filters");
+                      }
+
+                      return ListView.builder(
+                        controller: controller,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: traceData.list.length,
+                        itemBuilder: (context, index) {
+                          String dateKey = traceData.list.keys.elementAt(index);
+                          StaffTaskGroup group = traceData.list[dateKey]!;
+                          return _buildTraceGroup(dateKey, group);
+                        },
+                      );
+                    },
+                  );
+                }),
+              ),
             ],
           ),
         ),
@@ -1383,9 +1572,11 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (task.status == "1" ? Colors.green : Colors.orange).withOpacity(0.1),
+                  color: (task.status == "1" ? Colors.green : Colors.orange)
+                      .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1402,9 +1593,11 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildTraceInfo(Icons.access_time_filled, task.startTime, "Start"),
+              _buildTraceInfo(
+                  Icons.access_time_filled, task.startTime, "Start"),
               const SizedBox(width: 24),
-              _buildTraceInfo(Icons.timer_outlined, task.totalDuration, "Duration"),
+              _buildTraceInfo(
+                  Icons.timer_outlined, task.totalDuration, "Duration"),
             ],
           ),
           if (task.remarks != null && task.remarks!.isNotEmpty) ...[
@@ -1419,7 +1612,8 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
                 Expanded(
                   child: Text(
                     task.remarks!,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                    style:
+                        const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
                   ),
                 ),
               ],
@@ -1440,11 +1634,17 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.bold),
             ),
             Text(
               value,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF1E293B), fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF1E293B),
+                  fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -1464,20 +1664,4 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard> with Si
         return const Color(0xFF94A3B8);
     }
   }
-}
-
-class ModuleItem {
-  final String id;
-  final String name;
-  final int progress;
-  final String status;
-  final int tasks;
-
-  ModuleItem({
-    required this.id,
-    required this.name,
-    required this.progress,
-    required this.status,
-    required this.tasks,
-  });
 }

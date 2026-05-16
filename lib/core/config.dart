@@ -8,7 +8,7 @@ class Config {
     String? url = await Common.getSharedPref("url");
     log("SharedPref URL = $url");
     String baseUrl;
-    String? api = '/version3_0_4/Api/';
+    String? api = '/version3_0_5/Api/';
     if (url != null) {
       baseUrl = url.toString() + api;
     } else {

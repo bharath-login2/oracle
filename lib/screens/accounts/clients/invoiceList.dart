@@ -146,9 +146,9 @@ class _InvoiceListState extends State<InvoiceList> {
   }
 
   void refreshInvoiceList() async {
-    setState(() {
-      filteredInvoices.clear();
-    });
+    // setState(() {
+    //   filteredInvoices.clear();
+    // });
     String collectedByStaffIds = collectedByIds.join(',');
     String createdByStaffIds = createdByIds.join(',');
     String customerFilter = selectedCustomerIds.join(',');
@@ -1127,7 +1127,7 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                               ],
                                                                             ),
                                                                           ),
-                                                                          if (filteredInvoices[index].isHidden == // Use filteredInvoices
+                                                                          if (filteredInvoices[index].isHidden == 
                                                                               "0")
                                                                             const PopupMenuItem(
                                                                               value: 'hide',
@@ -1167,7 +1167,39 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                         });
                                                                       } else if (value ==
                                                                           'hide') {
-                                                                        // ... hide logic with filteredInvoices[index]
+                                                                        showDialog(
+                                                                            context: context,
+                                                                            builder: (BuildContext ctx) {
+                                                                              return AlertDialog(
+                                                                                title: const Text('Confirm'),
+                                                                                content: const Text('Are you sure you want to hide this invoice?'),
+                                                                                actions: [
+                                                                                  TextButton(
+                                                                                    onPressed: () => Navigator.of(ctx).pop(),
+                                                                                    child: const Text('No'),
+                                                                                  ),
+                                                                                  TextButton(
+                                                                                    onPressed: () async {
+                                                                                      Common.showProgressDialog(ctx, "Loading..");
+                                                                                      final hideResult = await HttpService.hideInvoice(widget.token, filteredInvoices[index].id);
+                                                                                      if (ctx.mounted) Navigator.pop(ctx);
+                                                                                      if (hideResult != null && hideResult.data == true) {
+                                                                                        Common.toastMessaage(hideResult.message ?? "Invoice hidden successfully", Colors.green);
+                                                                                        if (ctx.mounted) Navigator.pop(ctx);
+                                                                                        setState(() {
+                                                                                          var itemToRemove = filteredInvoices[index];
+                                                                                          invoiceList!.data.lists.removeWhere((item) => item.id == itemToRemove.id);
+                                                                                          filteredInvoices.removeAt(index);
+                                                                                        });
+                                                                                      } else {
+                                                                                        Common.toastMessaage(hideResult?.message ?? "Failed to hide invoice", Colors.red);
+                                                                                      }
+                                                                                    },
+                                                                                    child: const Text('Yes'),
+                                                                                  ),
+                                                                                ],
+                                                                              );
+                                                                            });
                                                                       } else if (value ==
                                                                           'invoice_history') {
                                                                         Navigator
@@ -1178,7 +1210,39 @@ class _InvoiceListState extends State<InvoiceList> {
                                                                         );
                                                                       } else if (value ==
                                                                           'delete') {
-                                                                        // ... delete logic with filteredInvoices[index]
+                                                                        showDialog(
+                                                                            context: context,
+                                                                            builder: (BuildContext ctx) {
+                                                                              return AlertDialog(
+                                                                                title: const Text('Confirm'),
+                                                                                content: const Text('Are you sure you want to delete this invoice?'),
+                                                                                actions: [
+                                                                                  TextButton(
+                                                                                    onPressed: () => Navigator.of(ctx).pop(),
+                                                                                    child: const Text('No'),
+                                                                                  ),
+                                                                                  TextButton(
+                                                                                    onPressed: () async {
+                                                                                      Common.showProgressDialog(ctx, "Loading..");
+                                                                                      final deleteResult = await HttpService.deleteInvoice(widget.token, filteredInvoices[index].id);
+                                                                                      if (ctx.mounted) Navigator.pop(ctx);
+                                                                                      if (deleteResult.data == true) {
+                                                                                        Common.toastMessaage(deleteResult.message ?? "Invoice deleted successfully", Colors.green);
+                                                                                        if (ctx.mounted) Navigator.pop(ctx);
+                                                                                        setState(() {
+                                                                                          var itemToRemove = filteredInvoices[index];
+                                                                                          invoiceList!.data.lists.removeWhere((item) => item.id == itemToRemove.id);
+                                                                                          filteredInvoices.removeAt(index);
+                                                                                        });
+                                                                                      } else {
+                                                                                        Common.toastMessaage(deleteResult.message ?? "Failed to delete invoice", Colors.red);
+                                                                                      }
+                                                                                    },
+                                                                                    child: const Text('Yes'),
+                                                                                  ),
+                                                                                ],
+                                                                              );
+                                                                            });
                                                                       }
                                                                     },
                                                                     child:

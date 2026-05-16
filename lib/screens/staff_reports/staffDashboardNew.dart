@@ -24,6 +24,7 @@ import '../../models/lead_management/salaryDetailsModel.dart';
 import '../authentication/googleDriveAccountsModel.dart';
 import '../../models/lead_management/getStaffDocumentListModel.dart';
 import '../../models/lead_management/getStaffSalaryDetailsModel.dart';
+import '../../models/lead_management/staffAccountDetailsModel.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -99,6 +100,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
       setState(() {});
     }
   }
+
   getCallDetails() async {
     callDetails =
         await HttpService.getStaffCallDetails(widget.id, fromDate, toDate);
@@ -113,6 +115,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
       setState(() {});
     }
   }
+
   initData() async {
     setState(() {
       isLoading = true;
@@ -148,7 +151,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
   }
 
   getDocumentTypes() async {
-    DocumentListModel? documentList = await HttpService.getDocumentType(widget.id);
+    DocumentListModel? documentList =
+        await HttpService.getDocumentType(widget.id);
     if (documentList != null && documentList.status == true) {
       documentTypes = documentList.data;
       if (documentTypes.isNotEmpty) {
@@ -182,8 +186,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
       isDriveFilesLoading = true;
       googleDriveFiles = [];
     });
-    final response = await HttpService.getStaffDocumentList(
-        "Staff", accountId, widget.id);
+    final response =
+        await HttpService.getStaffDocumentList("Staff", accountId, widget.id);
     if (mounted && response != null && response.status == true) {
       googleDriveFiles = response.data ?? [];
     }
@@ -1907,7 +1911,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
             Common.toastMessaage("Could not launch $linkToOpen", Colors.red);
           }
         } else {
-          Common.toastMessaage("No link available for this file", Colors.orange);
+          Common.toastMessaage(
+              "No link available for this file", Colors.orange);
         }
       },
       child: Stack(
@@ -1916,7 +1921,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (file.thumbnailLink != null && file.thumbnailLink!.isNotEmpty)
+                if (file.thumbnailLink != null &&
+                    file.thumbnailLink!.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
@@ -1924,12 +1930,15 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                       height: 40,
                       width: 40,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.insert_drive_file, color: Colors.grey, size: 40),
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.insert_drive_file,
+                          color: Colors.grey,
+                          size: 40),
                     ),
                   )
                 else
-                  const Icon(Icons.insert_drive_file, color: Colors.grey, size: 40),
+                  const Icon(Icons.insert_drive_file,
+                      color: Colors.grey, size: 40),
                 const SizedBox(height: 4),
                 Text(
                   file.fileName ?? "Unknown",
@@ -1938,7 +1947,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                 const SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Updated At:${file.uploadedAt ?? ""}',
                   textAlign: TextAlign.center,
@@ -1978,8 +1987,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
 
         for (var file in result.files) {
           if (file.path != null) {
-            multipartFiles.add(await MultipartFile.fromFile(file.path!,
-                filename: file.name));
+            multipartFiles.add(
+                await MultipartFile.fromFile(file.path!, filename: file.name));
             docTypes.add(selectedDocumentTypeId ?? "");
           }
         }
@@ -2091,8 +2100,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
 
           // Current Salary Highlight
           if (staffSalaryDetails != null)
-            _buildCurrentSalaryCard(
-                staffSalaryDetails!.data.currentSalary),
+            _buildCurrentSalaryCard(staffSalaryDetails!.data.currentSalary),
 
           const SizedBox(height: 24),
 
@@ -2318,7 +2326,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
               ),
             ],
           ),
-            const SizedBox(height: 8),
+          const SizedBox(height: 8),
           Row(
             children: [
               const Icon(Icons.person,
@@ -2326,7 +2334,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
               const SizedBox(width: 6),
               Text(
                 "Created By: ${history.createdByName}",
-                style: TextStyle(color: const Color.fromARGB(255, 19, 18, 18), fontSize: 13),
+                style: TextStyle(
+                    color: const Color.fromARGB(255, 19, 18, 18), fontSize: 13),
               ),
             ],
           ),
@@ -2338,7 +2347,21 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
               const SizedBox(width: 6),
               Text(
                 "Created At: ${history.createdAt}",
-                style: TextStyle(color: const Color.fromARGB(255, 36, 35, 35), fontSize: 13),
+                style: TextStyle(
+                    color: const Color.fromARGB(255, 36, 35, 35), fontSize: 13),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.credit_card,
+                  size: 14, color: Color.fromARGB(255, 27, 27, 27)),
+              const SizedBox(width: 6),
+              Text(
+                "Remark: ${history.remark}",
+                style: TextStyle(
+                    color: const Color.fromARGB(255, 36, 35, 35), fontSize: 13),
               ),
             ],
           ),
@@ -2354,7 +2377,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
         TextEditingController(text: history?.fromDate ?? "");
     final TextEditingController toDateController =
         TextEditingController(text: history?.toDate ?? "");
-    final TextEditingController remarkController = TextEditingController();
+    final TextEditingController remarkController =
+        TextEditingController(text: history?.remark ?? "");
 
     showDialog(
       context: context,
@@ -2438,7 +2462,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                         Common.toastMessaage(
                             "Salary saved successfully", Colors.green);
                       } else {
-                        Common.toastMessaage("Failed to save salary", Colors.red);
+                        Common.toastMessaage(
+                            "Failed to save salary", Colors.red);
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -2471,17 +2496,41 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
     );
   }
 
-  void _showAddStaffAccountDialog() {
+  void _showAddStaffAccountDialog() async {
+    Common.showProgressDialog(context, "Fetching account details...");
+    final details = await HttpService.getStaffAccountDetails(widget.id);
+    Navigator.pop(context);
+
+    bool hasSalaryData = details?.data.salary.accountId.isNotEmpty ?? false;
+    bool hasPettyData = details?.data.petty.accountId.isNotEmpty ?? false;
+
+    bool isSalary = hasSalaryData;
+    bool isPettyCash = hasPettyData;
+
     final TextEditingController openingBalanceController =
-        TextEditingController(text: "0");
+        TextEditingController(text: details?.data.salary.openingBalance ?? "0");
     final TextEditingController dateController = TextEditingController(
-        text: DateFormat('yyyy-MM-dd').format(DateTime.now()));
+        text: details?.data.salary.openingDate ??
+            DateFormat('yyyy-MM-dd').format(DateTime.now()));
     final TextEditingController pettyOpeningBalanceController =
-        TextEditingController();
-    final TextEditingController pettyDateController = TextEditingController();
+        TextEditingController(text: details?.data.petty.openingBalance ?? "0");
+    final TextEditingController pettyDateController = TextEditingController(
+        text: details?.data.petty.openingDate ??
+            DateFormat('yyyy-MM-dd').format(DateTime.now()));
 
     String salaryType = "Advance";
-    bool isPettyCash = false;
+    if (details != null && details.data.salary.debitOrCredit.isNotEmpty) {
+      salaryType = details.data.salary.debitOrCredit == "Credit"
+          ? "Advance"
+          : "Pending";
+    }
+
+    String pettyType = "Advance";
+    if (details != null && details.data.petty.debitOrCredit.isNotEmpty) {
+      pettyType = details.data.petty.debitOrCredit == "Credit"
+          ? "Advance"
+          : "Pending";
+    }
 
     showDialog(
       context: context,
@@ -2505,79 +2554,94 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Salary A/C",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    if (!hasSalaryData)
+                      Checkbox(
+                        value: isSalary,
+                        onChanged: (val) =>
+                            setDialogState(() => isSalary = val!),
+                        activeColor: const Color(0xFF406dbe),
+                      ),
+                    const Text("Salary A/C",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+                if (isSalary) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDialogLabel("Opening Balance"),
+                            _buildDialogTextField(
+                              controller: openingBalanceController,
+                              hint: "0",
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDialogLabel("Date"),
+                            _buildDatePickerField(
+                                context, dateController, "Select Date"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Row(
                         children: [
-                          _buildDialogLabel("Opening Balance"),
-                          _buildDialogTextField(
-                            controller: openingBalanceController,
-                            hint: "0",
-                            keyboardType: TextInputType.number,
+                          Radio<String>(
+                            value: "Advance",
+                            groupValue: salaryType,
+                            onChanged: (val) =>
+                                setDialogState(() => salaryType = val!),
+                            activeColor: Colors.blue,
                           ),
+                          const Text("Advance"),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(width: 20),
+                      Row(
                         children: [
-                          _buildDialogLabel("Date"),
-                          _buildDatePickerField(
-                              context, dateController, "Select Date"),
+                          Radio<String>(
+                            value: "Pending",
+                            groupValue: salaryType,
+                            onChanged: (val) =>
+                                setDialogState(() => salaryType = val!),
+                            activeColor: Colors.blue,
+                          ),
+                          const Text("Pending"),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: "Advance",
-                          groupValue: salaryType,
-                          onChanged: (val) =>
-                              setDialogState(() => salaryType = val!),
-                          activeColor: Colors.blue,
-                        ),
-                        const Text("Advance"),
-                      ],
-                    ),
-                    const SizedBox(width: 20),
-                    Row(
-                      children: [
-                        Radio<String>(
-                          value: "Pending",
-                          groupValue: salaryType,
-                          onChanged: (val) =>
-                              setDialogState(() => salaryType = val!),
-                          activeColor: Colors.blue,
-                        ),
-                        const Text("Pending"),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    Checkbox(
-                      value: isPettyCash,
-                      onChanged: (val) =>
-                          setDialogState(() => isPettyCash = val!),
-                      activeColor: const Color(0xFF406dbe),
-                    ),
+                    if (!hasPettyData)
+                      Checkbox(
+                        value: isPettyCash,
+                        onChanged: (val) =>
+                            setDialogState(() => isPettyCash = val!),
+                        activeColor: const Color(0xFF406dbe),
+                      ),
                     const Text("Petty Cash A/C",
-                        style:
-                            TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                   ],
                 ),
                 if (isPettyCash) ...[
@@ -2613,13 +2677,31 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Radio<String>(
-                        value: "Advance",
-                        groupValue: "Advance", // Petty cash only advance in image
-                        onChanged: (val) {},
-                        activeColor: Colors.blue,
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: "Advance",
+                            groupValue: pettyType,
+                            onChanged: (val) =>
+                                setDialogState(() => pettyType = val!),
+                            activeColor: Colors.blue,
+                          ),
+                          const Text("Advance"),
+                        ],
                       ),
-                      const Text("Advance"),
+                      const SizedBox(width: 20),
+                      Row(
+                        children: [
+                          Radio<String>(
+                            value: "Pending",
+                            groupValue: pettyType,
+                            onChanged: (val) =>
+                                setDialogState(() => pettyType = val!),
+                            activeColor: Colors.blue,
+                          ),
+                          const Text("Pending"),
+                        ],
+                      ),
                     ],
                   ),
                 ],
@@ -2649,12 +2731,15 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                       Common.showProgressDialog(context, "Saving Account...");
                       final success = await HttpService.saveStaffAccounts(
                         userId: widget.id,
-                        salary: "0", // Monthly salary not in this form
+                        salary: "0",
+                        isSalary: isSalary ? "1" : "0",
                         openingBalance: openingBalanceController.text,
-                        type: salaryType,
+                        openingDate: dateController.text,
+                        type: salaryType == "Advance" ? "Credit" : "Debit",
                         isPettyCash: isPettyCash ? "1" : "0",
-                        // Note: Backend might need petty cash details too,
-                        // but current HttpService.saveStaffAccounts only takes these.
+                        pettyOpeningBalance: pettyOpeningBalanceController.text,
+                        pettyOpeningDate: pettyDateController.text,
+                        pettyType: pettyType == "Advance" ? "Credit" : "Debit",
                       );
                       Navigator.pop(context);
 
@@ -2663,7 +2748,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                         getSalaryDetails();
                         Common.toastMessaage("Account saved", Colors.green);
                       } else {
-                        Common.toastMessaage("Failed to save account", Colors.red);
+                        Common.toastMessaage(
+                            "Failed to save account", Colors.red);
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -2718,7 +2804,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
         hintText: hint,
         isDense: true,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
   }
@@ -2736,7 +2823,7 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
           lastDate: DateTime(2100),
         );
         if (date != null) {
-          controller.text = DateFormat('yyyy-MM-dd').format(date);
+          controller.text = DateFormat('dd-MM-yyyy').format(date);
         }
       },
       decoration: InputDecoration(
@@ -2744,7 +2831,8 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
         isDense: true,
         suffixIcon: const Icon(Icons.calendar_month, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
   }

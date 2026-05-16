@@ -262,9 +262,9 @@ class _StockConsumptionPageState extends State<StockConsumptionPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatColumn("Quantity", item.quantity, Colors.green),
+                _buildStatColumn("Consumed Stock QTY", item.quantity, Colors.green),
                 _buildStatColumn("Unit Price", "₹${item.unitPrice}", Colors.blue),
-                _buildStatColumn("Total", "₹${item.totalAmount}", const Color(0xFF2a86c9)),
+                _buildStatColumn("Consumed Stock Price", "₹${item.totalAmount}", const Color(0xFF2a86c9)),
               ],
             ),
           ],
@@ -302,7 +302,7 @@ class _StockConsumptionPageState extends State<StockConsumptionPage> {
         Text(label.toUpperCase(),
             style: TextStyle(
                 color: Colors.grey[400],
-                fontSize: 10,
+                fontSize: 8,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5)),
         const SizedBox(height: 2),

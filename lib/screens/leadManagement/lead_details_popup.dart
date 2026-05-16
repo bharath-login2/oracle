@@ -153,7 +153,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   bool isActivityLoading = false;
   bool showTransferFreshValue = false;
   bool isCallHistoryLoading = false;
-
+  String viewLeadCategoryOnly = '';
+  String viewAllCategory = '';
   TextEditingController contactFName = TextEditingController();
   TextEditingController contactLName = TextEditingController();
   TextEditingController contactMobile = TextEditingController();
@@ -485,6 +486,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     whatsappOfficial = await Common.getSharedPref("officialWhatsapp");
     name = await Common.getSharedPref("name");
     userId = await Common.getSharedPref("userId");
+     viewLeadCategoryOnly =
+        await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
+    viewAllCategory = await Common.getSharedPref("viewAllCategory") ?? '';
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
     accessCallRecordingPermission =
@@ -1400,8 +1404,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                           ),
 
                                           const SizedBox(width: 12),
-
-                                          // Status badge
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 4),
@@ -1597,6 +1599,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           ];
                         },
                         onSelected: (value) {
+                            if (viewLeadCategoryOnly == "true") return;
                           _refreshData(value.toString());
                         }),
                   ]
@@ -1822,9 +1825,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   final String? phone = leadDetails?.data?.contactNumber1;
                   final String? name = leadDetails?.data?.clientName;
                   final String? callMasterId = leadDetails?.data?.callMasterId;
-
                   if (phone == null || callMasterId == null) return;
-
                   String? baseUrl = await Common.getSharedPref("url");
                   baseUrl = baseUrl ?? "https://s2.login2.in";
                   if (baseUrl.contains('index.php')) {
@@ -1837,18 +1838,15 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       .replaceAll('+', '-')
                       .replaceAll('/', '_')
                       .replaceAll('=', '');
-
                   String fullUrl = "$baseUrl/redirect/lead/$urlSafeBase64";
                   String message = "Name: $name\nPhone: $phone\nLink: $fullUrl";
                   String encodedMessage = Uri.encodeComponent(message);
                   final whatsappLink = "https://wa.me/?text=$encodedMessage";
-
                   await launchUrl(Uri.parse(whatsappLink));
                 },
                 child: _buildActionColumn(
                     icon: Icons.share, label: 'Share', color: Colors.brown),
               ),
-              //const SizedBox(width: 8),
               InkWell(
                 onTap: () async {
                   if (contactPermission == 'true') {
@@ -1888,7 +1886,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               //   child: _buildActionColumn(
               //       icon: Icons.share, label: 'Share', color: Colors.brown),
               // ),
-
               PopupMenuButton<String>(
                 elevation: 8,
                 offset: const Offset(0, 50),
@@ -1949,8 +1946,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                             email: leadDetails!.data!.emailId,
                             cost: leadDetails!.data!.cost,
                             leadCategoryId: leadDetails!.data!.leadCategoryId,
-                            leadSubCategoryId:
-                                leadDetails!.data!.leadSubCategoryId,
+                            leadSubCategoryId: leadDetails!.data!.leadSubCategoryId,
                             priorityId: leadDetails!.data!.priorityId,
                             leadSourceId: leadDetails!.data!.leadSourceId,
                             remarks: leadDetails!.data!.remarks,
@@ -2344,7 +2340,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         if (result.status == true) {
           Common.toastMessaage(result.message, Colors.green);
           widget.onDataChanged();
-          _refreshData(callMasterId ?? widget.callMasterId);
+          if (mounted) {
+            Navigator.pop(context); // Close the details popup
+          }
           setState(() {
             remarks.clear();
             isExpand = false;
@@ -3824,8 +3822,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           renProducts.clear();
           _recalculateTotals();
         });
-        await _refreshData(callMasterId ?? widget.callMasterId);
         widget.onDataChanged();
+        if (mounted) {
+          Navigator.pop(context); // Close the details popup
+        }
       } else {
         Common.toastMessaage(
             response?.message ?? 'Failed to create order', Colors.red);

@@ -4,6 +4,7 @@ import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/getStockRegisterListModel.dart';
 import 'package:login2/models/lead_management/productHistoryRental.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 
 class StockRegisterPage extends StatefulWidget {
   final String token;
@@ -931,26 +932,54 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                   const SizedBox(height: 20),
                   const Text('Select Product', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<StockRegisterData>(
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<StockRegisterData>(
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          items: materials.map((m) {
+                            return DropdownMenuItem<StockRegisterData>(
+                              value: m,
+                              child: Text(m.materialName),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            setModalState(() {
+                              selectedMaterial = val;
+                            });
+                          },
+                          hint: const Text('Choose a product'),
+                        ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    items: materials.map((m) {
-                      return DropdownMenuItem<StockRegisterData>(
-                        value: m,
-                        child: Text(m.materialName),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      setModalState(() {
-                        selectedMaterial = val;
-                      });
-                    },
-                    hint: const Text('Choose a product'),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2a86c9).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddProducts(),
+                              ),
+                            );
+                            if (result == true) {
+                              await _fetchStockRegister();
+                              setModalState(() {});
+                            }
+                          },
+                          icon: const Icon(Icons.add, color: Color(0xFF2a86c9)),
+                        ),
+                      ),
+                    ],
                   ),
                   if (selectedMaterial != null) ...[
                     const SizedBox(height: 20),

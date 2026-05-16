@@ -35,7 +35,9 @@ class Data {
       });
     }
     totalAmount = json['total_amount'];
-    totalRecords = json['total_records'];
+    totalRecords = json['total_records'] is int
+        ? json['total_records']
+        : int.tryParse(json['total_records']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {

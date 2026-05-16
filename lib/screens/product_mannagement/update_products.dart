@@ -9,7 +9,12 @@ import 'package:login2/models/product_mannagement/post_product.dart';
 import 'package:login2/models/product_mannagement/product_categories.dart';
 import 'package:login2/models/product_mannagement/products_by_id_model.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
+import 'package:intl/intl.dart';
+import 'package:login2/screens/product_mannagement/categories.dart';
+import 'package:login2/screens/product_mannagement/subcategories.dart';
+import 'package:login2/models/lead_management/productTypeModel.dart';
 import 'package:login2/service/service.dart';
+import 'dart:convert';
 
 class UpdateProducts extends StatefulWidget {
   String productId;
@@ -33,12 +38,82 @@ class _UpdateProductsState extends State<UpdateProducts> {
   TextEditingController description = TextEditingController();
   TextEditingController category = TextEditingController();
   TextEditingController subCategory = TextEditingController();
+  TextEditingController discount = TextEditingController();
+  TextEditingController brand = TextEditingController();
+  TextEditingController expiryDays = TextEditingController();
+  TextEditingController openingStock = TextEditingController();
+  TextEditingController currentStock = TextEditingController();
+  TextEditingController unitController = TextEditingController();
+  TextEditingController expiryDate = TextEditingController();
+  TextEditingController warrantyNumber = TextEditingController();
+  TextEditingController freeService = TextEditingController();
+  TextEditingController paidService = TextEditingController();
+  List<TextEditingController> complaintControllers = [];
+  List<String?> selectedComplaintTypes = [];
+  List<String> complaintTypeOptions = [
+    "Complaint Type",
+    "Product Issue",
+    "Payment Issue",
+    "Warranty Issue",
+    "Technical Issue"
+  ];
+
   List filteredCategories = [];
   List filteredSubCategories = [];
+  List<String> productTypeList = [];
+  String? selectedProductType;
+  String? selectedServiceCycle;
+  String? selectedWeekDay;
+  String? selectedYearMonth;
+  TextEditingController serviceNoOfDays = TextEditingController();
+  TextEditingController serviceMonthDays = TextEditingController();
+  TextEditingController serviceYearDays = TextEditingController();
+
+  List<String> serviceCycles = [
+    "Daily",
+    "N Days",
+    "Weekly",
+    "Monthly",
+    "Yearly"
+  ];
+
+  List<String> weekDays = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
+  ];
+
+  List<String> months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ];
+
   String? productImage;
   String categoryId = "";
   String subCategoryId = "";
+  String selectedStockStatus = "In Stock";
   bool isLoading = true;
+  bool addStock = false;
+  bool checkStock = false;
+  bool hasWarranty = false;
+  List<TextEditingController> pipelineControllers = [];
+  bool addPublish = false;
+  String selectedStatus = "Published";
+  String selectedVisibility = "Public";
   ProductCategoriesModel? categories;
   SubCategoriesModel? subCategories;
   PostProductModel? postResponse;
@@ -47,23 +122,93 @@ class _UpdateProductsState extends State<UpdateProducts> {
   getProductsById() async {
     productsResponse = await HttpService.getProductById(widget.productId);
     if (productsResponse != null) {
-      contentId.text = productsResponse!.data.contentId;
-      categoryId = productsResponse!.data.categoryId;
-      category.text = productsResponse!.data.categoryName;
-      subCategory.text = productsResponse!.data.subCategory;
-      subCategoryId = productsResponse!.data.subCategoryId;
-      productName.text = productsResponse!.data.productName;
-      productCode.text = productsResponse!.data.productCode;
-      mrp.text = productsResponse!.data.productMrp;
-      noOfDays.text = productsResponse!.data.noOfDays;
-      remindBefore.text = productsResponse!.data.remindBefore;
-      sellingPrice.text = productsResponse!.data.sellingPrice;
-      tax.text = productsResponse!.data.taxPercent;
-      totalAmount.text = productsResponse!.data.totalAmount;
-      description.text = productsResponse!.data.description;
+      var d = productsResponse!.data;
+      contentId.text = d.contentId;
+      categoryId = d.categoryId;
+      category.text = d.categoryName;
+      subCategory.text = d.subCategory;
+      subCategoryId = d.subCategoryId;
+      productName.text = d.productName;
+      productCode.text = d.productCode;
+      mrp.text = d.productMrp;
+      noOfDays.text = d.noOfDays;
+      remindBefore.text = d.remindBefore;
+      sellingPrice.text = d.sellingPrice;
+      tax.text = d.taxPercent;
+      totalAmount.text = d.totalAmount;
+      description.text = d.description;
+      brand.text = d.brand;
+      discount.text = d.discountPercent;
+      openingStock.text = d.openingStock;
+      currentStock.text = d.currentStock;
+      selectedStockStatus = d.stockStatus.isNotEmpty ? d.stockStatus : "In Stock";
+      addStock = d.openingStock.isNotEmpty || d.currentStock.isNotEmpty;
+      checkStock = d.checkStock == "1";
+      unitController.text = d.unitId;
+      selectedProductType = d.productType.isNotEmpty ? d.productType : null;
+      if (selectedProductType != null && !productTypeList.contains(selectedProductType!)) {
+        productTypeList.add(selectedProductType!);
+      }
+      hasWarranty = d.warranty == "1" || d.warranty == "Yes" || d.warranty == "Y";
+      expiryDate.text = d.expiryDate;
+      warrantyNumber.text = d.warrantyNo;
+      selectedServiceCycle = d.serviceCycle.isNotEmpty ? d.serviceCycle : null;
+      if (selectedServiceCycle != null) {
+        // Normalize "Ndays" to "N Days" if necessary
+        if (selectedServiceCycle == "Ndays") {
+          selectedServiceCycle = "N Days";
+        }
+        if (!serviceCycles.contains(selectedServiceCycle!)) {
+          serviceCycles.add(selectedServiceCycle!);
+        }
+      }
+      serviceNoOfDays.text = d.serviceNoDays;
+      selectedWeekDay = d.serviceWeeks.isNotEmpty ? d.serviceWeeks : null;
+      serviceMonthDays.text = d.serviceMonthDays;
+      serviceYearDays.text = d.serviceYearDays;
+      selectedYearMonth = d.serviceYearMonth.isNotEmpty ? d.serviceYearMonth : null;
+      freeService.text = d.freeCount;
+      paidService.text = d.paidCount;
+      selectedStatus = d.publishStatus.isNotEmpty ? d.publishStatus : "Published";
+      selectedVisibility = d.visibility.isNotEmpty ? d.visibility : "Public";
+      addPublish = d.publishStatus.isNotEmpty;
+
+      // Pipeline handling
+      if (d.pipelineName.isNotEmpty) {
+        pipelineControllers = d.pipelineName
+            .map((e) => TextEditingController(text: e))
+            .toList();
+      } else {
+        pipelineControllers = [TextEditingController()];
+      }
+
+      // Complaints handling
+      if (d.complaintType.isNotEmpty) {
+        complaintControllers = d.complaintType
+            .map((e) => TextEditingController(text: e.remark))
+            .toList();
+        selectedComplaintTypes = d.complaintType.map((e) => e.type).toList();
+      } else {
+        complaintControllers = [TextEditingController()];
+        selectedComplaintTypes = ["Complaint Type"];
+      }
+
       getProductSubCategory();
       setState(() {
         isLoading = false;
+      });
+    }
+  }
+
+  getProductTypes() async {
+    final response = await HttpService.getProductTypes();
+    if (response != null && response.status) {
+      setState(() {
+        productTypeList = response.data;
+        // Ensure selectedProductType is in the list to avoid dropdown errors
+        if (selectedProductType != null && !productTypeList.contains(selectedProductType!)) {
+          productTypeList.add(selectedProductType!);
+        }
       });
     }
   }
@@ -84,45 +229,85 @@ class _UpdateProductsState extends State<UpdateProducts> {
     }
   }
 
-  void filterCategories(
-    String query,
-  ) {
-    filteredCategories = categories!.data
-        .where((map) =>
-            map.categoryName.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  void filterCategories(String query) {
+    if (categories != null) {
+      setState(() {
+        filteredCategories = categories!.data
+            .where((map) =>
+                map.categoryName.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      });
+    }
   }
 
-  void filterSubCategories(
-    String query,
-  ) {
-    filteredSubCategories = subCategories!.data
-        .where((map) =>
-            map.subCategory.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  void filterSubCategories(String query) {
+    if (subCategories != null) {
+      setState(() {
+        filteredSubCategories = subCategories!.data
+            .where((map) =>
+                map.subCategory.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      });
+    }
   }
 
   updateProduct() async {
     postResponse = await HttpService.updateProduct(
-        contentId.text,
-        categoryId,
-        subCategoryId,
-        productName.text,
-        productCode.text,
-        mrp.text,
-        noOfDays.text,
-        remindBefore.text,
-        sellingPrice.text,
-        tax.text,
-        totalAmount.text,
-        description.text,
-        productImage,
-        widget.productId);
+      contentId.text,
+      categoryId,
+      subCategoryId,
+      productName.text,
+      productCode.text,
+      mrp.text,
+      noOfDays.text,
+      remindBefore.text,
+      sellingPrice.text,
+      tax.text,
+      totalAmount.text,
+      description.text,
+      productImage,
+      widget.productId,
+      productType: selectedProductType ?? "",
+      brand: brand.text,
+      discount: discount.text,
+      expiryDays: expiryDays.text,
+      addStock: addStock ? "1" : "0",
+      checkStock: checkStock ? "1" : "0",
+      openingStock: openingStock.text,
+      currentStock: currentStock.text,
+      stockStatus: selectedStockStatus,
+      unit: unitController.text,
+      hasWarranty: hasWarranty,
+      pipelines: pipelineControllers
+          .map((e) => e.text)
+          .where((text) => text.isNotEmpty)
+          .toList(),
+      addPublish: addPublish,
+      publishStatus: selectedStatus,
+      visibility: selectedVisibility,
+      expiryDate: expiryDate.text,
+      warrantyNumber: warrantyNumber.text,
+      serviceCycle: selectedServiceCycle,
+      freeService: freeService.text,
+      paidService: paidService.text,
+      serviceNoOfDays: serviceNoOfDays.text,
+      serviceWeeks: selectedWeekDay,
+      serviceMonthDays: serviceMonthDays.text,
+      serviceYearDays: serviceYearDays.text,
+      serviceYearMonth: selectedYearMonth,
+      complaints: List.generate(complaintControllers.length, (index) {
+        return {
+          "type": selectedComplaintTypes[index],
+          "remark": complaintControllers[index].text
+        };
+      }).where((element) => element["remark"]!.isNotEmpty).toList(),
+    );
     if (postResponse != null && postResponse!.status == true) {
       Navigator.pop(context);
-      Navigator.pop(context);
+      Navigator.pop(context, true);
       Common.toastMessaage(postResponse!.message, Colors.green);
     } else {
+      Navigator.pop(context);
       Common.toastMessaage(postResponse!.message, Colors.red);
     }
   }
@@ -131,6 +316,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
   void initState() {
     getProductsById();
     getProductCategory();
+    getProductTypes();
     super.initState();
   }
 
@@ -177,7 +363,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
                         width: 25,
                       ),
                       const Text(
-                        "Update",
+                        "Update Product",
                         style: TextStyle(color: Colors.white, fontSize: 18),
                       ),
                     ],
@@ -189,7 +375,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
       body: isLoading == true
           ? const Center(
               child: CircularProgressIndicator(
-                color: Colors.grey,
+                color: Color(0xFF2a86c9),
               ),
             )
           : SafeArea(
@@ -200,346 +386,913 @@ class _UpdateProductsState extends State<UpdateProducts> {
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        const Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                        _buildSectionCard(
+                          title: "Basic Information",
                           children: [
-                            Text(
-                              "Product Image *",
-                              style: TextStyle(
-                                fontSize: 18,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildDropdownField(
+                                    label: "Product Type *",
+                                    value: selectedProductType,
+                                    items: productTypeList,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        selectedProductType = val;
+                                      });
+                                    },
+                                    validator: (val) => val == null
+                                        ? "Select Product Type"
+                                        : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: productName,
+                                    label: "Product Name *",
+                                    icon: Icons.layers_outlined,
+                                    validator: (val) => val!.isEmpty
+                                        ? "Enter Product Name"
+                                        : null,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: productCode,
+                                    label: selectedProductType == "Service"
+                                        ? "SAC Code"
+                                        : (selectedProductType == "Material" ||
+                                                selectedProductType == "Rental")
+                                            ? "HSN/SAC Code"
+                                            : "HSN Code",
+                                    icon: Icons.qr_code_outlined,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: brand,
+                                    label: "Brand",
+                                    icon: Icons.branding_watermark_outlined,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            selectFile();
-                          },
-                          child: productImage == null
-                              ? Container(
-                                  height:
-                                      MediaQuery.of(context).size.height * .3,
-                                  width:
-                                      MediaQuery.of(context).size.width * .92,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    image: DecorationImage(
-                                      fit: BoxFit.fitWidth,
-                                      image: NetworkImage(
-                                        productsResponse!.data.productImage,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Container(
-                                  height:
-                                      MediaQuery.of(context).size.height * .3,
-                                  width:
-                                      MediaQuery.of(context).size.width * .92,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    image: DecorationImage(
-                                      fit: BoxFit.fitWidth,
-                                      image: FileImage(
-                                        File(productImage!),
-                                      ),
-                                    ),
+                        const SizedBox(height: 16),
+                        _buildSectionCard(
+                          title: "Pricing & Tax",
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: sellingPrice,
+                                    label: selectedProductType == "Rental"
+                                        ? "Rental Price *"
+                                        : "Selling Price *",
+                                    icon: Icons.currency_rupee_outlined,
+                                    keyboardType: TextInputType.number,
+                                    onChanged: (val) => _updateTotalAmount(),
+                                    validator: (val) => val!.isEmpty
+                                        ? (selectedProductType == "Rental"
+                                            ? "Enter Rental Price"
+                                            : "Enter Selling Price")
+                                        : null,
                                   ),
                                 ),
-                        ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Enter Product Name";
-                            }
-                            return null;
-                          },
-                          controller: productName,
-                          decoration: const InputDecoration(
-                            labelText: 'Product Name *',
-                            prefixIcon: Icon(Icons.layers, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          controller: productCode,
-                          decoration: const InputDecoration(
-                            labelText: 'Product Code',
-                            prefixIcon:
-                                Icon(Icons.terminal, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        const SizedBox(height: 14.0),
-                        TextFormField(
-                          controller: category,
-                          readOnly: true,
-                          onTap: (() {
-                            dropDialog(context, "category");
-                          }),
-                          decoration: const InputDecoration(
-                              labelText: 'Category ',
-                              prefixIcon:
-                                  Icon(Icons.category, color: Colors.grey),
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              labelStyle: TextStyle(color: Colors.grey)),
-                        ),
-                        Visibility(
-                          visible: categoryId != "",
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 14.0),
-                            child: TextFormField(
-                              controller: subCategory,
-                              readOnly: true,
-                              onTap: (() {
-                                dropDialog(context, "sub category");
-                              }),
-                              decoration: const InputDecoration(
-                                  labelText: 'Sub Category ',
-                                  prefixIcon:
-                                      Icon(Icons.category, color: Colors.grey),
-                                  border: OutlineInputBorder(),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.grey),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: tax,
+                                    label: "Tax (%)",
+                                    icon: Icons.percent_outlined,
+                                    keyboardType: TextInputType.number,
+                                    onChanged: (val) => _updateTotalAmount(),
                                   ),
-                                  labelStyle: TextStyle(color: Colors.grey)),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          onChanged: (value) {
-                            setState(() {
-                              if (value == "") {
-                                totalAmount.text = "";
-                              }
-                              if (tax.text == "") {
-                                totalAmount.text = sellingPrice.text;
-                              }
-                              double taxVal = double.parse(tax.text);
-                              double val = double.parse(value);
-                              totalAmount.text =
-                                  (val + val * (taxVal / 100)).toString();
-                            });
-                          },
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Enter Selling Price";
-                            }
-                            return null;
-                          },
-                          controller: sellingPrice,
-                          decoration: const InputDecoration(
-                            labelText: 'Selling Price *',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: discount,
+                                    label: "Discount (%)",
+                                    icon: Icons.discount_outlined,
+                                    keyboardType: TextInputType.number,
+                                    onChanged: (val) => _updateTotalAmount(),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: mrp,
+                                    label: "MRP *",
+                                    icon: Icons.price_check_outlined,
+                                    keyboardType: TextInputType.number,
+                                    validator: (val) {
+                                      if (val!.isEmpty) return "Enter MRP";
+                                      double mrpValue =
+                                          double.tryParse(val) ?? 0;
+                                      double totalValue =
+                                          double.tryParse(totalAmount.text) ??
+                                              0;
+                                      if (mrpValue < totalValue) {
+                                        return "MRP < Total Amount";
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          onChanged: ((value) {
-                            setState(() {
-                              if (value == "") {
-                                totalAmount.text = sellingPrice.text;
-                              }
-                              double amt = double.parse(sellingPrice.text);
-                              double val = double.parse(value);
-                              totalAmount.text =
-                                  (amt + amt * (val / 100)).toString();
-                            });
-                          }),
-                          keyboardType: TextInputType.number,
-                          controller: tax,
-                          decoration: const InputDecoration(
-                            labelText: 'Tax in(%)',
-                            prefixIcon:
-                                Icon(Icons.terminal, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                            const SizedBox(height: 16),
+                            _buildTextField(
+                              controller: totalAmount,
+                              label: "Total Amount",
+                              icon: Icons.account_balance_wallet_outlined,
+                              readOnly: true,
+                              fillColor: Colors.grey[100],
                             ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          readOnly: true,
-                          keyboardType: TextInputType.number,
-                          controller: totalAmount,
-                          decoration: const InputDecoration(
-                            labelText: 'Total Amount',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                        const SizedBox(height: 16),
+                        _buildSectionCard(
+                          title: "Other Details",
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: contentId,
+                                    label: "Content ID",
+                                    icon: Icons.badge_outlined,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildDynamicExpiryField(),
+                                ),
+                              ],
                             ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Enter Selling Price";
-                            } else if (double.parse(value) <
-                                double.parse(totalAmount.text)) {
-                              return "MRP should not be lower than the selling price";
-                            } else {
-                              return null;
-                            }
-                          },
-                          onChanged: (value) {
-                            if (double.parse(value) <
-                                double.parse(totalAmount.text)) {
-                              Common.toastMessaage(
-                                  "MRP should not be lower than the selling price",
-                                  Colors.red);
-                            }
-                          },
-                          controller: mrp,
-                          decoration: const InputDecoration(
-                            labelText: 'MRP *',
-                            prefixIcon:
-                                Icon(Icons.currency_rupee, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                            if (selectedProductType == "Service" &&
+                                hasWarranty) ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildSelectField(
+                                      controller: expiryDate,
+                                      label: "Expiry Date",
+                                      icon: Icons.calendar_month,
+                                      onTap: () async {
+                                        DateTime? pickedDate =
+                                            await showDatePicker(
+                                                context: context,
+                                                initialDate: DateTime.now(),
+                                                firstDate: DateTime(2000),
+                                                lastDate: DateTime(2101));
+                                        if (pickedDate != null) {
+                                          setState(() {
+                                            expiryDate.text =
+                                                DateFormat('yyyy-MM-dd')
+                                                    .format(pickedDate);
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: warrantyNumber,
+                                      label: "Warranty Number",
+                                      icon: Icons.numbers,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDropdownField(
+                                label: "Service Cycle",
+                                value: selectedServiceCycle,
+                                items: serviceCycles,
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedServiceCycle = val;
+                                  });
+                                },
+                              ),
+                              if (selectedServiceCycle == "N Days") ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: serviceNoOfDays,
+                                  label: "No of Days",
+                                  icon: Icons.calendar_today,
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ],
+                              if (selectedServiceCycle == "Weekly") ...[
+                                const SizedBox(height: 16),
+                                _buildDropdownField(
+                                  label: "Select Week Day",
+                                  value: selectedWeekDay,
+                                  items: weekDays,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      selectedWeekDay = val;
+                                    });
+                                  },
+                                ),
+                              ],
+                              if (selectedServiceCycle == "Monthly") ...[
+                                const SizedBox(height: 16),
+                                _buildTextField(
+                                  controller: serviceMonthDays,
+                                  label: "No of Days",
+                                  icon: Icons.calendar_today,
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ],
+                              if (selectedServiceCycle == "Yearly") ...[
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: serviceYearDays,
+                                        label: "No of Days",
+                                        icon: Icons.calendar_today,
+                                        keyboardType: TextInputType.number,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildDropdownField(
+                                        label: "Select Month",
+                                        value: selectedYearMonth,
+                                        items: months,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            selectedYearMonth = val;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                            const SizedBox(height: 16),
+                            _buildTextField(
+                              controller: description,
+                              label: "Description",
+                              icon: Icons.description_outlined,
+                              maxLines: 3,
                             ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          controller: contentId,
-                          decoration: const InputDecoration(
-                            labelText: 'Content Id *',
-                            prefixIcon: Icon(Icons.badge, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                        const SizedBox(height: 16),
+                        _buildSectionCard(
+                          title: "Classification",
+                          children: [
+                            _buildSelectField(
+                              controller: category,
+                              label: "Category",
+                              icon: Icons.category_outlined,
+                              onTap: () => dropDialog(context, "category"),
+                              actionWidget: _buildAddButton(() {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProductCategories()),
+                                ).then((value) => getProductCategory());
+                              }),
                             ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
+                            if (categoryId != "") ...[
+                              const SizedBox(height: 16),
+                              _buildSelectField(
+                                controller: subCategory,
+                                label: "Sub Category",
+                                icon: Icons.account_tree_outlined,
+                                onTap: () => dropDialog(context, "sub category"),
+                                actionWidget: _buildAddButton(() {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SubCategories(
+                                        catId: categoryId,
+                                        title: category.text,
+                                      ),
+                                    ),
+                                  ).then((value) => getProductSubCategory());
+                                }),
+                              ),
+                            ],
+                          ],
                         ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value!.isEmpty) {
-                              return "Please Enter Number of Days";
-                            }
-                            return null;
-                          },
-                          controller: noOfDays,
-                          decoration: const InputDecoration(
-                            labelText: 'Validity *',
-                            prefixIcon:
-                                Icon(Icons.calendar_month, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                        const SizedBox(height: 16),
+                        if (selectedProductType == "Service") ...[
+                          _buildPipelineSection(),
+                          const SizedBox(height: 16),
+                        ],
+                        _buildSectionCard(
+                          title: "Stock Management",
+                          children: [
+                            Row(
+                              children: [
+                                Text("Stock",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[700])),
+                                const Spacer(),
+                                Checkbox(
+                                  value: addStock,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      addStock = val!;
+                                      if (!addStock) {
+                                        openingStock.clear();
+                                        currentStock.clear();
+                                        selectedStockStatus = "In Stock";
+                                      }
+                                    });
+                                  },
+                                  activeColor: const Color(0xFF2a86c9),
+                                ),
+                                const Text("Add Stock"),
+                                const SizedBox(width: 12),
+                                Checkbox(
+                                  value: checkStock,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      checkStock = val!;
+                                    });
+                                  },
+                                  activeColor: const Color(0xFF2a86c9),
+                                ),
+                                const Text("Check Stock"),
+                              ],
                             ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
+                            if (addStock) ...[
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: openingStock,
+                                      label: "Opening Stock *",
+                                      icon: Icons.inventory_2_outlined,
+                                      keyboardType: TextInputType.number,
+                                      validator: (val) =>
+                                          addStock && val!.isEmpty
+                                              ? "Enter Opening Stock"
+                                              : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: currentStock,
+                                      label: "Current Stock *",
+                                      icon: Icons.inventory_outlined,
+                                      keyboardType: TextInputType.number,
+                                      validator: (val) =>
+                                          addStock && val!.isEmpty
+                                              ? "Enter Current Stock"
+                                              : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              _buildDropdownField(
+                                label: "Stock Status",
+                                value: selectedStockStatus,
+                                items: [
+                                  "In Stock",
+                                  "Low Stock",
+                                  "Out of Stock"
+                                ],
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedStockStatus = val!;
+                                  });
+                                },
+                              ),
+                            ],
+                          ],
                         ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          keyboardType: TextInputType.number,
-                          controller: remindBefore,
-                          decoration: const InputDecoration(
-                            labelText: 'Days Before Reminder',
-                            prefixIcon:
-                                Icon(Icons.edit_calendar, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
+                        if (selectedProductType == "Service" &&
+                            hasWarranty) ...[
+                          const SizedBox(height: 16),
+                          _buildServiceCountSection(),
+                          const SizedBox(height: 16),
+                          _buildComplaintsSection(),
+                        ],
+                        if (selectedProductType == "Ecommerce" ||
+                            selectedProductType == "Rental") ...[
+                          const SizedBox(height: 16),
+                          _buildPublishSection(),
+                        ],
+                        const SizedBox(height: 16),
+                        _buildSectionCard(
+                          title: "Product Image",
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                selectFile();
+                              },
+                              child: productImage == null
+                                  ? productsResponse!.data.productImage.isEmpty || productsResponse!.data.productImage == "null"
+                                    ? Container(
+                                        height: 180,
+                                        width: double.infinity,
+                                        color: Colors.grey[200],
+                                        child: const Icon(Icons.image_not_supported_outlined, size: 50, color: Colors.grey),
+                                      )
+                                    : Container(
+                                        height: 180,
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(12),
+                                          image: DecorationImage(
+                                            fit: BoxFit.cover,
+                                            image: NetworkImage(
+                                              productsResponse!.data.productImage,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                : Container(
+                                    height: 180,
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      image: DecorationImage(
+                                        fit: BoxFit.cover,
+                                        image: FileImage(
+                                          File(productImage!),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                             ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
+                          ],
                         ),
-                        const SizedBox(
-                          height: 14,
-                        ),
-                        TextFormField(
-                          maxLines: 3,
-                          controller: description,
-                          decoration: const InputDecoration(
-                            labelText: 'Description',
-                            prefixIcon:
-                                Icon(Icons.description, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        const SizedBox(height: 20.0),
+                        const SizedBox(height: 32),
                         Container(
-                          height: 40,
-                          width: double.maxFinite,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF3375e0),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          height: 54,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF2a86c9), Color(0xFF406dbe)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF2a86c9).withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: RawMaterialButton(
                             onPressed: () {
                               if (formKey.currentState!.validate()) {
-                                Common.showProgressDialog(context, "Loading..");
+                                Common.showProgressDialog(
+                                    context, "Updating Product...");
                                 updateProduct();
+                              } else {
+                                Common.toastMessaage(
+                                    "Please complete all required fields",
+                                    Colors.red);
                               }
                             },
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             child: const Text(
-                              "Update",
-                              style: TextStyle(color: Colors.white),
+                              "UPDATE PRODUCT",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
                             ),
                           ),
-                        )
+                        ),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
+    );
+  }
+
+  void _updateTotalAmount() {
+    double selling = double.tryParse(sellingPrice.text) ?? 0;
+    double taxVal = double.tryParse(tax.text) ?? 0;
+    double discVal = double.tryParse(discount.text) ?? 0;
+
+    double total =
+        (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
+    setState(() {
+      totalAmount.text = total.roundToDouble().toString();
+    });
+  }
+
+  Widget _buildLabel(String label) {
+    bool hasAsterisk = label.contains('*');
+    String cleanLabel = label.replaceAll('*', '').trim();
+
+    return RichText(
+      text: TextSpan(
+        text: cleanLabel,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey[700],
+        ),
+        children: [
+          if (hasAsterisk)
+            const TextSpan(
+              text: ' *',
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 16,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicExpiryField() {
+    if (selectedProductType == "Service") {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 0.0, bottom: 8.0),
+            child: _buildLabel("Warranty *"),
+          ),
+          Row(
+            children: [
+              Radio<bool>(
+                value: true,
+                groupValue: hasWarranty,
+                onChanged: (val) => setState(() => hasWarranty = val!),
+                activeColor: const Color(0xFF2a86c9),
+              ),
+              const Text("Yes", style: TextStyle(fontSize: 14)),
+              const SizedBox(width: 16),
+              Radio<bool>(
+                value: false,
+                groupValue: hasWarranty,
+                onChanged: (val) => setState(() => hasWarranty = val!),
+                activeColor: const Color(0xFF2a86c9),
+              ),
+              const Text("No", style: TextStyle(fontSize: 14)),
+            ],
+          ),
+        ],
+      );
+    } else if (selectedProductType == "Ecommerce" ||
+        selectedProductType == "Material" ||
+        selectedProductType == "Rental") {
+      return _buildTextField(
+        controller: unitController,
+        label: "Unit",
+        icon: Icons.scale_outlined,
+        actionWidget: _buildAddButton(() {
+          Common.toastMessaage("Quick Add Unit", Colors.green);
+        }),
+      );
+    } else {
+      return _buildTextField(
+        controller: expiryDays,
+        label: "Expiry Days",
+        icon: Icons.event_busy_outlined,
+        keyboardType: TextInputType.number,
+      );
+    }
+  }
+
+  Widget _buildPipelineSection() {
+    return _buildSectionCard(
+      title: "Add Pipeline",
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: pipelineControllers.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: _buildTextField(
+                controller: pipelineControllers[index],
+                label: "Pipeline Name *",
+                icon: Icons.linear_scale,
+                validator: (val) => val!.isEmpty ? "Enter Pipeline Name" : null,
+                actionWidget: index == 0
+                    ? _buildActionButton(Icons.add, const Color(0xFF26A69A),
+                        () {
+                        setState(() {
+                          pipelineControllers.add(TextEditingController());
+                        });
+                      })
+                    : _buildActionButton(
+                        Icons.delete_outline, const Color(0xFFEF5350), () {
+                        setState(() {
+                          pipelineControllers.removeAt(index);
+                        });
+                      }),
+              ),
+            );
+          },
+        )
+      ],
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        width: 50,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildPublishSection() {
+    return _buildSectionCard(
+      title: "Publish",
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Checkbox(
+            value: addPublish,
+            onChanged: (val) {
+              setState(() {
+                addPublish = val!;
+              });
+            },
+            activeColor: const Color(0xFF2a86c9),
+          ),
+          const Text("Add Publish",
+              style: TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+      children: [
+        if (addPublish) ...[
+          _buildDropdownField(
+            label: "Status",
+            value: selectedStatus,
+            items: ["Published", "Draft"],
+            onChanged: (val) {
+              setState(() {
+                selectedStatus = val!;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildDropdownField(
+            label: "Visibility",
+            value: selectedVisibility,
+            items: ["Public", "Private"],
+            onChanged: (val) {
+              setState(() {
+                selectedVisibility = val!;
+              });
+            },
+          ),
+        ]
+      ],
+    );
+  }
+
+  Widget _buildSectionCard(
+      {required String title,
+      required List<Widget> children,
+      Widget? trailing}) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
+                  ),
+                ),
+                if (trailing != null) trailing,
+              ],
+            ),
+            const Divider(height: 24),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    bool readOnly = false,
+    Color? fillColor,
+    ValueChanged<String>? onChanged,
+    FormFieldValidator<String>? validator,
+    Widget? actionWidget,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                keyboardType: keyboardType,
+                maxLines: maxLines,
+                readOnly: readOnly,
+                onChanged: onChanged,
+                validator: validator,
+                decoration: InputDecoration(
+                  hintText: label.replaceAll('*', '').trim(),
+                  prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+                  filled: fillColor != null,
+                  fillColor: fillColor,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                  ),
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            if (actionWidget != null) ...[
+              const SizedBox(width: 8),
+              actionWidget,
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownField({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+    FormFieldValidator<String>? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
+          onChanged: onChanged,
+          validator: validator,
+          decoration: InputDecoration(
+            hintText: label.replaceAll('*', '').trim(),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 2),
+            ),
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+    FormFieldValidator<String>? validator,
+    Widget? actionWidget,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                readOnly: true,
+                onTap: onTap,
+                validator: validator,
+                decoration: InputDecoration(
+                  hintText: label.replaceAll('*', '').trim(),
+                  prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+                  suffixIcon: const Icon(Icons.arrow_drop_down),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                  ),
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            if (actionWidget != null) ...[
+              const SizedBox(width: 8),
+              actionWidget,
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddButton(VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        width: 50,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF2a86c9), Color(0xFF406dbe)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 
@@ -585,8 +1338,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
                   ],
                 ),
                 content: SizedBox(
-                  height: MediaQuery.of(context).size.height * .32,
-                  width: MediaQuery.of(context).size.height * .8,
+                  height: MediaQuery.of(context).size.height * .4,
+                  width: MediaQuery.of(context).size.width * .7,
                   child: ListView.builder(
                     shrinkWrap: true,
                     itemCount: title == "category"
@@ -704,4 +1457,147 @@ class _UpdateProductsState extends State<UpdateProducts> {
       }),
     );
   }
+
+  Widget _buildServiceCountSection() {
+    return _buildSectionCard(
+      title: "Service Count",
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                controller: freeService,
+                label: "Free Service",
+                icon: Icons.sync,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildTextField(
+                controller: paidService,
+                label: "Paid Service",
+                icon: Icons.payments_outlined,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildComplaintsSection() {
+    return _buildSectionCard(
+      title: "Add Complaints",
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: complaintControllers.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () => _showComplaintTypeDialog(index),
+                    child: Container(
+                      height: 50,
+                      width: 100, // Fixed width for the type box
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        selectedComplaintTypes[index] ?? "Type",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: complaintControllers[index],
+                      decoration: InputDecoration(
+                        hintText: "Enter Remarks",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                              color: Color(0xFF2a86c9), width: 2),
+                        ),
+                        hintStyle:
+                            TextStyle(color: Colors.grey[400], fontSize: 14),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  index == 0
+                      ? _buildActionButton(Icons.add, const Color(0xFF26A69A),
+                          () {
+                          setState(() {
+                            complaintControllers.add(TextEditingController());
+                            selectedComplaintTypes.add("Complaint Type");
+                          });
+                        })
+                      : _buildActionButton(
+                          Icons.delete_outline, const Color(0xFFEF5350), () {
+                          setState(() {
+                            complaintControllers.removeAt(index);
+                            selectedComplaintTypes.removeAt(index);
+                          });
+                        }),
+                ],
+              ),
+            );
+          },
+        )
+      ],
+    );
+  }
+
+  void _showComplaintTypeDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select Complaint Type"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: complaintTypeOptions.length,
+              itemBuilder: (context, i) {
+                return ListTile(
+                  title: Text(complaintTypeOptions[i]),
+                  onTap: () {
+                    setState(() {
+                      selectedComplaintTypes[index] = complaintTypeOptions[i];
+                    });
+                    Navigator.pop(context);
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
+

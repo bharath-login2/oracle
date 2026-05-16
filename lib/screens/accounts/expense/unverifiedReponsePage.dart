@@ -26,8 +26,8 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
   String? _year;
   String? _status;
   bool _isFiltered = false;
-  final Color _primaryColor = const Color.fromARGB(255, 41, 133, 219); 
-  final Color _accentColor = const Color(0xFF3B82F6); 
+  final Color _primaryColor = const Color.fromARGB(255, 41, 133, 219);
+  final Color _accentColor = const Color(0xFF3B82F6);
   final Color _backgroundColor = const Color(0xFFF8FAFC);
   final Color _cardColor = Colors.white;
 
@@ -50,7 +50,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
         });
         _refreshData();
       }
-      setState(() {}); 
+      setState(() {});
     });
     _transactionsFuture = _fetchTransactions();
   }
@@ -121,7 +121,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
             color: Colors.white,
           ),
         ),
-       // centerTitle: true,
+        // centerTitle: true,
         backgroundColor: _primaryColor,
         elevation: 0,
         foregroundColor: Colors.white,
@@ -381,7 +381,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final receipt = receipts[index];
-        return _buildReceiptCard(receipt);
+        return _buildReceiptCard(receipt, title: title);
       },
     );
   }
@@ -397,7 +397,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final expense = expenses[index];
-        return _buildExpenseCard(expense);
+        return _buildExpenseCard(expense, title: title);
       },
     );
   }
@@ -442,7 +442,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
     );
   }
 
-  Widget _buildReceiptCard(dynamic receipt) {
+  Widget _buildReceiptCard(dynamic receipt, {required String title}) {
     return Container(
       decoration: BoxDecoration(
         color: _cardColor,
@@ -556,9 +556,106 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       icon: Icons.person_outline_rounded,
                       label: receipt.staffName,
                     ),
-                    _buildInfoChip(
-                      icon: Icons.create_rounded,
-                      label: 'By ${receipt.createdName}',
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.create_rounded,
+                          label: 'By ${receipt.createdName}',
+                        ),
+                        const Spacer(),
+                        if (title == "Verified Receipt" ||
+                            title == "Verified Expense" ||
+                            title == "Verified Salary")
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _showRevertConfirmationDialog(receipt,
+                                      title: title);
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.arrow_upward,
+                                          color: Colors.white, size: 18),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        "Revert",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _showVerifyConfirmationDialog(receipt,
+                                      title: title);
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.verified_outlined,
+                                          color: Colors.white, size: 18),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        "Verify",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -570,7 +667,230 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
     );
   }
 
-  Widget _buildExpenseCard(dynamic expense) {
+  void _showVerifyConfirmationDialog(dynamic item, {String? title}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.verified_outlined,
+                    color: Colors.green, size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Verify Receipt",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Are you sure you want to verify this receipt?",
+                style: TextStyle(fontSize: 15),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _verifyReceipt(item, title: title);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+              child: const Text("Yes, Verify"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showRevertConfirmationDialog(dynamic item, {String? title}) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child:
+                    const Icon(Icons.arrow_upward, color: Colors.red, size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Revert Receipt",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Are you sure you want to revert this receipt?",
+                style: TextStyle(fontSize: 15),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _verifyReceipt(item, title: title, isRevert: true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                elevation: 0,
+              ),
+              child: const Text("Yes, Revert"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _verifyReceipt(dynamic receipt,
+      {String? title, bool isRevert = false}) async {
+    final String id;
+    if (title?.toLowerCase().contains('expense') ?? false) {
+      id = receipt.cmpnyExId.toString();
+    } else {
+      id = receipt.id.toString();
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text("${isRevert ? 'Reverting' : 'Verifying'} transaction..."),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final response =
+          await HttpService.verifyReceipt(id, title: title, isRevert: isRevert);
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      if (response != null && response['status'] == true) {
+        _refreshData();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                "Transaction ${isRevert ? 'reverted' : 'verified'} successfully"),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response?['message'] ??
+                "${isRevert ? 'Reversion' : 'Verification'} failed"),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: ${e.toString()}"),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Widget _buildExpenseCard(dynamic expense, {required String title}) {
     return Container(
       decoration: BoxDecoration(
         color: _cardColor,
@@ -615,7 +935,6 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          
                           Text(
                             expense.expCatName,
                             style: TextStyle(
@@ -624,18 +943,17 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                            const SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             expense.toAccountPerson,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
-                            color: Color.fromARGB(255, 204, 191, 191),
+                              color: Color.fromARGB(255, 204, 191, 191),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        
                         ],
                       ),
                     ),
@@ -701,9 +1019,106 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       icon: Icons.account_circle_outlined,
                       label: expense.fromAccountPerson,
                     ),
-                    _buildInfoChip(
-                      icon: Icons.person_outline_rounded,
-                      label: 'By ${expense.staffName}',
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.person_outline_rounded,
+                          label: 'By ${expense.staffName}',
+                        ),
+                        const Spacer(),
+                        if (title == "Verified Receipt" ||
+                            title == "Verified Expense" ||
+                            title == "Verified Salary")
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _showRevertConfirmationDialog(expense,
+                                      title: title);
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.arrow_upward,
+                                          color: Colors.white, size: 18),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        "Revert",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  _showVerifyConfirmationDialog(expense,
+                                      title: title);
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.verified_outlined,
+                                          color: Colors.white, size: 18),
+                                      const SizedBox(width: 6),
+                                      const Text(
+                                        "Verify",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -825,14 +1240,64 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       icon: Icons.verified_user_outlined,
                       label: 'Verified by: ${salary.verifiedByName}',
                     ),
-                    salary.lopDays !=""?
-                      _buildInfoChip(
-                      icon: Icons.location_searching_sharp,
-                      label: 'LOP: ${salary.lopDays}',
-                    ):SizedBox(),
-                    _buildInfoChip(
-                      icon: Icons.calendar_today_outlined,
-                      label: 'Created: ${salary.createdAt.split(' ')[0]}',
+                    salary.lopDays != ""
+                        ? _buildInfoChip(
+                            icon: Icons.location_searching_sharp,
+                            label: 'LOP: ${salary.lopDays}',
+                          )
+                        : SizedBox(),
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.calendar_today_outlined,
+                          label: 'Created: ${salary.createdAt.split(' ')[0]}',
+                        ),
+                        const Spacer(),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                _showRevertConfirmationDialog(salary,
+                                    title: 'Verified Salary');
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.arrow_upward,
+                                        color: Colors.white, size: 18),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      "Revert",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
                     ),
                   ],
                 ),
@@ -986,7 +1451,10 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                     ],
                   ),
                   const SizedBox(height: 20),
-                  if (tabIndex == 0 || tabIndex == 1 || tabIndex == 2 || tabIndex == 3) ...[
+                  if (tabIndex == 0 ||
+                      tabIndex == 1 ||
+                      tabIndex == 2 ||
+                      tabIndex == 3) ...[
                     Row(
                       children: [
                         Expanded(
@@ -1054,23 +1522,33 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                         builder: (context, snapshot) {
                           String? staffName;
                           if (snapshot.hasData) {
-                            final staffs = (snapshot.data as dynamic).data as List<dynamic>;
-                            final selectedStaff = staffs.where((e) => e.staffId.toString() == _createdBy).toList();
-                            if (selectedStaff.isNotEmpty) staffName = selectedStaff.first.staffName;
+                            final staffs = (snapshot.data as dynamic).data
+                                as List<dynamic>;
+                            final selectedStaff = staffs
+                                .where((e) => e.userId.toString() == _createdBy)
+                                .toList();
+                            if (selectedStaff.isNotEmpty)
+                              staffName = selectedStaff.first.staffName;
                           }
                           return InkWell(
                             onTap: () {
                               if (snapshot.hasData) {
-                                final staffs = (snapshot.data as dynamic).data as List<dynamic>;
+                                final staffs = (snapshot.data as dynamic).data
+                                    as List<dynamic>;
                                 _showSearchableSelection(
-                                  context: context,
-                                  title: 'Select Staff',
-                                  items: staffs.map<Map<String, String>>((e) => {'id': e.staffId.toString(), 'name': e.staffName}).toList(),
-                                  onSelect: (val) {
-                                    setModalState(() => _createdBy = val['id']);
-                                    setState(() {});
-                                  }
-                                );
+                                    context: context,
+                                    title: 'Select Staff',
+                                    items: staffs
+                                        .map<Map<String, String>>((e) => {
+                                              'id': e.userId.toString(),
+                                              'name': e.staffName
+                                            })
+                                        .toList(),
+                                    onSelect: (val) {
+                                      setModalState(
+                                          () => _createdBy = val['id']);
+                                      setState(() {});
+                                    });
                               }
                             },
                             child: InputDecorator(
@@ -1079,7 +1557,8 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                                   isDense: true,
                                   border: OutlineInputBorder()),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(staffName ?? '--select--',
                                       style: TextStyle(
@@ -1098,23 +1577,35 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                         builder: (context, snapshot) {
                           String? headName;
                           if (snapshot.hasData) {
-                            final heads = (snapshot.data as dynamic).data.lists as List<dynamic>;
-                            final selectedHead = heads.where((e) => e.accountId.toString() == _accountHead).toList();
-                            if (selectedHead.isNotEmpty) headName = selectedHead.first.accountName;
+                            final heads = (snapshot.data as dynamic).data.lists
+                                as List<dynamic>;
+                            final selectedHead = heads
+                                .where((e) =>
+                                    e.accountId.toString() == _accountHead)
+                                .toList();
+                            if (selectedHead.isNotEmpty)
+                              headName = selectedHead.first.accountName;
                           }
                           return InkWell(
                             onTap: () {
                               if (snapshot.hasData) {
-                                final heads = (snapshot.data as dynamic).data.lists as List<dynamic>;
+                                final heads = (snapshot.data as dynamic)
+                                    .data
+                                    .lists as List<dynamic>;
                                 _showSearchableSelection(
-                                  context: context,
-                                  title: 'Select Account Head',
-                                  items: heads.map<Map<String, String>>((e) => {'id': e.accountId.toString(), 'name': e.accountName}).toList(),
-                                  onSelect: (val) {
-                                    setModalState(() => _accountHead = val['id']);
-                                    setState(() {});
-                                  }
-                                );
+                                    context: context,
+                                    title: 'Select Account Head',
+                                    items: heads
+                                        .map<Map<String, String>>((e) => {
+                                              'id': e.accountId.toString(),
+                                              'name': e.accountName
+                                            })
+                                        .toList(),
+                                    onSelect: (val) {
+                                      setModalState(
+                                          () => _accountHead = val['id']);
+                                      setState(() {});
+                                    });
                               }
                             },
                             child: InputDecorator(
@@ -1123,7 +1614,8 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                                   isDense: true,
                                   border: OutlineInputBorder()),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(headName ?? '--select--',
                                       style: TextStyle(
@@ -1183,9 +1675,8 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                             hint: const Text('--select--'),
                             items: List.generate(
                                     10,
-                                    (index) =>
-                                        (DateTime.now().year - 5 + index)
-                                            .toString())
+                                    (index) => (DateTime.now().year - 5 + index)
+                                        .toString())
                                 .map((e) =>
                                     DropdownMenuItem(value: e, child: Text(e)))
                                 .toList(),
@@ -1206,8 +1697,8 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       value: _status,
                       hint: const Text('--select--'),
                       items: ['Active', 'Inactive']
-                          .map((e) =>
-                              DropdownMenuItem(value: e, child: Text(e)))
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
                           .toList(),
                       onChanged: (val) {
                         setModalState(() => _status = val);
@@ -1243,7 +1734,8 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                           style: ElevatedButton.styleFrom(
                               backgroundColor: _primaryColor,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12)),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12)),
                           onPressed: () {
                             setState(() {
                               _isFiltered = true;
@@ -1355,7 +1847,6 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
     _tabController.dispose();
     super.dispose();
   }
-
 }
 
 class _DetailsModal extends StatelessWidget {
@@ -1495,6 +1986,4 @@ class _DetailsModal extends StatelessWidget {
       ),
     );
   }
-
 }
-

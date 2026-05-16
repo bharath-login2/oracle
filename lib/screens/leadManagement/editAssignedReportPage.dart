@@ -116,8 +116,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
     log("- Project ID: ${widget.assignedWork.projectId}");
     log("- Project Name: ${widget.assignedWork.projectName}");
     log("- Module Name: ${widget.assignedWork.moduleName}");
-    log("- Task ID: ${widget.assignedWork.taskId}"); 
-    // log("- Title: ${widget.assignedWork.title}"); 
+    log("- Task ID: ${widget.assignedWork.taskId}");
+    // log("- Title: ${widget.assignedWork.title}");
   }
 
   void _initializeData() {
@@ -126,7 +126,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
     selectedProjectId = work.projectId.toString();
     selectedProjectName = work.projectName;
     selectedProjectController.text = work.projectName;
-    selectedTitleId = ''; 
+    selectedTitleId = '';
     titleController.text = work.moduleName ?? '';
     log("🔍 Initializing Title Data:");
     log("- Module Name from API: ${work.moduleName}");
@@ -135,12 +135,12 @@ class _EditWorkPageState extends State<EditWorkPage> {
     for (var i = 0; i < work.workSessions.length; i++) {
       var session = work.workSessions[i];
       log("  - Session $i: ${session.taskName}");
-      log("    Task ID: ${session.taskId}"); 
+      log("    Task ID: ${session.taskId}");
     }
 
     if (work.dueDate.isNotEmpty) {
       try {
-        final parsedDate = DateFormat('yyyy-MM-dd').parse(work.dueDate);
+        final parsedDate = DateFormat('dd-MM-yyyy').parse(work.dueDate);
         dueDate = parsedDate;
       } catch (e) {
         try {
@@ -288,11 +288,11 @@ class _EditWorkPageState extends State<EditWorkPage> {
         return '1';
       case 'in progress':
       case 'in-progress':
-        return '2';
-      case 'pending':
-        return '3';
-      case 'completed':
         return '4';
+      case 'pending':
+        return '2';
+      case 'completed':
+        return '3';
       default:
         return '1';
     }
@@ -1111,8 +1111,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                               final picked =
                                                   await showDatePicker(
                                                 context: context,
-                                                initialDate:
-                                                    dueDate ?? DateTime.now(),
+                                                initialDate: dueDate ??
+                                                    DateTime
+                                                        .now(), // dueDate comes from widget.assignedWork
                                                 firstDate: DateTime(2022),
                                                 lastDate: DateTime(2100),
                                               );
@@ -1145,7 +1146,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                                       dueDate != null
                                                           ? DateFormat(
                                                                   'dd-MM-yyyy')
-                                                              .format(dueDate!)
+                                                              .format(
+                                                                  dueDate!) // Shows existing due date
                                                           : 'Select',
                                                       style: TextStyle(
                                                         color: dueDate != null
@@ -1161,6 +1163,75 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                         ],
                                       ),
                                     ),
+                                    // Expanded(
+                                    //   child: Column(
+                                    //     crossAxisAlignment:
+                                    //         CrossAxisAlignment.start,
+                                    //     children: [
+                                    //       Text(
+                                    //         'Due Date',
+                                    //         style: TextStyle(
+                                    //           fontSize: 14,
+                                    //           fontWeight: FontWeight.w500,
+                                    //           color: Colors.grey[700],
+                                    //         ),
+                                    //       ),
+                                    //       const SizedBox(height: 6),
+                                    //       GestureDetector(
+                                    //         onTap: () async {
+                                    //           final picked =
+                                    //               await showDatePicker(
+                                    //             context: context,
+                                    //             initialDate:
+                                    //                 dueDate ?? DateTime.now(),
+                                    //             firstDate: DateTime(2022),
+                                    //             lastDate: DateTime(2100),
+                                    //           );
+                                    //           if (picked != null) {
+                                    //             setState(() {
+                                    //               dueDate = picked;
+                                    //               _checkForChanges();
+                                    //             });
+                                    //           }
+                                    //         },
+                                    //         child: Container(
+                                    //           padding: const EdgeInsets.all(14),
+                                    //           decoration: BoxDecoration(
+                                    //             border: Border.all(
+                                    //                 color:
+                                    //                     Colors.grey.shade300),
+                                    //             borderRadius:
+                                    //                 BorderRadius.circular(8),
+                                    //           ),
+                                    //           child: Row(
+                                    //             children: [
+                                    //               Icon(
+                                    //                 Icons.calendar_today,
+                                    //                 size: 20,
+                                    //                 color: Colors.grey[600],
+                                    //               ),
+                                    //               const SizedBox(width: 12),
+                                    //               Expanded(
+                                    //                 child: Text(
+                                    //                   dueDate != null
+                                    //                       ? DateFormat(
+                                    //                               'dd-MM-yyyy')
+                                    //                           .format(dueDate!)
+                                    //                       : 'Select',
+                                    //                   style: TextStyle(
+                                    //                     color: dueDate != null
+                                    //                         ? Colors.grey[800]
+                                    //                         : Colors.grey[500],
+                                    //                   ),
+                                    //                 ),
+                                    //               ),
+                                    //             ],
+                                    //           ),
+                                    //         ),
+                                    //       ),
+                                    //     ],
+                                    //   ),
+                                    // ),
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
@@ -1708,13 +1779,14 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                                                 );
                                                               }).toList()
                                                             : [],
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            tasks[taskIndex]
-                                                                .status = value;
-                                                            _checkForChanges();
-                                                          });
-                                                        },
+                                                        // onChanged: (value) {
+                                                        //   setState(() {
+                                                        //     tasks[taskIndex]
+                                                          //         .status = value;
+                                                        //     _checkForChanges();
+                                                        //   });
+                                                        // },
+                                                           onChanged: null,
                                                         decoration:
                                                             const InputDecoration(
                                                           contentPadding:

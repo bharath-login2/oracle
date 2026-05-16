@@ -601,7 +601,14 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                      Common.saveSharedPref("customerAddPermission",
                   object1.data!.customerAddPermission.toString());
                      Common.saveSharedPref("customerAddInvoicePermission",
+                     
                   object1.data!.customerAddInvoicePermission.toString());
+                  
+                   Common.saveSharedPref("viewLeadCategoryOnly",
+                  object1.data!.viewLeadCategoryOnly.toString());
+
+                  Common.saveSharedPref("viewAllCategory",
+                  object1.data!.viewAllCategory.toString());
               // Common.saveSharedPref("callLogPermission", 'false');
               //  Common.saveSharedPref(
               //  "callLogPermission", 'true');

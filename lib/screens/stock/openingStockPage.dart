@@ -5,6 +5,7 @@ import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/getOpeningModel.dart' as history;
 import 'package:login2/models/rental/rentalLocationModel.dart';
 import 'package:login2/models/stock/opening_stock_model.dart';
+import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/service/service.dart';
 
 class OpeningStockPage extends StatefulWidget {
@@ -995,14 +996,51 @@ class _OpeningStockPageState extends State<OpeningStockPage>
               ),
             ],
           ),
+          // const SizedBox(height: 16),
+          // _buildClickableField(
+          //   label: "Product",
+          //   value: "Select a product to add",
+          //   icon: Icons.inventory_2_outlined,
+          //   onTap: () => _showProductPicker(),
+          //   isHighlight: true,
+          // ),
           const SizedBox(height: 16),
-          _buildClickableField(
-            label: "Product",
-            value: "Select a product to add",
-            icon: Icons.inventory_2_outlined,
-            onTap: () => _showProductPicker(),
-            isHighlight: true,
-          ),
+Row(
+  crossAxisAlignment: CrossAxisAlignment.center,
+  children: [
+    Expanded(
+      child: _buildClickableField(
+        label: "Product",
+        value: "Select a product to add",
+        icon: Icons.inventory_2_outlined,
+        onTap: () => _showProductPicker(),
+        isHighlight: true,
+      ),
+    ),
+    const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2a86c9).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AddProducts(),
+                              ),
+                            );
+                            // if (result == true) {
+                            //   await _fetchStockRegister();
+                            //   setModalState(() {});
+                            // }
+                          },
+                          icon: const Icon(Icons.add, color: Color(0xFF2a86c9)),
+                        ),
+                      ),
+  ],
+),
         ],
       ),
     );

@@ -55,12 +55,43 @@ class _AddProductsState extends State<AddProducts> {
   List<String> productTypeList = [];
   String? selectedProductType;
   String? selectedServiceCycle;
+  String? selectedWeekDay;
+  String? selectedYearMonth;
+  TextEditingController serviceNoOfDays = TextEditingController();
+  TextEditingController serviceMonthDays = TextEditingController();
+  TextEditingController serviceYearDays = TextEditingController();
+
   List<String> serviceCycles = [
     "Daily",
     "N Days",
     "Weekly",
     "Monthly",
     "Yearly"
+  ];
+
+  List<String> weekDays = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
+  ];
+
+  List<String> months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
   ];
 
   String? productImage;
@@ -166,6 +197,11 @@ class _AddProductsState extends State<AddProducts> {
       serviceCycle: selectedServiceCycle,
       freeService: freeService.text,
       paidService: paidService.text,
+      serviceNoOfDays: serviceNoOfDays.text,
+      serviceWeeks: selectedWeekDay,
+      serviceMonthDays: serviceMonthDays.text,
+      serviceYearDays: serviceYearDays.text,
+      serviceYearMonth: selectedYearMonth,
       complaints: List.generate(complaintControllers.length, (index) {
         return {
           "type": selectedComplaintTypes[index],
@@ -449,6 +485,65 @@ class _AddProductsState extends State<AddProducts> {
                             });
                           },
                         ),
+                        if (selectedServiceCycle == "N Days") ...[
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            controller: serviceNoOfDays,
+                            label: "No of Days",
+                            icon: Icons.calendar_today,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ],
+                        if (selectedServiceCycle == "Weekly") ...[
+                          const SizedBox(height: 16),
+                          _buildDropdownField(
+                            label: "Select Week Day",
+                            value: selectedWeekDay,
+                            items: weekDays,
+                            onChanged: (val) {
+                              setState(() {
+                                selectedWeekDay = val;
+                              });
+                            },
+                          ),
+                        ],
+                        if (selectedServiceCycle == "Monthly") ...[
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            controller: serviceMonthDays,
+                            label: "No of Days",
+                            icon: Icons.calendar_today,
+                            keyboardType: TextInputType.number,
+                          ),
+                        ],
+                        if (selectedServiceCycle == "Yearly") ...[
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: serviceYearDays,
+                                  label: "No of Days",
+                                  icon: Icons.calendar_today,
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildDropdownField(
+                                  label: "Select Month",
+                                  value: selectedYearMonth,
+                                  items: months,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      selectedYearMonth = val;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -465,11 +560,11 @@ class _AddProductsState extends State<AddProducts> {
                     children: [
                       _buildSelectField(
                         controller: category,
-                        label: "Category *",
+                        label: "Category",
                         icon: Icons.category_outlined,
                         onTap: () => dropDialog(context, "category"),
-                        validator: (val) =>
-                            val!.isEmpty ? "Select Category" : null,
+                        // validator: (val) =>
+                        //     val!.isEmpty ? "Select Category" : null,
                         actionWidget: _buildAddButton(() {
                           Navigator.push(
                             context,
@@ -483,11 +578,11 @@ class _AddProductsState extends State<AddProducts> {
                         const SizedBox(height: 16),
                         _buildSelectField(
                           controller: subCategory,
-                          label: "Sub Category *",
+                          label: "Sub Category",
                           icon: Icons.account_tree_outlined,
                           onTap: () => dropDialog(context, "sub category"),
-                          validator: (val) =>
-                              val!.isEmpty ? "Select Sub Category" : null,
+                          // validator: (val) =>
+                          //     val!.isEmpty ? "Select Sub Category" : null,
                           actionWidget: _buildAddButton(() {
                             Navigator.push(
                               context,

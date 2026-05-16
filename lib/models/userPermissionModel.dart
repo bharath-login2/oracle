@@ -114,6 +114,8 @@ class Data {
   String? createInstallment;
   String? customerAddPermission;
   String? customerAddInvoicePermission;
+  String? viewLeadCategoryOnly;
+  String? viewAllCategory;
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
@@ -206,6 +208,8 @@ class Data {
     this.createInstallment,
     this.customerAddPermission,
     this.customerAddInvoicePermission,
+    this.viewLeadCategoryOnly,
+    this.viewAllCategory,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -300,6 +304,8 @@ class Data {
     createInstallment = json['createInstallment'];
     customerAddPermission = json['customerAddPermission'];
     customerAddInvoicePermission = json['customerAddInvoicePermission'];
+    viewLeadCategoryOnly = json['viewLeadCategoryOnly'];
+    viewAllCategory = json['viewAllCategory'];
   }
 
   Map<String, dynamic> toJson() {
@@ -390,6 +396,8 @@ class Data {
     data['createInstallment'] = createInstallment;
     data['customerAddPermission'] = customerAddPermission;
     data['customerAddInvoicePermission'] = customerAddInvoicePermission;
+    data['viewLeadCategoryOnly'] = viewLeadCategoryOnly;
+    data['viewAllCategory'] = viewAllCategory;
     return data;
   }
 }

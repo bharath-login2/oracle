@@ -44,7 +44,7 @@ class AssignReport extends StatefulWidget {
 
 class _AssignReportState extends State<AssignReport> {
   late String currentDate;
-  late Future<List<AssignedWork>> assignedWorkFuture;
+  Future<List<AssignedWork>> assignedWorkFuture = Future.value(<AssignedWork>[]);
   Map<String, dynamic> currentFilters = {};
   Map<String, bool> _expandedDescriptions = {};
   Map<String, bool> _expandedRemarks = {};

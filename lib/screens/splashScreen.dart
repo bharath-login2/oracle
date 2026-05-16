@@ -127,7 +127,23 @@ class _SplashScreenState extends State<SplashScreen> {
     print("[INIT] SplashScreen: getData start");
     getData();
     _updateSelectedDashboard();
+    _checkInitialDeepLink();
     log('[DEEPLINK] SplashScreen: initState completed');
+  }
+
+  Future<void> _checkInitialDeepLink() async {
+    try {
+      log('[DEEPLINK] SplashScreen: Checking for initial app link');
+      final initialLink = await DeepLinkHandler().getInitialAppLink();
+      if (initialLink != null) {
+        log('[DEEPLINK] SplashScreen: Initial link captured: $initialLink');
+        await DeepLinkHandler().handleAppLink(initialLink);
+      } else {
+        log('[DEEPLINK] SplashScreen: No initial link found');
+      }
+    } catch (e) {
+      log('[DEEPLINK] SplashScreen ERROR: _checkInitialDeepLink: $e');
+    }
   }
 
   Future<void> _updateSelectedDashboard() async {
@@ -285,13 +301,13 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     if (mounted) {
-      Navigator.of(context)
-          .pushAndRemoveUntil(
+      Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => dashboardToOpen),
         (route) => false,
-      )
-          .then((_) {
-        // After transition to dashboard, handle any pending deep links
+      );
+
+      // Handle pending deep links after a short delay to ensure dashboard is ready
+      Future.delayed(const Duration(milliseconds: 800), () {
         DeepLinkHandler().checkAndHandlePendingDeepLink();
       });
     }
