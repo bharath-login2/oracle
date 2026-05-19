@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/getAttendanceReportModel.dart';
 import 'package:login2/service/service.dart';
 
@@ -27,16 +28,26 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
   late Future<GetAttendanceReportModel?> reportFuture;
   late String _fromDate;
   late String _toDate;
-
+  late TextEditingController _remarkController;
+  bool _isSubmittingRemark = false;
   @override
   void initState() {
     super.initState();
     _fromDate = widget.fromDate;
     _toDate = widget.toDate;
+    _remarkController = TextEditingController();
     _loadData();
   }
 
-  void _loadData() {
+  String? addAttendanceRemarks;
+  @override
+  void dispose() {
+    _remarkController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    addAttendanceRemarks = await Common.getSharedPref("addAttendanceRemarks");
     setState(() {
       reportFuture = HttpService.getAttendanceReport(
         _fromDate,
@@ -64,6 +75,117 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
       });
     }
   }
+
+  Future<void> _submitRemark(ListData item) async {
+    if (_remarkController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please enter a remark"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmittingRemark = true;
+    });
+
+    try {
+      final response = await HttpService.updateAttendanceRemark(
+        attendanceId: item.id ?? "",
+        // staffId: widget.staffId,
+        //   date: item.date,
+        remark: _remarkController.text.trim(),
+      );
+      if (response != null && response['status'] == true) {
+        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Remark updated successfully"),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        _loadData();
+      } else {
+        throw Exception(response?['message'] ?? "Failed to update remark");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingRemark = false;
+        });
+      }
+    }
+  }
+
+  // Future<void> _submitRemark(ListData item) async {
+  //   if (_remarkController.text.trim().isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text("Please enter a remark"),
+  //         backgroundColor: Colors.orange,
+  //       ),
+  //     );
+  //     return;
+  //   }
+
+  //   setState(() {
+  //     _isSubmittingRemark = true;
+  //   });
+
+  //   try {
+  //     final response = await HttpService.updateAttendanceRemark(
+  //       attendanceId: item.id ?? "",
+  //      // staffId: widget.staffId,
+  //     //  date: item.date,
+  //       remark: _remarkController.text.trim(),
+  //     );
+
+  //     if (response != null && response['success'] == true) {
+  //       if (mounted) Navigator.pop(context);
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           const SnackBar(
+  //             content: Text("Remark updated successfully"),
+  //             backgroundColor: Colors.green,
+  //             duration: Duration(seconds: 2),
+  //           ),
+  //         );
+  //       }
+  //       _loadData();
+  //     } else {
+  //       throw Exception(response?['message'] ?? "Failed to update remark");
+  //     }
+  //   } catch (e) {
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text("Error: ${e.toString()}"),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() {
+  //         _isSubmittingRemark = false;
+  //       });
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +224,6 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
       ),
       body: Column(
         children: [
-          // Date Range Header
           Container(
             margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -446,6 +567,10 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
         statusColor = Colors.red;
         statusIcon = Icons.cancel;
         break;
+      case 'leave':
+        statusColor = Colors.red;
+        statusIcon = Icons.cancel;
+        break;
       default:
         statusColor = Colors.grey;
         statusIcon = Icons.help_outline;
@@ -530,7 +655,7 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: statusColor,
+                            //color: statusColor,
                           ),
                         ),
                       ],
@@ -568,7 +693,6 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Time Section
               Row(
                 children: [
                   Expanded(
@@ -591,39 +715,129 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Stats Section
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: _buildStatRow(
-                        label: "Working Time",
-                        value: _formatTimeShort(item.workingTime ?? "0"),
-                        icon: Icons.timer,
-                        color: Colors.blue,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatRow(
+                            label: "Working Time",
+                            value: _formatTimeShort(item.workingTime ?? "0"),
+                            icon: Icons.timer,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        Container(
+                          width: 1,
+                          height: 30,
+                          color: Colors.grey.shade300,
+                        ),
+                        Expanded(
+                          child: _buildStatRow(
+                            label: "Idle Time",
+                            value: _formatTimeShort(item.idleTime ?? "0"),
+                            icon: Icons.timer_off,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
                     Container(
-                      width: 1,
-                      height: 30,
-                      color: Colors.grey.shade300,
-                    ),
-                    Expanded(
-                      child: _buildStatRow(
-                        label: "Idle Time",
-                        value: _formatTimeShort(item.idleTime ?? "0"),
-                        icon: Icons.timer_off,
-                        color: Colors.orange,
+                      padding: const EdgeInsets.only(top: 8),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Remarks",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.remarks?.isNotEmpty == true
+                                      ? item.remarks!
+                                      : "No remarks added",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: item.remarks?.isNotEmpty == true
+                                        ? Colors.black87
+                                        : Colors.grey.shade500,
+                                    fontStyle: item.remarks?.isNotEmpty == true
+                                        ? FontStyle.normal
+                                        : FontStyle.italic,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          addAttendanceRemarks !="false"?
+                          IconButton(
+                            icon: const Icon(Icons.edit_note, size: 20),
+                            color: const Color.fromARGB(255, 44, 126, 180),
+                            onPressed: () => _showEditRemarkDialog(item),
+                            tooltip: "Edit Remark",
+                          ):SizedBox(),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              // Container(
+              //   padding: const EdgeInsets.all(12),
+              //   decoration: BoxDecoration(
+              //     color: Colors.grey.shade50,
+              //     borderRadius: BorderRadius.circular(12),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Expanded(
+              //         child: _buildStatRow(
+              //           label: "Working Time",
+              //           value: _formatTimeShort(item.workingTime ?? "0"),
+              //           icon: Icons.timer,
+              //           color: Colors.blue,
+              //         ),
+              //       ),
+              //       Container(
+              //         width: 1,
+              //         height: 30,
+              //         color: Colors.grey.shade300,
+              //       ),
+              //       Expanded(
+              //         child: _buildStatRow(
+              //           label: "Idle Time",
+              //           value: _formatTimeShort(item.idleTime ?? "0"),
+              //           icon: Icons.timer_off,
+              //           color: Colors.orange,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -796,6 +1010,83 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showEditRemarkDialog(ListData item) {
+    _remarkController.text = item.remarks ?? "";
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Row(
+              children: [
+                Icon(
+                  Icons.edit_note,
+                  color: const Color.fromARGB(255, 44, 126, 180),
+                ),
+                const SizedBox(width: 8),
+                const Text("Edit Remark"),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Date: ${_formatDate(item.date ?? "N/A")}",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _remarkController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: "Enter remark...",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed:
+                    _isSubmittingRemark ? null : () => _submitRemark(item),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 44, 126, 180),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: _isSubmittingRemark
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text("Save Remark",
+                        style: TextStyle(fontSize: 14, color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 

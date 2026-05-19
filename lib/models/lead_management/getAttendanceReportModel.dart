@@ -52,6 +52,7 @@ class Data {
 }
 
 class ListData {
+  String? id;
   String? date;
   String? loginTime;
   String? logoutTime;
@@ -59,18 +60,21 @@ class ListData {
   String? idleTime;
   String? status;
   String? logoutStatus;
-
+ String? remarks;
   ListData({
+    this.id,
     this.date,
     this.loginTime,
     this.logoutTime,
     this.workingTime,
     this.idleTime,
     this.status,
-    this.logoutStatus,
+    this.logoutStatus, 
+    this.remarks,
   });
 
   ListData.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
     date = json['date'];
     loginTime = json['login_time'];
     logoutTime = json['logout_time'];
@@ -78,10 +82,12 @@ class ListData {
     idleTime = json['idle_time'];
     status = json['status'];
     logoutStatus = json['logout_status'];
+    remarks = json['remark'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
     data['date'] = date;
     data['login_time'] = loginTime;
     data['logout_time'] = logoutTime;
@@ -89,6 +95,7 @@ class ListData {
     data['idle_time'] = idleTime;
     data['status'] = status;   
     data['logout_status'] = logoutStatus;
+    data['remark'] = remarks;
     return data;
   }
 }

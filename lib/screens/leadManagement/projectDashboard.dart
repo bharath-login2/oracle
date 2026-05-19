@@ -71,6 +71,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   String? RenewalDashboardPermission;
   String? NewleadDashboardPermission;
   String? assignWork;
+  String? viewWorkReport;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   LeadDashboardModel? leadDashboard;
   CommonConfigureModel? configure;
@@ -266,6 +267,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     final value = await Common.getSharedPref("multipleWorks");
     userId = await Common.getSharedPref("userId");
     token = await Common.getSharedPref("token");
+      viewWorkReport = await Common.getSharedPref("viewWorkReport");
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
     AccountsDashboardPermission =
@@ -1191,8 +1193,10 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                         //   }).toList(),
                         // ),
                         const SizedBox(height: 24),
-                        _buildAssignedByMeSection(),
-                        const SizedBox(height: 16),
+                        assignWork == "true"
+                            ? _buildAssignedByMeSection()
+                            : SizedBox(),
+                        const SizedBox(height:  16),
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -1274,6 +1278,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                   _buildQuickLinkCard(
                                     "Work Summery All",
                                     Colors.cyan.shade100,
+                                    
                                     () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -2596,7 +2601,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const LeaveRequestListPage(),
+                              builder: (context) =>
+                                  const LeaveRequestListPage(),
                             ),
                           );
                         },

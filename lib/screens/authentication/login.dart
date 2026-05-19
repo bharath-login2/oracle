@@ -240,7 +240,6 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
       }
       updatedata = await HttpService.forceUpdate();
       String? savedUrl = await Common.getSharedPref("url");
-
       setState(() {
         if (updatedata!.data!.server!.length == 1) {
           Common.saveSharedPref(
@@ -501,7 +500,8 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                   object1.data!.whatsappUnofficial.toString());
               Common.saveSharedPref(
                   "transferLeads", object1.data!.transferLead.toString());
-
+              Common.saveSharedPref("addAttendanceRemarks",
+                  object1.data!.addAttendanceRemarks.toString());
               Common.saveSharedPref(
                   "uploadCallLog", object1.data!.uploadCallLog.toString());
               Common.saveSharedPref("addApproveLeavePermission",
@@ -529,6 +529,8 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                   "companyLocation", object1.data!.companyLocation.toString());
               Common.saveSharedPref(
                   "assignWork", object1.data!.assignWork.toString());
+              Common.saveSharedPref(
+                  "markAttendance", object1.data!.markAttendance.toString());
               Common.saveSharedPref("ProjectDashboardPermission",
                   object1.data!.ProjectDashboard.toString());
               Common.saveSharedPref(
@@ -587,28 +589,27 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
               Common.saveSharedPref("viewPendingWorks",
                   object1.data!.viewPendingWorks.toString());
 
-                  ///////////////////nnnnnnnnnnnnnnnnnnneeeeeeeeeeeeeeeeeeeeeewwwwwwwwwwwwwwwwwwwwwwwwwww/////////////////
-                   Common.saveSharedPref("voiceListeningPermission",
+              ///////////////////nnnnnnnnnnnnnnnnnnneeeeeeeeeeeeeeeeeeeeeewwwwwwwwwwwwwwwwwwwwwwwwwww/////////////////
+              Common.saveSharedPref("voiceListeningPermission",
                   object1.data!.voiceListerningPermission.toString());
-                     Common.saveSharedPref("voiceUploadPermission",
+              Common.saveSharedPref("voiceUploadPermission",
                   object1.data!.voiceUploadPermission.toString());
-               Common.saveSharedPref("createCustomerInvoice",
+              Common.saveSharedPref("createCustomerInvoice",
                   object1.data!.createCustomerInvoice.toString());
-                     Common.saveSharedPref("createRenewalPermission",
+              Common.saveSharedPref("createRenewalPermission",
                   object1.data!.createRenewal.toString());
-                     Common.saveSharedPref("createInstallmentPermission",
+              Common.saveSharedPref("createInstallmentPermission",
                   object1.data!.createInstallment.toString());
-                     Common.saveSharedPref("customerAddPermission",
+              Common.saveSharedPref("customerAddPermission",
                   object1.data!.customerAddPermission.toString());
-                     Common.saveSharedPref("customerAddInvoicePermission",
-                     
+              Common.saveSharedPref("customerAddInvoicePermission",
                   object1.data!.customerAddInvoicePermission.toString());
-                  
-                   Common.saveSharedPref("viewLeadCategoryOnly",
+
+              Common.saveSharedPref("viewLeadCategoryOnly",
                   object1.data!.viewLeadCategoryOnly.toString());
 
-                  Common.saveSharedPref("viewAllCategory",
-                  object1.data!.viewAllCategory.toString());
+              Common.saveSharedPref(
+                  "viewAllCategory", object1.data!.viewAllCategory.toString());
               // Common.saveSharedPref("callLogPermission", 'false');
               //  Common.saveSharedPref(
               //  "callLogPermission", 'true');
@@ -1247,7 +1248,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
 
                                         const SizedBox(height: 30),
                                         Text(
-                                          "Version 3.0.4",
+                                          "Version 3.0.5",
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey.shade400,

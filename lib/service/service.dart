@@ -7695,6 +7695,29 @@ class HttpService {
     return null;
   }
 
+  static Future<StaffListModel?> getWorkedStaffs(String date) async {
+    var token = await Common.getSharedPref('token');
+    try {
+      FormData formData = FormData.fromMap({
+        'token': token,
+        'date': date,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_worked_staffs",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return StaffListModel.fromJson(response.data);
+      } else {
+        log("getStaffs failed: ${response.data}");
+      }
+    } catch (e) {
+      log("getStaffs error: $e");
+    }
+    return null;
+  }
+
   static Future<StaffListModel?> getStaffsAccessible() async {
     var token = await Common.getSharedPref('token');
     try {
@@ -13883,7 +13906,6 @@ class HttpService {
         log("leaveAvailable error: Token not found");
         return null;
       }
-
       final response = await _dio.post(
         "${await Config.getUrl()}getAttendanceReport",
         data: FormData.fromMap({
@@ -13893,7 +13915,6 @@ class HttpService {
           "staff_id": staffId,
         }),
       );
-
       if (response.statusCode == 200) {
         final data = response.data;
         if (data['status'] == true || data['status'] == 'success') {
@@ -16093,6 +16114,62 @@ class HttpService {
       }
     } catch (e) {
       log("getContentId error: $e");
+    }
+    return null;
+  }
+
+  static Future<Map<String, dynamic>?> updateAttendanceRemark({
+    required String attendanceId,
+    // required String staffId,
+    // required String? date,
+    required String remark,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'id': attendanceId,
+      // 'staff_id': staffId,
+      //'date': date,
+      'remark': remark,
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_attendance_remark",
+        data: FormData.fromMap(data),
+      );
+
+    } catch (e) {
+      log("updateAttendanceRemark error: $e");
+    }
+    return null;
+  }
+
+  static Future<Uint8List?> downloadStaffTask({
+    required String userId,
+    required String projectId,
+    required String fromDate,
+    required String toDate,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final formData = FormData.fromMap({
+        "token": token,
+        "user_id": userId,
+        "project_id": projectId,
+        "fromdate": fromDate,
+        "todate": toDate,
+      });
+      final response = await _dio.post(
+        "${await Config.getUrl()}download_staff_task",
+        data: formData,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("downloadStaffTask error: $e");
     }
     return null;
   }

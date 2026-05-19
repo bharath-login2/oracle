@@ -86,6 +86,7 @@ class Data {
   String? faceDetection;
   String? companyLocation;
   String? assignWork;
+   String? markAttendance;
   String? addWorkModule;
   String? viewAttendanceSection;
   String? viewPendingWorks;
@@ -116,6 +117,7 @@ class Data {
   String? customerAddInvoicePermission;
   String? viewLeadCategoryOnly;
   String? viewAllCategory;
+  String? addAttendanceRemarks;
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
@@ -180,6 +182,7 @@ class Data {
     this.faceDetection,
     this.companyLocation,
     this.assignWork,
+    this.markAttendance,
     this.addWorkModule,
     this.viewAttendanceSection,
     this.viewPendingWorks,
@@ -210,6 +213,7 @@ class Data {
     this.customerAddInvoicePermission,
     this.viewLeadCategoryOnly,
     this.viewAllCategory,
+    this.addAttendanceRemarks,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -276,6 +280,7 @@ class Data {
     faceDetection = json['face_detection'];
     companyLocation = json['company_location'];
     assignWork = json['assign_work'];
+    markAttendance = json['mark_attendance'];
     addWorkModule = json['add_work_module'];
     viewAttendanceSection = json['view_attendance'];
     viewPendingWorks = json['view_pending_works'];
@@ -306,6 +311,7 @@ class Data {
     customerAddInvoicePermission = json['customerAddInvoicePermission'];
     viewLeadCategoryOnly = json['viewLeadCategoryOnly'];
     viewAllCategory = json['viewAllCategory'];
+    addAttendanceRemarks = json['add_attendance_remark'];
   }
 
   Map<String, dynamic> toJson() {
@@ -368,6 +374,7 @@ class Data {
     data['face_detection'] = faceDetection;
     data['company_location'] = companyLocation;
     data['assign_work'] = assignWork;
+    data['mark_attendance'] = markAttendance;
     data['add_work_module'] = addWorkModule;
     data['view_attendance'] = viewAttendanceSection;
     data['view_pending_works'] = viewPendingWorks;
@@ -398,6 +405,7 @@ class Data {
     data['customerAddInvoicePermission'] = customerAddInvoicePermission;
     data['viewLeadCategoryOnly'] = viewLeadCategoryOnly;
     data['viewAllCategory'] = viewAllCategory;
+    data['add_attendance_remark'] = addAttendanceRemarks;
     return data;
   }
 }

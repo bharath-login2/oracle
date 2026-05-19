@@ -46,7 +46,7 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat(reverse: true);
-    fetchStaffs();
+    fetchStaffs(selectedDate);
     fetchDoneWorks(selectedDate);
     fetchDoneCalls(selectedDate);
   }
@@ -58,10 +58,11 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
     super.dispose();
   }
 
-  Future<void> fetchStaffs() async {
+  Future<void> fetchStaffs(DateTime date) async {
+    final formattedDate = DateFormat('yyyy-MM-dd').format(date);
     setState(() => isLoadingStaffs = true);
     try {
-      final response = await HttpService.getStaffs();
+      final response = await HttpService.getWorkedStaffs(formattedDate);
       if (response != null && response.status) {
         setState(() {
           allStaffs = response.data;
@@ -120,6 +121,7 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
 
   Future<void> _handleRefresh() async {
     await Future.wait([
+      fetchStaffs(selectedDate),
       fetchDoneWorks(selectedDate),
       fetchDoneCalls(selectedDate),
     ]);
@@ -163,6 +165,7 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
       setState(() {
         selectedDate = picked;
       });
+      fetchStaffs(selectedDate);
       fetchDoneWorks(selectedDate);
       fetchDoneCalls(selectedDate);
     }

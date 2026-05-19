@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 import 'package:login2/models/lead_management/attendnceListModel.dart';
 import 'package:login2/models/lead_management/getAttendanceReportModel.dart';
@@ -42,7 +43,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
   GetAttendanceReportModel? attendanceReport;
   String? selectedStaffName;
   String? selectedStaffId;
-
+  String? markAttendance;
   @override
   void initState() {
     super.initState();
@@ -354,7 +355,7 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
   Future<void> fetchAttendanceData([DateTime? selectedMonth]) async {
     try {
       final DateTime currentMonth = selectedMonth ?? _focusedDay;
-
+      markAttendance = await Common.getSharedPref("markAttendance") ?? '';
       final String yearMonth =
           "${currentMonth.year.toString().padLeft(4, '0')}-${currentMonth.month.toString().padLeft(2, '0')}";
       final AttendanceDataModel? result = await HttpService.getAttendanceData(
@@ -1526,10 +1527,11 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                 color: Colors.black87,
               ),
             ),
+            markAttendance =="true"?
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.blue, size: 22),
               onPressed: onEdit,
-            ),
+            ):SizedBox(),
           ],
         ),
         const SizedBox(height: 20),

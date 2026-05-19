@@ -8,6 +8,8 @@ import 'package:login2/models/lead_management/projectTraceModel.dart';
 import 'package:login2/models/lead_management/moduleListModel.dart' as ml;
 import 'package:login2/models/lead_management/getTaskListModel.dart' as tl;
 import 'package:login2/service/service.dart';
+import 'package:printing/printing.dart';
+import 'package:pdf/pdf.dart';
 
 class SingleProjectDashboard extends StatefulWidget {
   final ProjectExp project;
@@ -415,34 +417,76 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard>
   Widget _buildStaffList() {
     final staffs = _projectData?.projectHandledStaffs ?? [];
     if (staffs.isEmpty) return const SizedBox();
+
+    final int maxAvatarsToShow = 4;
+    final int avatarsCount = staffs.length > maxAvatarsToShow ? maxAvatarsToShow : staffs.length;
+    final double avatarRadius = 20.0;
+    final double overlap = 14.0;
+    final double borderSize = 2.0;
+
+    List<Widget> stackChildren = [];
+
+    final List<Color> avatarColors = [
+      const Color(0xFF4A90E2),
+      const Color(0xFF50E3C2),
+      const Color(0xFFF5A623),
+      const Color(0xFF9013FE),
+    ];
+
+    for (int i = 0; i < avatarsCount; i++) {
+      stackChildren.add(
+        Positioned(
+          left: i * (avatarRadius * 2 - overlap),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF0F172A), width: borderSize),
+            ),
+            child: CircleAvatar(
+              radius: avatarRadius - borderSize,
+              backgroundColor: avatarColors[i % avatarColors.length].withOpacity(0.9),
+              child: Text(
+                staffs[i].staffName.isNotEmpty ? staffs[i].staffName[0].toUpperCase() : '?',
+                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    stackChildren.add(
+      Positioned(
+        left: avatarsCount * (avatarRadius * 2 - overlap),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF0F172A), width: borderSize),
+          ),
+          child: CircleAvatar(
+            radius: avatarRadius - borderSize,
+            backgroundColor: Colors.white.withOpacity(0.1),
+            child: const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white,
+              size: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final double totalWidth = (avatarsCount + 1) * (avatarRadius * 2) - (avatarsCount * overlap);
+
     return GestureDetector(
       onTap: _showStaffPopup,
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: Colors.white.withOpacity(0.2),
-            child: Text(
-              staffs.first.staffName.isNotEmpty
-                  ? staffs.first.staffName[0].toUpperCase()
-                  : '?',
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.arrow_forward_ios,
-                color: Colors.white, size: 14),
-          ),
-        ],
+      child: SizedBox(
+        height: avatarRadius * 2,
+        width: totalWidth,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: stackChildren,
+        ),
       ),
     );
   }
@@ -1358,6 +1402,32 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard>
     );
   }
 
+  Future<void> _downloadReport(String userId) async {
+    final fromDateStr = _fromDate != null ? DateFormat('yyyy-MM-dd').format(_fromDate!) : '';
+    final toDateStr = _toDate != null ? DateFormat('yyyy-MM-dd').format(_toDate!) : '';
+
+    final pdfBytes = await HttpService.downloadStaffTask(
+      userId: userId,
+      projectId: widget.project.id,
+      fromDate: fromDateStr,
+      toDate: toDateStr,
+    );
+
+    if (pdfBytes != null && pdfBytes.isNotEmpty) {
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async {
+          return pdfBytes;
+        },
+      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to download report or report is empty")),
+        );
+      }
+    }
+  }
+
   void _showProjectTraceDialog(String userId, String staffName) async {
     showModalBottomSheet(
       context: context,
@@ -1420,24 +1490,34 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard>
                         ],
                       ),
                     ),
-                    StatefulBuilder(builder: (context, setIconState) {
-                      return IconButton(
-                        onPressed: () => _showTraceFilterDialog(userId, (fn) {
-                          fn();
-                          setIconState(() {});
-                          if (_refreshTraceList != null) _refreshTraceList!();
-                        }),
-                        icon: Icon(
-                          Icons.filter_list,
-                          color: (_fromDate != null ||
-                                  _toDate != null ||
-                                  _selectedModuleId != null ||
-                                  _selectedTaskId != null)
-                              ? const Color(0xFF6366F1)
-                              : const Color(0xFF64748B),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () => _downloadReport(userId),
+                          icon: const Icon(Icons.download_rounded, color: Color(0xFF6366F1)),
+                          tooltip: 'Download Report',
                         ),
-                      );
-                    }),
+                        StatefulBuilder(builder: (context, setIconState) {
+                          return IconButton(
+                            onPressed: () => _showTraceFilterDialog(userId, (fn) {
+                              fn();
+                              setIconState(() {});
+                              if (_refreshTraceList != null) _refreshTraceList!();
+                            }),
+                            icon: Icon(
+                              Icons.filter_list,
+                              color: (_fromDate != null ||
+                                      _toDate != null ||
+                                      _selectedModuleId != null ||
+                                      _selectedTaskId != null)
+                                  ? const Color(0xFF6366F1)
+                                  : const Color(0xFF64748B),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.close, color: Color(0xFF64748B)),

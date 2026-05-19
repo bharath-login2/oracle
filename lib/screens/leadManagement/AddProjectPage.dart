@@ -483,68 +483,170 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                 itemCount: filteredProjects.length,
                                 itemBuilder: (context, index) {
                                   final item = filteredProjects[index];
-                                  return Card(
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    elevation: 3,
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10)),
-                                    child: ListTile(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => SingleProjectDashboard(project: item,permissions:permissions),
+                                  final List<Color> accentColors = [
+                                    const Color(0xFF6C63FF), // Indigo
+                                    const Color(0xFF00B4D8), // Cyan
+                                    const Color(0xFFFF6584), // Pink/Coral
+                                    const Color(0xFF38B000), // Green
+                                    const Color(0xFFFF9F1C), // Orange
+                                  ];
+                                  final Color accentColor = accentColors[index % accentColors.length];
+
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: accentColor.withOpacity(0.15),
+                                          blurRadius: 15,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(20),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => SingleProjectDashboard(project: item, permissions: permissions),
+                                              ),
+                                            );
+                                          },
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              border: Border(
+                                                left: BorderSide(color: accentColor, width: 6),
+                                              ),
+                                            ),
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.all(12),
+                                                      decoration: BoxDecoration(
+                                                        color: accentColor.withOpacity(0.1),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.rocket_launch_rounded,
+                                                        color: accentColor,
+                                                        size: 26,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 16),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Text(
+                                                            item.projectName,
+                                                            style: const TextStyle(
+                                                              fontWeight: FontWeight.bold,
+                                                              fontSize: 18,
+                                                              color: Colors.black87,
+                                                            ),
+                                                            maxLines: 2,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                          const SizedBox(height: 6),
+                                                          Row(
+                                                            children: [
+                                                              Container(
+                                                                padding: const EdgeInsets.all(4),
+                                                                decoration: BoxDecoration(
+                                                                  color: Colors.grey.shade100,
+                                                                  borderRadius: BorderRadius.circular(6),
+                                                                ),
+                                                                child: const Icon(Icons.person, size: 14, color: Colors.grey),
+                                                              ),
+                                                              const SizedBox(width: 8),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  item.customerName,
+                                                                  style: const TextStyle(
+                                                                    fontWeight: FontWeight.w600,
+                                                                    fontSize: 14,
+                                                                    color: Colors.black54,
+                                                                  ),
+                                                                  maxLines: 1,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    if (permissions == null || permissions!.editProject || permissions!.deleteProject)
+                                                      Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          if (permissions == null || permissions!.editProject)
+                                                            IconButton(
+                                                              icon: Container(
+                                                                padding: const EdgeInsets.all(6),
+                                                                decoration: BoxDecoration(color: Colors.orange.shade50, shape: BoxShape.circle),
+                                                                child: const Icon(Icons.edit_outlined, color: Colors.orange, size: 18),
+                                                              ),
+                                                              padding: EdgeInsets.zero,
+                                                              constraints: const BoxConstraints(),
+                                                              onPressed: () => showAddOrEditDialog(project: item),
+                                                            ),
+                                                          const SizedBox(width: 8),
+                                                          if (permissions == null || permissions!.deleteProject)
+                                                            IconButton(
+                                                              icon: Container(
+                                                                padding: const EdgeInsets.all(6),
+                                                                decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
+                                                                child: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                                              ),
+                                                              padding: EdgeInsets.zero,
+                                                              constraints: const BoxConstraints(),
+                                                              onPressed: () => deleteProject(item.id),
+                                                            ),
+                                                        ],
+                                                      ),
+                                                  ],
+                                                ),
+                                                if (item.fromDate != null && item.toDate != null && item.fromDate!.isNotEmpty && item.toDate!.isNotEmpty) ...[
+                                                  const SizedBox(height: 16),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                                    decoration: BoxDecoration(
+                                                      color: accentColor.withOpacity(0.05),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                      border: Border.all(color: accentColor.withOpacity(0.1)),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(Icons.calendar_month_rounded, size: 16, color: accentColor),
+                                                        const SizedBox(width: 10),
+                                                        Text(
+                                                          "${item.fromDate}  ➔  ${item.toDate}",
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight: FontWeight.w600,
+                                                            color: accentColor.withOpacity(0.8),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
                                           ),
-                                        );
-                                      },
-                                      leading: const Icon(
-                                        Icons.work_history_outlined,
-                                        color: Color.fromARGB(255, 15, 15, 15),
-                                      ),
-                                      title: Text(item.projectName,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16)),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const SizedBox(height: 4),
-                                          Text("Client: ${item.customerName}",
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 13)),
-                                          (item.fromDate == null ||
-                                                  item.toDate == null)
-                                              ? const SizedBox()
-                                              : Text(
-                                                  "${item.fromDate} - ${item.toDate}",
-                                                  style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.grey)),
-                                        ],
-                                      ),
-                                      trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (permissions == null || permissions!.editProject)
-                                            IconButton(
-                                              icon: const Icon(Icons.edit,
-                                                  color: Colors.orange),
-                                              onPressed: () =>
-                                                  showAddOrEditDialog(
-                                                      project: item),
-                                            ),
-                                          if (permissions == null || permissions!.deleteProject)
-                                            IconButton(
-                                              icon: const Icon(Icons.delete,
-                                                  color: Colors.red),
-                                              onPressed: () =>
-                                                  deleteProject(item.id),
-                                            ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   );

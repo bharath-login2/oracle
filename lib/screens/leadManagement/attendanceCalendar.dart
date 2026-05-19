@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/attendanceAllmodel.dart';
 import 'package:login2/models/lead_management/calendarDataModel.dart';
 import 'package:login2/models/lead_management/dailyAllCountModel.dart';
@@ -27,7 +28,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
   CalendarDataAllModel? calendarDetails;
   List<DailyItem> _dailyList = [];
   bool _isLoading = false;
-
+  String? markAttendance;
   @override
   void initState() {
     super.initState();
@@ -53,6 +54,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
   }
 
   Future<void> _fetchAttendanceData(DateTime date) async {
+    markAttendance = await Common.getSharedPref("markAttendance");
     final String formattedDate = DateFormat('yyyy-MM-dd').format(date);
     final attendanceData =
         await HttpService.getAttendanceAllData(date: formattedDate);
@@ -1294,6 +1296,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                         ),
                       ),
                     ),
+                    markAttendance =="true"?
                     IconButton(
                       icon: Icon(
                         Icons.edit_outlined,
@@ -1305,7 +1308,7 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                         _showDayActionDialog(context, date);
                       },
                       tooltip: 'Edit',
-                    ),
+                    ):SizedBox(),
                     IconButton(
                       icon: Icon(
                         Icons.close,
@@ -1317,8 +1320,6 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                   ],
                 ),
               ),
-
-              // Statistics
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -1352,8 +1353,6 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                   ],
                 ),
               ),
-
-              // Content
               Expanded(
                 child: DefaultTabController(
                   length: 2,
@@ -1420,7 +1419,6 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                       Expanded(
                         child: TabBarView(
                           children: [
-                            // Attendance Tab
                             _attendanceList.isEmpty
                                 ? Center(
                                     child: Column(
@@ -1451,8 +1449,6 @@ class _ViewCalendarPageState extends State<ViewCalendarPage>
                                       return _AttendanceCard(item: item);
                                     },
                                   ),
-
-                            // Leave Tab
                             _leaveList.isEmpty
                                 ? Center(
                                     child: Column(
