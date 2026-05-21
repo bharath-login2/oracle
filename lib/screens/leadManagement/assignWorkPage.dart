@@ -104,6 +104,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   bool notifyOnStatusChange = false;
   bool notifyOtherPeople = false;
   List<String> selectedStaffIds = [];
+  List<String> selectedAssignedStaffIds = [];
   bool _isAssigning = false;
 
   @override
@@ -157,6 +158,11 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       }
     } else if (assignedTo != null) {
       selectedStaffIds = [assignedTo!];
+    }
+    if (assignedTo != null && assignedTo!.isNotEmpty) {
+      selectedAssignedStaffIds = assignedTo!.split(',').where((id) => id.trim().isNotEmpty && id.trim() != "0").toList();
+    } else {
+      selectedAssignedStaffIds = [];
     }
     whatsappNotification = false;
     pushNotification = false;
@@ -420,7 +426,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       }
 
       final currentUserId = await Common.getSharedPref('user_id');
-      if (assignedTo != currentUserId) {
+      if (!selectedAssignedStaffIds.contains(currentUserId)) {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -477,12 +483,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           'notify_on_status_change': notifyOnStatusChange,
           'notify_other_people': notifyOtherPeople,
           'staff_ids': [
-            if (notifyToAssignedStaff &&
-                assignedTo != null &&
-                assignedTo != "0")
-              assignedTo!,
+            if (notifyToAssignedStaff)
+              ...selectedAssignedStaffIds,
             if (notifyOtherPeople)
-              ...selectedStaffIds.where((id) => id != assignedTo && id != "0"),
+              ...selectedStaffIds.where((id) => !selectedAssignedStaffIds.contains(id)),
           ].join(','),
           'on_start': notifyOnStart,
           'on_complete': notifyOnComplete,
@@ -1450,20 +1454,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                     const SizedBox(height: 6),
                                     GestureDetector(
                                       onTap: () async {
-                                        final selected =
-                                            await _showStaffSearchDialog(
-                                                context);
-                                        if (selected != null) {
-                                          setState(() {
-                                            assignedTo = selected['id'];
-                                            if (!selectedStaffIds
-                                                .contains(selected['id'])) {
-                                              selectedStaffIds = [
-                                                selected['id'] as String
-                                              ];
-                                            }
-                                          });
-                                        }
+                                        await _showMultiAssignedStaffSelectionDialog(context);
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.all(16),
@@ -1484,26 +1475,9 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                             const SizedBox(width: 12),
                                             Expanded(
                                               child: Text(
-                                                assignedTo == "0"
-                                                    ? 'Unassigned'
-                                                    : assignedTo != null &&
-                                                            staffList.isNotEmpty
-                                                        ? staffList
-                                                            .firstWhere(
-                                                              (s) =>
-                                                                  s.userIdStaff ==
-                                                                  assignedTo,
-                                                              orElse: () => Staff(
-                                                                  id: '',
-                                                                  name:
-                                                                      'Select Staff',
-                                                                  userIdStaff:
-                                                                      ''),
-                                                            )
-                                                            .name
-                                                        : 'Select Staff',
+                                                _getAssignedStaffNames(),
                                                 style: TextStyle(
-                                                  color: assignedTo != null
+                                                  color: selectedAssignedStaffIds.isNotEmpty
                                                       ? Colors.grey[800]
                                                       : Colors.grey[500],
                                                   fontSize: 16,
@@ -2612,6 +2586,111 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         } else {
           selectedStaffIds = selected;
         }
+      });
+    }
+  }
+
+  String _getAssignedStaffNames() {
+    if (selectedAssignedStaffIds.isEmpty) {
+      if (assignedTo == "0") return 'Unassigned';
+      return 'Select Staff';
+    }
+    final names = selectedAssignedStaffIds
+        .map((id) {
+          final staff = staffList.firstWhere(
+            (s) => s.userIdStaff == id,
+            orElse: () => Staff(id: '', name: '', userIdStaff: ''),
+          );
+          return staff.name;
+        })
+        .where((name) => name.isNotEmpty)
+        .toList();
+
+    if (names.isEmpty) return 'Select Staff';
+    return names.join(', ');
+  }
+
+  Future<void> _showMultiAssignedStaffSelectionDialog(
+      BuildContext context) async {
+    final selected = await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        final tempSelected = List<String>.from(selectedAssignedStaffIds);
+        List<Staff> filteredStaff = List.from(staffList);
+        TextEditingController searchController = TextEditingController();
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Assigned Staff'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search Staff',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filteredStaff = staffList
+                              .where((staff) => staff.name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredStaff.length,
+                        itemBuilder: (context, index) {
+                          final staff = filteredStaff[index];
+                          return CheckboxListTile(
+                            title: Text(staff.name),
+                            value: tempSelected.contains(staff.userIdStaff),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value == true) {
+                                  tempSelected.add(staff.userIdStaff);
+                                } else {
+                                  tempSelected.remove(staff.userIdStaff);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, tempSelected),
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (selected != null) {
+      setState(() {
+        selectedAssignedStaffIds = selected;
+        assignedTo = selectedAssignedStaffIds.isNotEmpty
+            ? selectedAssignedStaffIds.join(',')
+            : null;
       });
     }
   }

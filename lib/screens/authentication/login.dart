@@ -529,6 +529,10 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                   "companyLocation", object1.data!.companyLocation.toString());
               Common.saveSharedPref(
                   "assignWork", object1.data!.assignWork.toString());
+                   Common.saveSharedPref(
+                  "editAssignWork", object1.data!.editassignWork.toString());
+                   Common.saveSharedPref(
+                  "deleteAssignWork", object1.data!.deleteassignWork.toString());
               Common.saveSharedPref(
                   "markAttendance", object1.data!.markAttendance.toString());
               Common.saveSharedPref("ProjectDashboardPermission",

@@ -1527,11 +1527,12 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                 color: Colors.black87,
               ),
             ),
-            markAttendance =="true"?
-            IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blue, size: 22),
-              onPressed: onEdit,
-            ):SizedBox(),
+            markAttendance == "true"
+                ? IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue, size: 22),
+                    onPressed: onEdit,
+                  )
+                : SizedBox(),
           ],
         ),
         const SizedBox(height: 20),
@@ -1781,7 +1782,6 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                   ),
                 ),
 
-                // Main Content
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
@@ -1937,6 +1937,170 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 24),
+                        Card(
+                          elevation: 4,
+                          shadowColor: Colors.black.withOpacity(0.08),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                                color: Colors.grey.shade100, width: 1),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 4,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade600,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      "Legend",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 18,
+                                        color: Colors.grey.shade800,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildLegendItem(
+                                            color: Colors.green.shade500,
+                                            backgroundColor:
+                                                Colors.green.shade50,
+                                            text: "Present",
+                                            icon: Icons.check_circle_rounded,
+                                          ),
+                                          const SizedBox(height: 14),
+                                          _buildLegendItem(
+                                            color: Colors.orange.shade500,
+                                            backgroundColor:
+                                                Colors.orange.shade50,
+                                            text: "Half Day",
+                                            icon: Icons.timelapse_rounded,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildLegendItem(
+                                            color: Colors.red.shade500,
+                                            backgroundColor: Colors.red.shade50,
+                                            text: "Absent / Leave",
+                                            icon: Icons.cancel_rounded,
+                                          ),
+                                          const SizedBox(height: 14),
+                                          _buildLegendItem(
+                                            color: Colors.blue.shade600,
+                                            backgroundColor:
+                                                Colors.blue.shade50,
+                                            text: "Holiday",
+                                            icon: Icons.beach_access_rounded,
+                                            hasBorder: true,
+                                            borderColor: Colors.blue.shade200,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Card(
+                        //   elevation: 3,
+                        //   shape: RoundedRectangleBorder(
+                        //     borderRadius: BorderRadius.circular(12),
+                        //   ),
+                        //   child: Padding(
+                        //     padding: const EdgeInsets.symmetric(
+                        //         horizontal: 16, vertical: 14),
+                        //     child: Column(
+                        //       crossAxisAlignment: CrossAxisAlignment.start,
+                        //       children: [
+                        //         Text(
+                        //           "Legend",
+                        //           style: TextStyle(
+                        //             fontWeight: FontWeight.bold,
+                        //             fontSize: 16,
+                        //           ),
+                        //         ),
+                        //         const SizedBox(height: 12),
+                        //         Row(
+                        //           crossAxisAlignment: CrossAxisAlignment.start,
+                        //           children: [
+                        //             Expanded(
+                        //               child: Column(
+                        //                 crossAxisAlignment:
+                        //                     CrossAxisAlignment.start,
+                        //                 children: [
+                        //                   LegendRow(
+                        //                     color: Colors.green,
+                        //                     borderColor: Colors.white,
+                        //                     text: "Present",
+                        //                     icon: Icons.check_circle,
+                        //                   ),
+                        //                   const SizedBox(height: 8),
+                        //                   LegendRow(
+                        //                     color: Colors.orange,
+                        //                     borderColor: Colors.white,
+                        //                     text: "Half Day",
+                        //                     icon: Icons.timelapse,
+                        //                   ),
+                        //                 ],
+                        //               ),
+                        //             ),
+                        //             Expanded(
+                        //               child: Column(
+                        //                 crossAxisAlignment:
+                        //                     CrossAxisAlignment.start,
+                        //                 children: [
+                        //                   LegendRow(
+                        //                     color: Colors.red,
+                        //                     borderColor: Colors.white,
+                        //                     text: "Absent/Leave",
+                        //                     icon: Icons.cancel,
+                        //                   ),
+                        //                   const SizedBox(height: 8),
+                        //                   LegendRow(
+                        //                     color: Colors.blue,
+                        //                     borderColor: Colors.red,
+                        //                     text: "Holiday",
+                        //                     icon: Icons.beach_access,
+                        //                     hasBorder: true,
+                        //                   ),
+                        //                 ],
+                        //               ),
+                        //             ),
+                        //           ],
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
                         const SizedBox(height: 24),
                         Card(
                           elevation: 3,
@@ -2209,78 +2373,6 @@ class _StaffCalendarPageState extends State<StaffCalendarPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        Card(
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Legend",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          LegendRow(
-                                            color: Colors.green,
-                                            borderColor: Colors.white,
-                                            text: "Present",
-                                            icon: Icons.check_circle,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          LegendRow(
-                                            color: Colors.orange,
-                                            borderColor: Colors.white,
-                                            text: "Half Day",
-                                            icon: Icons.timelapse,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          LegendRow(
-                                            color: Colors.red,
-                                            borderColor: Colors.white,
-                                            text: "Absent/Leave",
-                                            icon: Icons.cancel,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          LegendRow(
-                                            color: Colors.blue,
-                                            borderColor: Colors.red,
-                                            text: "Holiday",
-                                            icon: Icons.beach_access,
-                                            hasBorder: true,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -2415,6 +2507,45 @@ Widget _buildReportRow({
         ),
       ],
     ),
+  );
+}
+
+Widget _buildLegendItem({
+  required Color color,
+  required Color backgroundColor,
+  required String text,
+  required IconData icon,
+  bool hasBorder = false,
+  Color? borderColor,
+}) {
+  return Row(
+    children: [
+      Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(10),
+          border: hasBorder && borderColor != null
+              ? Border.all(color: borderColor, width: 1.5)
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: color,
+        ),
+      ),
+      const SizedBox(width: 12),
+      Text(
+        text,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey.shade700,
+        ),
+      ),
+    ],
   );
 }
 

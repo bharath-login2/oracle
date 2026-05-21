@@ -679,8 +679,12 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                     widget.staffId ==
                                                                         userId
                                                                 ? GestureDetector(
-                                                                    onTap:
-                                                                        () async {
+                                                                    onTap: () async {
+                                                                      bool isAnyWorkInProgress = workStatusDetails!.data.any((w) => w.endTime == "00:00:00" || w.endTime.isEmpty);
+                                                                      if (isAnyWorkInProgress) {
+                                                                        Common.toastMessaage('Work is in progress. Please stop the work before restarting new work', Colors.red);
+                                                                        return;
+                                                                      }
                                                                       final workStatusModel =
                                                                           await HttpService.getWorkStatusPaused(
                                                                               item.id);
@@ -761,7 +765,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                     ),
                                                                   )
                                                                 : Text(
-                                                                    "Working...",
+                                                                    "Running...",
                                                                     style:
                                                                         TextStyle(
                                                                       fontSize:
@@ -886,7 +890,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                             children: [
                                                               Text(""),
                                                               BlinkingText(
-                                                                text: "Working",
+                                                                text: "Running",
                                                                 style:
                                                                     TextStyle(
                                                                   fontSize: 13,

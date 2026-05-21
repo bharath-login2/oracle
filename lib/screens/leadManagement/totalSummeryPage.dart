@@ -1011,7 +1011,9 @@ class _TotalSummeryPageState extends State<TotalSummeryPage>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  call.name,
+                                  call.name != "null" ? 
+                                  call.name : "Unknown",
+                                  //call.name,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,

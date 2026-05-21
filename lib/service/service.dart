@@ -5201,6 +5201,7 @@ class HttpService {
       "title_id": workData['title_id'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
+      "action": workData['action'] ?? '',
       "tasks": jsonEncode(workData['tasks']),
     });
     try {
@@ -5255,6 +5256,7 @@ class HttpService {
       "assigned_id": workData['assignedId'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
+      "action": workData['action'] ?? '',
       "tasks": workData['tasks'],
     };
     try {
@@ -5289,6 +5291,7 @@ class HttpService {
       'attendance_id': workData['attendance_id'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
+      "action": workData['action'] ?? '',
       "tasks": jsonEncode(workData['tasks']),
     });
     // try {

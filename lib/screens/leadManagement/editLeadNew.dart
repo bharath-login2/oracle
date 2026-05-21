@@ -239,8 +239,16 @@ class _EditLeadNewState extends State<EditLeadNew> {
       priorityCtrl.text = priority;
       priorityId = data.priorityId?.toString() ?? '';
       leadSource = data.leadSource ?? 'Lead Source';
-      leadSourceCtrl.text = leadSource;
       leadSourceId = data.leadSourceId?.toString() ?? '';
+      if (commonDetails?.data.leadSource != null) {
+        for (var src in commonDetails!.data.leadSource) {
+          if (src.leadSourceId.toString() == leadSourceId && src.isRestricted == "Y") {
+            leadSource = "${src.leadSource} (Restricted)";
+            break;
+          }
+        }
+      }
+      leadSourceCtrl.text = leadSource;
       callResult = data.callResult ?? 'New';
       callResultId = data.callResultId?.toString() ?? '1';
       nextFollowupCtrl.text = data.nextFollowupDate ?? "";
@@ -417,9 +425,9 @@ class _EditLeadNewState extends State<EditLeadNew> {
                 const SizedBox(height: 12),
                 if (leadSubTypeList?.data?.isNotEmpty ?? false)
                   _buildSubCategoryField(),
-               // const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-                // _buildLeadSourceField(),
+                _buildLeadSourceField(),
                 const SizedBox(height: 12),
                 _buildPriorityField(),
                 // const SizedBox(height: 12),
@@ -1333,7 +1341,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
         context: context,
         builder: (_) {
           var search = TextEditingController();
-          var list = List.from(commonDetails!.data.leadSource);
+          var list = List<LeadSource>.from(commonDetails!.data.leadSource);
           return StatefulBuilder(
               builder: (c, setS) => AlertDialog(
                     title: const Text('Lead Source'),
@@ -1354,17 +1362,34 @@ class _EditLeadNewState extends State<EditLeadNew> {
                           Expanded(
                               child: ListView.builder(
                                   itemCount: list.length,
-                                  itemBuilder: (c, i) => ListTile(
-                                      title: Text(list[i].leadSource),
-                                      onTap: () {
-                                        setState(() {
-                                          leadSource = list[i].leadSource;
-                                          leadSourceCtrl.text = leadSource;
-                                          leadSourceId =
-                                              list[i].leadSourceId.toString();
-                                        });
-                                        Navigator.pop(context);
-                                      })))
+                                  itemBuilder: (c, i) {
+                                    final src = list[i];
+                                    final bool isRestricted = src.isRestricted == "Y";
+                                    return ListTile(
+                                      title: Text(
+                                        isRestricted
+                                            ? "${src.leadSource} (Restricted)"
+                                            : src.leadSource,
+                                        style: TextStyle(
+                                          color: isRestricted
+                                              ? Colors.grey
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                      enabled: !isRestricted,
+                                      onTap: isRestricted
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                leadSource = src.leadSource;
+                                                leadSourceCtrl.text = leadSource;
+                                                leadSourceId =
+                                                    src.leadSourceId.toString();
+                                              });
+                                              Navigator.pop(context);
+                                            },
+                                    );
+                                  }))
                         ])),
                   ));
         });

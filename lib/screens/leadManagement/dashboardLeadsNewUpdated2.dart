@@ -324,7 +324,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     const Color(0xFF0D47A1),
     const Color(0xFF3F51B5),
   ];
-
   Map<String, double> reportDataMap = {};
   int catNew = 0,
       catPending = 0,
@@ -5085,7 +5084,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "callResultId": isFollowupFiltering
           ? ""
           : (_listTabCurrentIsCalled == true
-              ? (_listTabSelectedStatusIds?.join(',') ?? "")
+              ? ((_listTabSelectedStatusIds != null && _listTabSelectedStatusIds!.isNotEmpty)
+                  ? _listTabSelectedStatusIds!.join(',')
+                  : (_listTabFilter == "New" ? "1" : ""))
               : (_listTabCurrentStatus == "0"
                   ? ""
                   : (_listTabCurrentStatus ?? ""))),
@@ -5187,7 +5188,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     Map<String, dynamic> body = {
       "token": widget.token,
       "callResultId": (_listTabCurrentIsCalled == true)
-          ? (_listTabSelectedStatusIds?.join(',') ?? "")
+          ? ((_listTabSelectedStatusIds != null && _listTabSelectedStatusIds!.isNotEmpty)
+              ? _listTabSelectedStatusIds!.join(',')
+              : (_listTabFilter == "New" ? "1" : ""))
           : (_listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? "")),
       "leadCategoryId": _listTabSelectedCategoryIds,
       "leadSubcategoryId": [],
@@ -5217,7 +5220,6 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         shouldSendDates ? DateFormat('yyyy-MM-dd').format(fromDate) : "";
     body["toDate"] =
         shouldSendDates ? DateFormat('yyyy-MM-dd').format(toDate) : "";
-
     try {
       final response = await HttpService.leadReport(body);
       if (response != null && response.data != null) {

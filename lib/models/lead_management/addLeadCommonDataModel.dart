@@ -238,20 +238,25 @@ class LeadCategory {
 class LeadSource {
     String leadSourceId;
     String leadSource;
+    String isRestricted;
 
     LeadSource({
         required this.leadSourceId,
         required this.leadSource,
+        required this.isRestricted,
     });
 
     factory LeadSource.fromJson(Map<String, dynamic> json) => LeadSource(
         leadSourceId: json["lead_source_id"]??"",
         leadSource: json["lead_source"]??"",
+        isRestricted: json["is_restricted"]??"",
     );
 
     Map<String, dynamic> toJson() => {
         "lead_source_id": leadSourceId,
         "lead_source": leadSource,
+         "is_restricted": isRestricted,
+        
     };
 }
 

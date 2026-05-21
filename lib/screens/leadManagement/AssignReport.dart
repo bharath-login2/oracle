@@ -62,6 +62,8 @@ class _AssignReportState extends State<AssignReport> {
   String? userId;
   String? phoneCallLogPermission;
   String? assignWork;
+    String? editAssignWork;
+    String? deleteAssignWork;
   bool isLoading = true;
   bool isRemarkExpanded = false;
   List<String> participantIds = [];
@@ -86,6 +88,20 @@ class _AssignReportState extends State<AssignReport> {
   Map<String, bool> _expandedWorkSessions = {};
   Map<String, bool> _cardMinimalViews = {};
   bool _hasShownTaskDetails = false;
+  bool isLoggedIn = false;
+
+  Future<void> loginorNot() async {
+    final token = await Common.getSharedPref("token");
+    final response = await HttpService.getLoginorNot(token);
+
+    setState(() {
+      if (response != null && response.data == true) {
+        isLoggedIn = true;
+      } else {
+        isLoggedIn = false;
+      }
+    });
+  }
 
   // @override
   // void initState() {
@@ -117,6 +133,7 @@ class _AssignReportState extends State<AssignReport> {
   @override
   void initState() {
     super.initState();
+    loginorNot();
     _loadCurrentUserId();
     _fetchStaffList();
     checkAssignedWorks();
@@ -162,6 +179,8 @@ class _AssignReportState extends State<AssignReport> {
     token = await Common.getSharedPref("token");
     name = await Common.getSharedPref("name");
     assignWork = await Common.getSharedPref("assignWork");
+     editAssignWork = await Common.getSharedPref("editAssignWork");
+     deleteAssignWork = await Common.getSharedPref("deleteAssignWork");
     userId = await Common.getSharedPref("userId");
     phoneCallLogPermission =
         await Common.getSharedPref("phoneCallLogPermission");
@@ -2184,6 +2203,7 @@ class _AssignReportState extends State<AssignReport> {
                           ),
                         ),
                         const PopupMenuDivider(),
+                        if (editAssignWork == "true") ...[
                         PopupMenuItem<String>(
                           value: 'edit',
                           child: SizedBox(
@@ -2203,7 +2223,9 @@ class _AssignReportState extends State<AssignReport> {
                             ),
                           ),
                         ),
+                        ],
                         const PopupMenuDivider(),
+                        if (deleteAssignWork == "true") ...[
                         PopupMenuItem<String>(
                           value: 'delete',
                           child: SizedBox(
@@ -2223,6 +2245,7 @@ class _AssignReportState extends State<AssignReport> {
                             ),
                           ),
                         ),
+                        ]
                       ],
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -2946,6 +2969,27 @@ class _AssignReportState extends State<AssignReport> {
   }
 
   Future<void> _handleStartWork(AssignedWork item) async {
+    if (!isLoggedIn) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Login Required'),
+            content: const Text('Please login to start work.'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     final result = await HttpService.getWorkStatus();
     if (result != null && result.data.isNotEmpty) {
       if (!mounted) return;
@@ -2994,6 +3038,7 @@ class _AssignReportState extends State<AssignReport> {
             existingWork: null,
             isPaused: 0,
             Restart: 0,
+            isAssigned:1,
             onSuccess: () {
               setState(() {
                 checkExistingWorkStatus();

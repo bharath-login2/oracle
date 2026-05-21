@@ -43,6 +43,7 @@ class AddWorkPage extends StatefulWidget {
   final Function() onSuccess;
   final int isPaused;
   final int Restart;
+  final int isAssigned;
   const AddWorkPage({
     super.key,
     required this.workId,
@@ -50,6 +51,7 @@ class AddWorkPage extends StatefulWidget {
     required this.onSuccess,
     this.isPaused = 0,
     this.Restart = 0,
+    this.isAssigned = 0,
   });
 
   @override
@@ -577,6 +579,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      'action': widget.existingWork != null ? 'stop' : 'start',
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
@@ -593,7 +596,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
     };
     try {
       final response = widget.existingWork != null
-          ? await HttpService.updateWorkData(workData)
+          ?await HttpService.saveWorkData(workData)
+          // await HttpService.updateWorkData(workData)
           : await HttpService.submitWorkData(workData);
 
       if (response.status) {
@@ -675,6 +679,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      'action': 'save',
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
@@ -1453,7 +1458,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             }),
 
                             // Add Task Button (only for last task)
-                            if ((taskIndex == tasks.length - 1) && widget.Restart != 1)
+                            if ((taskIndex == tasks.length - 1) && widget.Restart != 1 && widget.isAssigned != 1)
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton.icon(
@@ -1593,35 +1598,54 @@ class _AddWorkPageState extends State<AddWorkPage> {
               
                 if (widget.existingWork != null &&
                     widget.isPaused != 1 &&
-                    widget.Restart != 1)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade600,
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 45),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                    widget.Restart != 1) ...[
+                  if (tasks.any((task) => task.isChecked && task.status == '3'))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade600,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          onPressed: _submitWork,
+                          child: const Text(
+                            'STOP WORK',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
                           ),
                         ),
-                        onPressed: _savework,
-                        child: const Text(
-                          'SAVE WORK',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue.shade600,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          onPressed: _savework,
+                          child: const Text(
+                            'SAVE WORK',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-
-                // Primary Action Button
-                if (!(widget.existingWork != null &&
-                    widget.isPaused != 1 &&
-                    widget.Restart != 1 &&
-                    !tasks.any((task) => task.status == '4')))
+                ] else
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -1630,9 +1654,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             ? Colors.orange.shade600
                             : (widget.Restart == 1
                                 ? Colors.green.shade600
-                                : (widget.existingWork != null
-                                    ? Colors.red.shade600
-                                    : Colors.green.shade600)),
+                                : Colors.green.shade600),
                         foregroundColor: Colors.white,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
@@ -1643,17 +1665,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
                           ? _pauseWork
                           : (widget.Restart == 1
                               ? _restartWork
-                              : (widget.existingWork != null
-                                  ? _savework
-                                  : _submitWork)),
+                              : _submitWork),
                       child: Text(
                         widget.isPaused == 1
                             ? "PAUSE WORK"
                             : (widget.Restart == 1
                                 ? "RESTART WORK"
-                                : (widget.existingWork != null
-                                    ? 'STOP WORK'
-                                    : 'START WORK')),
+                                : 'START WORK'),
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),

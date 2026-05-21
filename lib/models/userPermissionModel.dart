@@ -86,6 +86,8 @@ class Data {
   String? faceDetection;
   String? companyLocation;
   String? assignWork;
+   String? editassignWork;
+     String? deleteassignWork;
    String? markAttendance;
   String? addWorkModule;
   String? viewAttendanceSection;
@@ -182,6 +184,8 @@ class Data {
     this.faceDetection,
     this.companyLocation,
     this.assignWork,
+      this.editassignWork,
+      this.deleteassignWork,
     this.markAttendance,
     this.addWorkModule,
     this.viewAttendanceSection,
@@ -280,6 +284,8 @@ class Data {
     faceDetection = json['face_detection'];
     companyLocation = json['company_location'];
     assignWork = json['assign_work'];
+      editassignWork = json['edit_assign_work'];
+      deleteassignWork = json['delete_assign_work'];
     markAttendance = json['mark_attendance'];
     addWorkModule = json['add_work_module'];
     viewAttendanceSection = json['view_attendance'];
@@ -374,6 +380,8 @@ class Data {
     data['face_detection'] = faceDetection;
     data['company_location'] = companyLocation;
     data['assign_work'] = assignWork;
+      data['edit_assign_work'] = editassignWork;
+      data['delete_assign_work'] = deleteassignWork;
     data['mark_attendance'] = markAttendance;
     data['add_work_module'] = addWorkModule;
     data['view_attendance'] = viewAttendanceSection;

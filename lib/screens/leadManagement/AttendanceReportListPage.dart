@@ -285,7 +285,6 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
               ],
             ),
           ),
-          // Summary Stats
           FutureBuilder<GetAttendanceReportModel?>(
             future: reportFuture,
             builder: (context, snapshot) {
@@ -299,7 +298,6 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
               return const SizedBox.shrink();
             },
           ),
-          // List Header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
@@ -578,6 +576,7 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
 
     return Card(
       elevation: 2,
+      color: item.status?.toLowerCase() == 'leave' ? Colors.red.shade50 : Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -718,7 +717,7 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: item.status?.toLowerCase() == 'leave' ? Colors.red.shade100.withOpacity(0.5) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
