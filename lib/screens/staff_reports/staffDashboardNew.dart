@@ -1036,13 +1036,45 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
           const SizedBox(height: 12),
           Row(
             children: [
+              // Expanded(
+              //   child: _buildMetricCard(
+              //     icon: Icons.timeline,
+              //     label: "Call Timeline",
+              //     value: "View Details",
+              //     color: const Color(0xFF4facfe),
+              //     onTap: () {
+              //       Navigator.push(
+              //         context,
+              //         MaterialPageRoute(
+              //           builder: (context) => const TimelinePage(),
+              //           settings: RouteSettings(
+              //             arguments: {
+              //               "staffId": staffDetails!.data.userData.userId
+              //             },
+              //           ),
+              //         ),
+              //       );
+              //     },
+              //   ),
+              // ),
+              //  const SizedBox(width: 12),
               Expanded(
                 child: _buildMetricCard(
-                  icon: Icons.timeline,
-                  label: "Call Timeline",
-                  value: "View Details",
-                  color: const Color(0xFF4facfe),
-                  onTap: () {
+                  icon: Icons.call_end,
+                  label: "Total Call Duration",
+                  value: callDetails!.data.callDetails.totDurationSum,
+                  color: const Color(0xFF43e97b),
+                  onTap: null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1055,18 +1087,30 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                       ),
                     );
                   },
+                  style: TextButton.styleFrom(
+                    backgroundColor: const Color(0xFF4facfe).withOpacity(0.1),
+                    foregroundColor: const Color(0xFF4facfe),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.timeline, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        "View Call Timeline",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              // const SizedBox(width: 12),
-              // Expanded(
-              //   child: _buildMetricCard(
-              //     icon: Icons.call_end,
-              //     label: "Total Calls",
-              //     value: callDetails!.data.callDetails.totalCalls.toString(),
-              //     color: const Color(0xFF43e97b),
-              //     onTap: null,
-              //   ),
-              // ),
             ],
           ),
         ],
@@ -2520,16 +2564,14 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
 
     String salaryType = "Advance";
     if (details != null && details.data.salary.debitOrCredit.isNotEmpty) {
-      salaryType = details.data.salary.debitOrCredit == "Credit"
-          ? "Advance"
-          : "Pending";
+      salaryType =
+          details.data.salary.debitOrCredit == "Credit" ? "Advance" : "Pending";
     }
 
     String pettyType = "Advance";
     if (details != null && details.data.petty.debitOrCredit.isNotEmpty) {
-      pettyType = details.data.petty.debitOrCredit == "Credit"
-          ? "Advance"
-          : "Pending";
+      pettyType =
+          details.data.petty.debitOrCredit == "Credit" ? "Advance" : "Pending";
     }
 
     showDialog(

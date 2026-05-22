@@ -111,11 +111,13 @@ class CallCountByResponse {
 class CallDetails {
   String totDuration;
   String phoneCallDuration;
+  String totDurationSum;
   int closedCalls;
   String totalCost;
 
   CallDetails({
     required this.totDuration,
+    required this.totDurationSum,
     required this.phoneCallDuration,
     required this.closedCalls,
     required this.totalCost,
@@ -123,6 +125,7 @@ class CallDetails {
 
   factory CallDetails.fromJson(Map<String, dynamic> json) => CallDetails(
         totDuration: json["tot_duration"],
+        totDurationSum: json["total_duration_sum"],
         phoneCallDuration: json["phone_call_duration"],
         closedCalls: json["closedCalls"],
         totalCost: json["totalCost"],
@@ -130,6 +133,7 @@ class CallDetails {
 
   Map<String, dynamic> toJson() => {
         "tot_duration": totDuration,
+        "total_duration_sum": totDurationSum,
         "phone_call_duration": phoneCallDuration,
         "closedCalls": closedCalls,
         "totalCost": totalCost,
