@@ -272,7 +272,9 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                       context: context,
                       builder: (context) => AddWorkPage(
                         workId: "",
+                       
                         existingWork: newExistingWork,
+                          isAssigned:1,
                         onSuccess: () {
                           setState(() {
                             getWorkDuration(currentDate);

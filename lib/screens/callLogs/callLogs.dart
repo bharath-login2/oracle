@@ -1161,10 +1161,7 @@ class _CallLogsState extends State<CallLogs> {
             //  await uploadMissingLogsToServer(listOfCallLogNeedToAddHive);
             await HiveUtil.addCallLogs(listOfCallLogNeedToAddHive);
           }
-          setState(() {
-            refresh = false;
-          });
-          // getSharedData();
+          await loadHiveData();
           return;
         } else {
           log('No call logs found');
@@ -1443,11 +1440,7 @@ class _CallLogsState extends State<CallLogs> {
               await HiveUtil.addCallLogs(nonDuplicates);
             }
 
-            setState(() {
-              refresh = false;
-            });
-            // getSharedData();
-
+            await loadHiveData();
             return;
           } else {
             log('No NEW Call Logs found in device.');
@@ -1456,8 +1449,12 @@ class _CallLogsState extends State<CallLogs> {
       }
     } catch (e) {
       log(e.toString());
+      if (mounted) {
+        setState(() {
+          refresh = false;
+        });
+      }
     }
-    // setState(() {});
   }
 
   void printLastUploadedData() async {

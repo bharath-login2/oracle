@@ -2207,7 +2207,7 @@ class _AssignReportState extends State<AssignReport> {
                         PopupMenuItem<String>(
                           value: 'edit',
                           child: SizedBox(
-                            width: 100, // Same width for consistency
+                            width: 100,
                             child: Row(
                               children: [
                                 const Icon(Icons.edit,

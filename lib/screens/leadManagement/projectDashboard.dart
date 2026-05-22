@@ -906,13 +906,13 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                     newExistingWork =
                                         workStatusModel.data.first;
                                   }
-
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => AddWorkPage(
                                         workId: "",
                                         existingWork: newExistingWork,
+                                        // isAssigned: 1,
                                         onSuccess: () {},
                                       ),
                                     ),
@@ -1046,6 +1046,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                                     AddWorkPage(
                                                   workId: "",
                                                   existingWork: existingWork,
+                                                   isAssigned: 1,
                                                   onSuccess: () {
                                                     setState(() {
                                                       getData(token, fromdate,

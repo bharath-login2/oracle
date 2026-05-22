@@ -299,6 +299,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                           builder: (context) => AddWorkPage(
                             workId: "",
                             existingWork: newExistingWork,
+                            isAssigned: 1,
                             onSuccess: () {
                               setState(() {
                                 getWorkDuration(currentDate);
@@ -344,7 +345,6 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                           workStatusModel.data.isNotEmpty) {
                         newExistingWork = workStatusModel.data.first;
                       }
-
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -659,7 +659,7 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                     (item.totalDuration
                                                                 .isNotEmpty) &&
                                                             item.is_paused !=
-                                                                "1"
+                                                                "0"
                                                         ? Text(
                                                             "Worked:${item.totalDuration}",
                                                             style: TextStyle(
@@ -674,195 +674,123 @@ class _ViewWorkPageState extends State<ViewWorkPage> {
                                                                 TextOverflow
                                                                     .ellipsis,
                                                           )
-                                                        : item.is_paused == "1"
-                                                            ? (isInProgress == false && userId != null &&
-                                                                    widget.staffId ==
-                                                                        userId
-                                                                ? GestureDetector(
-                                                                    onTap: () async {
-                                                                      bool isAnyWorkInProgress = workStatusDetails!.data.any((w) => w.endTime == "00:00:00" || w.endTime.isEmpty);
-                                                                      if (isAnyWorkInProgress) {
-                                                                        Common.toastMessaage('Work is in progress. Please stop the work before restarting new work', Colors.red);
-                                                                        return;
-                                                                      }
-                                                                      final workStatusModel =
-                                                                          await HttpService.getWorkStatusPaused(
+                                                        : (isInProgress ==
+                                                                    false &&
+                                                                userId !=
+                                                                    null &&
+                                                                widget.staffId ==
+                                                                    userId
+                                                            ? GestureDetector(
+                                                                onTap:
+                                                                    () async {
+                                                                  bool isAnyWorkInProgress = workStatusDetails!.data.any((w) =>
+                                                                      w.endTime ==
+                                                                          "00:00:00" ||
+                                                                      w.endTime
+                                                                          .isEmpty);
+                                                                  if (isAnyWorkInProgress) {
+                                                                    Common.toastMessaage(
+                                                                        'Work is in progress. Please stop the work before restarting new work',
+                                                                        Colors
+                                                                            .red);
+                                                                    return;
+                                                                  }
+                                                                  final workStatusModel =
+                                                                      await HttpService
+                                                                          .getWorkStatusPaused(
                                                                               item.id);
-                                                                      workStatus
-                                                                          .WorkStatus?
-                                                                          newExistingWork;
-                                                                      if (workStatusModel !=
-                                                                              null &&
-                                                                          workStatusModel
-                                                                              .data
-                                                                              .isNotEmpty) {
-                                                                        newExistingWork = workStatusModel
+                                                                  workStatus
+                                                                      .WorkStatus?
+                                                                      newExistingWork;
+                                                                  if (workStatusModel !=
+                                                                          null &&
+                                                                      workStatusModel
+                                                                          .data
+                                                                          .isNotEmpty) {
+                                                                    newExistingWork =
+                                                                        workStatusModel
                                                                             .data
                                                                             .first;
-                                                                      }
-                                                                      Navigator
-                                                                          .push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                          builder: (context) =>
+                                                                  }
+                                                                  Navigator
+                                                                      .push(
+                                                                    context,
+                                                                    MaterialPageRoute(
+                                                                      builder:
+                                                                          (context) =>
                                                                               AddWorkPage(
-                                                                            workId:
-                                                                                item.id,
-                                                                            existingWork:
-                                                                                null,
-                                                                            isPaused:
-                                                                                0,
-                                                                            Restart:
-                                                                                1,
-                                                                            onSuccess:
-                                                                                () {
-                                                                              setState(() {
-                                                                                checkExistingWorkStatus();
-                                                                              });
-                                                                            },
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    },
-                                                                    child:
-                                                                        const Row(
-                                                                      mainAxisSize:
-                                                                          MainAxisSize
-                                                                              .min,
-                                                                      children: [
-                                                                        Icon(
-                                                                          Icons
-                                                                              .restart_alt,
-                                                                          size:
-                                                                              20,
-                                                                          color: Color.fromARGB(
-                                                                              255,
-                                                                              29,
-                                                                              183,
-                                                                              230),
-                                                                        ),
-                                                                        SizedBox(
-                                                                            width:
-                                                                                4),
-                                                                        Text(
-                                                                          "Restart",
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontSize:
-                                                                                14,
-                                                                            color: Color.fromARGB(
-                                                                                255,
-                                                                                29,
-                                                                                183,
-                                                                                230),
-                                                                            fontWeight:
-                                                                                FontWeight.bold,
-                                                                          ),
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                        ),
-                                                                      ],
+                                                                        workId:
+                                                                            item.id,
+                                                                        existingWork:
+                                                                            null,
+                                                                        isPaused:
+                                                                            0,
+                                                                        Restart:
+                                                                            1,
+                                                                        onSuccess:
+                                                                            () {
+                                                                          setState(
+                                                                              () {
+                                                                            checkExistingWorkStatus();
+                                                                          });
+                                                                        },
+                                                                      ),
                                                                     ),
-                                                                  )
-                                                                : Text(
-                                                                    "Running...",
-                                                                    style:
-                                                                        TextStyle(
-                                                                      fontSize:
-                                                                          14,
-                                                                      color: Colors
-                                                                          .grey
-                                                                          .shade600,
-                                                                      fontWeight:
-                                                                          FontWeight
-                                                                              .bold,
+                                                                  );
+                                                                },
+                                                                child:
+                                                                    const Row(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  children: [
+                                                                    Icon(
+                                                                      Icons
+                                                                          .restart_alt,
+                                                                      size: 20,
+                                                                      color: Color.fromARGB(
+                                                                          255,
+                                                                          29,
+                                                                          183,
+                                                                          230),
                                                                     ),
-                                                                  ))
-                                                            : (userId != null &&
-                                                                    widget.staffId ==
-                                                                        userId
-                                                                ? GestureDetector(
-                                                                    onTap:
-                                                                        () async {
-                                                                      final workStatusModel =
-                                                                          await HttpService.getWorkStatus(
-                                                                              isPaused: 1);
-                                                                      workStatus
-                                                                          .WorkStatus?
-                                                                          newExistingWork;
-                                                                      if (workStatusModel !=
-                                                                              null &&
-                                                                          workStatusModel
-                                                                              .data
-                                                                              .isNotEmpty) {
-                                                                        newExistingWork = workStatusModel
-                                                                            .data
-                                                                            .first;
-                                                                      }
-                                                                      Navigator
-                                                                          .push(
-                                                                        context,
-                                                                        MaterialPageRoute(
-                                                                          builder: (context) =>
-                                                                              AddWorkPage(
-                                                                            workId:
-                                                                                "",
-                                                                            existingWork:
-                                                                                newExistingWork,
-                                                                            isPaused:
-                                                                                1,
-                                                                            onSuccess:
-                                                                                () {
-                                                                              setState(() {
-                                                                                getWorkDuration(currentDate);
-                                                                                checkExistingWorkStatus();
-                                                                              });
-                                                                            },
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    },
-                                                                    child:
-                                                                        const Row(
-                                                                      mainAxisSize:
-                                                                          MainAxisSize
-                                                                              .min,
-                                                                      children: [
-                                                                        Icon(
-                                                                          Icons
-                                                                              .pause_circle_filled,
-                                                                          size:
-                                                                              20,
-                                                                          color: Color.fromARGB(
-                                                                              255,
-                                                                              238,
-                                                                              109,
-                                                                              4),
-                                                                        ),
-                                                                        SizedBox(
-                                                                            width:
-                                                                                4),
-                                                                        Text(
-                                                                          "Pause",
-                                                                          style:
-                                                                              TextStyle(
-                                                                            fontSize:
-                                                                                14,
-                                                                            color: Color.fromARGB(
-                                                                                255,
-                                                                                238,
-                                                                                109,
-                                                                                4),
-                                                                            fontWeight:
-                                                                                FontWeight.bold,
-                                                                          ),
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                        ),
-                                                                      ],
+                                                                    SizedBox(
+                                                                        width:
+                                                                            4),
+                                                                    Text(
+                                                                      "Restart",
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontSize:
+                                                                            14,
+                                                                        color: Color.fromARGB(
+                                                                            255,
+                                                                            29,
+                                                                            183,
+                                                                            230),
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                      ),
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
                                                                     ),
-                                                                  )
-                                                                : const SizedBox())
+                                                                  ],
+                                                                ),
+                                                              )
+                                                            : Text(
+                                                                "Running...",
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 14,
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade600,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ))
                                                   ],
                                                 ),
                                                 const SizedBox(height: 8),

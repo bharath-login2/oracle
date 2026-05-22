@@ -4937,27 +4937,69 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         final d = response.data!;
         if (mounted) {
           setState(() {
-            var lead = listTabLeads[index];
-            lead.clientName = d.clientName ?? lead.clientName;
-            lead.contactNumber1 = d.contactNumber1 ?? lead.contactNumber1;
-            lead.calledDate = d.calledDate ?? lead.calledDate;
-            lead.lastCalledDate = d.calledDate ?? lead.lastCalledDate;
-            lead.nextFollowupDate = d.nextFollowupDate ?? lead.nextFollowupDate;
-            lead.callResult = d.callResult ?? lead.callResult;
-            lead.callResultId =
-                int.tryParse(d.callResultId ?? "0") ?? lead.callResultId;
-            lead.leadCategory = d.leadCategory ?? lead.leadCategory;
-            lead.leadCategoryId = d.leadCategoryId ?? lead.leadCategoryId;
-            lead.leadSubCategory = d.leadSubCategory ?? lead.leadSubCategory;
-            lead.leadSubCategoryId =
-                d.leadSubCategoryId ?? lead.leadSubCategoryId;
-            lead.priority = d.priorityId ?? lead.priority;
-            lead.priorityName = d.priority ?? lead.priorityName;
-            lead.cost = d.cost ?? lead.cost;
-            lead.address = d.address ?? lead.address;
-            lead.staffName = d.staffName ?? lead.staffName;
-            lead.isCalled = true;
-            lead.isNewCall = false;
+            final String newStatusIdStr = d.callResultId ?? '';
+            bool shouldRemove = false;
+
+            if (_listTabSelectedStatusIds != null &&
+                _listTabSelectedStatusIds!.isNotEmpty) {
+              if (!_listTabSelectedStatusIds!.contains(newStatusIdStr)) {
+                shouldRemove = true;
+              }
+            } else {
+              if (_listTabFilter == 'New') {
+                if (newStatusIdStr != '1') {
+                  shouldRemove = true;
+                }
+              } else if (_listTabFilter == 'Followup') {
+                if (newStatusIdStr != '2') {
+                  shouldRemove = true;
+                }
+              } else if (_listTabFilter == 'Missed') {
+                if (newStatusIdStr != '3') {
+                  shouldRemove = true;
+                }
+              } else if (_listTabFilter == 'Called') {
+                if (newStatusIdStr != '4') {
+                  shouldRemove = true;
+                }
+              } else if (_listTabFilter == 'Transferred') {
+                if (newStatusIdStr != '5') {
+                  shouldRemove = true;
+                }
+              } else if (_listTabFilter == 'Closed') {
+                if (newStatusIdStr != '6') {
+                  shouldRemove = true;
+                }
+              }
+            }
+
+            if (shouldRemove) {
+              listTabLeads.removeAt(index);
+              _totalLeads = (_totalLeads - 1).clamp(0, 999999);
+            } else {
+              var lead = listTabLeads[index];
+              lead.clientName = d.clientName ?? lead.clientName;
+              lead.contactNumber1 = d.contactNumber1 ?? lead.contactNumber1;
+              lead.calledDate = d.calledDate ?? lead.calledDate;
+              lead.lastCalledDate = d.calledDate ?? lead.lastCalledDate;
+              lead.nextFollowupDate =
+                  d.nextFollowupDate ?? lead.nextFollowupDate;
+              lead.callResult = d.callResult ?? lead.callResult;
+              lead.callResultId =
+                  int.tryParse(d.callResultId ?? "0") ?? lead.callResultId;
+              lead.leadCategory = d.leadCategory ?? lead.leadCategory;
+              lead.leadCategoryId = d.leadCategoryId ?? lead.leadCategoryId;
+              lead.leadSubCategory = d.leadSubCategory ?? lead.leadSubCategory;
+              lead.leadSubCategoryId =
+                  d.leadSubCategoryId ?? lead.leadSubCategoryId;
+              lead.priority = d.priorityId ?? lead.priority;
+              lead.priorityName = d.priority ?? lead.priorityName;
+              lead.cost = d.cost ?? lead.cost;
+              lead.address = d.address ?? lead.address;
+              lead.staffName = d.staffName ?? lead.staffName;
+              lead.isCalled = true;
+              lead.isNewCall = false;
+            }
           });
           // Update counts in background to keep dashboard consistent
           _fetchDashboardTabContent();

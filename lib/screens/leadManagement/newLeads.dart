@@ -1032,6 +1032,10 @@ class _NewLeadsState extends State<NewLeads>
             if (!checkedResponseItems.contains(newStatusIdStr)) {
               shouldRemove = true;
             }
+          } else if (isCalled == false) {
+            if (newStatusIdStr != '1') {
+              shouldRemove = true;
+            }
           }
 
           if (!shouldRemove && fromdate != null && todate != null) {
