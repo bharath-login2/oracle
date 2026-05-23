@@ -203,3 +203,4 @@ class LegendItem extends StatelessWidget {
     );
   }
 }
+

@@ -15,7 +15,7 @@ class BottomNavBar extends StatelessWidget {
     return BottomAppBar(
       shape: const CircularNotchedRectangle(),
       notchMargin: 6.0,
-      color: const Color(0xFF3A2F87),
+      color: const Color(0xFF2a86c9),
       elevation: 8,
       child: SizedBox(
         height: 30, 
@@ -52,3 +52,4 @@ class BottomNavBar extends StatelessWidget {
     );
   }
 }
+

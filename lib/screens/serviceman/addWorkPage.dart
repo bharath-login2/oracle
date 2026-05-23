@@ -79,22 +79,245 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
     setState(() {});
   }
 
-  Future<void> _pickDate(BuildContext context, bool isPreferred) async {
-    final DateTime? picked = await showDatePicker(
+  Future<void> _pickDateTime(BuildContext context, bool isPreferred) async {
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: isPreferred 
+          ? (_preferredDate ?? DateTime.now()) 
+          : (_estimatedDate ?? DateTime.now()),
       firstDate: DateTime(2023),
       lastDate: DateTime(2101),
     );
-    if (picked != null) {
-      setState(() {
-        if (isPreferred) {
-          _preferredDate = picked;
-        } else {
-          _estimatedDate = picked;
-        }
-      });
+    if (pickedDate != null) {
+      if (!context.mounted) return;
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(isPreferred
+            ? (_preferredDate ?? DateTime.now())
+            : (_estimatedDate ?? DateTime.now())),
+      );
+      if (pickedTime != null) {
+        setState(() {
+          final fullDateTime = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          if (isPreferred) {
+            _preferredDate = fullDateTime;
+          } else {
+            _estimatedDate = fullDateTime;
+          }
+        });
+      }
     }
+  }
+
+  Widget _buildAccessoriesDropdown() {
+    // Common accessories suggestions
+    final List<String> accessorySuggestions = [
+      "Battery",
+      "Charger",
+      "Display",
+      "Mouse",
+      // "Charger",
+      // "Display",
+      // "Adapter",
+      // "Keyboard",
+      // "Mouse",
+      // "Stand",
+      // "Cover",
+      // "Case",
+      // "Stylus",
+      // "Headphones",
+      // "Power Cord",
+      // "USB Cable",
+      // "HDMI Cable",
+      // "Earphones",
+      // "Dongle",
+      // "Mount",
+    ];
+
+    // Parse existing accessories from the string format: "battery, charger"
+    List<String> selectedAccessories = [];
+    if (_selectedAccessory != null && _selectedAccessory!.isNotEmpty) {
+      String cleanedString = _selectedAccessory!
+          .replaceAll('"', '')
+          .replaceAll("'", '');
+      selectedAccessories = cleanedString
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Other Accessories",
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
+        const SizedBox(height: 6),
+        GestureDetector(
+          onTap: () async {
+            final List<String>? result = await showDialog<List<String>>(
+              context: context,
+              builder: (context) {
+                List<String> tempSelected = List.from(selectedAccessories);
+                TextEditingController customController =
+                    TextEditingController();
+
+                return StatefulBuilder(
+                  builder: (context, setState) => AlertDialog(
+                    title: const Text('Select Accessories'),
+                    content: SizedBox(
+                      width: double.maxFinite,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: customController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Add custom accessory...',
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.green,
+                                  ),
+                                  onPressed: () {
+                                    if (customController.text
+                                        .trim()
+                                        .isNotEmpty) {
+                                      final newAccessory = customController.text
+                                          .trim();
+                                      if (!tempSelected.contains(
+                                        newAccessory,
+                                      )) {
+                                        tempSelected.add(newAccessory);
+                                        customController.clear();
+                                        setState(() {});
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          if (tempSelected.isNotEmpty) ...[
+                            const Text(
+                              'Selected:',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: tempSelected.map((accessory) {
+                                return Chip(
+                                  label: Text(accessory),
+                                  onDeleted: () {
+                                    tempSelected.remove(accessory);
+                                    setState(() {});
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 12),
+                            const Divider(),
+                          ],
+                          const Text(
+                            'Suggestions:',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 200,
+                            child: ListView.builder(
+                              itemCount: accessorySuggestions.length,
+                              itemBuilder: (context, index) {
+                                final accessory = accessorySuggestions[index];
+                                final isSelected = tempSelected.contains(
+                                  accessory,
+                                );
+                                return CheckboxListTile(
+                                  title: Text(accessory),
+                                  value: isSelected,
+                                  onChanged: (value) {
+                                    if (value == true) {
+                                      if (!tempSelected.contains(accessory)) {
+                                        tempSelected.add(accessory);
+                                      }
+                                    } else {
+                                      tempSelected.remove(accessory);
+                                    }
+                                    setState(() {});
+                                  },
+                                  dense: true,
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, tempSelected),
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+
+            if (result != null) {
+              setState(() {
+                _selectedAccessory = result.join(', ');
+              });
+            }
+          },
+          child: AbsorbPointer(
+            child: TextFormField(
+              decoration: InputDecoration(
+                labelText: "Accessories",
+                hintText: "Tap to select accessories",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                suffixIcon: const Icon(Icons.arrow_drop_down),
+              ),
+              controller: TextEditingController(
+                text: _selectedAccessory ?? '',
+              ),
+              readOnly: true,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _showError(String message) {
@@ -112,7 +335,7 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Work'),
-        backgroundColor: const Color(0xFF3A2F87),
+        backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
       ),
       body:
@@ -298,12 +521,12 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
                     _buildDateField(
                       "Preferred Date",
                       _preferredDate,
-                      () => _pickDate(context, true),
+                      () => _pickDateTime(context, true),
                     ),
                     _buildDateField(
                       "Estimated Date",
                       _estimatedDate,
-                      () => _pickDate(context, false),
+                      () => _pickDateTime(context, false),
                     ),
                     _buildDropdown(
                       "Assigned Service Man",
@@ -369,17 +592,7 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
                       _remarksController,
                       "Remarks from Customer",
                     ),
-                    _buildDropdown(
-                      "Other Accessories",
-                      _selectedAccessory,
-                      [
-                        "Remote",
-                        "Cable",
-                        "Manual",
-                        "Others",
-                      ].map((e) => {"id": e, "name": e}).toList(),
-                      (val) => setState(() => _selectedAccessory = val),
-                    ),
+                    _buildAccessoriesDropdown(),
 
                     const SizedBox(height: 20),
                     const Text(
@@ -410,7 +623,7 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
                     Center(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3A2F87),
+                          backgroundColor: const Color(0xFF2a86c9),
                           minimumSize: const Size(200, 48),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -457,12 +670,12 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
                             "problem_description": _problemDescController.text,
                             "preferred_date": _preferredDate != null
                                 ? DateFormat(
-                                    'yyyy-MM-dd',
+                                    'yyyy-MM-dd HH:mm:ss',
                                   ).format(_preferredDate!)
                                 : "",
                             "estimated_date": _estimatedDate != null
                                 ? DateFormat(
-                                    'yyyy-MM-dd',
+                                    'yyyy-MM-dd HH:mm:ss',
                                   ).format(_estimatedDate!)
                                 : "",
                             "assigned_service_man": _selectedServiceMan,
@@ -600,8 +813,8 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
           ),
           child: Text(
             date == null
-                ? 'Select date'
-                : DateFormat('dd MMM yyyy').format(date),
+                ? 'Select date and time'
+                : DateFormat('dd MMM yyyy, hh:mm a').format(date),
           ),
         ),
       ),
@@ -617,3 +830,4 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
     );
   }
 }
+

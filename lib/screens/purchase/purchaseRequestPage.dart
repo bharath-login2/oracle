@@ -6,6 +6,7 @@ import 'package:login2/screens/purchase/showPopupReject.dart';
 import 'package:login2/service/service.dart';
 import 'package:intl/intl.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:login2/screens/purchase/purchaseOrderPage.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   final String token;
@@ -565,14 +566,17 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                 else
                                   ...cartItems.asMap().entries.map((entry) {
                                     return _buildCartItemCard(
-                                        entry.value, entry.key, setDialogState,
-                                        () {
-                                      setDialogState(() {
-                                        cartItems[entry.key].dispose();
-                                        cartItems.removeAt(entry.key);
-                                      });
-                                    },
-                                    dialogContext,);
+                                      entry.value,
+                                      entry.key,
+                                      setDialogState,
+                                      () {
+                                        setDialogState(() {
+                                          cartItems[entry.key].dispose();
+                                          cartItems.removeAt(entry.key);
+                                        });
+                                      },
+                                      dialogContext,
+                                    );
                                   }).toList(),
 
                                 const SizedBox(height: 32),
@@ -781,8 +785,13 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
 
-  Widget _buildCartItemCard(CartItem item, int index,
-      StateSetter setDialogState, VoidCallback onDelete,BuildContext dialogContext,) {
+  Widget _buildCartItemCard(
+    CartItem item,
+    int index,
+    StateSetter setDialogState,
+    VoidCallback onDelete,
+    BuildContext dialogContext,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -832,51 +841,56 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                 IconButton(
                   icon: const Icon(Icons.delete_outline_rounded,
                       color: Colors.redAccent),
-                 // onPressed: onDelete,
-                 onPressed: () async {
-                  // Show confirmation dialog
-                  bool? confirm = await showDialog(
-                    context: dialogContext,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Delete Product'),
-                      content: Text('Delete "${item.material.materialName}"?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
-                          child: const Text('Delete'),
-                        ),
-                      ],
-                    ),
-                  );
-                  
-                  if (confirm == true) {
-                    // Show loading
-                    showDialog(
+                  // onPressed: onDelete,
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    bool? confirm = await showDialog(
                       context: dialogContext,
-                      barrierDismissible: false,
-                      builder: (context) => const Center(child: CircularProgressIndicator()),
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Product'),
+                        content:
+                            Text('Delete "${item.material.materialName}"?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.red),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
                     );
-                    
-                    // Call API
-                    final response = await HttpService.deletePurchaseOrderProduct(
-                      productId: item.material.materialId!,
-                    );
-                    
-                    Navigator.pop(dialogContext); // Close loading
-                    
-                    if (response?.status == true) {
-                      Common.toastMessaage('Product deleted', Colors.green);
-                      onDelete(); // Remove from cart
-                    } else {
-                      Common.toastMessaage(response?.message ?? 'Delete failed', Colors.red);
+
+                    if (confirm == true) {
+                      // Show loading
+                      showDialog(
+                        context: dialogContext,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            const Center(child: CircularProgressIndicator()),
+                      );
+
+                      // Call API
+                      final response =
+                          await HttpService.deletePurchaseOrderProduct(
+                        productId: item.material.materialId!,
+                      );
+
+                      Navigator.pop(dialogContext); // Close loading
+
+                      if (response?.status == true) {
+                        Common.toastMessaage('Product deleted', Colors.green);
+                        onDelete(); // Remove from cart
+                      } else {
+                        Common.toastMessaage(
+                            response?.message ?? 'Delete failed', Colors.red);
+                      }
                     }
-                  }
-                },
+                  },
                 ),
               ],
             ),
@@ -1109,6 +1123,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                       _showEditRequestDialog(request);
                                     } else if (value == 'delete') {
                                       _deleteRequest(request.id ?? "");
+                                    } else if (value == 'create_order') {
+                                      _createOrderFromRequest(request);
                                     }
                                   },
                                   itemBuilder: (context) => [
@@ -1134,6 +1150,20 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                         ],
                                       ),
                                     ),
+                                    if (request.orderStatus ==
+                                            "Order Not Created" &&
+                                        request.requestStatus != "Pending")
+                                      PopupMenuItem(
+                                        value: 'create_order',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.add,
+                                                size: 18, color: Colors.green),
+                                            SizedBox(width: 8),
+                                            Text("Create Order"),
+                                          ],
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ],
@@ -1248,7 +1278,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => _RequestDetailsDrawer(request: request),
+      builder: (context) => _RequestDetailsDrawer(
+        request: request,
+        onCreateOrder: () => _createOrderFromRequest(request),
+      ),
     );
   }
 
@@ -1283,6 +1316,31 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
             response?.message ?? "Failed to delete request", Colors.red);
       }
     }
+  }
+
+  Future<void> _createOrderFromRequest(PurchaseRequestData request) async {
+    Common.showProgressDialog(context, "Fetching request details...");
+    final detailsResponse =
+        await HttpService.getPurchaseRequestDetails(request.id ?? "");
+    Navigator.pop(context);
+
+    if (detailsResponse == null || !detailsResponse.status) {
+      Common.toastMessaage("Failed to fetch request details", Colors.red);
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PurchaseOrderPage(
+          token: widget.token,
+          name: widget.name,
+          userId: widget.userId,
+          createFromRequestItems: detailsResponse.data,
+          createFromRequestRemarks: request.remarks,
+        ),
+      ),
+    );
   }
 
   Widget _buildEmptyState() {
@@ -1524,8 +1582,12 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
 
 class _RequestDetailsDrawer extends StatelessWidget {
   final PurchaseRequestData request;
+  final VoidCallback? onCreateOrder;
 
-  const _RequestDetailsDrawer({required this.request});
+  const _RequestDetailsDrawer({
+    required this.request,
+    this.onCreateOrder,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1668,6 +1730,33 @@ class _RequestDetailsDrawer extends StatelessWidget {
                     fontStyle: FontStyle.italic),
               ),
             ),
+            const SizedBox(height: 30),
+            if (request.orderStatus == "Order Not Created" &&
+                request.requestStatus != "Pending")
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        if (onCreateOrder != null) {
+                          onCreateOrder!();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2a86c9),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: const Text('Create Order',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 30),
             Row(
               children: [

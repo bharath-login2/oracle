@@ -9,6 +9,7 @@ import 'package:login2/models/expense/account_head_model.dart';
 import 'package:login2/service/service.dart';
 import 'package:intl/intl.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:login2/models/lead_management/getPurchaseOrderDetailsModel.dart' as order_details_model;
 
 class BillItem {
   MaterialData material;
@@ -68,12 +69,16 @@ class PurchaseBillPage extends StatefulWidget {
   final String token;
   final String name;
   final String userId;
+  final order_details_model.PurchaseOrderData? createFromOrder;
+  final bool showAddDialogOnArrive;
 
   const PurchaseBillPage({
     super.key,
     required this.token,
     required this.name,
     required this.userId,
+    this.createFromOrder,
+    this.showAddDialogOnArrive = false,
   });
 
   @override
@@ -96,6 +101,11 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
     super.initState();
     _fetchBills();
     _fetchSuppliers();
+    if (widget.createFromOrder != null || widget.showAddDialogOnArrive) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showAddBillDialog(createFromOrder: widget.createFromOrder);
+      });
+    }
   }
 
   Future<void> _fetchSuppliers() async {
@@ -629,7 +639,10 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
     );
   }
 
-  void _showAddBillDialog({PurchaseBillData? editBill}) {
+  void _showAddBillDialog({
+    PurchaseBillData? editBill,
+    order_details_model.PurchaseOrderData? createFromOrder,
+  }) {
     List<BillItem> cartItems = [];
     List<PaymentItem> paymentItems = [];
     DateTime billDate = DateTime.now();
@@ -652,6 +665,30 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
     final TextEditingController trRefNoController = TextEditingController();
     final TextEditingController remarkController = TextEditingController();
 
+    if (createFromOrder != null) {
+      if (createFromOrder.orderDetails != null) {
+        final details = createFromOrder.orderDetails!;
+        remarkController.text = details.remarks ?? "";
+        if (suppliers.any((s) => s.supplierId == details.supplierId)) {
+          selectedSupplier = suppliers.firstWhere((s) => s.supplierId == details.supplierId);
+        }
+      }
+      if (createFromOrder.items != null) {
+        cartItems = createFromOrder.items!.map((item) {
+          return BillItem(
+            material: MaterialData(
+              materialId: item.materialId,
+              materialName: item.materialName,
+              unitName: item.unitName,
+            ),
+            quantity: double.tryParse(item.quantity ?? "1") ?? 1.0,
+            unitPrice: double.tryParse(item.unitPrice ?? "0") ?? 0.0,
+            gstPercentage: 0.0,
+          );
+        }).toList();
+      }
+    }
+
     bool deductFromAdvance = false;
 
     showGeneralDialog(
@@ -669,6 +706,12 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
 
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
+            if (createFromOrder != null && selectedSupplier == null && suppliers.isNotEmpty) {
+              final details = createFromOrder.orderDetails;
+              if (details != null && suppliers.any((s) => s.supplierId == details.supplierId)) {
+                selectedSupplier = suppliers.firstWhere((s) => s.supplierId == details.supplierId);
+              }
+            }
             if (dialogMaterials.isEmpty && !isFetching) {
               isFetching = true;
               HttpService.getMaterials().then((val) {
@@ -795,6 +838,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                               children: [
                                 Row(
                                   children: [
+                                    editBill != null?
                                     Expanded(
                                         child: _buildInputLabelField(
                                             label: "Bill Id",
@@ -802,7 +846,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                                 controller: billIdController,
                                                 decoration:
                                                     _inputDecoration("Bill Id"),
-                                                readOnly: true))),
+                                                readOnly: true))):SizedBox(),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: _buildInputLabelField(
@@ -881,14 +925,16 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    editBill != null?
+                                    const SizedBox(width: 12):SizedBox(),
+                                    editBill != null?
                                     Expanded(
                                         child: _buildInputLabelField(
                                             label: "Invoice Number",
                                             child: TextField(
                                                 controller: invoiceNoController,
                                                 decoration: _inputDecoration(
-                                                    "Invoice Number")))),
+                                                    "Invoice Number")))):SizedBox(),
                                   ],
                                 ),
                                 const SizedBox(height: 16),

@@ -35,7 +35,7 @@ class _LeadDashboardState extends State<LeadDashboard> {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF3A2F87),
+        statusBarColor: Color(0xFF2a86c9),
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
@@ -51,7 +51,7 @@ class _LeadDashboardState extends State<LeadDashboard> {
               height: 140,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFF3A2F87), Color(0xFF5D4EDB)],
+                  colors: [Color(0xFF2a86c9), Color(0xFF5D4EDB)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -121,7 +121,7 @@ class _LeadDashboardState extends State<LeadDashboard> {
                       child: ElevatedButton.icon(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3A2F87),
+                          backgroundColor: const Color(0xFF2a86c9),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 18,
                             vertical: 12,
@@ -201,7 +201,7 @@ class _LeadDashboardState extends State<LeadDashboard> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF3A2F87),
+        backgroundColor: const Color(0xFF2a86c9),
         onPressed: _refreshPage,
         child: const Icon(Icons.refresh, color: Colors.white),
       ),
@@ -297,3 +297,4 @@ class _LeadDashboardState extends State<LeadDashboard> {
     );
   }
 }
+

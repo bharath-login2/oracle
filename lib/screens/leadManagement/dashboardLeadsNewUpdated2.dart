@@ -246,6 +246,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
   bool viewTargetReportPermission1 = false;
   bool showTransferFreshValue = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey<RefreshIndicatorState> _listTabRefreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
   DashboardLeadsCountsModel? dashboardCounts;
   DashboardLeadCounts? dashboardMainCounts;
@@ -2931,6 +2932,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       controller: _tabController,
       children: [
         RefreshIndicator(
+          key: _listTabRefreshIndicatorKey,
           onRefresh: () =>
               getData(widget.token, fromDate, toDate, isRefresh: true),
           displacement: 40,
@@ -4913,8 +4915,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           pageName: 'Dashboard',
           autoExpandFollowup: autoExpandFollowup,
           onDataChanged: () {
-            if (customCallMasterId == null) {
-              _refreshLeadData(index);
+            // Programmatically trigger the pull-to-refresh visual spinner and sequence
+            if (_listTabRefreshIndicatorKey.currentState != null) {
+              _listTabRefreshIndicatorKey.currentState!.show();
             } else {
               getData(widget.token, fromDate, toDate, isRefresh: true);
             }
@@ -4959,9 +4962,9 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                   shouldRemove = true;
                 }
               } else if (_listTabFilter == 'Called') {
-                if (newStatusIdStr != '4') {
-                  shouldRemove = true;
-                }
+                // For Called tab, the backend returns all called leads regardless of callResultId.
+                // Therefore, we should never remove a lead from Called tab locally.
+                shouldRemove = false;
               } else if (_listTabFilter == 'Transferred') {
                 if (newStatusIdStr != '5') {
                   shouldRemove = true;

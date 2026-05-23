@@ -848,6 +848,7 @@ class HttpService {
   }
 
   static Future leadReport(body) async {
+    print(body);
     try {
       var result = await _dio.post("${await Config.getUrl()}leadReport",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
@@ -3111,10 +3112,8 @@ class HttpService {
       var result = await _dio.post(
           "${await Config.getUrl()}delete_phone_call_log",
           data: jsonEncode(body));
-
       DeleteCallHistoryModel model =
           DeleteCallHistoryModel.fromJson(result.data);
-
       return model;
     } catch (e) {
       log("error: $e");

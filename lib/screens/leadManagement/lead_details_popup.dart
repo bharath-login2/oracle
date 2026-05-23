@@ -1428,8 +1428,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   @override
   Widget build(BuildContext context) {
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
+      padding: EdgeInsets.only(bottom: keyboardHeight),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(

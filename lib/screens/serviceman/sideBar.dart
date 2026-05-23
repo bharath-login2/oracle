@@ -22,8 +22,8 @@ class SideBar extends StatelessWidget {
             ),
             child: Center(
               child: Image.asset(
-                "assets/icons/logo.png",
-                height: 80,
+                "assets/main/logo.png",
+                height: 180,
                 fit: BoxFit.contain,
               ),
             ),
@@ -32,12 +32,12 @@ class SideBar extends StatelessWidget {
           ListTile(
             leading: const Icon(
               Icons.dashboard,
-              color: Color.fromARGB(255, 39, 37, 194),
+              color: Color.fromARGB(255, 37, 118, 194),
             ),
             title: const Text(
               "Lead Dashboard",
               style: TextStyle(
-                color: Color.fromARGB(255, 39, 37, 194),
+                color: Color.fromARGB(255, 37, 118, 194),
                 fontSize: 16,
               ),
             ),
@@ -51,7 +51,7 @@ class SideBar extends StatelessWidget {
           ListTile(
             leading: const Icon(
               Icons.work,
-              color: Color.fromARGB(255, 39, 37, 194),
+              color: Color.fromARGB(255, 37, 118, 194),
             ),
             title: const Text(
               "All Works",
@@ -70,12 +70,12 @@ class SideBar extends StatelessWidget {
           ListTile(
             leading: const Icon(
               Icons.quora_outlined,
-              color: Color.fromARGB(255, 39, 37, 194),
+              color: Color.fromARGB(255, 37, 118, 194),
             ),
             title: const Text(
               "Quotations & Estimations",
               style: TextStyle(
-                color: Color.fromARGB(255, 39, 37, 194),
+                color: Color.fromARGB(255, 37, 118, 194),
                 fontSize: 16,
               ),
             ),
@@ -89,12 +89,12 @@ class SideBar extends StatelessWidget {
           ListTile(
             leading: const Icon(
               Icons.logout,
-              color: Color.fromARGB(255, 39, 37, 194),
+              color: Color.fromARGB(255, 37, 118, 194),
             ),
             title: const Text(
               "Logout",
               style: TextStyle(
-                color: Color.fromARGB(255, 39, 37, 194),
+                color: Color.fromARGB(255, 37, 118, 194),
                 fontSize: 16,
               ),
             ),
@@ -113,3 +113,4 @@ class SideBar extends StatelessWidget {
     );
   }
 }
+

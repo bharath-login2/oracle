@@ -38,7 +38,7 @@ class DashboardCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
               decoration: const BoxDecoration(
-                color: Colors.deepPurple,
+                color: Color(0xFF2a86c9),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
@@ -76,3 +76,4 @@ class DashboardCard extends StatelessWidget {
     );
   }
 }
+

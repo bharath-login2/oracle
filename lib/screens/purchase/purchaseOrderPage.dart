@@ -11,17 +11,23 @@ import 'package:login2/models/lead_management/getPurchaseOrderDetailsModel.dart'
 import 'package:login2/service/service.dart';
 import 'package:intl/intl.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:login2/models/lead_management/getPurchaseRequestDetailsModel.dart';
+import 'package:login2/screens/purchase/purchaseBillPage.dart';
 
 class PurchaseOrderPage extends StatefulWidget {
   final String token;
   final String name;
   final String userId;
+  final List<PurchaseRequestDetail>? createFromRequestItems;
+  final String? createFromRequestRemarks;
 
   const PurchaseOrderPage({
     super.key,
     required this.token,
     required this.name,
     required this.userId,
+    this.createFromRequestItems,
+    this.createFromRequestRemarks,
   });
 
   @override
@@ -45,6 +51,14 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
     super.initState();
     _fetchOrders();
     _fetchSuppliers();
+    if (widget.createFromRequestItems != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showOrderDialog(
+          createFromRequestItems: widget.createFromRequestItems,
+          createFromRequestRemarks: widget.createFromRequestRemarks,
+        );
+      });
+    }
   }
 
   Future<void> _fetchSuppliers() async {
@@ -252,15 +266,59 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                       order.billStatus ?? 'Pending'),
                                   if (!isBilled) ...[
                                     const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined,
-                                          color: Colors.blue, size: 20),
-                                      onPressed: () =>
-                                          _fetchOrderDetailsAndShowDialog(
-                                              order),
-                                      constraints: const BoxConstraints(),
-                                      padding: EdgeInsets.zero,
+                                    Row(
+                                      children: [
+                                        PopupMenuButton<String>(
+                                          icon: const Icon(Icons.more_vert,
+                                              size: 20, color: Colors.grey),
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              _fetchOrderDetailsAndShowDialog(
+                                                  order);
+                                            } else if (value == 'create_bill') {
+                                              _createBillFromOrder(order);
+                                            }
+                                          },
+                                          itemBuilder: (context) => [
+                                            const PopupMenuItem(
+                                              value: 'edit',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.edit,
+                                                      size: 18,
+                                                      color: Colors.blue),
+                                                  SizedBox(width: 8),
+                                                  Text("Edit"),
+                                                ],
+                                              ),
+                                            ),
+                                            if (order.billStatus ==
+                                                "Bill Not Created")
+                                              PopupMenuItem(
+                                                value: 'create_bill',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.add,
+                                                        size: 18,
+                                                        color: Colors.green),
+                                                    SizedBox(width: 8),
+                                                    Text("Create Bill"),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
+                                    // IconButton(
+                                    //   icon: const Icon(Icons.edit_outlined,
+                                    //       color: Colors.blue, size: 20),
+                                    //   onPressed: () =>
+                                    //       _fetchOrderDetailsAndShowDialog(
+                                    //           order),
+                                    //   constraints: const BoxConstraints(),
+                                    //   padding: EdgeInsets.zero,
+                                    // ),
                                   ],
                                 ],
                               ),
@@ -374,10 +432,11 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
     );
 
     try {
-      final response =
-          await HttpService.getPurchaseOrderDetails(order.poId!);
-      Navigator.pop(context); 
-      if (response != null && response.status == true && response.data != null) {
+      final response = await HttpService.getPurchaseOrderDetails(order.poId!);
+      Navigator.pop(context);
+      if (response != null &&
+          response.status == true &&
+          response.data != null) {
         _showOrderDialog(editData: response.data);
       } else {
         Common.toastMessaage(
@@ -389,471 +448,745 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
     }
   }
 
+  Future<void> _createBillFromOrder(PurchaseOrderData order) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
 
-
-  void _showOrderDialog({details.PurchaseOrderData? editData}) {
-  List<CartItem> cartItems = [];
-  DateTime orderDate = DateTime.now();
-  DateTime? paidDate = DateTime.now();
-  DateTime? deliveryDate;
-  DateTime? trRefDate = DateTime.now();
-
-  MaterialData? selectedMaterial;
-  Supplier? selectedSupplier;
-  String? selectedAccount;
-  String? paymentMode = "Cash";
-  PlatformFile? orderCopyFile;
-
-  final TextEditingController refNoController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
-  final TextEditingController advancePaidController = TextEditingController();
-  final TextEditingController trRefNoController = TextEditingController();
-  final TextEditingController transRemarkController = TextEditingController();
-  final TextEditingController remarksController = TextEditingController();
-
-  if (editData != null && editData.orderDetails != null) {
-    var d = editData.orderDetails!;
     try {
-      orderDate = DateFormat('yyyy-MM-dd').parse(d.orderDate!);
-    } catch (e) {}
-    selectedSupplier = suppliers.any((s) => s.supplierId == d.supplierId)
-        ? suppliers.firstWhere((s) => s.supplierId == d.supplierId)
-        : null;
-    paymentMode = d.paymentMethod ?? "Cash";
-    advancePaidController.text = d.advanceAmount ?? "";
-    refNoController.text = d.referenceNo ?? d.refNo ?? "";
-    addressController.text = d.billingAddress ?? d.address ?? "";
-    remarksController.text = d.remarks ?? "";
-    if (d.deliveryDate != null && d.deliveryDate!.isNotEmpty) {
-      try {
-        deliveryDate = DateFormat('yyyy-MM-dd').parse(d.deliveryDate!);
-      } catch (e) {}
+      final response = await HttpService.getPurchaseOrderDetails(order.poId!);
+      Navigator.pop(context);
+      if (response != null &&
+          response.status == true &&
+          response.data != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PurchaseBillPage(
+              token: widget.token,
+              name: widget.name,
+              userId: widget.userId,
+              createFromOrder: response.data,
+            ),
+          ),
+        );
+      } else {
+        Common.toastMessaage(
+            response?.message ?? "Failed to fetch order details", Colors.red);
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      Common.toastMessaage("Error fetching details: $e", Colors.red);
     }
   }
 
-  if (editData != null && editData.items != null) {
-    cartItems = editData.items!.map((item) {
-      return CartItem(
-        material: MaterialData(
-          materialId: item.materialId,
-          materialName: item.materialName,
-          unitPrice: item.unitPrice,
-        ),
-        quantity: double.tryParse(item.quantity ?? "1") ?? 1.0,
-        unitPrice: double.tryParse(item.unitPrice ?? "0") ?? 0.0,
-      );
-    }).toList();
-  }
+  void _showOrderDialog({
+    details.PurchaseOrderData? editData,
+    List<PurchaseRequestDetail>? createFromRequestItems,
+    String? createFromRequestRemarks,
+  }) {
+    List<CartItem> cartItems = [];
+    DateTime orderDate = DateTime.now();
+    DateTime? paidDate = DateTime.now();
+    DateTime? deliveryDate;
+    DateTime? trRefDate = DateTime.now();
 
-  showGeneralDialog(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: "AddPurchaseOrder",
-    barrierColor: Colors.black.withOpacity(0.6),
-    transitionDuration: const Duration(milliseconds: 400),
-    transitionBuilder: (context, anim1, anim2, child) {
-      return FadeTransition(
-        opacity: anim1,
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-            CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+    MaterialData? selectedMaterial;
+    Supplier? selectedSupplier;
+    String? selectedAccount;
+    String? paymentMode = "Cash";
+    PlatformFile? orderCopyFile;
+
+    final TextEditingController refNoController = TextEditingController();
+    final TextEditingController addressController = TextEditingController();
+    final TextEditingController advancePaidController = TextEditingController();
+    final TextEditingController trRefNoController = TextEditingController();
+    final TextEditingController transRemarkController = TextEditingController();
+    final TextEditingController remarksController = TextEditingController();
+
+    if (editData != null && editData.orderDetails != null) {
+      var d = editData.orderDetails!;
+      try {
+        orderDate = DateFormat('yyyy-MM-dd').parse(d.orderDate!);
+      } catch (e) {}
+      selectedSupplier = suppliers.any((s) => s.supplierId == d.supplierId)
+          ? suppliers.firstWhere((s) => s.supplierId == d.supplierId)
+          : null;
+      paymentMode = d.paymentMethod ?? "Cash";
+      advancePaidController.text = d.advanceAmount ?? "";
+      refNoController.text = d.referenceNo ?? d.refNo ?? "";
+      addressController.text = d.billingAddress ?? d.address ?? "";
+      remarksController.text = d.remarks ?? "";
+      if (d.deliveryDate != null && d.deliveryDate!.isNotEmpty) {
+        try {
+          deliveryDate = DateFormat('yyyy-MM-dd').parse(d.deliveryDate!);
+        } catch (e) {}
+      }
+    }
+
+    if (editData != null && editData.items != null) {
+      cartItems = editData.items!.map((item) {
+        return CartItem(
+          material: MaterialData(
+            materialId: item.materialId,
+            materialName: item.materialName,
+            unitPrice: item.unitPrice,
           ),
-          child: child,
-        ),
-      );
-    },
-    pageBuilder: (context, anim1, anim2) {
-      List<MaterialData> dialogMaterials = [];
-      List<ListElement> accountHeads = [];
-      bool isFetching = false;
-      bool isFetchingAccounts = false;
+          quantity: double.tryParse(item.quantity ?? "1") ?? 1.0,
+          unitPrice: double.tryParse(item.unitPrice ?? "0") ?? 0.0,
+        );
+      }).toList();
+    }
 
-      return StatefulBuilder(
-        builder: (dialogContext, setDialogState) {
-          if (dialogMaterials.isEmpty && !isFetching) {
-            isFetching = true;
-            HttpService.getMaterials().then((val) {
-              if (val != null && val.data != null && dialogContext.mounted) {
-                setDialogState(() {
-                  dialogMaterials = val.data!;
-                  isFetching = false;
-                });
-              }
-            });
-          }
+    if (createFromRequestItems != null) {
+      remarksController.text = createFromRequestRemarks ?? "";
+      cartItems = createFromRequestItems.map((item) {
+        return CartItem(
+          material: MaterialData(
+            materialId: item.materialId,
+            materialName: item.materialName,
+            unitPrice: item.unitPrice,
+            unitName: item.unitName,
+          ),
+          quantity: double.tryParse(item.quantity) ?? 1.0,
+          unitPrice: double.tryParse(item.unitPrice) ?? 0.0,
+        );
+      }).toList();
+    }
 
-          if (accountHeads.isEmpty && !isFetchingAccounts) {
-            isFetchingAccounts = true;
-            HttpService.getAccountHead().then((val) {
-              if (val != null && val.data != null && dialogContext.mounted) {
-                setDialogState(() {
-                  accountHeads = val.data!.lists;
-                  isFetchingAccounts = false;
-                });
-              }
-            });
-          }
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "AddPurchaseOrder",
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+            ),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, anim1, anim2) {
+        List<MaterialData> dialogMaterials = [];
+        List<ListElement> accountHeads = [];
+        bool isFetching = false;
+        bool isFetchingAccounts = false;
 
-          double totalAmount =
-              cartItems.fold(0, (sum, item) => sum + item.total);
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            if (dialogMaterials.isEmpty && !isFetching) {
+              isFetching = true;
+              HttpService.getMaterials().then((val) {
+                if (val != null && val.data != null && dialogContext.mounted) {
+                  setDialogState(() {
+                    dialogMaterials = val.data!;
+                    isFetching = false;
+                  });
+                }
+              });
+            }
 
-          return Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.95,
-                height: MediaQuery.of(context).size.height * 0.9,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10))
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 20),
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF2a86c9), Color(0xFF1e6399)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+            if (accountHeads.isEmpty && !isFetchingAccounts) {
+              isFetchingAccounts = true;
+              HttpService.getAccountHead().then((val) {
+                if (val != null && val.data != null && dialogContext.mounted) {
+                  setDialogState(() {
+                    accountHeads = val.data!.lists;
+                    isFetchingAccounts = false;
+                  });
+                }
+              });
+            }
+
+            double totalAmount =
+                cartItems.fold(0, (sum, item) => sum + item.total);
+
+            return Scaffold(
+              backgroundColor: Colors.transparent,
+              body: Center(
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.95,
+                  height: MediaQuery.of(context).size.height * 0.9,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10))
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(30),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 20),
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xFF2a86c9), Color(0xFF1e6399)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: const Icon(Icons.shopping_cart_checkout,
+                                    color: Colors.white, size: 24),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  editData == null
+                                      ? "Purchase Order"
+                                      : "Edit Purchase Order",
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close,
+                                    color: Colors.white, size: 26),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12)),
-                              child: const Icon(Icons.shopping_cart_checkout,
-                                  color: Colors.white, size: 24),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                editData == null
-                                    ? "Purchase Order"
-                                    : "Edit Purchase Order",
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close,
-                                  color: Colors.white, size: 26),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildSectionHeader(
-                                  "Order Details", Icons.assignment_outlined),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildGlassCard(
-                                      title: "Order No",
-                                      value:
-                                          "#${DateFormat('HHmmss').format(DateTime.now())}",
-                                      icon: Icons.tag,
-                                      color: const Color(0xFF2a86c9),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () async {
-                                        final picked = await showDatePicker(
-                                          context: context,
-                                          initialDate: orderDate,
-                                          firstDate: DateTime(2000),
-                                          lastDate: DateTime(2100),
-                                        );
-                                        if (picked != null)
-                                          setDialogState(
-                                              () => orderDate = picked);
-                                      },
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionHeader(
+                                    "Order Details", Icons.assignment_outlined),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
                                       child: _buildGlassCard(
-                                        title: "Order Date",
-                                        value: DateFormat('dd-MM-yyyy')
-                                            .format(orderDate),
-                                        icon: Icons.calendar_today,
-                                        color: Colors.orange,
+                                        title: "Order No",
+                                        value:
+                                            "#${DateFormat('HHmmss').format(DateTime.now())}",
+                                        icon: Icons.tag,
+                                        color: const Color(0xFF2a86c9),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildInputLabelField(
-                                      label: "Supplier Name*",
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                          border: Border.all(
-                                              color: Colors.grey.shade200),
-                                        ),
-                                        child: DropdownSearch<Supplier>(
-                                          compareFn: (item, selectedItem) =>
-                                              item.supplierId ==
-                                              selectedItem?.supplierId,
-                                          selectedItem: selectedSupplier,
-                                          items: (f, p) => suppliers,
-                                          itemAsString: (s) => s.supplierName,
-                                          decoratorProps:
-                                              const DropDownDecoratorProps(
-                                            decoration: InputDecoration(
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 8),
-                                              border: InputBorder.none,
-                                              hintText: "Select Supplier",
-                                            ),
-                                          ),
-                                          onChanged: (val) => setDialogState(
-                                              () => selectedSupplier = val),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildInputLabelField(
-                                      label: "Reference No",
-                                      child: TextField(
-                                        controller: refNoController,
-                                        decoration: _inputDecoration("Ref #"),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              _buildInputLabelField(
-                                label: "Billing Address*",
-                                child: TextField(
-                                  controller: addressController,
-                                  maxLines: 2,
-                                  decoration: _inputDecoration(
-                                      "Enter full billing address..."),
-                                ),
-                              ),
-                              const Divider(height: 40),
-                              _buildSectionHeader("Add Items to Cart",
-                                  Icons.add_shopping_cart_rounded),
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(25),
-                                  border:
-                                      Border.all(color: Colors.grey.shade100),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.black.withOpacity(0.03),
-                                        blurRadius: 15,
-                                        offset: const Offset(0, 5))
-                                  ],
-                                ),
-                                child: Column(
-                                  children: [
-                                    DropdownSearch<MaterialData>(
-                                      compareFn: (i, s) =>
-                                          i?.materialId == s?.materialId,
-                                      items: (f, p) => dialogMaterials
-                                          .where((m) =>
-                                              m.materialName
-                                                  ?.toLowerCase()
-                                                  .contains(
-                                                      f.toLowerCase()) ??
-                                              true)
-                                          .toList(),
-                                      itemAsString: (m) =>
-                                          m.materialName ?? "",
-                                      decoratorProps:
-                                          const DropDownDecoratorProps(
-                                        decoration: InputDecoration(
-                                          hintText: "Search material",
-                                          border: OutlineInputBorder(
-                                              borderRadius: BorderRadius.all(
-                                                  Radius.circular(15))),
-                                          prefixIcon: Icon(
-                                              Icons.inventory_2_outlined),
-                                        ),
-                                      ),
-                                      popupProps: const PopupProps.menu(
-                                          showSearchBox: true),
-                                      onChanged: (val) => setDialogState(
-                                          () => selectedMaterial = val),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton.icon(
-                                        onPressed: () {
-                                          if (selectedMaterial != null) {
-                                            setDialogState(() {
-                                              cartItems.add(CartItem(
-                                                material: selectedMaterial!,
-                                                unitPrice: double.tryParse(
-                                                        selectedMaterial!
-                                                                .unitPrice ??
-                                                            "0") ??
-                                                    0.0,
-                                              ));
-                                              selectedMaterial = null;
-                                            });
-                                          }
-                                        },
-                                        icon: const Icon(Icons.add,
-                                            color: Colors.white),
-                                        label: const Text("ADD TO CART",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold)),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              const Color(0xFF2a86c9),
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 15),
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(15)),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text("Cart Items",
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold)),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color: const Color(0xFF2a86c9)
-                                            .withOpacity(0.1),
-                                        borderRadius:
-                                            BorderRadius.circular(20)),
-                                    child: Text("${cartItems.length} Items",
-                                        style: const TextStyle(
-                                            color: Color(0xFF2a86c9),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              cartItems.isEmpty
-                                  ? _buildEmptyCart()
-                                  : Column(
-                                      children: List.generate(
-                                          cartItems.length, (index) {
-                                        return _buildCartItemCard(
-                                          cartItems[index],
-                                          index,
-                                          setDialogState,
-                                          () {
-                                            setDialogState(() {
-                                              cartItems[index].dispose();
-                                              cartItems.removeAt(index);
-                                            });
-                                          },
-                                          editData, // Pass editData
-                                          dialogContext, // Pass dialogContext
-                                        );
-                                      }),
-                                    ),
-                              const SizedBox(height: 20),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                    color: const Color(0xFF2a86c9)
-                                        .withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(15)),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text("Total Estimated Amount",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    Text("₹${totalAmount.toStringAsFixed(2)}",
-                                        style: const TextStyle(
-                                            color: Color(0xFF2a86c9),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18)),
-                                  ],
-                                ),
-                              ),
-                              const Divider(height: 40),
-                              _buildSectionHeader(
-                                  "Payment Details", Icons.payments_outlined),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildInputLabelField(
-                                      label: "Advance Paid",
-                                      child: TextField(
-                                        controller: advancePaidController,
-                                        keyboardType: TextInputType.number,
-                                        decoration:
-                                            _inputDecoration("₹ 0.00"),
-                                      ),
-                                    ),
-                                  ),
-                                  if (editData == null) ...[
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: InkWell(
                                         onTap: () async {
                                           final picked = await showDatePicker(
+                                            context: context,
+                                            initialDate: orderDate,
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime(2100),
+                                          );
+                                          if (picked != null)
+                                            setDialogState(
+                                                () => orderDate = picked);
+                                        },
+                                        child: _buildGlassCard(
+                                          title: "Order Date",
+                                          value: DateFormat('dd-MM-yyyy')
+                                              .format(orderDate),
+                                          icon: Icons.calendar_today,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: _buildInputLabelField(
+                                        label: "Supplier Name*",
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            border: Border.all(
+                                                color: Colors.grey.shade200),
+                                          ),
+                                          child: DropdownSearch<Supplier>(
+                                            compareFn: (item, selectedItem) =>
+                                                item.supplierId ==
+                                                selectedItem?.supplierId,
+                                            selectedItem: selectedSupplier,
+                                            items: (f, p) => suppliers,
+                                            itemAsString: (s) => s.supplierName,
+                                            decoratorProps:
+                                                const DropDownDecoratorProps(
+                                              decoration: InputDecoration(
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 8),
+                                                border: InputBorder.none,
+                                                hintText: "Select Supplier",
+                                              ),
+                                            ),
+                                            onChanged: (val) => setDialogState(
+                                                () => selectedSupplier = val),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildInputLabelField(
+                                        label: "Reference No",
+                                        child: TextField(
+                                          controller: refNoController,
+                                          decoration: _inputDecoration("Ref #"),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                _buildInputLabelField(
+                                  label: "Billing Address*",
+                                  child: TextField(
+                                    controller: addressController,
+                                    maxLines: 2,
+                                    decoration: _inputDecoration(
+                                        "Enter full billing address..."),
+                                  ),
+                                ),
+                                const Divider(height: 40),
+                                _buildSectionHeader("Add Items to Cart",
+                                    Icons.add_shopping_cart_rounded),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(25),
+                                    border:
+                                        Border.all(color: Colors.grey.shade100),
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: Colors.black.withOpacity(0.03),
+                                          blurRadius: 15,
+                                          offset: const Offset(0, 5))
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      DropdownSearch<MaterialData>(
+                                        compareFn: (i, s) =>
+                                            i?.materialId == s?.materialId,
+                                        items: (f, p) => dialogMaterials
+                                            .where((m) =>
+                                                m.materialName
+                                                    ?.toLowerCase()
+                                                    .contains(
+                                                        f.toLowerCase()) ??
+                                                true)
+                                            .toList(),
+                                        itemAsString: (m) =>
+                                            m.materialName ?? "",
+                                        decoratorProps:
+                                            const DropDownDecoratorProps(
+                                          decoration: InputDecoration(
+                                            hintText: "Search material",
+                                            border: OutlineInputBorder(
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(15))),
+                                            prefixIcon: Icon(
+                                                Icons.inventory_2_outlined),
+                                          ),
+                                        ),
+                                        popupProps: const PopupProps.menu(
+                                            showSearchBox: true),
+                                        onChanged: (val) => setDialogState(
+                                            () => selectedMaterial = val),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            if (selectedMaterial != null) {
+                                              setDialogState(() {
+                                                cartItems.add(CartItem(
+                                                  material: selectedMaterial!,
+                                                  unitPrice: double.tryParse(
+                                                          selectedMaterial!
+                                                                  .unitPrice ??
+                                                              "0") ??
+                                                      0.0,
+                                                ));
+                                                selectedMaterial = null;
+                                              });
+                                            }
+                                          },
+                                          icon: const Icon(Icons.add,
+                                              color: Colors.white),
+                                          label: const Text("ADD TO CART",
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFF2a86c9),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 15),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(15)),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text("Cart Items",
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold)),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                          color: const Color(0xFF2a86c9)
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(20)),
+                                      child: Text("${cartItems.length} Items",
+                                          style: const TextStyle(
+                                              color: Color(0xFF2a86c9),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                cartItems.isEmpty
+                                    ? _buildEmptyCart()
+                                    : Column(
+                                        children: List.generate(
+                                            cartItems.length, (index) {
+                                          return _buildCartItemCard(
+                                            cartItems[index],
+                                            index,
+                                            setDialogState,
+                                            () {
+                                              setDialogState(() {
+                                                cartItems[index].dispose();
+                                                cartItems.removeAt(index);
+                                              });
+                                            },
+                                            editData, // Pass editData
+                                            dialogContext, // Pass dialogContext
+                                          );
+                                        }),
+                                      ),
+                                const SizedBox(height: 20),
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                      color: const Color(0xFF2a86c9)
+                                          .withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(15)),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text("Total Estimated Amount",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold)),
+                                      Text("₹${totalAmount.toStringAsFixed(2)}",
+                                          style: const TextStyle(
+                                              color: Color(0xFF2a86c9),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18)),
+                                    ],
+                                  ),
+                                ),
+                                const Divider(height: 40),
+                                _buildSectionHeader(
+                                    "Payment Details", Icons.payments_outlined),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildInputLabelField(
+                                        label: "Advance Paid",
+                                        child: TextField(
+                                          controller: advancePaidController,
+                                          keyboardType: TextInputType.number,
+                                          decoration:
+                                              _inputDecoration("₹ 0.00"),
+                                        ),
+                                      ),
+                                    ),
+                                    if (editData == null) ...[
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () async {
+                                            final picked = await showDatePicker(
+                                                context: context,
+                                                initialDate:
+                                                    paidDate ?? DateTime.now(),
+                                                firstDate: DateTime(2000),
+                                                lastDate: DateTime(2100));
+                                            if (picked != null)
+                                              setDialogState(
+                                                  () => paidDate = picked);
+                                          },
+                                          child: _buildInputLabelField(
+                                            label: "Paid Date",
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 12),
+                                              decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                  border: Border.all(
+                                                      color: Colors
+                                                          .grey.shade200)),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                      Icons.calendar_today,
+                                                      size: 16,
+                                                      color: Colors.grey),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                      paidDate != null
+                                                          ? DateFormat(
+                                                                  'dd-MM-yyyy')
+                                                              .format(paidDate!)
+                                                          : "Select Date",
+                                                      style: const TextStyle(
+                                                          fontSize: 13)),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                if (editData == null) ...[
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildInputLabelField(
+                                          label: "Paid From Account",
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(15),
+                                                border: Border.all(
+                                                    color:
+                                                        Colors.grey.shade200)),
+                                            child: DropdownSearch<ListElement>(
+                                              compareFn: (i, s) =>
+                                                  i.accountId == s?.accountId,
+                                              selectedItem: accountHeads.any(
+                                                      (a) =>
+                                                          a.accountName ==
+                                                          selectedAccount)
+                                                  ? accountHeads.firstWhere(
+                                                      (a) =>
+                                                          a.accountName ==
+                                                          selectedAccount)
+                                                  : null,
+                                              items: (f, p) => accountHeads
+                                                  .where((a) => a.accountName
+                                                      .toLowerCase()
+                                                      .contains(
+                                                          f.toLowerCase()))
+                                                  .toList(),
+                                              itemAsString: (a) =>
+                                                  a.accountName,
+                                              onChanged: (val) =>
+                                                  setDialogState(() =>
+                                                      selectedAccount =
+                                                          val?.accountName),
+                                              decoratorProps:
+                                                  const DropDownDecoratorProps(
+                                                      decoration: InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets.symmetric(
+                                                                  horizontal:
+                                                                      16,
+                                                                  vertical: 8),
+                                                          border:
+                                                              InputBorder.none,
+                                                          hintText: "Select")),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _buildInputLabelField(
+                                          label: "Payment Mode",
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(15),
+                                                border: Border.all(
+                                                    color:
+                                                        Colors.grey.shade200)),
+                                            child: DropdownSearch<String>(
+                                              compareFn: (i, s) => i == s,
+                                              items: (f, p) => [
+                                                "Cash",
+                                                "Online",
+                                                "Credit By Transfer"
+                                              ],
+                                              onChanged: (val) =>
+                                                  setDialogState(
+                                                      () => paymentMode = val),
+                                              selectedItem: paymentMode,
+                                              decoratorProps:
+                                                  const DropDownDecoratorProps(
+                                                      decoration: InputDecoration(
+                                                          contentPadding:
+                                                              EdgeInsets
+                                                                  .symmetric(
+                                                                      horizontal:
+                                                                          16,
+                                                                      vertical:
+                                                                          8),
+                                                          border: InputBorder
+                                                              .none)),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildInputLabelField(
+                                          label: "TR Reference No",
+                                          child: TextField(
+                                              controller: trRefNoController,
+                                              decoration:
+                                                  _inputDecoration("TR #")),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () async {
+                                            final picked = await showDatePicker(
+                                                context: context,
+                                                initialDate:
+                                                    trRefDate ?? DateTime.now(),
+                                                firstDate: DateTime(2000),
+                                                lastDate: DateTime(2100));
+                                            if (picked != null)
+                                              setDialogState(
+                                                  () => trRefDate = picked);
+                                          },
+                                          child: _buildInputLabelField(
+                                            label: "TR Ref Date",
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 12),
+                                              decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                  border: Border.all(
+                                                      color: Colors
+                                                          .grey.shade200)),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                      Icons.calendar_today,
+                                                      size: 16,
+                                                      color: Colors.grey),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                      trRefDate != null
+                                                          ? DateFormat(
+                                                                  'dd-MM-yyyy')
+                                                              .format(
+                                                                  trRefDate!)
+                                                          : "Select Date",
+                                                      style: const TextStyle(
+                                                          fontSize: 13)),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildInputLabelField(
+                                    label: "Transaction Remark",
+                                    child: TextField(
+                                        controller: transRemarkController,
+                                        decoration: _inputDecoration(
+                                            "Enter remark...")),
+                                  ),
+                                ],
+                                const Divider(height: 40),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final picked = await showDatePicker(
                                               context: context,
-                                              initialDate:
-                                                  paidDate ?? DateTime.now(),
+                                              initialDate: deliveryDate ??
+                                                  DateTime.now(),
                                               firstDate: DateTime(2000),
                                               lastDate: DateTime(2100));
                                           if (picked != null)
                                             setDialogState(
-                                                () => paidDate = picked);
+                                                () => deliveryDate = picked);
                                         },
                                         child: _buildInputLabelField(
-                                          label: "Paid Date",
+                                          label: "Delivery Date",
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 16, vertical: 12),
@@ -866,15 +1199,18 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                                         Colors.grey.shade200)),
                                             child: Row(
                                               children: [
-                                                const Icon(Icons.calendar_today,
+                                                const Icon(
+                                                    Icons
+                                                        .local_shipping_outlined,
                                                     size: 16,
                                                     color: Colors.grey),
                                                 const SizedBox(width: 8),
                                                 Text(
-                                                    paidDate != null
+                                                    deliveryDate != null
                                                         ? DateFormat(
                                                                 'dd-MM-yyyy')
-                                                            .format(paidDate!)
+                                                            .format(
+                                                                deliveryDate!)
                                                         : "Select Date",
                                                     style: const TextStyle(
                                                         fontSize: 13)),
@@ -884,126 +1220,21 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ],
-                              ),
-                              if (editData == null) ...[
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildInputLabelField(
-                                        label: "Paid From Account",
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                              border: Border.all(
-                                                  color: Colors.grey.shade200)),
-                                          child: DropdownSearch<ListElement>(
-                                            compareFn: (i, s) =>
-                                                i.accountId == s?.accountId,
-                                            selectedItem: accountHeads.any((a) =>
-                                                    a.accountName ==
-                                                    selectedAccount)
-                                                ? accountHeads.firstWhere((a) =>
-                                                    a.accountName ==
-                                                    selectedAccount)
-                                                : null,
-                                            items: (f, p) => accountHeads
-                                                .where((a) => a.accountName
-                                                    .toLowerCase()
-                                                    .contains(f.toLowerCase()))
-                                                .toList(),
-                                            itemAsString: (a) => a.accountName,
-                                            onChanged: (val) => setDialogState(
-                                                () => selectedAccount =
-                                                    val?.accountName),
-                                            decoratorProps:
-                                                const DropDownDecoratorProps(
-                                                    decoration: InputDecoration(
-                                                        contentPadding:
-                                                            EdgeInsets
-                                                                .symmetric(
-                                                                    horizontal:
-                                                                        16,
-                                                                    vertical:
-                                                                        8),
-                                                        border:
-                                                            InputBorder.none,
-                                                        hintText: "Select")),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: _buildInputLabelField(
-                                        label: "Payment Mode",
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                              border: Border.all(
-                                                  color: Colors.grey.shade200)),
-                                          child: DropdownSearch<String>(
-                                            compareFn: (i, s) => i == s,
-                                            items: (f, p) => [
-                                              "Cash",
-                                              "Online",
-                                              "Credit By Transfer"
-                                            ],
-                                            onChanged: (val) => setDialogState(
-                                                () => paymentMode = val),
-                                            selectedItem: paymentMode,
-                                            decoratorProps:
-                                                const DropDownDecoratorProps(
-                                                    decoration: InputDecoration(
-                                                        contentPadding:
-                                                            EdgeInsets
-                                                                .symmetric(
-                                                                    horizontal:
-                                                                        16,
-                                                                    vertical:
-                                                                        8),
-                                                        border:
-                                                            InputBorder.none)),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildInputLabelField(
-                                        label: "TR Reference No",
-                                        child: TextField(
-                                            controller: trRefNoController,
-                                            decoration:
-                                                _inputDecoration("TR #")),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: InkWell(
-                                        onTap: () async {
-                                          final picked = await showDatePicker(
-                                              context: context,
-                                              initialDate:
-                                                  trRefDate ?? DateTime.now(),
-                                              firstDate: DateTime(2000),
-                                              lastDate: DateTime(2100));
-                                          if (picked != null)
-                                            setDialogState(
-                                                () => trRefDate = picked);
-                                        },
-                                        child: _buildInputLabelField(
-                                          label: "TR Ref Date",
+                                        label: "Upload Order Copy",
+                                        child: InkWell(
+                                          onTap: () async {
+                                            FilePickerResult? result =
+                                                await FilePicker.platform
+                                                    .pickFiles();
+                                            if (result != null) {
+                                              setDialogState(() =>
+                                                  orderCopyFile =
+                                                      result.files.first);
+                                            }
+                                          },
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 16, vertical: 12),
@@ -1016,18 +1247,27 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                                         Colors.grey.shade200)),
                                             child: Row(
                                               children: [
-                                                const Icon(Icons.calendar_today,
+                                                Icon(Icons.upload_file,
                                                     size: 16,
-                                                    color: Colors.grey),
+                                                    color: orderCopyFile != null
+                                                        ? Colors.blue
+                                                        : Colors.grey),
                                                 const SizedBox(width: 8),
-                                                Text(
-                                                    trRefDate != null
-                                                        ? DateFormat(
-                                                                'dd-MM-yyyy')
-                                                            .format(trRefDate!)
-                                                        : "Select Date",
-                                                    style: const TextStyle(
-                                                        fontSize: 13)),
+                                                Expanded(
+                                                  child: Text(
+                                                      orderCopyFile != null
+                                                          ? orderCopyFile!.name
+                                                          : "Choose File",
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          color:
+                                                              orderCopyFile !=
+                                                                      null
+                                                                  ? Colors.black
+                                                                  : Colors.grey,
+                                                          overflow: TextOverflow
+                                                              .ellipsis)),
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -1038,281 +1278,202 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                 ),
                                 const SizedBox(height: 16),
                                 _buildInputLabelField(
-                                  label: "Transaction Remark",
+                                  label: "Remarks/Notes",
                                   child: TextField(
-                                      controller: transRemarkController,
-                                      decoration:
-                                          _inputDecoration("Enter remark...")),
+                                    controller: remarksController,
+                                    maxLines: 3,
+                                    decoration: _inputDecoration(
+                                        "Add any additional notes..."),
+                                  ),
                                 ),
+                                const SizedBox(height: 40),
                               ],
-                              const Divider(height: 40),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () async {
-                                        final picked = await showDatePicker(
-                                            context: context,
-                                            initialDate: deliveryDate ??
-                                                DateTime.now(),
-                                            firstDate: DateTime(2000),
-                                            lastDate: DateTime(2100));
-                                        if (picked != null)
-                                          setDialogState(
-                                              () => deliveryDate = picked);
-                                      },
-                                      child: _buildInputLabelField(
-                                        label: "Delivery Date",
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 12),
-                                          decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                              border: Border.all(
-                                                  color:
-                                                      Colors.grey.shade200)),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                  Icons
-                                                      .local_shipping_outlined,
-                                                  size: 16,
-                                                  color: Colors.grey),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                  deliveryDate != null
-                                                      ? DateFormat(
-                                                              'dd-MM-yyyy')
-                                                          .format(
-                                                              deliveryDate!)
-                                                      : "Select Date",
-                                                  style: const TextStyle(
-                                                      fontSize: 13)),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildInputLabelField(
-                                      label: "Upload Order Copy",
-                                      child: InkWell(
-                                        onTap: () async {
-                                          FilePickerResult? result =
-                                              await FilePicker.platform
-                                                  .pickFiles();
-                                          if (result != null) {
-                                            setDialogState(() =>
-                                                orderCopyFile =
-                                                    result.files.first);
-                                          }
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 12),
-                                          decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(15),
-                                              border: Border.all(
-                                                  color:
-                                                      Colors.grey.shade200)),
-                                          child: Row(
-                                            children: [
-                                              Icon(Icons.upload_file,
-                                                  size: 16,
-                                                  color: orderCopyFile != null
-                                                      ? Colors.blue
-                                                      : Colors.grey),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(
-                                                    orderCopyFile != null
-                                                        ? orderCopyFile!.name
-                                                        : "Choose File",
-                                                    style: TextStyle(
-                                                        fontSize: 13,
-                                                        color: orderCopyFile !=
-                                                                null
-                                                            ? Colors.black
-                                                            : Colors.grey,
-                                                        overflow: TextOverflow
-                                                            .ellipsis)),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              _buildInputLabelField(
-                                label: "Remarks/Notes",
-                                child: TextField(
-                                  controller: remarksController,
-                                  maxLines: 3,
-                                  decoration: _inputDecoration(
-                                      "Add any additional notes..."),
-                                ),
-                              ),
-                              const SizedBox(height: 40),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, -5))
                             ],
                           ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, -5))
-                          ],
-                        ),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (selectedSupplier == null) {
-                                Common.toastMessaage("Please select a supplier", Colors.red);
-                                return;
-                              }
-                              if (addressController.text.trim().isEmpty) {
-                                Common.toastMessaage("Please enter billing address", Colors.red);
-                                return;
-                              }
-                              if (cartItems.isEmpty) {
-                                Common.toastMessaage("Please add at least one item to cart", Colors.red);
-                                return;
-                              }
-                              showDialog(
-                                context: dialogContext,
-                                barrierDismissible: false,
-                                builder: (context) => const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                              
-                              try {
-                                Map<String, dynamic> postData = {};
-                                postData['order_date'] = DateFormat('yyyy-MM-dd').format(orderDate);
-                                postData['supplier_id'] = selectedSupplier!.supplierId;
-                                postData['ref_no'] = refNoController.text.trim();
-                                postData['address'] = addressController.text.trim();
-                                List<Map<String, dynamic>> itemsList = [];
-                                for (var item in cartItems) {
-                                  itemsList.add({
-                                    'material_id': item.material.materialId,
-                                    'quantity': item.quantity.toString(),
-                                    'unit_price': item.unitPrice.toString(),
-                                    'total_price': item.total.toString(),
-                                  });
-                                }
-                                postData['items'] = itemsList;
-                                double advancePaid = double.tryParse(advancePaidController.text.trim()) ?? 0;
-                                postData['advance_paid'] = advancePaid.toString();
-                                postData['paid_date'] = paidDate != null ? DateFormat('yyyy-MM-dd').format(paidDate!) : '';
-                                postData['paid_from_account'] = selectedAccount ?? '';
-                                postData['payment_mode'] = paymentMode ?? '';
-                                postData['tr_ref_no'] = trRefNoController.text.trim();
-                                postData['tr_ref_date'] = trRefDate != null ? DateFormat('yyyy-MM-dd').format(trRefDate!) : '';
-                                postData['transaction_remark'] = transRemarkController.text.trim();
-                                postData['delivery_date'] = deliveryDate != null ? DateFormat('yyyy-MM-dd').format(deliveryDate!) : '';
-                                postData['remarks'] = remarksController.text.trim();
-                                
-                                if (orderCopyFile != null && orderCopyFile!.path != null) {
-                                  postData['order_copy'] = await dio.MultipartFile.fromFile(
-                                    orderCopyFile!.path!,
-                                    filename: orderCopyFile!.name,
-                                  );
-                                }
-
-                                double totalAmount = cartItems.fold(0, (sum, item) => sum + item.total);
-                                postData['total_estimated_amt'] = totalAmount.toString();
-                                postData['user_id'] = widget.userId;
-                                postData['created_by'] = widget.name;
-
-                                dynamic response;
-                                if (editData != null) {
-                                  postData['purchase_order_id'] =
-                                      editData.orderDetails!.purchaseOrderId;
-                                  response = await HttpService.updatePurchaseOrder(
-                                      postData);
-                                } else {
-                                  response =
-                                      await HttpService.postPurchaseOrder(postData);
-                                }
-
-                                Navigator.pop(dialogContext);
-                                if (response != null && response['status'] == true) {
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (selectedSupplier == null) {
                                   Common.toastMessaage(
-                                    response['message'] ??
-                                        (editData == null
-                                            ? "Purchase Order Submitted Successfully"
-                                            : "Purchase Order Updated Successfully"),
-                                    Colors.green,
-                                  );
+                                      "Please select a supplier", Colors.red);
+                                  return;
+                                }
+                                if (addressController.text.trim().isEmpty) {
+                                  Common.toastMessaage(
+                                      "Please enter billing address",
+                                      Colors.red);
+                                  return;
+                                }
+                                if (cartItems.isEmpty) {
+                                  Common.toastMessaage(
+                                      "Please add at least one item to cart",
+                                      Colors.red);
+                                  return;
+                                }
+                                showDialog(
+                                  context: dialogContext,
+                                  barrierDismissible: false,
+                                  builder: (context) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+
+                                try {
+                                  Map<String, dynamic> postData = {};
+                                  postData['order_date'] =
+                                      DateFormat('yyyy-MM-dd')
+                                          .format(orderDate);
+                                  postData['supplier_id'] =
+                                      selectedSupplier!.supplierId;
+                                  postData['ref_no'] =
+                                      refNoController.text.trim();
+                                  postData['address'] =
+                                      addressController.text.trim();
+                                  List<Map<String, dynamic>> itemsList = [];
+                                  for (var item in cartItems) {
+                                    itemsList.add({
+                                      'material_id': item.material.materialId,
+                                      'quantity': item.quantity.toString(),
+                                      'unit_price': item.unitPrice.toString(),
+                                      'total_price': item.total.toString(),
+                                    });
+                                  }
+                                  postData['items'] = itemsList;
+                                  double advancePaid = double.tryParse(
+                                          advancePaidController.text.trim()) ??
+                                      0;
+                                  postData['advance_paid'] =
+                                      advancePaid.toString();
+                                  postData['paid_date'] = paidDate != null
+                                      ? DateFormat('yyyy-MM-dd')
+                                          .format(paidDate!)
+                                      : '';
+                                  postData['paid_from_account'] =
+                                      selectedAccount ?? '';
+                                  postData['payment_mode'] = paymentMode ?? '';
+                                  postData['tr_ref_no'] =
+                                      trRefNoController.text.trim();
+                                  postData['tr_ref_date'] = trRefDate != null
+                                      ? DateFormat('yyyy-MM-dd')
+                                          .format(trRefDate!)
+                                      : '';
+                                  postData['transaction_remark'] =
+                                      transRemarkController.text.trim();
+                                  postData['delivery_date'] =
+                                      deliveryDate != null
+                                          ? DateFormat('yyyy-MM-dd')
+                                              .format(deliveryDate!)
+                                          : '';
+                                  postData['remarks'] =
+                                      remarksController.text.trim();
+
+                                  if (orderCopyFile != null &&
+                                      orderCopyFile!.path != null) {
+                                    postData['order_copy'] =
+                                        await dio.MultipartFile.fromFile(
+                                      orderCopyFile!.path!,
+                                      filename: orderCopyFile!.name,
+                                    );
+                                  }
+
+                                  double totalAmount = cartItems.fold(
+                                      0, (sum, item) => sum + item.total);
+                                  postData['total_estimated_amt'] =
+                                      totalAmount.toString();
+                                  postData['user_id'] = widget.userId;
+                                  postData['created_by'] = widget.name;
+
+                                  dynamic response;
+                                  if (editData != null) {
+                                    postData['purchase_order_id'] =
+                                        editData.orderDetails!.purchaseOrderId;
+                                    response =
+                                        await HttpService.updatePurchaseOrder(
+                                            postData);
+                                  } else {
+                                    response =
+                                        await HttpService.postPurchaseOrder(
+                                            postData);
+                                  }
+
                                   Navigator.pop(dialogContext);
-                                  _fetchOrders();
-                                } else {
+                                  if (response != null &&
+                                      response['status'] == true) {
+                                    Common.toastMessaage(
+                                      response['message'] ??
+                                          (editData == null
+                                              ? "Purchase Order Submitted Successfully"
+                                              : "Purchase Order Updated Successfully"),
+                                      Colors.green,
+                                    );
+                                    Navigator.pop(dialogContext);
+                                    _fetchOrders();
+                                  } else {
+                                    Common.toastMessaage(
+                                      response?['message'] ??
+                                          "Failed to process purchase order",
+                                      Colors.red,
+                                    );
+                                  }
+                                } catch (e) {
+                                  Navigator.pop(dialogContext);
                                   Common.toastMessaage(
-                                    response?['message'] ??
-                                        "Failed to process purchase order",
-                                    Colors.red,
-                                  );
+                                      "Error: ${e.toString()}", Colors.red);
+                                  print("Error posting purchase order: $e");
                                 }
-                              } catch (e) {
-                                Navigator.pop(dialogContext);
-                                Common.toastMessaage("Error: ${e.toString()}", Colors.red);
-                                print("Error posting purchase order: $e");
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2a86c9),
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18)),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.send_rounded,
-                                    color: Colors.white, size: 20),
-                                SizedBox(width: 12),
-                                Text(
-                                    editData == null
-                                        ? "SUBMIT ORDER"
-                                        : "UPDATE ORDER",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        letterSpacing: 1.2)),
-                              ],
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2a86c9),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 18),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18)),
+                                elevation: 0,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.send_rounded,
+                                      color: Colors.white, size: 20),
+                                  SizedBox(width: 12),
+                                  Text(
+                                      editData == null
+                                          ? "SUBMIT ORDER"
+                                          : "UPDATE ORDER",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          letterSpacing: 1.2)),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+            );
+          },
+        );
+      },
+    );
+  }
 
   // void _showOrderDialog({details.PurchaseOrderData? editData}) {
   //   List<CartItem> cartItems = [];
@@ -2119,7 +2280,7 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
   //                               child: CircularProgressIndicator(),
   //                             ),
   //                           );
-                            
+
   //                           try {
   //                             Map<String, dynamic> postData = {};
   //                             postData['order_date'] = DateFormat('yyyy-MM-dd').format(orderDate);
@@ -2146,7 +2307,7 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
   //                             postData['transaction_remark'] = transRemarkController.text.trim();
   //                             postData['delivery_date'] = deliveryDate != null ? DateFormat('yyyy-MM-dd').format(deliveryDate!) : '';
   //                             postData['remarks'] = remarksController.text.trim();
-                              
+
   //                             if (orderCopyFile != null && orderCopyFile!.path != null) {
   //                               postData['order_copy'] = await dio.MultipartFile.fromFile(
   //                                 orderCopyFile!.path!,
@@ -2289,8 +2450,13 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
               const SizedBox(height: 10),
               Wrap(
                 spacing: 10,
-                children: ["All", "Pending", "Approved", "Rejected", "Bill Created"]
-                    .map((status) {
+                children: [
+                  "All",
+                  "Pending",
+                  "Approved",
+                  "Rejected",
+                  "Bill Created"
+                ].map((status) {
                   bool isSelected = selectedStatus == status;
                   return ChoiceChip(
                     label: Text(status),
@@ -2461,6 +2627,23 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
               child: Text(order.address ?? 'No address provided',
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 14)),
             ),
+            if (order.billStatus == "Bill Not Created")
+              const SizedBox(height: 30),
+            if (order.billStatus == "Bill Not Created")
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _createBillFromOrder(order),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2a86c9),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15))),
+                  child: const Text('Create Bill',
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
             const SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
@@ -2609,156 +2792,160 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
     );
   }
 
-Widget _buildCartItemCard(
-  CartItem item,
-  int index,
-  StateSetter setDialogState,
-  VoidCallback onDelete,
-  details.PurchaseOrderData? editData,
-  BuildContext dialogContext,
-) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade100)),
-    child: Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-                child: Text(item.material.materialName ?? "Unknown",
-                    style: const TextStyle(fontWeight: FontWeight.bold))),
-            // Delete button with confirmation for edit mode
-            if (editData != null && item.material.materialId != null)
-              IconButton(
-                icon: const Icon(Icons.delete_outline,
-                    color: Colors.red, size: 20),
-                onPressed: () async {
-                  // Show confirmation dialog
-                  bool? confirm = await showDialog(
-                    context: dialogContext,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Delete Product'),
-                      content: Text('Delete "${item.material.materialName}"?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
-                          child: const Text('Delete'),
-                        ),
+  Widget _buildCartItemCard(
+    CartItem item,
+    int index,
+    StateSetter setDialogState,
+    VoidCallback onDelete,
+    details.PurchaseOrderData? editData,
+    BuildContext dialogContext,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade100)),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                  child: Text(item.material.materialName ?? "Unknown",
+                      style: const TextStyle(fontWeight: FontWeight.bold))),
+              // Delete button with confirmation for edit mode
+              if (editData != null && item.material.materialId != null)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.red, size: 20),
+                  onPressed: () async {
+                    // Show confirmation dialog
+                    bool? confirm = await showDialog(
+                      context: dialogContext,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Product'),
+                        content:
+                            Text('Delete "${item.material.materialName}"?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.red),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      // Show loading
+                      showDialog(
+                        context: dialogContext,
+                        barrierDismissible: false,
+                        builder: (context) =>
+                            const Center(child: CircularProgressIndicator()),
+                      );
+
+                      // Call API
+                      final response =
+                          await HttpService.deletePurchaseOrderRealProduct(
+                        productId: item.material.materialId!,
+                      );
+
+                      Navigator.pop(dialogContext); // Close loading
+
+                      if (response?.status == true) {
+                        Common.toastMessaage('Product deleted', Colors.green);
+                        onDelete(); // Remove from cart
+                      } else {
+                        Common.toastMessaage(
+                            response?.message ?? 'Delete failed', Colors.red);
+                      }
+                    }
+                  },
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      color: Colors.red, size: 20),
+                  onPressed: onDelete,
+                ),
+            ],
+          ),
+          const Divider(),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Price",
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    TextField(
+                      controller: item.unitPriceController,
+                      onChanged: (v) => setDialogState(
+                          () => item.unitPrice = double.tryParse(v) ?? 0),
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                          hintText: "0.00",
+                          isDense: true,
+                          border: InputBorder.none),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    const Text("Quantity",
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                            icon: const Icon(Icons.remove_circle_outline,
+                                size: 18),
+                            onPressed: () => setDialogState(() =>
+                                item.quantity > 1 ? item.quantity-- : null)),
+                        Text(item.quantity.toInt().toString(),
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        IconButton(
+                            icon:
+                                const Icon(Icons.add_circle_outline, size: 18),
+                            onPressed: () =>
+                                setDialogState(() => item.quantity++)),
                       ],
                     ),
-                  );
-                  
-                  if (confirm == true) {
-                    // Show loading
-                    showDialog(
-                      context: dialogContext,
-                      barrierDismissible: false,
-                      builder: (context) => const Center(child: CircularProgressIndicator()),
-                    );
-                    
-                    // Call API
-                    final response = await HttpService.deletePurchaseOrderRealProduct(
-                      productId: item.material.materialId!,
-                    );
-                    
-                    Navigator.pop(dialogContext); // Close loading
-                    
-                    if (response?.status == true) {
-                      Common.toastMessaage('Product deleted', Colors.green);
-                      onDelete(); // Remove from cart
-                    } else {
-                      Common.toastMessaage(response?.message ?? 'Delete failed', Colors.red);
-                    }
-                  }
-                },
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.delete_outline,
-                    color: Colors.red, size: 20),
-                onPressed: onDelete,
+                  ],
+                ),
               ),
-          ],
-        ),
-        const Divider(),
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text("Price",
-                      style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  TextField(
-                    controller: item.unitPriceController,
-                    onChanged: (v) => setDialogState(
-                        () => item.unitPrice = double.tryParse(v) ?? 0),
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                        hintText: "0.00",
-                        isDense: true,
-                        border: InputBorder.none),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text("Amount",
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    Text("₹${item.total.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2a86c9))),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  const Text("Quantity",
-                      style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                          icon: const Icon(Icons.remove_circle_outline,
-                              size: 18),
-                          onPressed: () => setDialogState(() =>
-                              item.quantity > 1 ? item.quantity-- : null)),
-                      Text(item.quantity.toInt().toString(),
-                          style:
-                              const TextStyle(fontWeight: FontWeight.bold)),
-                      IconButton(
-                          icon:
-                              const Icon(Icons.add_circle_outline, size: 18),
-                          onPressed: () =>
-                              setDialogState(() => item.quantity++)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text("Amount",
-                      style: TextStyle(fontSize: 10, color: Colors.grey)),
-                  Text("₹${item.total.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2a86c9))),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   // Widget _buildCartItemCard(CartItem item, int index,
   //     StateSetter setDialogState, VoidCallback onDelete) {

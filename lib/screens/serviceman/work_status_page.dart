@@ -11,3 +11,4 @@ class WorkStatusPage extends StatelessWidget {
     );
   }
 }
+

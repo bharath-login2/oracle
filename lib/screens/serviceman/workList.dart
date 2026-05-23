@@ -348,7 +348,7 @@ class _WorkListPageState extends State<WorkListPage>
                 title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF3A2F87),
+                  color: Color(0xFF2a86c9),
                 ),
               ),
               content: SingleChildScrollView(
@@ -715,7 +715,7 @@ class _WorkListPageState extends State<WorkListPage>
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3A2F87),
+                    backgroundColor: const Color(0xFF2a86c9),
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
@@ -907,7 +907,7 @@ class _WorkListPageState extends State<WorkListPage>
                 title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF3A2F87),
+                  color: Color(0xFF2a86c9),
                 ),
               ),
               content: SingleChildScrollView(
@@ -1326,7 +1326,7 @@ class _WorkListPageState extends State<WorkListPage>
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3A2F87),
+                    backgroundColor: const Color(0xFF2a86c9),
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
@@ -1519,7 +1519,7 @@ class _WorkListPageState extends State<WorkListPage>
                 title,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF3A2F87),
+                  color: Color(0xFF2a86c9),
                 ),
               ),
               content: SingleChildScrollView(
@@ -2162,7 +2162,7 @@ class _WorkListPageState extends State<WorkListPage>
                   Row(
                     children: [
                       const CircleAvatar(
-                        backgroundColor: Color(0xFF3A2F87),
+                        backgroundColor: Color(0xFF2a86c9),
                         child: Icon(Icons.person, color: Colors.white),
                       ),
                       const SizedBox(width: 8),
@@ -2479,20 +2479,20 @@ class _WorkListPageState extends State<WorkListPage>
                         ),
                       ),
                     )
-                  else if (roleId == "3")
-                    Row(
-                      children: const [
-                        Icon(Icons.verified, color: Colors.green, size: 22),
-                        SizedBox(width: 4),
-                        Text(
-                          "Completed",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
+                  // else if (roleId == "3")
+                  //   Row(
+                  //     children: const [
+                  //       Icon(Icons.verified, color: Colors.green, size: 22),
+                  //       SizedBox(width: 4),
+                  //       Text(
+                  //         "Completed",
+                  //         style: TextStyle(
+                  //           fontWeight: FontWeight.bold,
+                  //           color: Colors.green,
+                  //         ),
+                  //       ),
+                  //     ],
+                  //   ),
                 ],
               ),
             ],
@@ -2622,7 +2622,7 @@ class _WorkListPageState extends State<WorkListPage>
                                 Icon(
                                   Icons.assignment_rounded,
                                   size: 50,
-                                  color: Color(0xFF3A2F87),
+                                  color: Color(0xFF2a86c9),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
@@ -2630,7 +2630,7 @@ class _WorkListPageState extends State<WorkListPage>
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF3A2F87),
+                                    color: Color(0xFF2a86c9),
                                   ),
                                 ),
                               ],
@@ -2683,7 +2683,7 @@ class _WorkListPageState extends State<WorkListPage>
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF3A2F87),
+                                color: Color(0xFF2a86c9),
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -2768,7 +2768,7 @@ class _WorkListPageState extends State<WorkListPage>
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF3A2F87),
+                                  color: Color(0xFF2a86c9),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -2780,12 +2780,12 @@ class _WorkListPageState extends State<WorkListPage>
                                     theme: TimelineThemeData(
                                       direction: Axis.horizontal,
                                       connectorTheme: const ConnectorThemeData(
-                                        color: Color(0xFF3A2F87),
+                                        color: Color(0xFF2a86c9),
                                         thickness: 2,
                                       ),
                                       indicatorTheme: const IndicatorThemeData(
                                         size: 14,
-                                        color: Color(0xFF3A2F87),
+                                        color: Color(0xFF2a86c9),
                                       ),
                                     ),
                                     builder: TimelineTileBuilder.connected(
@@ -2823,12 +2823,12 @@ class _WorkListPageState extends State<WorkListPage>
                                       },
                                       indicatorBuilder: (_, i) =>
                                           const DotIndicator(
-                                        color: Color(0xFF3A2F87),
+                                        color: Color(0xFF2a86c9),
                                         size: 14,
                                       ),
                                       connectorBuilder: (_, i, __) =>
                                           const SolidLineConnector(
-                                        color: Color(0xFF3A2F87),
+                                        color: Color(0xFF2a86c9),
                                         thickness: 2,
                                       ),
                                     ),
@@ -2892,7 +2892,7 @@ class _WorkListPageState extends State<WorkListPage>
       backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
         title: Text(widget.pageTitle),
-        backgroundColor: const Color(0xFF3A2F87),
+        backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
         elevation: 4,
         shape: const RoundedRectangleBorder(
@@ -2936,3 +2936,4 @@ class _WorkListPageState extends State<WorkListPage>
     );
   }
 }
+

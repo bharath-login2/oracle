@@ -9,7 +9,6 @@ import 'package:login2/models/serviceman/workOrderIdModel.dart';
 import 'package:login2/models/serviceman/workTypeModel.dart';
 import 'package:login2/service/service.dart';
 
-
 class EditWorkPage extends StatefulWidget {
   final String workOrderId;
   const EditWorkPage({super.key, required this.workOrderId});
@@ -65,35 +64,34 @@ class _EditWorkPageState extends State<EditWorkPage> {
   Widget _buildAccessoriesDropdown() {
     // Common accessories suggestions
     final List<String> accessorySuggestions = [
-      "Remote",
-      "Cable",
-      "Manual",
       "Battery",
       "Charger",
       "Display",
-      "Adapter",
-      "Keyboard",
       "Mouse",
-      "Stand",
-      "Cover",
-      "Case",
-      "Stylus",
-      "Headphones",
-      "Power Cord",
-      "USB Cable",
-      "HDMI Cable",
-      "Earphones",
-      "Dongle",
-      "Mount",
+      // "Charger",
+      // "Display",
+      // "Adapter",
+      // "Keyboard",
+      // "Mouse",
+      // "Stand",
+      // "Cover",
+      // "Case",
+      // "Stylus",
+      // "Headphones",
+      // "Power Cord",
+      // "USB Cable",
+      // "HDMI Cable",
+      // "Earphones",
+      // "Dongle",
+      // "Mount",
     ];
 
     // Parse existing accessories from the string format: "battery, charger"
     List<String> selectedAccessories = [];
     if (_selectedAccessory != null && _selectedAccessory!.isNotEmpty) {
       // Remove quotes and split by comma
-      String cleanedString = _selectedAccessory!
-          .replaceAll('"', '')
-          .replaceAll("'", '');
+      String cleanedString =
+          _selectedAccessory!.replaceAll('"', '').replaceAll("'", '');
       selectedAccessories = cleanedString
           .split(',')
           .map((e) => e.trim())
@@ -153,8 +151,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                     if (customController.text
                                         .trim()
                                         .isNotEmpty) {
-                                      final newAccessory = customController.text
-                                          .trim();
+                                      final newAccessory =
+                                          customController.text.trim();
                                       if (!tempSelected.contains(
                                         newAccessory,
                                       )) {
@@ -168,7 +166,6 @@ class _EditWorkPageState extends State<EditWorkPage> {
                               ],
                             ),
                           ),
-
                           if (tempSelected.isNotEmpty) ...[
                             const Text(
                               'Selected:',
@@ -333,21 +330,39 @@ class _EditWorkPageState extends State<EditWorkPage> {
     }
   }
 
-  Future<void> _pickDate(BuildContext context, bool isPreferred) async {
-    final DateTime? picked = await showDatePicker(
+  Future<void> _pickDateTime(BuildContext context, bool isPreferred) async {
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: isPreferred
+          ? (_preferredDate ?? DateTime.now())
+          : (_estimatedDate ?? DateTime.now()),
       firstDate: DateTime(2023),
       lastDate: DateTime(2101),
     );
-    if (picked != null) {
-      setState(() {
-        if (isPreferred) {
-          _preferredDate = picked;
-        } else {
-          _estimatedDate = picked;
-        }
-      });
+    if (pickedDate != null) {
+      if (!context.mounted) return;
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(isPreferred
+            ? (_preferredDate ?? DateTime.now())
+            : (_estimatedDate ?? DateTime.now())),
+      );
+      if (pickedTime != null) {
+        setState(() {
+          final fullDateTime = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+          if (isPreferred) {
+            _preferredDate = fullDateTime;
+          } else {
+            _estimatedDate = fullDateTime;
+          }
+        });
+      }
     }
   }
 
@@ -401,10 +416,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
         "Editwork_category": _selectedCategory,
         "editproblem_reported": _problemDescController.text,
         "preferred_datetime": _preferredDate != null
-            ? DateFormat('yyyy-MM-dd').format(_preferredDate!)
+            ? DateFormat('yyyy-MM-dd HH:mm:ss').format(_preferredDate!)
             : "",
         "editestimated_datetime": _estimatedDate != null
-            ? DateFormat('yyyy-MM-dd').format(_estimatedDate!)
+            ? DateFormat('yyyy-MM-dd HH:mm:ss').format(_estimatedDate!)
             : "",
         "editservice_man": _selectedServiceMan,
         "editStatus": _selectedStatus ?? "New",
@@ -462,7 +477,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Edit Work'),
-          backgroundColor: const Color(0xFF3A2F87),
+          backgroundColor: const Color(0xFF2a86c9),
           foregroundColor: Colors.white,
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -473,7 +488,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Edit Work'),
-          backgroundColor: const Color(0xFF3A2F87),
+          backgroundColor: const Color(0xFF2a86c9),
           foregroundColor: Colors.white,
         ),
         body: Center(
@@ -499,7 +514,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Work'),
-        backgroundColor: const Color(0xFF3A2F87),
+        backgroundColor: const Color(0xFF2a86c9),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -582,13 +597,13 @@ class _EditWorkPageState extends State<EditWorkPage> {
               _buildDateField(
                 "Preferred Date",
                 _preferredDate,
-                () => _pickDate(context, true),
+                () => _pickDateTime(context, true),
               ),
 
               _buildDateField(
                 "Estimated Date",
                 _estimatedDate,
-                () => _pickDate(context, false),
+                () => _pickDateTime(context, false),
               ),
 
               _buildServiceManDropdown(),
@@ -674,7 +689,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3A2F87),
+                    backgroundColor: const Color(0xFF2a86c9),
                     minimumSize: const Size(200, 48),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -726,8 +741,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                               filteredList = customerModel!.data
                                   .where(
                                     (c) => c.name.toLowerCase().contains(
-                                      searchText,
-                                    ),
+                                          searchText,
+                                        ),
                                   )
                                   .toList();
                             });
@@ -930,8 +945,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
           ),
           child: Text(
             date == null
-                ? 'Select date'
-                : DateFormat('dd MMM yyyy').format(date),
+                ? 'Select date and time'
+                : DateFormat('dd MMM yyyy, hh:mm a').format(date),
           ),
         ),
       ),

@@ -51,6 +51,7 @@ class _DashboardPageState extends State<DashboardPage> {
   String userId = '';
   String token = '';
   int notificationCount = 0;
+  String profilePic = '';
   CommonConfigureModel? configure;
   @override
   void initState() {
@@ -89,7 +90,7 @@ class _DashboardPageState extends State<DashboardPage> {
         message.notification?.title ?? "New Notification",
         style: const TextStyle(color: Colors.white),
       ),
-      backgroundColor: Colors.deepPurple,
+      backgroundColor: const Color(0xFF2a86c9),
       duration: const Duration(seconds: 3),
     );
 
@@ -125,6 +126,7 @@ class _DashboardPageState extends State<DashboardPage> {
     role = await Common.getSharedPref("role");
     userId = await Common.getSharedPref("userId");
     token = await Common.getSharedPref("token");
+    final String pPic = await Common.getSharedPref("profile_pic") ?? "";
     configure = await HttpService.configure(token);
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
@@ -137,6 +139,7 @@ class _DashboardPageState extends State<DashboardPage> {
         await Common.getSharedPref("NewleadDashboardPermission");
     setState(() {
       staffName = prefs.getString('staff_name') ?? "Staff";
+      profilePic = pPic;
     });
   }
 
@@ -144,7 +147,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
-        statusBarColor: Color(0xFF3A2F87),
+        statusBarColor: Color(0xFF2a86c9),
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
       ),
@@ -153,177 +156,195 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       key: _scaffoldKey,
       endDrawer: const SideBar(),
-      //backgroundColor: const Color(0xFF3A2F87),
-      body: SafeArea(
-        top: true,
-        bottom: false,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    height: 120,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF3A2F87),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(30),
-                        bottomRight: Radius.circular(30),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(MediaQuery.of(context).size.height * 0.08),
+        child: Container(
+          padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+                colors: [Color(0xFF2a86c9), Color(0xFF406dbe)]),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 10.0, top: 10.0, bottom: 10.0, right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    InkWell(
+                      onTap: () async {
+                        final shouldLogout = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Confirm Logout"),
+                            content: const Text(
+                              "Are you sure you want to log out?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: const Text("Cancel"),
+                              ),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color.fromARGB(
+                                    255,
+                                    145,
+                                    141,
+                                    141,
+                                  ),
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                child: const Text("Logout"),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (shouldLogout == true) {
+                          final prefs =
+                              await SharedPreferences.getInstance();
+                          await prefs.remove('token');
+                          if (context.mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const Login(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 2,
+                                color: Colors.grey.shade800,
+                                offset: const Offset(0, 2.0),
+                              )
+                            ],
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF2191ce)),
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundImage: (profilePic.isNotEmpty)
+                              ? NetworkImage(profilePic)
+                              : const AssetImage("assets/icons/profile_placeholder.png") as ImageProvider,
+                          backgroundColor: Colors.white,
+                        ),
                       ),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 25,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    const SizedBox(width: 15),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        GestureDetector(
-                          onTap: () async {
-                            final shouldLogout = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text("Confirm Logout"),
-                                content: const Text(
-                                  "Are you sure you want to log out?",
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text("Cancel"),
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color.fromARGB(
-                                        255,
-                                        145,
-                                        141,
-                                        141,
-                                      ),
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: const Text("Logout"),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (shouldLogout == true) {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.remove('token');
-                              if (context.mounted) {
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const Login(),
-                                  ),
-                                  (route) => false,
-                                );
-                              }
-                            }
-                          },
-                          child: const CircleAvatar(
-                            radius: 25,
-                            backgroundImage: AssetImage(
-                              "assets/icons/profile_placeholder.png",
-                            ),
-                            backgroundColor: Colors.white,
-                          ),
+                        Text(
+                          name.isNotEmpty ? name : staffName,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text(
-                              staffName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.notification_add,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            NotificationPageService(),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                Positioned(
-                                  right: 8,
-                                  top: 8,
-                                  child: Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(width: 15),
-                            IconButton(
-                              icon: const Icon(Icons.menu, color: Colors.white),
-                              onPressed: () {
-                                _scaffoldKey.currentState?.openEndDrawer();
-                              },
-                            ),
-                          ],
+                        const SizedBox(height: 2),
+                        Text(
+                          role.isNotEmpty ? role : "Serviceman",
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white),
                         ),
                       ],
                     ),
-                  ),
-                  Positioned(
-                    left: 20,
-                    right: 20,
-                    bottom: -25,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(25),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12.withOpacity(0.1),
-                            blurRadius: 6,
-                            offset: const Offset(2, 2),
-                          ),
-                        ],
-                      ),
-                      child: const TextField(
-                        decoration: InputDecoration(
-                          hintText: "Search....",
-                          border: InputBorder.none,
-                          icon: Icon(Icons.search, color: Colors.grey),
+                  ],
+                ),
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => NotificationPageService()),
+                        ).then((r) {
+                          _loadStaffName();
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: Stack(
+                          children: [
+                            Image.asset(
+                                "assets/icons/notification.png",
+                                width: 20,
+                                color: Colors.white),
+                            Positioned(
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(1),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 12,
+                                  minHeight: 12,
+                                ),
+                              ),
+                            )
+                          ],
                         ),
                       ),
                     ),
+                    InkWell(
+                      onTap: () {
+                        _scaffoldKey.currentState!.openEndDrawer();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: Image.asset("assets/icons/menu.png", width: 20, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(left: 20, right: 20, top: 20, bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12.withOpacity(0.1),
+                    blurRadius: 6,
+                    offset: const Offset(2, 2),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 40),
+              child: const TextField(
+                decoration: InputDecoration(
+                  hintText: "Search....",
+                  border: InputBorder.none,
+                  icon: Icon(Icons.search, color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: GridView.count(
@@ -917,10 +938,9 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
           ),
         ),
-      ),
 
       // floatingActionButton: FloatingActionButton(
-      //   backgroundColor: const Color(0xFF3A2F87),
+      //   backgroundColor: const Color(0xFF2a86c9),
       //   onPressed: _refreshPage,
       //   child: const Icon(Icons.window_sharp, color: Colors.white),
       // ),
@@ -1006,3 +1026,4 @@ class LegendItem extends StatelessWidget {
     );
   }
 }
+

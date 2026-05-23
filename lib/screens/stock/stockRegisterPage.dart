@@ -5,6 +5,7 @@ import 'package:login2/models/lead_management/getStockRegisterListModel.dart';
 import 'package:login2/models/lead_management/productHistoryRental.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
+import 'package:login2/screens/purchase/purchaseBillPage.dart';
 
 class StockRegisterPage extends StatefulWidget {
   final String token;
@@ -64,7 +65,6 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
 
   Future<void> _submitAllStock() async {
     if (pendingStockItems.isEmpty) return;
-
     Common.showProgressDialog(context, "Updating stock...");
     try {
       final response = await HttpService.postStocks(pendingStockItems);
@@ -94,6 +94,25 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
         backgroundColor: const Color(0xFF2a86c9),
         title: const Text('Stock Register', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PurchaseBillPage(
+                    token: widget.token,
+                    name: widget.name,
+                    userId: widget.userId,
+                    showAddDialogOnArrive: true,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.add, color: Colors.white),
+            tooltip: "Purchase Stock",
+          ),
+        ],
       ),
       body: Column(
         children: [
