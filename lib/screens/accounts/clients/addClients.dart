@@ -483,6 +483,95 @@ class _AddClientsState extends State<AddClients> {
                                 ),
                                 labelStyle: TextStyle(color: Colors.grey)),
                           ),
+                           SizedBox(
+                            height: 10,
+                          ),
+                          postal != null
+                              ? TextFormField(
+                                  onTap: () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                              scrollable: true,
+                                              title: const Text('Post Office'),
+                                              content: postal!.postOffice !=
+                                                      null
+                                                  ? SizedBox(
+                                                      height:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              .32,
+                                                      width:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              .8,
+                                                      child: ListView.builder(
+                                                        shrinkWrap: true,
+                                                        itemCount: postal!
+                                                            .postOffice!.length,
+                                                        itemBuilder:
+                                                            (context, ind) {
+                                                          return InkWell(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                postOffice
+                                                                        .text =
+                                                                    postal!
+                                                                        .postOffice![
+                                                                            ind]
+                                                                        .name
+                                                                        .toString();
+                                                                Navigator.pop(
+                                                                    context,
+                                                                    true);
+                                                              });
+                                                            },
+                                                            child: SizedBox(
+                                                              height: 50,
+                                                              child: Text(
+                                                                postal!
+                                                                    .postOffice![
+                                                                        ind]
+                                                                    .name
+                                                                    .toString(),
+                                                                style:
+                                                                    const TextStyle(
+                                                                        fontSize:
+                                                                            18),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    )
+                                                  : const Text(
+                                                      'No Post Office Found'));
+                                        });
+                                  },
+                                  maxLines: 1,
+                                  readOnly: true,
+                                  controller: postOffice,
+                                  decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.only(
+                                          left: 10, top: 2, bottom: 2),
+                                      labelText: 'Post Office',
+                                      fillColor: Colors.white,
+                                      filled: true,
+                                      prefixIcon: Icon(
+                                          Icons.arrow_drop_down_circle_outlined,
+                                          color: Colors.grey),
+                                      border: OutlineInputBorder(),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide:
+                                            BorderSide(color: Colors.grey),
+                                      ),
+                                      labelStyle:
+                                          TextStyle(color: Colors.grey)),
+                                )
+                              : const SizedBox(),
                           const SizedBox(
                             height: 15,
                           ),
@@ -636,95 +725,7 @@ class _AddClientsState extends State<AddClients> {
                             ],
                           ),
 
-                          SizedBox(
-                            height: 10,
-                          ),
-                          postal != null
-                              ? TextFormField(
-                                  onTap: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                              scrollable: true,
-                                              title: const Text('Post Office'),
-                                              content: postal!.postOffice !=
-                                                      null
-                                                  ? SizedBox(
-                                                      height:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              .32,
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .height *
-                                                              .8,
-                                                      child: ListView.builder(
-                                                        shrinkWrap: true,
-                                                        itemCount: postal!
-                                                            .postOffice!.length,
-                                                        itemBuilder:
-                                                            (context, ind) {
-                                                          return InkWell(
-                                                            onTap: () {
-                                                              setState(() {
-                                                                postOffice
-                                                                        .text =
-                                                                    postal!
-                                                                        .postOffice![
-                                                                            ind]
-                                                                        .name
-                                                                        .toString();
-                                                                Navigator.pop(
-                                                                    context,
-                                                                    true);
-                                                              });
-                                                            },
-                                                            child: SizedBox(
-                                                              height: 50,
-                                                              child: Text(
-                                                                postal!
-                                                                    .postOffice![
-                                                                        ind]
-                                                                    .name
-                                                                    .toString(),
-                                                                style:
-                                                                    const TextStyle(
-                                                                        fontSize:
-                                                                            18),
-                                                              ),
-                                                            ),
-                                                          );
-                                                        },
-                                                      ),
-                                                    )
-                                                  : const Text(
-                                                      'No Post Office Found'));
-                                        });
-                                  },
-                                  maxLines: 1,
-                                  readOnly: true,
-                                  controller: postOffice,
-                                  decoration: const InputDecoration(
-                                      contentPadding: EdgeInsets.only(
-                                          left: 10, top: 2, bottom: 2),
-                                      labelText: 'Post Office',
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                      prefixIcon: Icon(
-                                          Icons.arrow_drop_down_circle_outlined,
-                                          color: Colors.grey),
-                                      border: OutlineInputBorder(),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide:
-                                            BorderSide(color: Colors.grey),
-                                      ),
-                                      labelStyle:
-                                          TextStyle(color: Colors.grey)),
-                                )
-                              : const SizedBox(),
+                         
                           const SizedBox(
                             height: 15,
                           ),

@@ -6,17 +6,22 @@ import 'package:login2/models/lead_management/productHistoryRental.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/screens/purchase/purchaseBillPage.dart';
+import 'package:login2/screens/product_mannagement/product_view.dart';
+import 'package:login2/screens/stock/stockConsumptionPage.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 
 class StockRegisterPage extends StatefulWidget {
   final String token;
   final String name;
   final String userId;
+  final bool showAddDialogOnArrive;
 
   const StockRegisterPage({
     super.key,
     required this.token,
     required this.name,
     required this.userId,
+    this.showAddDialogOnArrive = false,
   });
 
   @override
@@ -34,6 +39,11 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
   void initState() {
     super.initState();
     _fetchStockRegister();
+    if (widget.showAddDialogOnArrive) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showAddStockDialog();
+      });
+    }
   }
 
   Future<void> _fetchStockRegister() async {
@@ -58,7 +68,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
   void _filterMaterials(String query) {
     setState(() {
       filteredMaterials = materials
-          .where((m) => (m.materialName).toLowerCase().contains(query.toLowerCase()))
+          .where((m) =>
+              (m.materialName).toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
@@ -77,7 +88,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
         });
         _fetchStockRegister();
       } else {
-        Common.toastMessaage(response?.message ?? "Failed to add stock", Colors.red);
+        Common.toastMessaage(
+            response?.message ?? "Failed to add stock", Colors.red);
       }
     } catch (e) {
       Navigator.pop(context);
@@ -92,25 +104,54 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFF2a86c9),
-        title: const Text('Stock Register', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Stock Register',
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PurchaseBillPage(
-                    token: widget.token,
-                    name: widget.name,
-                    userId: widget.userId,
-                    showAddDialogOnArrive: true,
+          Container(
+            margin: const EdgeInsets.only(right: 10),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PurchaseBillPage(
+                      token: widget.token,
+                      name: widget.name,
+                      userId: widget.userId,
+                      showAddDialogOnArrive: true,
+                    ),
                   ),
+                );
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-              );
-            },
-            icon: const Icon(Icons.add, color: Colors.white),
-            tooltip: "Purchase Stock",
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    SizedBox(width: 6),
+                    Text(
+                      'Purchase Bill',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: "MontserratMedium",
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -144,21 +185,26 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
-                  BoxShadow(color: Colors.black12, blurRadius: 10, offset: const Offset(0, -2))
+                  BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: const Offset(0, -2))
                 ],
               ),
               child: ElevatedButton.icon(
                 onPressed: _submitAllStock,
                 icon: const Icon(Icons.check_circle_outline, size: 20),
-                label: Text('Submit ${pendingStockItems.length} Items to Stock', 
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                label: Text('Submit ${pendingStockItems.length} Items to Stock',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   elevation: 5,
                   shadowColor: Colors.green.withOpacity(0.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
                 ),
               ),
             ),
@@ -167,7 +213,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
 
   void _updateQuantity(int index, int delta) {
     setState(() {
-      int currentQty = int.tryParse(pendingStockItems[index]['quantity'].toString()) ?? 0;
+      int currentQty =
+          int.tryParse(pendingStockItems[index]['quantity'].toString()) ?? 0;
       int newQty = currentQty + delta;
       if (newQty > 0) {
         pendingStockItems[index]['quantity'] = newQty.toString();
@@ -207,7 +254,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                         color: Colors.orange.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.shopping_cart_outlined, color: Colors.orange, size: 20),
+                      child: const Icon(Icons.shopping_cart_outlined,
+                          color: Colors.orange, size: 20),
                     ),
                     const SizedBox(width: 10),
                     const Text(
@@ -220,22 +268,28 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.orange,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         "${pendingStockItems.length}",
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
                 TextButton.icon(
                   onPressed: () => setState(() => pendingStockItems.clear()),
-                  icon: const Icon(Icons.delete_sweep_outlined, color: Colors.red, size: 18),
-                  label: const Text("Clear", style: TextStyle(color: Colors.red, fontSize: 13)),
+                  icon: const Icon(Icons.delete_sweep_outlined,
+                      color: Colors.red, size: 18),
+                  label: const Text("Clear",
+                      style: TextStyle(color: Colors.red, fontSize: 13)),
                 )
               ],
             ),
@@ -265,7 +319,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.inventory_2_outlined, color: Colors.blue, size: 20),
+                        child: const Icon(Icons.inventory_2_outlined,
+                            color: Colors.blue, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -274,13 +329,15 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           children: [
                             Text(
                               item['product_name'] ?? "",
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 14),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               "Unit: ${item['unit']}",
-                              style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 11),
                             ),
                           ],
                         ),
@@ -291,20 +348,26 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4),
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 4),
                           ],
                         ),
                         child: Row(
                           children: [
-                            _buildQtyBtn(Icons.remove, () => _updateQuantity(index, -1)),
+                            _buildQtyBtn(
+                                Icons.remove, () => _updateQuantity(index, -1)),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
                               child: Text(
                                 "${item['quantity']}",
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 14),
                               ),
                             ),
-                            _buildQtyBtn(Icons.add, () => _updateQuantity(index, 1)),
+                            _buildQtyBtn(
+                                Icons.add, () => _updateQuantity(index, 1)),
                           ],
                         ),
                       ),
@@ -338,7 +401,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
         children: [
           Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          Text("No stock items found", style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+          Text("No stock items found",
+              style: TextStyle(color: Colors.grey[600], fontSize: 16)),
         ],
       ),
     );
@@ -453,7 +517,6 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           letterSpacing: -0.5,
                         ),
                       ),
-                     
                     ],
                   ),
                 ),
@@ -464,60 +527,45 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       onPressed: () => _showRentalTimeline(item),
                       tooltip: "View History",
                     ),
-                    const SizedBox(width: 8),
-                    item.unit !=""?
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2a86c9),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2a86c9).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        item.unit,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ):SizedBox(),
+                    // const SizedBox(width: 8),
+                    // item.unit != ""
+                    //     ? Container(
+                    //         padding: const EdgeInsets.symmetric(
+                    //             horizontal: 12, vertical: 6),
+                    //         decoration: BoxDecoration(
+                    //           color: const Color(0xFF2a86c9),
+                    //           borderRadius: BorderRadius.circular(12),
+                    //           boxShadow: [
+                    //             BoxShadow(
+                    //               color:
+                    //                   const Color(0xFF2a86c9).withOpacity(0.3),
+                    //               blurRadius: 8,
+                    //               offset: const Offset(0, 4),
+                    //             ),
+                    //           ],
+                    //         ),
+                    //         child: Text(
+                    //           item.unit,
+                    //           style: const TextStyle(
+                    //             color: Colors.white,
+                    //             fontSize: 11,
+                    //             fontWeight: FontWeight.w900,
+                    //           ),
+                    //         ),
+                    //       )
+                    //     : SizedBox(),
                   ],
                 ),
               ],
             ),
           ),
-          
+
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 15, 20, 20),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Unit Price',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      '₹ ${item.unitPrice}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(20),
@@ -526,29 +574,70 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: _buildStockStat(
-                          'Available',
-                          item.currentQty,
-                          const Color(0xFF10B981),
-                          Icons.check_circle,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductView(
+                                  productId: item.materialId,
+                                  title: item.materialName,
+                                ),
+                              ),
+                            ).then((_) => _fetchStockRegister());
+                          },
+                          child: _buildStockStat(
+                            'Current',
+                            item.currentQty,
+                            const Color(0xFF10B981),
+                            Icons.check_circle,
+                          ),
                         ),
                       ),
                       _buildStatDivider(),
                       Expanded(
-                        child: _buildStockStat(
-                          'Purchased',
-                          item.purchasedQty,
-                          const Color(0xFF3B82F6),
-                          Icons.shopping_cart,
+                        child: InkWell(
+                          onTap: () {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => PurchaseBillPage(
+                            //       token: widget.token,
+                            //       name: widget.name,
+                            //       userId: widget.userId,
+                            //       initialSearchQuery: item.materialName,
+                            //     ),
+                            //   ),
+                            // );
+                          },
+                          child: _buildStockStat(
+                            'Purchased',
+                            item.purchasedQty,
+                            const Color(0xFF3B82F6),
+                            Icons.shopping_cart,
+                          ),
                         ),
                       ),
                       _buildStatDivider(),
                       Expanded(
-                        child: _buildStockStat(
-                          'Consumed',
-                          item.consumedQty,
-                          const Color(0xFFF59E0B),
-                          Icons.analytics,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StockConsumptionPage(
+                                  initialProductId: item.materialId,
+                                  initialProductName: item.materialName,
+                                ),
+                              ),
+                            );
+                          },
+                          child: _buildStockStat(
+                            'Consumed',
+                            item.consumedQty,
+                            const Color(0xFFF59E0B),
+                            Icons.analytics,
+                          ),
                         ),
                       ),
                     ],
@@ -562,7 +651,10 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
     );
   }
 
-  Widget _buildIconButton({required IconData icon, required VoidCallback onPressed, required String tooltip}) {
+  Widget _buildIconButton(
+      {required IconData icon,
+      required VoidCallback onPressed,
+      required String tooltip}) {
     return InkWell(
       onTap: onPressed,
       child: Container(
@@ -601,7 +693,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
     );
   }
 
-  Widget _buildStockStat(String label, String value, Color color, IconData icon) {
+  Widget _buildStockStat(
+      String label, String value, Color color, IconData icon) {
     return Column(
       children: [
         Container(
@@ -634,7 +727,6 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
       ],
     );
   }
-
 
   void _showRentalTimeline(StockRegisterData item) {
     showModalBottomSheet(
@@ -669,11 +761,13 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                         children: [
                           const Text(
                             "Stock History",
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 22, fontWeight: FontWeight.bold),
                           ),
                           Text(
                             item.materialName,
-                            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                            style: TextStyle(
+                                color: Colors.grey[600], fontSize: 14),
                           ),
                         ],
                       ),
@@ -697,7 +791,9 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    if (snapshot.hasError || snapshot.data == null || snapshot.data!.status == false) {
+                    if (snapshot.hasError ||
+                        snapshot.data == null ||
+                        snapshot.data!.status == false) {
                       return _buildTimelineError();
                     }
                     final history = snapshot.data!.data;
@@ -705,10 +801,12 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       return _buildTimelineEmpty();
                     }
                     return ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
                       itemCount: history.length,
                       itemBuilder: (context, index) {
-                        return _buildTimelineItem(history[index], index == history.length - 1);
+                        return _buildTimelineItem(
+                            history[index], index == history.length - 1);
                       },
                     );
                   },
@@ -755,7 +853,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                 decoration: BoxDecoration(
                   color: actionColor.withOpacity(0.1),
                   shape: BoxShape.circle,
-                  border: Border.all(color: actionColor.withOpacity(0.2), width: 2),
+                  border:
+                      Border.all(color: actionColor.withOpacity(0.2), width: 2),
                 ),
                 child: Icon(actionIcon, color: actionColor, size: 22),
               ),
@@ -804,7 +903,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           ),
                           Text(
                             _formatDate(hist.createdAt),
-                            style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                            style: TextStyle(
+                                color: Colors.grey[500], fontSize: 11),
                           ),
                         ],
                       ),
@@ -814,17 +914,20 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Text(
                             hist.customerName,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15),
                           ),
                         ),
                       if (hist.locationName.isNotEmpty)
                         Row(
                           children: [
-                            Icon(Icons.location_on_outlined, size: 12, color: Colors.grey[600]),
+                            Icon(Icons.location_on_outlined,
+                                size: 12, color: Colors.grey[600]),
                             const SizedBox(width: 4),
                             Text(
                               hist.locationName,
-                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 12),
                             ),
                           ],
                         ),
@@ -832,11 +935,18 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       Row(
                         children: [
                           if (int.parse(hist.issuedQuantity) > 0)
-                            _buildHistoryBadge("Issued: ${hist.issuedQuantity}", Colors.orange),
+                            _buildHistoryBadge("Issued: ${hist.issuedQuantity}",
+                                Colors.orange),
                           if (int.parse(hist.returnedQuantity) > 0)
-                            _buildHistoryBadge("Returned: ${hist.returnedQuantity}", Colors.green),
-                          if (hist.addedQuantity.isNotEmpty && int.parse(hist.addedQuantity) > 0)
-                            _buildHistoryBadge("Added: ${hist.addedQuantity}", Colors.blue),
+                            _buildHistoryBadge(
+                                "Returned: ${hist.returnedQuantity}",
+                                Colors.green),
+                          if (hist.addedQuantity.isNotEmpty &&
+                              int.parse(hist.addedQuantity) > 0)
+                            _buildHistoryBadge(
+                                "Added: ${hist.addedQuantity}", Colors.blue),
+                                  _buildHistoryBadge("Current: ${hist.currentStock}", const Color.fromARGB(255, 33, 243, 121)),
+                           _buildHistoryBadge("By: ${hist.companyName}", const Color.fromARGB(255, 26, 117, 145)),
                         ],
                       ),
                       if (hist.rentNo.isNotEmpty || hist.invoiceNo.isNotEmpty)
@@ -844,7 +954,10 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
                             "Ref: ${hist.rentNo.isNotEmpty ? hist.rentNo : hist.invoiceNo}",
-                            style: TextStyle(color: Colors.grey[500], fontSize: 11, fontStyle: FontStyle.italic),
+                            style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic),
                           ),
                         ),
                     ],
@@ -877,7 +990,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+        style:
+            TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -889,7 +1003,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
         children: [
           Icon(Icons.history_toggle_off, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          Text("No history found for this product", style: TextStyle(color: Colors.grey[600])),
+          Text("No history found for this product",
+              style: TextStyle(color: Colors.grey[600])),
         ],
       ),
     );
@@ -902,7 +1017,8 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
         children: [
           Icon(Icons.error_outline, size: 64, color: Colors.red[100]),
           const SizedBox(height: 16),
-          Text("Failed to load history", style: TextStyle(color: Colors.grey[600])),
+          Text("Failed to load history",
+              style: TextStyle(color: Colors.grey[600])),
         ],
       ),
     );
@@ -949,31 +1065,83 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Text('Select Product', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Select Product',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<StockRegisterData>(
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                          ),
-                          items: materials.map((m) {
-                            return DropdownMenuItem<StockRegisterData>(
-                              value: m,
-                              child: Text(m.materialName),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setModalState(() {
-                              selectedMaterial = val;
+                        child: InkWell(
+                          onTap: () {
+                            _showSearchProductDialog(context, materials, (val) {
+                              setModalState(() {
+                                selectedMaterial = val;
+                              });
                             });
                           },
-                          hint: const Text('Choose a product'),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade400),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    selectedMaterial != null
+                                        ? selectedMaterial!.materialName
+                                        : 'Choose a product',
+                                    style: TextStyle(
+                                      color: selectedMaterial != null ? Colors.black87 : Colors.grey.shade600,
+                                      fontSize: 15,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2a86c9).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () async {
+                            var res = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SimpleBarcodeScannerPage(),
+                              ),
+                            );
+                            if (res is String && res != '-1') {
+                              Common.showProgressDialog(context, "Fetching product...");
+                              final productRes = await HttpService.getQrcodeproductDetails(res);
+                              Navigator.pop(context);
+                              if (productRes != null && productRes.data != null) {
+                                final productData = productRes.data!;
+                                int existingIndex = materials.indexWhere((m) => m.materialId == productData.id);
+                                if (existingIndex != -1) {
+                                  setModalState(() {
+                                    selectedMaterial = materials[existingIndex];
+                                  });
+                                } else {
+                                  Common.toastMessaage("Product not found in register", Colors.red);
+                                }
+                              } else {
+                                Common.toastMessaage("Product not found", Colors.red);
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -1007,20 +1175,24 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF2a86c9).withOpacity(0.05),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF2a86c9).withOpacity(0.2)),
+                        border: Border.all(
+                            color: const Color(0xFF2a86c9).withOpacity(0.2)),
                       ),
                       child: Column(
                         children: [
-                          _buildModalInfoRow('Product Name', selectedMaterial!.materialName),
+                          _buildModalInfoRow(
+                              'Product Name', selectedMaterial!.materialName),
                           const SizedBox(height: 8),
-                          _buildModalInfoRow('Current Stock', selectedMaterial!.currentQty),
+                          _buildModalInfoRow(
+                              'Current Stock', selectedMaterial!.currentQty),
                           const SizedBox(height: 8),
                           _buildModalInfoRow('Unit', selectedMaterial!.unit),
                         ],
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text('Quantity to Add', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Quantity to Add',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     TextField(
                       controller: qtyController,
@@ -1042,31 +1214,42 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           ? null
                           : () {
                               if (qtyController.text.isEmpty) {
-                                Common.toastMessaage("Please enter quantity", Colors.red);
+                                Common.toastMessaage(
+                                    "Please enter quantity", Colors.red);
                                 return;
                               }
-                              
+
                               setState(() {
-                                int existingIndex = pendingStockItems.indexWhere(
-                                    (item) => item['product_id'] == selectedMaterial!.materialId);
+                                int existingIndex =
+                                    pendingStockItems.indexWhere((item) =>
+                                        item['product_id'] ==
+                                        selectedMaterial!.materialId);
 
                                 if (existingIndex != -1) {
-                                  int oldQty = int.tryParse(pendingStockItems[existingIndex]['quantity'].toString()) ?? 0;
-                                  int addQty = int.tryParse(qtyController.text) ?? 0;
-                                  pendingStockItems[existingIndex]['quantity'] = (oldQty + addQty).toString();
+                                  int oldQty = int.tryParse(
+                                          pendingStockItems[existingIndex]
+                                                  ['quantity']
+                                              .toString()) ??
+                                      0;
+                                  int addQty =
+                                      int.tryParse(qtyController.text) ?? 0;
+                                  pendingStockItems[existingIndex]['quantity'] =
+                                      (oldQty + addQty).toString();
                                 } else {
                                   pendingStockItems.add({
                                     "product_id": selectedMaterial!.materialId,
-                                    "product_name": selectedMaterial!.materialName,
+                                    "product_name":
+                                        selectedMaterial!.materialName,
                                     "quantity": qtyController.text,
                                     "unit_price": selectedMaterial!.unitPrice,
                                     "unit": selectedMaterial!.unit,
                                   });
                                 }
                               });
-                              
+
                               Navigator.pop(context);
-                              Common.toastMessaage("Added to list", Colors.blue);
+                              Common.toastMessaage(
+                                  "Added to list", Colors.blue);
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2a86c9),
@@ -1076,7 +1259,9 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Add to List', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text('Add to List',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -1096,6 +1281,120 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
         Text(label, style: TextStyle(color: Colors.grey[700])),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
       ],
+    );
+  }
+
+  void _showSearchProductDialog(
+    BuildContext context,
+    List<StockRegisterData> items,
+    ValueChanged<StockRegisterData> onSelected,
+  ) {
+    List<StockRegisterData> searchResults = List.from(items);
+    TextEditingController searchController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Select Product',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search product...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                        suffixIcon: searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  searchController.clear();
+                                  setStateDialog(() {
+                                    searchResults = List.from(items);
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (val) {
+                        setStateDialog(() {
+                          searchResults = items
+                              .where((item) => item.materialName
+                                  .toLowerCase()
+                                  .contains(val.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    Expanded(
+                      child: searchResults.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No products found',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: searchResults.length,
+                              itemBuilder: (context, index) {
+                                final item = searchResults[index];
+                                return ListTile(
+                                  title: Text(
+                                    item.materialName,
+                                    style: const TextStyle(fontWeight: FontWeight.w500),
+                                  ),
+                                  subtitle: Text(
+                                    'Stock: ${item.currentQty} ${item.unit}',
+                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                                  ),
+                                  trailing: const Icon(Icons.chevron_right, size: 16),
+                                  onTap: () {
+                                    onSelected(item);
+                                    Navigator.pop(context);
+                                  },
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

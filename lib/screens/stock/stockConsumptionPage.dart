@@ -6,9 +6,17 @@ import 'package:login2/models/lead_management/stockCounsumptionListModel.dart';
 import 'package:login2/models/lead_management/getMaterialForStockCunsuptionModel.dart';
 import 'package:login2/models/rental/rentalLocationModel.dart' as loc;
 import 'package:login2/service/service.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 
 class StockConsumptionPage extends StatefulWidget {
-  const StockConsumptionPage({super.key});
+  final String? initialProductId;
+  final String? initialProductName;
+  
+  const StockConsumptionPage({
+    super.key,
+    this.initialProductId,
+    this.initialProductName,
+  });
 
   @override
   State<StockConsumptionPage> createState() => _StockConsumptionPageState();
@@ -29,6 +37,8 @@ class _StockConsumptionPageState extends State<StockConsumptionPage> {
   @override
   void initState() {
     super.initState();
+    _selectedProductId = widget.initialProductId;
+    _selectedProductName = widget.initialProductName;
     _loadInitialData();
     _fetchConsumption();
     _searchController.addListener(_filterBySearch);
@@ -556,12 +566,51 @@ class _AddStockConsumptionPageState extends State<AddStockConsumptionPage> {
                     const Text("Product",
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
                     const SizedBox(height: 6),
-                    GestureDetector(
-                      onTap: _showProductPicker,
-                      child: _buildFilterBox(
-                        _selectedProductName ?? "---All Product---",
-                        Icons.inventory_2_outlined,
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _showProductPicker,
+                            child: _buildFilterBox(
+                              _selectedProductName ?? "---All Product---",
+                              Icons.inventory_2_outlined,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: IconButton(
+                            onPressed: () async {
+                              var res = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SimpleBarcodeScannerPage(),
+                                ),
+                              );
+                              if (res is String && res != '-1') {
+                                Common.showProgressDialog(context, "Fetching product...");
+                                final productRes = await HttpService.getQrcodeproductDetails(res);
+                                Navigator.pop(context);
+                                if (productRes != null && productRes.data != null) {
+                                  setState(() {
+                                    _selectedProductId = productRes.data!.id;
+                                    _selectedProductName = productRes.data!.productName;
+                                  });
+                                  _fetchMaterials();
+                                } else {
+                                  Common.toastMessaage("Product not found", Colors.red);
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

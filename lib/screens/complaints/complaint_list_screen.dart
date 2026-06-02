@@ -10,6 +10,7 @@ import 'package:login2/screens/complaints/complaint_register_screen.dart';
 import 'package:login2/screens/complaints/complaint_update_screen.dart';
 import 'package:login2/screens/complaints/remark_screen.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
+import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/service/service.dart';
 
 class ComplaintListScreen extends StatefulWidget {
@@ -80,7 +81,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
       onPopInvoked: (didPop) async {
         String token = await Common.getSharedPref("token");
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => Dashboard(token)));
+            context, MaterialPageRoute(builder: (context) => DashboardLeadNewUpdatedTwo(token)));
       },
       child: Scaffold(
         backgroundColor: Colors.grey.shade300,
@@ -113,7 +114,7 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => Dashboard(token)));
+                                      builder: (context) => DashboardLeadNewUpdatedTwo(token)));
                             },
                             child: Container(
                               height: 25,

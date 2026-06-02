@@ -41,8 +41,12 @@ class PurchaseBillData {
   final String? igst;
   final String? gstAmount;
   final String? itemTotal;
+  final String? taxType;
+  final String? billAddress;
   final String? grandTotal;
-
+  final String? paidAmount;
+    final String? balanceAmount;
+     final String? paymentStatus;
   PurchaseBillData({
      this.id,
     this.billId,
@@ -55,7 +59,12 @@ class PurchaseBillData {
     this.igst,
     this.gstAmount,
     this.itemTotal,
+      this.taxType,
+      this.billAddress,
     this.grandTotal,
+    this.paidAmount,
+    this.balanceAmount,
+    this.paymentStatus,
   });
 
   factory PurchaseBillData.fromJson(Map<String, dynamic> json) {
@@ -71,7 +80,12 @@ class PurchaseBillData {
       igst: json['igst'],
       gstAmount: json['gst_amount'],
       itemTotal: json['item_total'],
+      taxType: json['tax_type'],
+      billAddress: json['bill_address'],
       grandTotal: json['grand_total'],
+      paidAmount: json['paid_amount'],
+      balanceAmount: json['balance_amount'],
+       paymentStatus: json['payment_status'],
     );
   }
 
@@ -88,7 +102,12 @@ class PurchaseBillData {
       'igst': igst,
       'gst_amount': gstAmount,
       'item_total': itemTotal,
+      'tax_type': taxType,
+      'bill_address': billAddress,
       'grand_total': grandTotal,
+      'paid_amount': paidAmount,
+      'balance_amount': balanceAmount,
+       'payment_status': paymentStatus,
     };
   }
 

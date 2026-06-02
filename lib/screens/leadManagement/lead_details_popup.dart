@@ -491,7 +491,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   Future<void> _initializeData() async {
     contactPermission = await Common.getSharedPref("getContactPermission");
-    transferPermission = await Common.getSharedPref("transferPermission");
+    transferPermission = await Common.getSharedPref("transferLeads");
     cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
     createRenewalPermission =
         await Common.getSharedPref("createRenewalPermission");
@@ -586,7 +586,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       roleId = await Common.getSharedPref("roleId") ?? "";
 
       contactPermission = await Common.getSharedPref("getContactPermission");
-      transferPermission = await Common.getSharedPref("transferPermission");
+      transferPermission = await Common.getSharedPref("transferLeads");
       cloudCallPermission = await Common.getSharedPref("cloudCallPermission") ?? "";
       whatsappOfficial = await Common.getSharedPref("officialWhatsapp") ?? "";
 
@@ -10064,7 +10064,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   void _showCallTypeDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Choose Call Type'),
           content: Column(
@@ -10074,7 +10074,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 leading: const Icon(Icons.cloud, color: Colors.blue),
                 title: const Text('Cloud Call'),
                 onTap: () async {
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext);
                   Common.showProgressDialog(context, "Loading..");
 
                   final result = await HttpService.addCloudCall(
@@ -10082,14 +10082,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     (callMasterId ?? widget.callMasterId),
                     leadDetails!.data!.contactNumber1,
                   );
-
                   if (context.mounted) {
-                    Navigator.pop(context);
-                    if (result.data == true) {
+                  //  Navigator.pop(context);
+                    if (result != null && result.data == true) {
                       Common.toastMessaage(result.message, Colors.green);
                       Navigator.pop(context);
                     } else {
-                      Common.toastMessaage(result.message, Colors.red);
+                      Common.toastMessaage(result?.message ?? "Failed to initiate call", Colors.red);
                     }
                   }
                 },
@@ -10098,7 +10097,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 leading: const Icon(Icons.phone, color: Colors.green),
                 title: const Text('Phone Call'),
                 onTap: () {
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext);
                   Common.dialPad(leadDetails!.data!.contactNumber1.toString());
                 },
               ),

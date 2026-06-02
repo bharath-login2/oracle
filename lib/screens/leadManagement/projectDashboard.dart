@@ -1196,8 +1196,93 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                         const SizedBox(height: 24),
                         assignWork == "true"
                             ? _buildAssignedByMeSection()
-                            : SizedBox(),
-                        const SizedBox(height:  16),
+                            : const SizedBox(),
+                        const SizedBox(height: 16),
+                        
+                        // Recent Projects Section
+                        if (projectList != null && projectList!.data.isNotEmpty) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Recent Projects",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const AddProjectPage(),
+                                    ),
+                                  );
+                                },
+                                child: const Row(
+                                  children: [
+                                    Text(
+                                      'View More',
+                                      style: TextStyle(
+                                        color: Colors.blue,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 12,
+                                      color: Colors.blue,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: projectList!.data.length > 5 ? 5 : projectList!.data.length,
+                            itemBuilder: (context, index) {
+                              final project = projectList!.data[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                  border: Border.all(color: Colors.grey.shade100),
+                                ),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.blue.shade50,
+                                    child: Icon(Icons.rocket_launch_rounded, color: Colors.blue.shade400, size: 20),
+                                  ),
+                                  title: Text(
+                                    project.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    "Project ID: ${project.id}",
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),

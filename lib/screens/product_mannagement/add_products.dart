@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/product_mannagement/post_product.dart';
 import 'package:login2/models/product_mannagement/product_categories.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
+import 'package:login2/models/lead_management/unitModel.dart';
 import 'package:login2/screens/product_mannagement/categories.dart';
 import 'package:login2/screens/product_mannagement/subcategories.dart';
 import 'package:intl/intl.dart';
@@ -22,14 +25,17 @@ class _AddProductsState extends State<AddProducts> {
   TextEditingController productName = TextEditingController();
   TextEditingController productCode = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
+  TextEditingController purchasePrice = TextEditingController();
   TextEditingController tax = TextEditingController();
   TextEditingController discount = TextEditingController();
+  TextEditingController barcodeController = TextEditingController();
   TextEditingController totalAmount = TextEditingController();
   TextEditingController mrp = TextEditingController();
   TextEditingController contentId = TextEditingController();
   TextEditingController brand = TextEditingController();
   TextEditingController expiryDays = TextEditingController();
-  TextEditingController openingStock = TextEditingController();
+  //TextEditingController openingStock = TextEditingController();
+  final TextEditingController openingStock = TextEditingController(text: "0");
   TextEditingController currentStock = TextEditingController();
   TextEditingController noOfDays = TextEditingController();
   TextEditingController remindBefore = TextEditingController();
@@ -49,6 +55,10 @@ class _AddProductsState extends State<AddProducts> {
     "Warranty Issue",
     "Technical Issue"
   ];
+
+  List<UnitData> unitList = [];
+  List<UnitData> filteredUnits = [];
+  bool isUnitsLoading = false;
 
   List filteredCategories = [];
   List filteredSubCategories = [];
@@ -103,6 +113,7 @@ class _AddProductsState extends State<AddProducts> {
   bool checkStock = false;
 
   TextEditingController unitController = TextEditingController();
+  String selectedUnitId = "";
   bool hasWarranty = false;
   List<TextEditingController> pipelineControllers = [TextEditingController()];
   bool addPublish = false;
@@ -169,6 +180,8 @@ class _AddProductsState extends State<AddProducts> {
       noOfDays.text,
       remindBefore.text,
       sellingPrice.text,
+      purchasePrice.text,
+      barcodeController.text,
       tax.text,
       totalAmount.text,
       description.text,
@@ -178,12 +191,13 @@ class _AddProductsState extends State<AddProducts> {
       brand.text,
       discount.text,
       expiryDays.text,
-      addStock ? "1" : "0",
-      checkStock ? "1" : "0",
-      openingStock.text,
-      currentStock.text,
-      selectedStockStatus,
-      unit: unitController.text,
+      addStock: addStock ? "1" : "0",
+      checkStock: checkStock ? "1" : "0",
+      openingStock: openingStock.text,
+      currentStock: currentStock.text,
+      stockStatus: selectedStockStatus,
+      unit: selectedUnitId,
+      unitId: selectedUnitId,
       hasWarranty: hasWarranty,
       pipelines: pipelineControllers
           .map((e) => e.text)
@@ -219,10 +233,130 @@ class _AddProductsState extends State<AddProducts> {
     }
   }
 
+  getUnitsList() async {
+    setState(() {
+      isUnitsLoading = true;
+    });
+    try {
+      final response = await HttpService.getUnits();
+      if (response != null && response.status == true) {
+        setState(() {
+          unitList = response.data ?? [];
+          filteredUnits = unitList;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching units: $e");
+    } finally {
+      setState(() {
+        isUnitsLoading = false;
+      });
+    }
+  }
+
+  void filterUnits(String query) {
+    setState(() {
+      filteredUnits = unitList
+          .where((m) =>
+              (m.unitName ?? "").toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void _showQuickAddUnitDialog() {
+    final TextEditingController newUnitController = TextEditingController();
+    final newUnitFormKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            "Quick Add Unit",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Form(
+            key: newUnitFormKey,
+            child: TextFormField(
+              controller: newUnitController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: "Unit Name *",
+                hintText: "e.g. PCS, KG, BOX",
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? "Enter unit name" : null,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (newUnitFormKey.currentState!.validate()) {
+                  Common.showProgressDialog(context, "Adding Unit...");
+                  try {
+                    final response = await HttpService.addUnit(
+                        newUnitController.text.trim());
+                    Navigator.pop(context); // Pop loading dialog
+                    if (response != null &&
+                        (response['status'] == true ||
+                            response['status'] == 'true')) {
+                      Common.toastMessaage(
+                          response['message'] ?? "Unit added successfully",
+                          Colors.green);
+                      Navigator.pop(context); // Pop Quick Add Dialog
+                      await getUnitsList();
+                      setState(() {
+                        unitController.text = newUnitController.text.trim();
+                      });
+                      final addedUnit = unitList.firstWhere(
+                        (element) =>
+                            (element.unitName ?? "").toLowerCase() ==
+                            newUnitController.text.trim().toLowerCase(),
+                        orElse: () => UnitData(
+                            id: "", unitName: newUnitController.text.trim()),
+                      );
+                      setState(() {
+                        unitController.text = addedUnit.unitName ?? "";
+                        selectedUnitId = addedUnit.id ?? "";
+                      });
+                    } else {
+                      Common.toastMessaage(
+                          response?['message'] ?? "Failed to add unit",
+                          Colors.red);
+                    }
+                  } catch (e) {
+                    Navigator.pop(context); // Pop loading dialog
+                    Common.toastMessaage("Error: $e", Colors.red);
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2a86c9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("Add"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     getProductCategory();
     getProductTypes();
+    getUnitsList();
     super.initState();
   }
 
@@ -301,8 +435,9 @@ class _AddProductsState extends State<AddProducts> {
                                   selectedProductType = val;
                                 });
                                 if (val != null) {
-                                  final response = await HttpService.getContentId(
-                                      productType: val);
+                                  final response =
+                                      await HttpService.getContentId(
+                                          productType: val);
                                   if (response != null && response.status) {
                                     setState(() {
                                       contentId.text = response.data;
@@ -326,6 +461,58 @@ class _AddProductsState extends State<AddProducts> {
                           ),
                         ],
                       ),
+                       const SizedBox(height: 16),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: barcodeController,
+                          label: "Barcode value",
+                          icon: Icons.qr_code,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Transform.translate(
+                        offset: const Offset(0, 24),
+                        child: Container(
+                          height: 50,
+                          width: 50,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: const Color(0xFF2a86c9),
+                          ),
+                          child: IconButton(
+                            onPressed: () async {
+                              var res = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const SimpleBarcodeScannerPage(),
+                                ),
+                              );
+                              if (res is String && res != '-1') {
+                                setState(() {
+                                  barcodeController.text = res;
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.qr_code_scanner,
+                                color: Colors.white, size: 24),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFF2a86c9),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              minimumSize: const Size(50, 50),
+                            ),
+                            tooltip: "Scan Barcode",
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -339,6 +526,11 @@ class _AddProductsState extends State<AddProducts> {
                                       ? "HSN/SAC Code"
                                       : "HSN Code",
                               icon: Icons.qr_code_outlined,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter
+                                    .digitsOnly, 
+                              ],
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -367,7 +559,10 @@ class _AddProductsState extends State<AddProducts> {
                                   : "Selling Price *",
                               icon: Icons.currency_rupee_outlined,
                               keyboardType: TextInputType.number,
-                              onChanged: (val) => _updateTotalAmount(),
+                              onChanged: (val) {
+                                _updateTotalAmount();
+                                formKey.currentState?.validate();
+                              },
                               validator: (val) => val!.isEmpty
                                   ? (selectedProductType == "Rental"
                                       ? "Enter Rental Price"
@@ -391,6 +586,37 @@ class _AddProductsState extends State<AddProducts> {
                       Row(
                         children: [
                           Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildTextField(
+                                  controller: purchasePrice,
+                                  label: "Purchase Amount",
+                                  icon: Icons.currency_rupee_outlined,
+                                  keyboardType: TextInputType.number,
+                                  onChanged: (val) {
+                                    formKey.currentState?.validate();
+                                  },
+                                  validator: (val) {
+                                    if (val != null &&
+                                        val.isNotEmpty &&
+                                        sellingPrice.text.isNotEmpty) {
+                                      double pPrice = double.tryParse(val) ?? 0;
+                                      double sPrice =
+                                          double.tryParse(sellingPrice.text) ??
+                                              0;
+                                      if (pPrice > sPrice) {
+                                        return "Purchase price > selling price";
+                                      }
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
                             child: _buildTextField(
                               controller: discount,
                               label: "Discount (%)",
@@ -399,15 +625,19 @@ class _AddProductsState extends State<AddProducts> {
                               onChanged: (val) => _updateTotalAmount(),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
                           Expanded(
                             child: _buildTextField(
                               controller: mrp,
-                              label: "MRP *",
+                              label: "MRP",
                               icon: Icons.price_check_outlined,
                               keyboardType: TextInputType.number,
                               validator: (val) {
-                                if (val!.isEmpty) return "Enter MRP";
+                                if (val == null || val.isEmpty) return null;
                                 double mrpValue = double.tryParse(val) ?? 0;
                                 double totalValue =
                                     double.tryParse(totalAmount.text) ?? 0;
@@ -430,6 +660,93 @@ class _AddProductsState extends State<AddProducts> {
                       ),
                     ],
                   ),
+                  //  const SizedBox(height: 16),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: _buildTextField(
+                  //         controller: barcodeController,
+                  //         label: "Barcode value",
+                  //         icon: Icons.qr_code,
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 12),
+                  //     ElevatedButton.icon(
+                  //       onPressed: () async {
+                  //         var res = await Navigator.push(
+                  //           context,
+                  //           MaterialPageRoute(
+                  //             builder: (context) => const SimpleBarcodeScannerPage(),
+                  //           ),
+                  //         );
+                  //         if (res is String && res != '-1') {
+                  //           setState(() {
+                  //             barcodeController.text = res;
+                  //           });
+                  //         }
+                  //       },
+                  //       icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                  //       label: const Text("Scan Barcode", style: TextStyle(color: Colors.white)),
+                  //       style: ElevatedButton.styleFrom(
+                  //         backgroundColor: const Color(0xFF2a86c9),
+                  //         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
+                  // const SizedBox(height: 16),
+                  // Row(
+                  //   crossAxisAlignment: CrossAxisAlignment.start,
+                  //   children: [
+                  //     Expanded(
+                  //       child: _buildTextField(
+                  //         controller: barcodeController,
+                  //         label: "Barcode value",
+                  //         icon: Icons.qr_code,
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 12),
+                  //     Transform.translate(
+                  //       offset: const Offset(0, 24),
+                  //       child: Container(
+                  //         height: 50,
+                  //         width: 50,
+                  //         decoration: BoxDecoration(
+                  //           borderRadius: BorderRadius.circular(8),
+                  //           color: const Color(0xFF2a86c9),
+                  //         ),
+                  //         child: IconButton(
+                  //           onPressed: () async {
+                  //             var res = await Navigator.push(
+                  //               context,
+                  //               MaterialPageRoute(
+                  //                 builder: (context) =>
+                  //                     const SimpleBarcodeScannerPage(),
+                  //               ),
+                  //             );
+                  //             if (res is String && res != '-1') {
+                  //               setState(() {
+                  //                 barcodeController.text = res;
+                  //               });
+                  //             }
+                  //           },
+                  //           icon: const Icon(Icons.qr_code_scanner,
+                  //               color: Colors.white, size: 24),
+                  //           padding: EdgeInsets.zero,
+                  //           constraints: const BoxConstraints(),
+                  //           style: IconButton.styleFrom(
+                  //             backgroundColor: const Color(0xFF2a86c9),
+                  //             shape: RoundedRectangleBorder(
+                  //                 borderRadius: BorderRadius.circular(8)),
+                  //             minimumSize: const Size(50, 50),
+                  //           ),
+                  //           tooltip: "Scan Barcode",
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   const SizedBox(height: 16),
                   _buildSectionCard(
                     title: "Other Details",
@@ -443,7 +760,11 @@ class _AddProductsState extends State<AddProducts> {
                               icon: Icons.badge_outlined,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
                           Expanded(
                             child: _buildDynamicExpiryField(),
                           ),
@@ -614,84 +935,96 @@ class _AddProductsState extends State<AddProducts> {
                   ],
                   _buildSectionCard(
                     title: "Stock Management",
-                    children: [
-                      Row(
-                        children: [
-                          Text("Stock",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey[700])),
-                          const Spacer(),
-                          Checkbox(
-                            value: addStock,
-                            onChanged: (val) {
-                              setState(() {
-                                addStock = val!;
-                                if (!addStock) {
-                                  openingStock.clear();
-                                  currentStock.clear();
-                                  selectedStockStatus = "In Stock";
-                                }
-                              });
-                            },
-                            activeColor: const Color(0xFF2a86c9),
-                          ),
-                          const Text("Add Stock"),
-                          const SizedBox(width: 12),
-                          Checkbox(
-                            value: checkStock,
-                            onChanged: (val) {
-                              setState(() {
-                                checkStock = val!;
-                              });
-                            },
-                            activeColor: const Color(0xFF2a86c9),
-                          ),
-                          const Text("Check Stock"),
-                        ],
+                    trailing: IconButton(
+                      icon: Icon(
+                        addStock
+                            ? Icons.remove_circle_outline
+                            : Icons.add_circle_outline,
+                        color: addStock ? Colors.red : const Color(0xFF2a86c9),
                       ),
-                      if (addStock) ...[
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: openingStock,
-                                label: "Opening Stock *",
-                                icon: Icons.inventory_2_outlined,
-                                keyboardType: TextInputType.number,
-                                validator: (val) => addStock && val!.isEmpty
-                                    ? "Enter Opening Stock"
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildTextField(
-                                controller: currentStock,
-                                label: "Current Stock *",
-                                icon: Icons.inventory_outlined,
-                                keyboardType: TextInputType.number,
-                                validator: (val) => addStock && val!.isEmpty
-                                    ? "Enter Current Stock"
-                                    : null,
-                              ),
+                      onPressed: () {
+                        setState(() {
+                          addStock = !addStock;
+                          if (!addStock) {
+                            openingStock.clear();
+                            currentStock.clear();
+                            selectedStockStatus = "In Stock";
+                            checkStock = false;
+                          }
+                        });
+                      },
+                    ),
+                    children: !addStock
+                        ? []
+                        : [
+                            // Row(
+                            //   children: [
+                            //     Checkbox(
+                            //       value: checkStock,
+                            //       onChanged: (val) {
+                            //         setState(() {
+                            //           checkStock = val!;
+                            //         });
+                            //       },
+                            //       activeColor: const Color(0xFF2a86c9),
+                            //     ),
+                            //     const Text("Check Stock"),
+                            //   ],
+                            // ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildTextField(
+                                        controller: openingStock,
+                                        label: "Opening Stock *",
+                                        icon: Icons.inventory_2_outlined,
+                                        keyboardType: TextInputType.number,
+                                        validator: (val) =>
+                                            addStock && val!.isEmpty
+                                                ? "Enter Opening Stock"
+                                                : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value: checkStock,
+                                      onChanged: (val) {
+                                        setState(() {
+                                          checkStock = val!;
+                                        });
+                                      },
+                                      activeColor: const Color(0xFF2a86c9),
+                                    ),
+                                    const Text(
+                                      "Check Stock",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 12, right: 12, top: 2),
+                                  child: Text(
+                                    "Enable this checkbox to check inventory stock. If disabled, unlimited sales are allowed.",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDropdownField(
-                          label: "Stock Status",
-                          value: selectedStockStatus,
-                          items: ["In Stock", "Low Stock", "Out of Stock"],
-                          onChanged: (val) {
-                            setState(() {
-                              selectedStockStatus = val!;
-                            });
-                          },
-                        ),
-                      ],
-                    ],
                   ),
                   if (selectedProductType == "Service" && hasWarranty) ...[
                     const SizedBox(height: 16),
@@ -749,6 +1082,7 @@ class _AddProductsState extends State<AddProducts> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 32),
                   Container(
                     height: 54,
@@ -810,6 +1144,7 @@ class _AddProductsState extends State<AddProducts> {
         (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
     setState(() {
       totalAmount.text = total.roundToDouble().toString();
+      mrp.text = totalAmount.text;
     });
   }
 
@@ -872,12 +1207,15 @@ class _AddProductsState extends State<AddProducts> {
     } else if (selectedProductType == "Ecommerce" ||
         selectedProductType == "Material" ||
         selectedProductType == "Rental") {
-      return _buildTextField(
+      return _buildSelectField(
         controller: unitController,
         label: "Unit",
-        icon: Icons.scale_outlined,
+        //icon: Icons.scale_outlined,
+        onTap: () {
+          dropDialog(context, "unit");
+        },
         actionWidget: _buildAddButton(() {
-          Common.toastMessaage("Quick Add Unit", Colors.green);
+          _showQuickAddUnitDialog();
         }),
       );
     } else {
@@ -1026,65 +1364,200 @@ class _AddProductsState extends State<AddProducts> {
     );
   }
 
+
   Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    bool readOnly = false,
-    Color? fillColor,
-    ValueChanged<String>? onChanged,
-    FormFieldValidator<String>? validator,
-    Widget? actionWidget,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel(label),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: controller,
-                keyboardType: keyboardType,
-                maxLines: maxLines,
-                readOnly: readOnly,
-                onChanged: onChanged,
-                validator: validator,
-                decoration: InputDecoration(
-                  hintText: label.replaceAll('*', '').trim(),
-                  prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-                  filled: fillColor != null,
-                  fillColor: fillColor,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF2a86c9), width: 2),
-                  ),
-                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  required TextEditingController controller,
+  required String label,
+  required IconData icon,
+  TextInputType keyboardType = TextInputType.text,
+  int maxLines = 1,
+  bool readOnly = false,
+  Color? fillColor,
+  ValueChanged<String>? onChanged,
+  FormFieldValidator<String>? validator,
+  Widget? actionWidget,
+  List<TextInputFormatter>? inputFormatters, // Add this parameter
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildLabel(label),
+      const SizedBox(height: 8),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              keyboardType: keyboardType,
+              maxLines: maxLines,
+              readOnly: readOnly,
+              onChanged: onChanged,
+              validator: validator,
+              inputFormatters: inputFormatters, // Add this line
+              decoration: InputDecoration(
+                hintText: label.replaceAll('*', '').trim(),
+                prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+                filled: fillColor != null,
+                fillColor: fillColor,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                ),
+                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                errorMaxLines: 2,
+                errorStyle: const TextStyle(
+                  fontSize: 11,
+                  height: 1.2,
                 ),
               ),
             ),
-            if (actionWidget != null) ...[
-              const SizedBox(width: 8),
-              actionWidget,
-            ],
+          ),
+          if (actionWidget != null) ...[
+            const SizedBox(width: 8),
+            actionWidget,
           ],
-        ),
-      ],
-    );
-  }
+        ],
+      ),
+    ],
+  );
+}
+
+  // Widget _buildTextField({
+  //   required TextEditingController controller,
+  //   required String label,
+  //   required IconData icon,
+  //   TextInputType keyboardType = TextInputType.text,
+  //   int maxLines = 1,
+  //   bool readOnly = false,
+  //   Color? fillColor,
+  //   ValueChanged<String>? onChanged,
+  //   FormFieldValidator<String>? validator,
+  //   Widget? actionWidget,
+  // }) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       _buildLabel(label),
+  //       const SizedBox(height: 8),
+  //       Row(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Expanded(
+  //             child: TextFormField(
+  //               controller: controller,
+  //               keyboardType: keyboardType,
+  //               maxLines: maxLines,
+  //               readOnly: readOnly,
+  //               onChanged: onChanged,
+  //               validator: validator,
+  //               decoration: InputDecoration(
+  //                 hintText: label.replaceAll('*', '').trim(),
+  //                 prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+  //                 filled: fillColor != null,
+  //                 fillColor: fillColor,
+  //                 border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(12)),
+  //                 enabledBorder: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   borderSide: BorderSide(color: Colors.grey[300]!),
+  //                 ),
+  //                 focusedBorder: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   borderSide:
+  //                       const BorderSide(color: Color(0xFF2a86c9), width: 2),
+  //                 ),
+  //                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+  //                 contentPadding:
+  //                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  //                 errorMaxLines:
+  //                     2, // Add this line to allow multi-line error messages
+  //                 errorStyle: const TextStyle(
+  //                   fontSize: 11,
+  //                   height:
+  //                       1.2, // Optional: Adjust line height for better readability
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           if (actionWidget != null) ...[
+  //             const SizedBox(width: 8),
+  //             actionWidget,
+  //           ],
+  //         ],
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  // Widget _buildTextField({
+  //   required TextEditingController controller,
+  //   required String label,
+  //   required IconData icon,
+  //   TextInputType keyboardType = TextInputType.text,
+  //   int maxLines = 1,
+  //   bool readOnly = false,
+  //   Color? fillColor,
+  //   ValueChanged<String>? onChanged,
+  //   FormFieldValidator<String>? validator,
+  //   Widget? actionWidget,
+  // }) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       _buildLabel(label),
+  //       const SizedBox(height: 8),
+  //       Row(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Expanded(
+  //             child: TextFormField(
+  //               controller: controller,
+  //               keyboardType: keyboardType,
+  //               maxLines: maxLines,
+  //               readOnly: readOnly,
+  //               onChanged: onChanged,
+  //               validator: validator,
+  //               decoration: InputDecoration(
+  //                 hintText: label.replaceAll('*', '').trim(),
+  //                 prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+  //                 filled: fillColor != null,
+  //                 fillColor: fillColor,
+  //                 border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(12)),
+  //                 enabledBorder: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   borderSide: BorderSide(color: Colors.grey[300]!),
+  //                 ),
+  //                 focusedBorder: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   borderSide:
+  //                       const BorderSide(color: Color(0xFF2a86c9), width: 2),
+  //                 ),
+  //                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+  //                 contentPadding:
+  //                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  //               ),
+  //             ),
+  //           ),
+  //           if (actionWidget != null) ...[
+  //             const SizedBox(width: 8),
+  //             actionWidget,
+  //           ],
+  //         ],
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildDropdownField({
     required String label,
@@ -1128,7 +1601,7 @@ class _AddProductsState extends State<AddProducts> {
   Widget _buildSelectField({
     required TextEditingController controller,
     required String label,
-    required IconData icon,
+    IconData? icon,
     required VoidCallback onTap,
     FormFieldValidator<String>? validator,
     Widget? actionWidget,
@@ -1200,7 +1673,7 @@ class _AddProductsState extends State<AddProducts> {
       context: context,
       builder: (context) {
         return Builder(builder: (context) {
-          return StatefulBuilder(builder: (context, setState) {
+          return StatefulBuilder(builder: (context, setDialogState) {
             return AlertDialog(
                 scrollable: true,
                 title: Row(
@@ -1228,8 +1701,14 @@ class _AddProductsState extends State<AddProducts> {
                           ),
                         ),
                         onChanged: ((value) {
-                          setState(() {
-                            filterCategories(value);
+                          setDialogState(() {
+                            if (title == "category") {
+                              filterCategories(value);
+                            } else if (title == "sub category") {
+                              filterSubCategories(value);
+                            } else if (title == "unit") {
+                              filterUnits(value);
+                            }
                           });
                         }),
                       ),
@@ -1243,7 +1722,9 @@ class _AddProductsState extends State<AddProducts> {
                     shrinkWrap: true,
                     itemCount: title == "category"
                         ? filteredCategories.length
-                        : filteredSubCategories.length,
+                        : title == "sub category"
+                            ? filteredSubCategories.length
+                            : filteredUnits.length,
                     itemBuilder: (context, index) {
                       return ListTile(
                         onTap: (() {
@@ -1255,13 +1736,20 @@ class _AddProductsState extends State<AddProducts> {
                             setState(() {});
                             filterCategories("");
                             getProductSubCategory();
-                          } else {
+                          } else if (title == "sub category") {
                             subCategory.text =
                                 filteredSubCategories[index].subCategory;
                             subCategoryId = filteredSubCategories[index].id;
                             Navigator.pop(context);
                             setState(() {});
                             filterSubCategories("");
+                          } else if (title == "unit") {
+                            unitController.text =
+                                filteredUnits[index].unitName ?? "";
+                            selectedUnitId = filteredUnits[index].id ?? "";
+                            Navigator.pop(context);
+                            setState(() {});
+                            filterUnits("");
                           }
                         }),
                         title: SizedBox(
@@ -1271,9 +1759,11 @@ class _AddProductsState extends State<AddProducts> {
                                 ? filteredCategories[index]
                                     .categoryName
                                     .toString()
-                                : filteredSubCategories[index]
-                                    .subCategory
-                                    .toString(),
+                                : title == "sub category"
+                                    ? filteredSubCategories[index]
+                                        .subCategory
+                                        .toString()
+                                    : filteredUnits[index].unitName.toString(),
                             style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w400,

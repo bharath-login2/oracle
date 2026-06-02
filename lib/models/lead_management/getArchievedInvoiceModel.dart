@@ -58,6 +58,8 @@ class ArchievedInvoiceItem {
   String? estimatedTax;
   String? discountAmount;
   String? totalPaidAmount;
+  String? totalPaid;
+  String? balance;
   String? paymentStatus;
   String? paymentMode;
   String? customerName;
@@ -77,6 +79,8 @@ class ArchievedInvoiceItem {
     this.estimatedTax,
     this.discountAmount,
     this.totalPaidAmount,
+    this.totalPaid,
+    this.balance,
     this.paymentStatus,
     this.paymentMode,
     this.customerName,
@@ -97,6 +101,8 @@ class ArchievedInvoiceItem {
     estimatedTax = json['estimated_tax'];
     discountAmount = json['discount_amount'];
     totalPaidAmount = json['total_paid_amount'];
+    totalPaid = json['total_paid'];
+    balance = json['balance'];
     paymentStatus = json['payment_status'];
     paymentMode = json['payment_mode'];
     customerName = json['customer_name'];
@@ -118,6 +124,8 @@ class ArchievedInvoiceItem {
     data['estimated_tax'] = estimatedTax;
     data['discount_amount'] = discountAmount;
     data['total_paid_amount'] = totalPaidAmount;
+    data['total_paid'] = totalPaid;
+    data['balance'] = balance;
     data['payment_status'] = paymentStatus;
     data['payment_mode'] = paymentMode;
     data['customer_name'] = customerName;

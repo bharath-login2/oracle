@@ -41,6 +41,8 @@ class Data {
   String productCode;
   String productMrp;
   String sellingPrice;
+  String purchasePrice;
+ // String barcode;
   String taxPercent;
   String totalAmount;
   String noOfDays;
@@ -50,6 +52,7 @@ class Data {
   String productType;
   String brand;
   String discountPercent;
+    String discountAmount;
   String checkStock;
   String openingStock;
   String currentStock;
@@ -57,12 +60,15 @@ class Data {
   String isFeatureProduct;
   String isGst;
   String unitId;
+  String unitName;
   String publishStatus;
   String visibility;
   String rentalPrice;
   String warranty;
   String expiryDate;
   String warrantyNo;
+   String purchaseAmount;
+    String barCode;
   List<String> pipelineName;
   String serviceCycle;
   String freeCount;
@@ -84,6 +90,8 @@ class Data {
     required this.productCode,
     required this.productMrp,
     required this.sellingPrice,
+    required this.purchasePrice,
+    // //required this.barcode,
     required this.taxPercent,
     required this.totalAmount,
     required this.noOfDays,
@@ -93,6 +101,7 @@ class Data {
     required this.productType,
     required this.brand,
     required this.discountPercent,
+    required this.discountAmount,
     required this.checkStock,
     required this.openingStock,
     required this.currentStock,
@@ -100,12 +109,15 @@ class Data {
     required this.isFeatureProduct,
     required this.isGst,
     required this.unitId,
+    required this.unitName,
     required this.publishStatus,
     required this.visibility,
     required this.rentalPrice,
     required this.warranty,
     required this.expiryDate,
     required this.warrantyNo,
+      required this.purchaseAmount,
+    required this.barCode,
     required this.pipelineName,
     required this.serviceCycle,
     required this.freeCount,
@@ -129,6 +141,8 @@ class Data {
         productCode: json["product_code"] ?? "",
         productMrp: json["product_mrp"] ?? "",
         sellingPrice: json["selling_price"] ?? "",
+        purchasePrice: json["purchase_price"] ?? "",
+        // barcode: json["barcode"] ?? "",
         taxPercent: json["tax_percent"] ?? "",
         totalAmount: json["total_amount"] ?? "",
         noOfDays: json["no_of_days"] ?? "",
@@ -138,6 +152,7 @@ class Data {
         productType: json["product_type"] ?? "",
         brand: json["brand"] ?? "",
         discountPercent: json["discount_percent"] ?? "",
+        discountAmount: json["discount_amount"] ?? "",
         checkStock: json["check_stock"] ?? "",
         openingStock: json["opening_stock"] ?? "",
         currentStock: json["current_stock"] ?? "",
@@ -145,12 +160,15 @@ class Data {
         isFeatureProduct: json["is_feature_product"] ?? "",
         isGst: json["is_gst"] ?? "",
         unitId: json["unit_id"] ?? "",
+        unitName: json["unit_name"] ?? "",
         publishStatus: json["publish_status"] ?? "",
         visibility: json["visibility"] ?? "",
         rentalPrice: json["rental_price"] ?? "",
         warranty: json["warranty"] ?? "",
         expiryDate: json["expiry_date"] ?? "",
         warrantyNo: json["warranty_no"] ?? "",
+        purchaseAmount: json["purchase_amount"] ?? "",
+        barCode: json["bar_code"] ?? "",
         pipelineName: List<String>.from(
             json["pipeline_name"]?.map((x) => x.toString()) ?? []),
         serviceCycle: json["service_cycle"] ?? "",
@@ -178,6 +196,8 @@ class Data {
         "product_code": productCode,
         "product_mrp": productMrp,
         "selling_price": sellingPrice,
+        "purchase_price": purchasePrice,
+     //   "barcode": barcode,
         "tax_percent": taxPercent,
         "total_amount": totalAmount,
         "no_of_days": noOfDays,
@@ -187,6 +207,7 @@ class Data {
         "product_type": productType,
         "brand": brand,
         "discount_percent": discountPercent,
+        "discount_amount": discountAmount,
         "check_stock": checkStock,
         "opening_stock": openingStock,
         "current_stock": currentStock,
@@ -194,12 +215,15 @@ class Data {
         "is_feature_product": isFeatureProduct,
         "is_gst": isGst,
         "unit_id": unitId,
+        "unit_name": unitName,
         "publish_status": publishStatus,
         "visibility": visibility,
         "rental_price": rentalPrice,
         "warranty": warranty,
         "expiry_date": expiryDate,
         "warranty_no": warrantyNo,
+        "purchase_amount": purchaseAmount,
+        "bar_code": barCode,
         "pipeline_name": List<dynamic>.from(pipelineName.map((x) => x)),
         "service_cycle": serviceCycle,
         "free_count": freeCount,

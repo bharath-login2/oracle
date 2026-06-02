@@ -75,20 +75,20 @@ class Data {
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-        todayExpense: json["todayExpense"] ?? "",
-        monthlyExpense: json["monthlyExpense"] ?? "",
-        pendingExpense: json["pendingExpense"] ?? "",
-        advanceAmount: json["advanceAmount"] ?? "",
-        bankAccount: json["BankAccount"] ?? "",
-        todaysIncome: json["todaysIncome"] ?? "",
-        monthlyIncome: json["monthlyIncome"] ?? "",
-        pendingIncome: json["pendingIncome"] ?? "",
-        bankAccCount: json["bank_acc_count"] ?? "",
-        bankAccountId: json["bank_account_id"] ?? "",
-        bankAccountName: json["bank_account_name"] ?? "",
-        isViewAccHead: json["is_view_acc_head"] ?? "",
-        isViewBankAcc: json["is_view_bank_acc"] ?? "",
-        isViewPendingExpense: json["is_view_pending_expense"] ?? "",
+        todayExpense: json["todayExpense"]?.toString() ?? "",
+        monthlyExpense: json["monthlyExpense"]?.toString() ?? "",
+        pendingExpense: json["pendingExpense"]?.toString() ?? "",
+        advanceAmount: json["advanceAmount"]?.toString() ?? "",
+        bankAccount: json["BankAccount"]?.toString() ?? "",
+        todaysIncome: json["todaysIncome"]?.toString() ?? "",
+        monthlyIncome: json["monthlyIncome"]?.toString() ?? "",
+        pendingIncome: json["pendingIncome"]?.toString() ?? "",
+        bankAccCount: json["bank_acc_count"]?.toString() ?? "",
+        bankAccountId: json["bank_account_id"]?.toString() ?? "",
+        bankAccountName: json["bank_account_name"]?.toString() ?? "",
+        isViewAccHead: json["is_view_acc_head"] == true || json["is_view_acc_head"] == "true" || json["is_view_acc_head"] == 1 || json["is_view_acc_head"] == "1",
+        isViewBankAcc: json["is_view_bank_acc"] == true || json["is_view_bank_acc"] == "true" || json["is_view_bank_acc"] == 1 || json["is_view_bank_acc"] == "1",
+        isViewPendingExpense: json["is_view_pending_expense"] == true || json["is_view_pending_expense"] == "true" || json["is_view_pending_expense"] == 1 || json["is_view_pending_expense"] == "1",
         profitAndLoss: json["profit_and_loss"] != null
             ? ProfitAndLoss.fromJson(json["profit_and_loss"])
             : null,
@@ -142,10 +142,10 @@ class ProfitAndLoss {
   });
 
   factory ProfitAndLoss.fromJson(Map<String, dynamic> json) => ProfitAndLoss(
-        type: json["type"] ?? "",
-        amount: json["amount"] ?? "",
-        openingBalance: json["opening_balance"] ?? "",
-        closingBalance: json["closing_balance"] ?? "",
+        type: json["type"]?.toString() ?? "",
+        amount: json["amount"]?.toString() ?? "",
+        openingBalance: json["opening_balance"]?.toString() ?? "",
+        closingBalance: json["closing_balance"]?.toString() ?? "",
         incomeExpense: IncomeExpense.fromJson(json["income_expense"] ?? {}),
       );
 
@@ -188,8 +188,8 @@ class Income {
   });
 
   factory Income.fromJson(Map<String, dynamic> json) => Income(
-        receipt: json["receipt"] ?? "",
-        totalIncome: json["total_income"] ?? "",
+        receipt: json["receipt"]?.toString() ?? "",
+        totalIncome: json["total_income"]?.toString() ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -214,11 +214,11 @@ class Expense {
   });
 
   factory Expense.fromJson(Map<String, dynamic> json) => Expense(
-        expense: json["expense"] ?? "",
-        advance: json["advance"] ?? "",
-        lastMonthAdvance: json["last_month_advance"] ?? "",
-        difference: json["difference"] ?? "",
-        netExpense: json["net_expense"] ?? "",
+        expense: json["expense"]?.toString() ?? "",
+        advance: json["advance"]?.toString() ?? "",
+        lastMonthAdvance: json["last_month_advance"]?.toString() ?? "",
+        difference: json["difference"]?.toString() ?? "",
+        netExpense: json["net_expense"]?.toString() ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -244,10 +244,10 @@ class ExpenseGraph {
   });
 
   factory ExpenseGraph.fromJson(Map<String, dynamic> json) => ExpenseGraph(
-        totalExpense: json["totalExpense"] ?? "",
-        expCatid: json["ExpCatid"] ?? "",
-        expCatName: json["ExpCatName"] ?? "",
-        perc: json["perc"] ?? "",
+        totalExpense: json["totalExpense"]?.toString() ?? "",
+        expCatid: json["ExpCatid"]?.toString() ?? "",
+        expCatName: json["ExpCatName"]?.toString() ?? "",
+        perc: json["perc"]?.toString() ?? "",
       );
 
   Map<String, dynamic> toJson() => {
@@ -272,10 +272,10 @@ class IncomeGraph {
   });
 
   factory IncomeGraph.fromJson(Map<String, dynamic> json) => IncomeGraph(
-        type: json["type"] ?? "",
-        totalExpense: json["totalExpense"] ?? "",
-        category: json["category"] ?? "",
-        perc: json["perc"] ?? "",
+        type: json["type"]?.toString() ?? "",
+        totalExpense: json["totalExpense"]?.toString() ?? "",
+        category: json["category"]?.toString() ?? "",
+        perc: json["perc"]?.toString() ?? "",
       );
 
   Map<String, dynamic> toJson() => {

@@ -7,6 +7,7 @@ import 'package:login2/models/lead_management/stockRequestEditDetails.dart'
     as edit;
 import 'package:login2/models/rental/rentalLocationModel.dart' as loc;
 import 'package:login2/service/service.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 
 class StockRequestPage extends StatefulWidget {
   const StockRequestPage({super.key});
@@ -657,19 +658,57 @@ class _StockRequestPageState extends State<StockRequestPage> {
                             const SizedBox(height: 16),
                             _buildFormField(
                               label: "Product*",
-                              child: _buildClickableField(
-                                productName ?? "Select Material",
-                                Icons.hardware_rounded,
-                                () => _showItemPicker(
-                                    "Product",
-                                    _products
-                                        .map((p) => p.materialName ?? "")
-                                        .toList(), (index) {
-                                  setDialogState(() {
-                                    productId = _products[index].materialId;
-                                    productName = _products[index].materialName;
-                                  });
-                                }),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildClickableField(
+                                      productName ?? "Select Material",
+                                      Icons.hardware_rounded,
+                                      () => _showItemPicker(
+                                          "Product",
+                                          _products
+                                              .map((p) => p.materialName ?? "")
+                                              .toList(), (index) {
+                                        setDialogState(() {
+                                          productId = _products[index].materialId;
+                                          productName = _products[index].materialName;
+                                        });
+                                      }),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: IconButton(
+                                      onPressed: () async {
+                                        var res = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const SimpleBarcodeScannerPage(),
+                                          ),
+                                        );
+                                        if (res is String && res != '-1') {
+                                          Common.showProgressDialog(context, "Fetching product...");
+                                          final productRes = await HttpService.getQrcodeproductDetails(res);
+                                          Navigator.pop(context);
+                                          if (productRes != null && productRes.data != null) {
+                                            setDialogState(() {
+                                              productId = productRes.data!.id;
+                                              productName = productRes.data!.productName;
+                                            });
+                                          } else {
+                                            Common.toastMessaage("Product not found", Colors.red);
+                                          }
+                                        }
+                                      },
+                                      icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const SizedBox(height: 20),

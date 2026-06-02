@@ -28,18 +28,26 @@ class MaterialData {
   final String? materialId;
   final String? materialName;
   final String? productType;
+   final String? taxPercentage;
+    final String? discountPercentage;
   final String? unitName;
   final String? unitPrice;
+   final String? lastPurchasePrice;
   final String? currentStock;
 final String? gstPercentage;
+final String? purchasePrice;
   MaterialData({
     this.materialId,
     this.materialName,
     this.productType,
+    this.taxPercentage,
+    this.discountPercentage,
     this.unitName,
     this.unitPrice,
+    this.lastPurchasePrice,
     this.currentStock,
         this.gstPercentage,
+        this.purchasePrice
   });
 
   factory MaterialData.fromJson(Map<String, dynamic> json) {
@@ -47,10 +55,14 @@ final String? gstPercentage;
       materialId: json['material_id'] ?? "",
       materialName: json['material_name'] ?? "",
       productType: json['product_type'] ?? "",
+      taxPercentage: json['tax_percentage'] ?? "",
+      discountPercentage: json['discount_percentage'] ?? "",
       unitName: json['unit_name'] ?? "",
       unitPrice: json['unit_price'] ?? "",
+      lastPurchasePrice: json['last_purchase_amount'] ?? "",
       currentStock: json['current_stock'] ?? "",
       gstPercentage: json['gst_percentage'] ?? "",
+      purchasePrice: json['purchase_price'] ?? "",
     );
   }
 
@@ -58,9 +70,13 @@ final String? gstPercentage;
     'material_id': materialId,
     'material_name': materialName,
     'product_type': productType,
+    'tax_percentage': taxPercentage,
+    'discount_percentage': discountPercentage,
     'unit_name': unitName,
     'unit_price': unitPrice,
+    'last_purchase_amount': lastPurchasePrice,
     'current_stock': currentStock,
     'gst_percentage': gstPercentage,
+      'purchase_price': purchasePrice,
   };
 }

@@ -1,9 +1,9 @@
-// ignore_for_file: use_build_context_synchronously, must_be_immutable
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/product_mannagement/post_product.dart';
 import 'package:login2/models/product_mannagement/product_categories.dart';
@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/screens/product_mannagement/categories.dart';
 import 'package:login2/screens/product_mannagement/subcategories.dart';
 import 'package:login2/models/lead_management/productTypeModel.dart';
+import 'package:login2/models/lead_management/unitModel.dart';
 import 'package:login2/service/service.dart';
 import 'dart:convert';
 
@@ -29,6 +30,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
   TextEditingController productName = TextEditingController();
   TextEditingController productCode = TextEditingController();
   TextEditingController sellingPrice = TextEditingController();
+  TextEditingController purchasePrice = TextEditingController();
+  TextEditingController barcodeController = TextEditingController();
   TextEditingController tax = TextEditingController();
   TextEditingController totalAmount = TextEditingController();
   TextEditingController mrp = TextEditingController();
@@ -44,6 +47,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
   TextEditingController openingStock = TextEditingController();
   TextEditingController currentStock = TextEditingController();
   TextEditingController unitController = TextEditingController();
+  String selectedUnitId = "";
   TextEditingController expiryDate = TextEditingController();
   TextEditingController warrantyNumber = TextEditingController();
   TextEditingController freeService = TextEditingController();
@@ -57,6 +61,10 @@ class _UpdateProductsState extends State<UpdateProducts> {
     "Warranty Issue",
     "Technical Issue"
   ];
+
+  List<UnitData> unitList = [];
+  List<UnitData> filteredUnits = [];
+  bool isUnitsLoading = false;
 
   List filteredCategories = [];
   List filteredSubCategories = [];
@@ -134,6 +142,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
       noOfDays.text = d.noOfDays;
       remindBefore.text = d.remindBefore;
       sellingPrice.text = d.sellingPrice;
+      purchasePrice.text = d.purchasePrice;
+      barcodeController.text = d.barCode;
       tax.text = d.taxPercent;
       totalAmount.text = d.totalAmount;
       description.text = d.description;
@@ -141,15 +151,19 @@ class _UpdateProductsState extends State<UpdateProducts> {
       discount.text = d.discountPercent;
       openingStock.text = d.openingStock;
       currentStock.text = d.currentStock;
-      selectedStockStatus = d.stockStatus.isNotEmpty ? d.stockStatus : "In Stock";
+      selectedStockStatus =
+          d.stockStatus.isNotEmpty ? d.stockStatus : "In Stock";
       addStock = d.openingStock.isNotEmpty || d.currentStock.isNotEmpty;
       checkStock = d.checkStock == "1";
-      unitController.text = d.unitId;
+      selectedUnitId = d.unitId;
+      unitController.text = d.unitName.isNotEmpty ? d.unitName : d.unitId;
       selectedProductType = d.productType.isNotEmpty ? d.productType : null;
-      if (selectedProductType != null && !productTypeList.contains(selectedProductType!)) {
+      if (selectedProductType != null &&
+          !productTypeList.contains(selectedProductType!)) {
         productTypeList.add(selectedProductType!);
       }
-      hasWarranty = d.warranty == "1" || d.warranty == "Yes" || d.warranty == "Y";
+      hasWarranty =
+          d.warranty == "1" || d.warranty == "Yes" || d.warranty == "Y";
       expiryDate.text = d.expiryDate;
       warrantyNumber.text = d.warrantyNo;
       selectedServiceCycle = d.serviceCycle.isNotEmpty ? d.serviceCycle : null;
@@ -166,18 +180,19 @@ class _UpdateProductsState extends State<UpdateProducts> {
       selectedWeekDay = d.serviceWeeks.isNotEmpty ? d.serviceWeeks : null;
       serviceMonthDays.text = d.serviceMonthDays;
       serviceYearDays.text = d.serviceYearDays;
-      selectedYearMonth = d.serviceYearMonth.isNotEmpty ? d.serviceYearMonth : null;
+      selectedYearMonth =
+          d.serviceYearMonth.isNotEmpty ? d.serviceYearMonth : null;
       freeService.text = d.freeCount;
       paidService.text = d.paidCount;
-      selectedStatus = d.publishStatus.isNotEmpty ? d.publishStatus : "Published";
+      selectedStatus =
+          d.publishStatus.isNotEmpty ? d.publishStatus : "Published";
       selectedVisibility = d.visibility.isNotEmpty ? d.visibility : "Public";
       addPublish = d.publishStatus.isNotEmpty;
 
       // Pipeline handling
       if (d.pipelineName.isNotEmpty) {
-        pipelineControllers = d.pipelineName
-            .map((e) => TextEditingController(text: e))
-            .toList();
+        pipelineControllers =
+            d.pipelineName.map((e) => TextEditingController(text: e)).toList();
       } else {
         pipelineControllers = [TextEditingController()];
       }
@@ -206,7 +221,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
       setState(() {
         productTypeList = response.data;
         // Ensure selectedProductType is in the list to avoid dropdown errors
-        if (selectedProductType != null && !productTypeList.contains(selectedProductType!)) {
+        if (selectedProductType != null &&
+            !productTypeList.contains(selectedProductType!)) {
           productTypeList.add(selectedProductType!);
         }
       });
@@ -262,6 +278,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
       noOfDays.text,
       remindBefore.text,
       sellingPrice.text,
+      purchasePrice.text,
+      barcodeController.text,
       tax.text,
       totalAmount.text,
       description.text,
@@ -276,7 +294,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
       openingStock: openingStock.text,
       currentStock: currentStock.text,
       stockStatus: selectedStockStatus,
-      unit: unitController.text,
+      unit: selectedUnitId,
+      unitId: selectedUnitId,
       hasWarranty: hasWarranty,
       pipelines: pipelineControllers
           .map((e) => e.text)
@@ -312,11 +331,128 @@ class _UpdateProductsState extends State<UpdateProducts> {
     }
   }
 
+  getUnitsList() async {
+    setState(() {
+      isUnitsLoading = true;
+    });
+    try {
+      final response = await HttpService.getUnits();
+      if (response != null && response.status == true) {
+        setState(() {
+          unitList = response.data ?? [];
+          filteredUnits = unitList;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching units: $e");
+    } finally {
+      setState(() {
+        isUnitsLoading = false;
+      });
+    }
+  }
+
+  void filterUnits(String query) {
+    setState(() {
+      filteredUnits = unitList
+          .where((m) =>
+              (m.unitName ?? "").toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void _showQuickAddUnitDialog() {
+    final TextEditingController newUnitController = TextEditingController();
+    final newUnitFormKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text(
+            "Quick Add Unit",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Form(
+            key: newUnitFormKey,
+            child: TextFormField(
+              controller: newUnitController,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: "Unit Name *",
+                hintText: "e.g. PCS, KG, BOX",
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              validator: (val) =>
+                  val == null || val.trim().isEmpty ? "Enter unit name" : null,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (newUnitFormKey.currentState!.validate()) {
+                  Common.showProgressDialog(context, "Adding Unit...");
+                  try {
+                    final response = await HttpService.addUnit(
+                        newUnitController.text.trim());
+                    Navigator.pop(context); // Pop loading dialog
+                    if (response != null &&
+                        (response['status'] == true ||
+                            response['status'] == 'true')) {
+                      Common.toastMessaage(
+                          response['message'] ?? "Unit added successfully",
+                          Colors.green);
+                      Navigator.pop(context); // Pop Quick Add Dialog
+                      await getUnitsList();
+                      final addedUnit = unitList.firstWhere(
+                        (element) =>
+                            (element.unitName ?? "").toLowerCase() ==
+                            newUnitController.text.trim().toLowerCase(),
+                        orElse: () => UnitData(
+                            id: "", unitName: newUnitController.text.trim()),
+                      );
+                      setState(() {
+                        unitController.text = addedUnit.unitName ?? "";
+                        selectedUnitId = addedUnit.id ?? "";
+                      });
+                    } else {
+                      Common.toastMessaage(
+                          response?['message'] ?? "Failed to add unit",
+                          Colors.red);
+                    }
+                  } catch (e) {
+                    Navigator.pop(context); // Pop loading dialog
+                    Common.toastMessaage("Error: $e", Colors.red);
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2a86c9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("Add"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     getProductsById();
     getProductCategory();
     getProductTypes();
+    getUnitsList();
     super.initState();
   }
 
@@ -419,6 +555,58 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                 ),
                               ],
                             ),
+                             const SizedBox(height: 16),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: barcodeController,
+                                label: "Barcode value",
+                                icon: Icons.qr_code,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Transform.translate(
+                              offset: const Offset(0, 24),
+                              child: Container(
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: const Color(0xFF2a86c9),
+                                ),
+                                child: IconButton(
+                                  onPressed: () async {
+                                    var res = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SimpleBarcodeScannerPage(),
+                                      ),
+                                    );
+                                    if (res is String && res != '-1') {
+                                      setState(() {
+                                        barcodeController.text = res;
+                                      });
+                                    }
+                                  },
+                                  icon: const Icon(Icons.qr_code_scanner,
+                                      color: Colors.white, size: 24),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2a86c9),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8)),
+                                    minimumSize: const Size(50, 50),
+                                  ),
+                                  tooltip: "Scan Barcode",
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                             const SizedBox(height: 16),
                             Row(
                               children: [
@@ -432,6 +620,11 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                             ? "HSN/SAC Code"
                                             : "HSN Code",
                                     icon: Icons.qr_code_outlined,
+                                     keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter
+                                    .digitsOnly, 
+                              ]
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -460,7 +653,10 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                         : "Selling Price *",
                                     icon: Icons.currency_rupee_outlined,
                                     keyboardType: TextInputType.number,
-                                    onChanged: (val) => _updateTotalAmount(),
+                                    onChanged: (val) {
+                                      _updateTotalAmount();
+                                      formKey.currentState?.validate();
+                                    },
                                     validator: (val) => val!.isEmpty
                                         ? (selectedProductType == "Rental"
                                             ? "Enter Rental Price"
@@ -484,6 +680,40 @@ class _UpdateProductsState extends State<UpdateProducts> {
                             Row(
                               children: [
                                 Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildTextField(
+                                        controller: purchasePrice,
+                                        label: "Purchase Amount",
+                                        icon: Icons.currency_rupee_outlined,
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (val) {
+                                          formKey.currentState?.validate();
+                                        },
+                                        validator: (val) {
+                                          if (val != null &&
+                                              val.isNotEmpty &&
+                                              sellingPrice.text.isNotEmpty) {
+                                            double pPrice =
+                                                double.tryParse(val) ?? 0;
+                                            double sPrice = double.tryParse(
+                                                    sellingPrice.text) ??
+                                                0;
+                                            if (pPrice > sPrice) {
+                                              //return "Should not be smaller than selling price";
+                                               return "Purchase price > selling price";
+                                            }
+                                          }
+                                          return null;
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
                                   child: _buildTextField(
                                     controller: discount,
                                     label: "Discount (%)",
@@ -492,15 +722,20 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                     onChanged: (val) => _updateTotalAmount(),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
                                 Expanded(
                                   child: _buildTextField(
                                     controller: mrp,
-                                    label: "MRP *",
+                                    label: "MRP",
                                     icon: Icons.price_check_outlined,
                                     keyboardType: TextInputType.number,
                                     validator: (val) {
-                                      if (val!.isEmpty) return "Enter MRP";
+                                      if (val == null || val.isEmpty)
+                                        return null;
                                       double mrpValue =
                                           double.tryParse(val) ?? 0;
                                       double totalValue =
@@ -525,6 +760,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
                             ),
                           ],
                         ),
+                       
                         const SizedBox(height: 16),
                         _buildSectionCard(
                           title: "Other Details",
@@ -538,7 +774,11 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                     icon: Icons.badge_outlined,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
                                 Expanded(
                                   child: _buildDynamicExpiryField(),
                                 ),
@@ -685,7 +925,8 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                 controller: subCategory,
                                 label: "Sub Category",
                                 icon: Icons.account_tree_outlined,
-                                onTap: () => dropDialog(context, "sub category"),
+                                onTap: () =>
+                                    dropDialog(context, "sub category"),
                                 actionWidget: _buildAddButton(() {
                                   Navigator.push(
                                     context,
@@ -708,90 +949,103 @@ class _UpdateProductsState extends State<UpdateProducts> {
                         ],
                         _buildSectionCard(
                           title: "Stock Management",
-                          children: [
-                            Row(
-                              children: [
-                                Text("Stock",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[700])),
-                                const Spacer(),
-                                Checkbox(
-                                  value: addStock,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      addStock = val!;
-                                      if (!addStock) {
-                                        openingStock.clear();
-                                        currentStock.clear();
-                                        selectedStockStatus = "In Stock";
-                                      }
-                                    });
-                                  },
-                                  activeColor: const Color(0xFF2a86c9),
-                                ),
-                                const Text("Add Stock"),
-                                const SizedBox(width: 12),
-                                Checkbox(
-                                  value: checkStock,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      checkStock = val!;
-                                    });
-                                  },
-                                  activeColor: const Color(0xFF2a86c9),
-                                ),
-                                const Text("Check Stock"),
-                              ],
+                          trailing: IconButton(
+                            icon: Icon(
+                              addStock
+                                  ? Icons.remove_circle_outline
+                                  : Icons.add_circle_outline,
+                              color: addStock
+                                  ? Colors.red
+                                  : const Color(0xFF2a86c9),
                             ),
-                            if (addStock) ...[
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: openingStock,
-                                      label: "Opening Stock *",
-                                      icon: Icons.inventory_2_outlined,
-                                      keyboardType: TextInputType.number,
-                                      validator: (val) =>
-                                          addStock && val!.isEmpty
-                                              ? "Enter Opening Stock"
-                                              : null,
+                            onPressed: () {
+                              setState(() {
+                                addStock = !addStock;
+                                if (!addStock) {
+                                  openingStock.clear();
+                                  currentStock.clear();
+                                  selectedStockStatus = "In Stock";
+                                  checkStock = false;
+                                }
+                              });
+                            },
+                          ),
+                          children: !addStock
+                              ? []
+                              : [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildTextField(
+                                          controller: openingStock,
+                                          label: "Opening Stock *",
+                                          icon: Icons.inventory_2_outlined,
+                                          keyboardType: TextInputType.number,
+                                          validator: (val) =>
+                                              addStock && val!.isEmpty
+                                                  ? "Enter Opening Stock"
+                                                  : null,
+                                        ),
+                                      ),
+                                      // const SizedBox(width: 12),
+                                      // Expanded(
+                                      //   child: _buildTextField(
+                                      //     controller: currentStock,
+                                      //     label: "Current Stock *",
+                                      //     icon: Icons.inventory_outlined,
+                                      //     keyboardType: TextInputType.number,
+                                      //     validator: (val) =>
+                                      //         addStock && val!.isEmpty
+                                      //             ? "Enter Current Stock"
+                                      //             : null,
+                                      //   ),
+                                      // ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Checkbox(
+                                        value: checkStock,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            checkStock = val!;
+                                          });
+                                        },
+                                        activeColor: const Color(0xFF2a86c9),
+                                      ),
+                                      const Text("Check Stock"),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 12, right: 12, top: 2),
+                                    child: Text(
+                                      "Enable this checkbox to check inventory stock. If disabled, unlimited sales are allowed.",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                        height: 1.4,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _buildTextField(
-                                      controller: currentStock,
-                                      label: "Current Stock *",
-                                      icon: Icons.inventory_outlined,
-                                      keyboardType: TextInputType.number,
-                                      validator: (val) =>
-                                          addStock && val!.isEmpty
-                                              ? "Enter Current Stock"
-                                              : null,
-                                    ),
-                                  ),
+
+                                  // const SizedBox(height: 16),
+                                  // _buildDropdownField(
+                                  //   label: "Stock Status",
+                                  //   value: selectedStockStatus,
+                                  //   items: [
+                                  //     "In Stock",
+                                  //     "Low Stock",
+                                  //     "Out of Stock"
+                                  //   ],
+                                  //   onChanged: (val) {
+                                  //     setState(() {
+                                  //       selectedStockStatus = val!;
+                                  //     });
+                                  //   },
+                                  // ),
                                 ],
-                              ),
-                              const SizedBox(height: 16),
-                              _buildDropdownField(
-                                label: "Stock Status",
-                                value: selectedStockStatus,
-                                items: [
-                                  "In Stock",
-                                  "Low Stock",
-                                  "Out of Stock"
-                                ],
-                                onChanged: (val) {
-                                  setState(() {
-                                    selectedStockStatus = val!;
-                                  });
-                                },
-                              ),
-                            ],
-                          ],
                         ),
                         if (selectedProductType == "Service" &&
                             hasWarranty) ...[
@@ -814,39 +1068,48 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                 selectFile();
                               },
                               child: productImage == null
-                                  ? productsResponse!.data.productImage.isEmpty || productsResponse!.data.productImage == "null"
-                                    ? Container(
-                                        height: 180,
-                                        width: double.infinity,
-                                        color: Colors.grey[200],
-                                        child: const Icon(Icons.image_not_supported_outlined, size: 50, color: Colors.grey),
-                                      )
-                                    : Container(
-                                        height: 180,
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(12),
-                                          image: DecorationImage(
-                                            fit: BoxFit.cover,
-                                            image: NetworkImage(
-                                              productsResponse!.data.productImage,
+                                  ? productsResponse!
+                                              .data.productImage.isEmpty ||
+                                          productsResponse!.data.productImage ==
+                                              "null"
+                                      ? Container(
+                                          height: 180,
+                                          width: double.infinity,
+                                          color: Colors.grey[200],
+                                          child: const Icon(
+                                              Icons
+                                                  .image_not_supported_outlined,
+                                              size: 50,
+                                              color: Colors.grey),
+                                        )
+                                      : Container(
+                                          height: 180,
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                            image: DecorationImage(
+                                              fit: BoxFit.cover,
+                                              image: NetworkImage(
+                                                productsResponse!
+                                                    .data.productImage,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      )
-                                : Container(
-                                    height: 180,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      image: DecorationImage(
-                                        fit: BoxFit.cover,
-                                        image: FileImage(
-                                          File(productImage!),
+                                        )
+                                  : Container(
+                                      height: 180,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        image: DecorationImage(
+                                          fit: BoxFit.cover,
+                                          image: FileImage(
+                                            File(productImage!),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
                             ),
                           ],
                         ),
@@ -911,6 +1174,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
         (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
     setState(() {
       totalAmount.text = total.roundToDouble().toString();
+      mrp.text = totalAmount.text;
     });
   }
 
@@ -973,12 +1237,15 @@ class _UpdateProductsState extends State<UpdateProducts> {
     } else if (selectedProductType == "Ecommerce" ||
         selectedProductType == "Material" ||
         selectedProductType == "Rental") {
-      return _buildTextField(
+      return _buildSelectField(
         controller: unitController,
         label: "Unit",
         icon: Icons.scale_outlined,
+        onTap: () {
+          dropDialog(context, "unit");
+        },
         actionWidget: _buildAddButton(() {
-          Common.toastMessaage("Quick Add Unit", Colors.green);
+          _showQuickAddUnitDialog();
         }),
       );
     } else {
@@ -1127,65 +1394,134 @@ class _UpdateProductsState extends State<UpdateProducts> {
     );
   }
 
+
   Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-    bool readOnly = false,
-    Color? fillColor,
-    ValueChanged<String>? onChanged,
-    FormFieldValidator<String>? validator,
-    Widget? actionWidget,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel(label),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: controller,
-                keyboardType: keyboardType,
-                maxLines: maxLines,
-                readOnly: readOnly,
-                onChanged: onChanged,
-                validator: validator,
-                decoration: InputDecoration(
-                  hintText: label.replaceAll('*', '').trim(),
-                  prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-                  filled: fillColor != null,
-                  fillColor: fillColor,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF2a86c9), width: 2),
-                  ),
-                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  required TextEditingController controller,
+  required String label,
+  required IconData icon,
+  TextInputType keyboardType = TextInputType.text,
+  int maxLines = 1,
+  bool readOnly = false,
+  Color? fillColor,
+  ValueChanged<String>? onChanged,
+  FormFieldValidator<String>? validator,
+  Widget? actionWidget,
+  List<TextInputFormatter>? inputFormatters, // Add this parameter
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildLabel(label),
+      const SizedBox(height: 8),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              keyboardType: keyboardType,
+              maxLines: maxLines,
+              readOnly: readOnly,
+              onChanged: onChanged,
+              validator: validator,
+              inputFormatters: inputFormatters, // Add this line
+              decoration: InputDecoration(
+                hintText: label.replaceAll('*', '').trim(),
+                prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+                filled: fillColor != null,
+                fillColor: fillColor,
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                ),
+                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                errorMaxLines: 2,
+                errorStyle: const TextStyle(
+                  fontSize: 11,
+                  height: 1.2,
                 ),
               ),
             ),
-            if (actionWidget != null) ...[
-              const SizedBox(width: 8),
-              actionWidget,
-            ],
+          ),
+          if (actionWidget != null) ...[
+            const SizedBox(width: 8),
+            actionWidget,
           ],
-        ),
-      ],
-    );
-  }
+        ],
+      ),
+    ],
+  );
+}
+
+
+  // Widget _buildTextField({
+  //   required TextEditingController controller,
+  //   required String label,
+  //   required IconData icon,
+  //   TextInputType keyboardType = TextInputType.text,
+  //   int maxLines = 1,
+  //   bool readOnly = false,
+  //   Color? fillColor,
+  //   ValueChanged<String>? onChanged,
+  //   FormFieldValidator<String>? validator,
+  //   Widget? actionWidget,
+  // }) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       _buildLabel(label),
+  //       const SizedBox(height: 8),
+  //       Row(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Expanded(
+  //             child: TextFormField(
+  //               controller: controller,
+  //               keyboardType: keyboardType,
+  //               maxLines: maxLines,
+  //               readOnly: readOnly,
+  //               onChanged: onChanged,
+  //               validator: validator,
+  //               decoration: InputDecoration(
+  //                 hintText: label.replaceAll('*', '').trim(),
+  //                 prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+  //                 filled: fillColor != null,
+  //                 fillColor: fillColor,
+  //                 border: OutlineInputBorder(
+  //                     borderRadius: BorderRadius.circular(12)),
+  //                 enabledBorder: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   borderSide: BorderSide(color: Colors.grey[300]!),
+  //                 ),
+  //                 focusedBorder: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(12),
+  //                   borderSide:
+  //                       const BorderSide(color: Color(0xFF2a86c9), width: 2),
+  //                 ),
+  //                 hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+  //                 contentPadding:
+  //                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  //               ),
+  //             ),
+  //           ),
+  //           if (actionWidget != null) ...[
+  //             const SizedBox(width: 8),
+  //             actionWidget,
+  //           ],
+  //         ],
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildDropdownField({
     required String label,
@@ -1301,7 +1637,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
       context: context,
       builder: (context) {
         return Builder(builder: (context) {
-          return StatefulBuilder(builder: (context, setState) {
+          return StatefulBuilder(builder: (context, setDialogState) {
             return AlertDialog(
                 scrollable: true,
                 title: Row(
@@ -1329,8 +1665,14 @@ class _UpdateProductsState extends State<UpdateProducts> {
                           ),
                         ),
                         onChanged: ((value) {
-                          setState(() {
-                            filterCategories(value);
+                          setDialogState(() {
+                            if (title == "category") {
+                              filterCategories(value);
+                            } else if (title == "sub category") {
+                              filterSubCategories(value);
+                            } else if (title == "unit") {
+                              filterUnits(value);
+                            }
                           });
                         }),
                       ),
@@ -1344,7 +1686,9 @@ class _UpdateProductsState extends State<UpdateProducts> {
                     shrinkWrap: true,
                     itemCount: title == "category"
                         ? filteredCategories.length
-                        : filteredSubCategories.length,
+                        : title == "sub category"
+                            ? filteredSubCategories.length
+                            : filteredUnits.length,
                     itemBuilder: (context, index) {
                       return ListTile(
                         onTap: (() {
@@ -1356,13 +1700,20 @@ class _UpdateProductsState extends State<UpdateProducts> {
                             setState(() {});
                             filterCategories("");
                             getProductSubCategory();
-                          } else {
+                          } else if (title == "sub category") {
                             subCategory.text =
                                 filteredSubCategories[index].subCategory;
                             subCategoryId = filteredSubCategories[index].id;
                             Navigator.pop(context);
                             setState(() {});
                             filterSubCategories("");
+                          } else if (title == "unit") {
+                            unitController.text =
+                                filteredUnits[index].unitName ?? "";
+                            selectedUnitId = filteredUnits[index].id ?? "";
+                            Navigator.pop(context);
+                            setState(() {});
+                            filterUnits("");
                           }
                         }),
                         title: SizedBox(
@@ -1372,9 +1723,11 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                 ? filteredCategories[index]
                                     .categoryName
                                     .toString()
-                                : filteredSubCategories[index]
-                                    .subCategory
-                                    .toString(),
+                                : title == "sub category"
+                                    ? filteredSubCategories[index]
+                                        .subCategory
+                                        .toString()
+                                    : filteredUnits[index].unitName.toString(),
                             style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.w400,
@@ -1600,4 +1953,3 @@ class _UpdateProductsState extends State<UpdateProducts> {
     );
   }
 }
-

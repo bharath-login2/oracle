@@ -3565,7 +3565,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   Future<dynamic> chooseCallDialog(BuildContext context, int index) {
     return showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         final item =
             _searchQuery.isEmpty ? items[index] : _filteredItems[index];
         return AlertDialog(
@@ -3579,18 +3579,35 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                     const Icon(Icons.cloud_circle_rounded, color: appBarStart),
                 title: const Text('Cloud Call'),
                 onTap: () async {
+                  Navigator.pop(dialogContext);
                   Common.showProgressDialog(context, "Loading..");
-                  CloudCallModel object1 = await HttpService.addCloudCall(
-                      widget.token, item.callMasterId, item.contactNumber1);
-                  if (object1.data == true) {
+
+                  try {
+                    final result = await HttpService.addCloudCall(
+                      widget.token,
+                      item.callMasterId,
+                      item.contactNumber1,
+                    );
+
                     if (context.mounted) {
-                      Common.toastMessaage(object1.message, callGreen);
-                      Navigator.pop(context);
-                      Navigator.pop(context);
+                      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading dialog
+
+                      if (result != null && result.data == true) {
+                        Common.toastMessaage(
+                            result.message ?? "Call initiated successfully",
+                            callGreen);
+                        Navigator.pop(context); // Pop the previous screen
+                      } else {
+                        Common.toastMessaage(
+                            result?.message ?? "Failed to initiate call",
+                            accentRed);
+                      }
                     }
-                  } else {
-                    Common.toastMessaage(object1.message, accentRed);
-                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    if (context.mounted) {
+                      Navigator.of(context, rootNavigator: true).pop(); // Dismiss loading dialog on error
+                      Common.toastMessaage("An error occurred: $e", accentRed);
+                    }
                   }
                 },
               ),
@@ -3601,7 +3618,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
                     const Icon(Icons.phone_android_rounded, color: callGreen),
                 title: const Text('Phone Call'),
                 onTap: () async {
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext);
                   Common.dialPad(item.contactNumber1);
                   _showCallInitiatedMessage();
                 },
@@ -3610,7 +3627,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
           ],

@@ -7,6 +7,7 @@ import 'package:login2/service/service.dart';
 import 'package:intl/intl.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:login2/screens/purchase/purchaseOrderPage.dart';
+import 'package:login2/screens/purchase/supplierManagementPage.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   final String token;
@@ -28,18 +29,28 @@ class CartItem {
   MaterialData material;
   double quantity;
   String description;
+  String pmrId;
   late TextEditingController descriptionController;
+  late TextEditingController quantityController;
 
   CartItem({
     required this.material,
     this.quantity = 1.0,
     this.description = "",
+    this.pmrId = "",
   }) {
     descriptionController = TextEditingController(text: description);
+    quantityController = TextEditingController(
+        text: quantity > 0
+            ? (quantity == quantity.toInt()
+                ? quantity.toInt().toString()
+                : quantity.toString())
+            : "1");
   }
 
   void dispose() {
     descriptionController.dispose();
+    quantityController.dispose();
   }
 }
 
@@ -143,6 +154,31 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           IconButton(
             icon: const Icon(Icons.filter_list, color: Colors.white),
             onPressed: _showFilterSheet,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) {
+              if (value == 'view_suppliers') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SupplierManagementPage(token: widget.token),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'view_suppliers',
+                child: Row(
+                  children: [
+                    Icon(Icons.people_outline, color: Color(0xFF2a86c9)),
+                    SizedBox(width: 12),
+                    Text('View Suppliers'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -251,6 +287,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       MaterialData mat = materials.firstWhere(
         (m) => m.materialId.toString() == detail.materialId,
         orElse: () => MaterialData(
+       
           materialId: detail.materialId,
           materialName: detail.materialName,
           unitName: detail.unitName,
@@ -260,6 +297,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
         material: mat,
         quantity: double.tryParse(detail.quantity) ?? 1.0,
         description: detail.description,
+        pmrId: detail.pmrId,
       );
     }).toList();
 
@@ -354,7 +392,15 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               IconButton(
                                 icon: const Icon(Icons.close_rounded,
                                     color: Colors.white),
-                                onPressed: () => Navigator.pop(dialogContext),
+                                onPressed: () {
+                                  if (isEdit && cartItems.isEmpty) {
+                                    Common.toastMessaage(
+                                        "Please add at least one product before closing",
+                                        Colors.red);
+                                  } else {
+                                    Navigator.pop(dialogContext);
+                                  }
+                                },
                               ),
                               Expanded(
                                 child: Text(
@@ -873,14 +919,12 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                         builder: (context) =>
                             const Center(child: CircularProgressIndicator()),
                       );
-
-                      // Call API
                       final response =
                           await HttpService.deletePurchaseOrderProduct(
-                        productId: item.material.materialId!,
+                        pmrId: item.pmrId,
                       );
 
-                      Navigator.pop(dialogContext); // Close loading
+                      Navigator.pop(dialogContext); 
 
                       if (response?.status == true) {
                         Common.toastMessaage('Product deleted', Colors.green);
@@ -910,19 +954,37 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildStepperBtn(Icons.remove, () {
-                        if (item.quantity > 1)
-                          setDialogState(() => item.quantity--);
+                        if (item.quantity > 1) {
+                          setDialogState(() {
+                            item.quantity--;
+                            item.quantityController.text = item.quantity == item.quantity.toInt() ? item.quantity.toInt().toString() : item.quantity.toString();
+                          });
+                        }
                       }),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          item.quantity.toInt().toString(),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
+                      SizedBox(
+                        width: 45,
+                        child: TextField(
+                          controller: item.quantityController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          textAlign: TextAlign.center,
+                          onChanged: (v) {
+                            setDialogState(() {
+                              item.quantity = double.tryParse(v) ?? 1.0;
+                            });
+                          },
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 4),
+                            border: InputBorder.none,
+                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                         ),
                       ),
                       _buildStepperBtn(Icons.add, () {
-                        setDialogState(() => item.quantity++);
+                        setDialogState(() {
+                          item.quantity++;
+                          item.quantityController.text = item.quantity == item.quantity.toInt() ? item.quantity.toInt().toString() : item.quantity.toString();
+                        });
                       }),
                     ],
                   ),
@@ -1184,19 +1246,29 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    request.requestedBy ?? 'Unknown',
+                                   Text(
+                                    request.requestId ?? 'Unknown',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                       color: Colors.black87,
                                     ),
                                   ),
+                                  SizedBox(height: 2),
                                   Text(
                                     request.requestedDate ?? 'N/A',
                                     style: TextStyle(
                                       color: Colors.grey.shade500,
                                       fontSize: 12,
+                                    ),
+                                  ),
+                                    SizedBox(height: 2),
+                                  Text(
+                                    request.requestedBy ?? 'Unknown',
+                                    style: const TextStyle(
+                                     // fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                      color: Colors.black87,
                                     ),
                                   ),
                                 ],
@@ -1274,14 +1346,53 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   }
 
   void _showViewDrawer(PurchaseRequestData request) {
-    showModalBottomSheet(
+    showGeneralDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => _RequestDetailsDrawer(
-        request: request,
-        onCreateOrder: () => _createOrderFromRequest(request),
-      ),
+      barrierDismissible: true,
+      barrierLabel: "ViewPurchaseRequest",
+      barrierColor: Colors.black.withOpacity(0.6),
+      transitionDuration: const Duration(milliseconds: 400),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: anim1,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+            ),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (context, anim1, anim2) {
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Center(
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.95,
+              height: MediaQuery.of(context).size.height * 0.9,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(30),
+                child: _RequestDetailsDrawer(
+                  request: request,
+                  onCreateOrder: () => _createOrderFromRequest(request),
+                  onRefresh: _fetchRequests,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1579,14 +1690,15 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
     );
   }
 }
-
 class _RequestDetailsDrawer extends StatelessWidget {
   final PurchaseRequestData request;
   final VoidCallback? onCreateOrder;
+  final VoidCallback? onRefresh;
 
   const _RequestDetailsDrawer({
     required this.request,
     this.onCreateOrder,
+    this.onRefresh,
   });
 
   @override
@@ -1595,213 +1707,296 @@ class _RequestDetailsDrawer extends StatelessWidget {
         request.products != null && request.products!.isNotEmpty;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      padding: const EdgeInsets.all(25),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
-                ),
+      color: Colors.white,
+      child: Column(
+        children: [
+          // Premium Header with Gradient
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF2a86c9), Color(0xFF1e6091)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-            const SizedBox(height: 25),
-            Row(
+            child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2a86c9).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.assignment, color: Color(0xFF2a86c9)),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
                 ),
-                const SizedBox(width: 15),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: const Text(
+                    'Purchase  Details',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48),
+              ],
+            ),
+          ),
+          
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        'Request #${request.requestId ?? 'N/A'}',
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2a86c9).withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.assignment, color: Color(0xFF2a86c9)),
                       ),
-                      Text(
-                        'Purchase Requisition Details',
-                        style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 13),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Request #${request.requestId ?? 'N/A'}',
+                              style: const TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'Requisition ID: ${request.id ?? 'N/A'}',
+                              style: TextStyle(
+                                  color: Colors.grey.shade500, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildStatusBadge(request.requestStatus ?? 'Pending'),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: "Estimated Amt",
+                          value: "₹${request.estimatedAmount ?? '0'}",
+                          icon: Icons.currency_rupee,
+                          color: const Color(0xFF2a86c9),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildMetricCard(
+                          title: "Requested Date",
+                          value: request.requestedDate ?? 'N/A',
+                          icon: Icons.calendar_today,
+                          color: Colors.orange,
+                        ),
                       ),
                     ],
                   ),
-                ),
-                _buildStatusBadge(request.requestStatus ?? 'Pending'),
-              ],
-            ),
-            const SizedBox(height: 30),
-            _buildDetailRow(Icons.person_outline, 'Requested By',
-                request.requestedBy ?? 'Unknown'),
-            _buildDetailRow(Icons.calendar_today_outlined, 'Requested Date',
-                request.requestedDate ?? 'N/A'),
-            _buildDetailRow(Icons.currency_rupee, 'Estimated Amount',
-                '₹${request.estimatedAmount ?? '0'}'),
-            _buildDetailRow(Icons.shopping_cart_outlined, 'Order Status',
-                request.orderStatus ?? 'Not Ordered'),
-            if (request.requestStatus != "Pending")
-              _buildDetailRow(Icons.event_available_outlined, 'Approved Date',
-                  request.approvedDate ?? 'Not Approved'),
+                  const SizedBox(height: 20),
+                  _buildDetailRow(Icons.person_outline, 'Requested By',
+                      request.requestedBy ?? 'Unknown'),
+                  _buildDetailRow(Icons.shopping_cart_outlined, 'Order Status',
+                      request.orderStatus ?? 'Not Ordered'),
+                  if (request.requestStatus != "Pending")
+                    _buildDetailRow(Icons.event_available_outlined, 'Approved Date',
+                        request.approvedDate ?? 'Not Approved'),
 
-            const Divider(height: 40),
+                  const Divider(height: 30),
 
-            // Products Section
-            if (hasProducts) ...[
-              Row(
-                children: [
-                  const Icon(Icons.inventory_2_outlined,
-                      size: 20, color: Color(0xFF2a86c9)),
-                  const SizedBox(width: 10),
+                  // Products Section
+                  if (hasProducts) ...[
+                    Row(
+                      children: [
+                        const Icon(Icons.inventory_2_outlined,
+                            size: 20, color: Color(0xFF2a86c9)),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Products List',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2a86c9).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${request.products?.length}',
+                            style: const TextStyle(
+                              color: Color(0xFF2a86c9),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: request.products!.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final product = request.products![index];
+                        return _buildProductCard(product);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(height: 20),
+                  ],
+
+                  // Remarks Section
                   const Text(
-                    'Products',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    'Remarks / Notes',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(height: 10),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2a86c9).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.grey.shade200),
                     ),
                     child: Text(
-                      '${request.products?.length}',
-                      style: const TextStyle(
-                        color: Color(0xFF2a86c9),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
+                      request.remarks ?? 'No remarks provided',
+                      style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 15),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: request.products!.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final product = request.products![index];
-                  return _buildProductCard(product);
-                },
-              ),
-              const SizedBox(height: 20),
-              const Divider(height: 20),
-            ],
-
-            // Remarks Section
-            const Text(
-              'Remarks',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(15),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Text(
-                request.remarks ?? 'No remarks provided',
-                style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic),
-              ),
-            ),
-            const SizedBox(height: 30),
-            if (request.orderStatus == "Order Not Created" &&
-                request.requestStatus != "Pending")
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        if (onCreateOrder != null) {
-                          onCreateOrder!();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2a86c9),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15)),
-                      ),
-                      child: const Text('Create Order',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ),
-            const SizedBox(height: 30),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (BuildContext context) {
-                          return ApprovalDialog(request: request);
+                  const SizedBox(height: 25),
+                  if (request.orderStatus == "Order Not Created" &&
+                      request.requestStatus != "Pending")
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          if (onCreateOrder != null) {
+                            onCreateOrder!();
+                          }
                         },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2a86c9),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2a86c9),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                        ),
+                        child: const Text('Create Purchase Order',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
+                      ),
                     ),
-                    child: const Text('Approve/Reject',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 7, 7, 7),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15)),
+                          ),
+                          child: const Text('Close',
+                              style: TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                       const SizedBox(width: 15),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (BuildContext context) {
+                                return ApprovalDialog(
+                                  request: request,
+                                  onRefresh: onRefresh,
+                                );
+                              },
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15)),
+                          ),
+                          child: const Text('Approve / Reject',
+                              style: TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                     
+                    ],
                   ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2a86c9),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                    ),
-                    child: const Text('Close',
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard({required String title, required String value, required IconData icon, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+          ),
+        ],
       ),
     );
   }

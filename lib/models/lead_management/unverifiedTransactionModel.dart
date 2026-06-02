@@ -359,7 +359,7 @@ class VerifiedSalary {
   String staffName;
   String verifiedByName;
   String createdAt;
-
+  String verifiedAt;
   VerifiedSalary({
     required this.id,
     required this.userId,
@@ -382,6 +382,7 @@ class VerifiedSalary {
     required this.staffName,
     required this.verifiedByName,
     required this.createdAt,
+    required this.verifiedAt,
   });
 
   factory VerifiedSalary.fromJson(Map<String, dynamic> json) => VerifiedSalary(
@@ -406,6 +407,7 @@ class VerifiedSalary {
         staffName: json["staff_name"],
         verifiedByName: json["verified_by_name"],
         createdAt: json["created_at"],
+        verifiedAt: json["verified_at"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -430,5 +432,6 @@ class VerifiedSalary {
         "staff_name": staffName,
         "verified_by_name": verifiedByName,
         "created_at": createdAt,
+        "verified_at": verifiedAt,
       };
 }

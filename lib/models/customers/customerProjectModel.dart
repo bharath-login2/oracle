@@ -34,10 +34,25 @@ class CustomerwiseProjectModel {
   });
 
   factory CustomerwiseProjectModel.fromJson(Map<String, dynamic> json) {
+    final rawData = json["data"];
+    CustomerProjectListData parsedData;
+
+    if (rawData is List) {
+      parsedData = CustomerProjectListData(
+        list: List<ProjectData>.from(
+          rawData.map((x) => ProjectData.fromJson(x)),
+        ),
+      );
+    } else if (rawData is Map<String, dynamic>) {
+      parsedData = CustomerProjectListData.fromJson(rawData);
+    } else {
+      parsedData = CustomerProjectListData(list: []);
+    }
+
     return CustomerwiseProjectModel(
       status: json["status"] == true,
       message: json["message"]?.toString() ?? "",
-      data: CustomerProjectListData.fromJson(json["data"] ?? {}),
+      data: parsedData,
     );
   }
 

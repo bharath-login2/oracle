@@ -104,6 +104,7 @@ class Task {
   final String userId;
   final String? remarks;
   final String staffName;
+  final List<String> remarksList;
 
   Task({
     required this.title,
@@ -117,6 +118,7 @@ class Task {
     required this.userId,
     this.remarks,
     required this.staffName,
+    this.remarksList = const [],
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -132,6 +134,10 @@ class Task {
       userId: json['user_id']?.toString() ?? '',
       remarks: json['remarks'],
       staffName: json['staff_name'] ?? '',
+      remarksList: (json['remarks_list'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
     );
   }
 
@@ -148,6 +154,7 @@ class Task {
       'user_id': userId,
       'remarks': remarks,
       'staff_name': staffName,
+      'remarks_list': remarksList,
     };
   }
 }

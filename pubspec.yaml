@@ -141,6 +141,8 @@ dependencies:
   device_marketing_names: ^1.1.6
   flutter_auto_orientation: ^1.0.0-beta.1
   sms_autofill: ^2.3.0
+  simple_barcode_scanner: ^0.3.0
+  barcode_widget: ^2.0.4
   #overlay_support: ^2.0.0
   #uni_links: ^0.5.1
 dev_dependencies:

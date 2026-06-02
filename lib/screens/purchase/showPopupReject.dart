@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:login2/models/lead_management/getPurchaseRequestListModel.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/core/common.dart';
 
 // Add this method to show the approval dialog
-void showApprovalDialog(BuildContext context, PurchaseRequestData request) {
+void showApprovalDialog(BuildContext context, PurchaseRequestData request, {VoidCallback? onRefresh}) {
   showDialog(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
-      return ApprovalDialog(request: request);
+      return ApprovalDialog(request: request, onRefresh: onRefresh);
     },
   );
 }
 
 class ApprovalDialog extends StatefulWidget {
   final PurchaseRequestData request;
+  final VoidCallback? onRefresh;
 
-  const ApprovalDialog({super.key, required this.request});
+  const ApprovalDialog({super.key, required this.request, this.onRefresh});
 
   @override
   State<ApprovalDialog> createState() => _ApprovalDialogState();
@@ -242,29 +244,25 @@ class _ApprovalDialogState extends State<ApprovalDialog> {
     });
 
     if (result != null && result.status == true) {
-      // Success - close both dialogs
-      Navigator.pop(context); // Close approval dialog
-      Navigator.pop(context); // Close the details drawer
+      // Refresh the list first
+      if (widget.onRefresh != null) {
+        widget.onRefresh!();
+      }
       
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message ?? 'Request ${_selectedAction?.toLowerCase()} successfully'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
+      // Show success toast message
+      Common.toastMessaage(
+        result.message ?? 'Request ${_selectedAction?.toLowerCase()} successfully',
+        Colors.green,
       );
-      
-      // Optional: Refresh the list
-      // You can add a callback to refresh the parent widget
+
+      // Close both dialogs safely
+      final navigator = Navigator.of(context);
+      navigator.pop(); // Close approval dialog
+      navigator.pop(); // Close details drawer
     } else {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result?.message ?? 'Failed to update request status'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
+      Common.toastMessaage(
+        result?.message ?? 'Failed to update request status',
+        Colors.red,
       );
     }
   }

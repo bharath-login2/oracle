@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
+import 'package:login2/core/common.dart';
 
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:flutter/material.dart';
@@ -963,50 +965,109 @@ void _showDownloadSuccessDialog(String filePath) {
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       const SizedBox(height: 6),
-                      TextField(
-                        controller: productSearchController,
-                        onChanged: (value) {
-                          setState(() {
-                            _onSearchChanged(value);
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Search product name',
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: productSearchController.text.isEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.add_circle_outline,
-                                      color: Colors.blue, size: 22),
-                                  tooltip: 'Add New Product',
-                                  onPressed: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => AddProducts()),
-                                    );
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: productSearchController,
+                              onChanged: (value) {
+                                setState(() {
+                                  _onSearchChanged(value);
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Search product name',
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: productSearchController.text.isEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.add_circle_outline,
+                                            color: Colors.blue, size: 22),
+                                        tooltip: 'Add New Product',
+                                        onPressed: () async {
+                                          final result = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) => AddProducts()),
+                                          );
 
-                                    if (result == true || result != null) {
-                                      await _getProductList();
-                                      setState(() {
-                                        _clearProductSearch();
-                                      });
-                                    }
-                                  },
-                                )
-                              : IconButton(
-                                  icon: const Icon(Icons.clear, size: 20),
-                                  onPressed: () {
-                                    _clearProductSearch();
-                                    setState(() {});
-                                  },
-                                  splashRadius: 20,
+                                          if (result == true || result != null) {
+                                            await _getProductList();
+                                            setState(() {
+                                              _clearProductSearch();
+                                            });
+                                          }
+                                        },
+                                      )
+                                    : IconButton(
+                                        icon: const Icon(Icons.clear, size: 20),
+                                        onPressed: () {
+                                          _clearProductSearch();
+                                          setState(() {});
+                                        },
+                                        splashRadius: 20,
+                                      ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 12),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Container(
+                            height: 48,
+                            width: 48,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2a86c9),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: IconButton(
+                              onPressed: () async {
+                                var res = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SimpleBarcodeScannerPage(),
+                                  ),
+                                );
+                                if (res is String && res != '-1') {
+                                  Common.showProgressDialog(
+                                      context, "Fetching product...");
+                                  final productRes = await HttpService
+                                      .getQrcodeproductDetails(res);
+                                  Navigator.pop(context); // close dialog
+                                  if (productRes != null &&
+                                      productRes.data != null) {
+                                    final productData = productRes.data!;
+                                    setState(() {
+                                      int existingIndex = allProducts.indexWhere((p) => p.id == productData.id);
+                                      if (existingIndex != -1) {
+                                        _addProduct(allProducts[existingIndex]);
+                                      } else {
+                                        ProductList newProduct = ProductList(
+                                          id: productData.id ?? "",
+                                          productName: productData.productName ?? "",
+                                          totalAmount: productData.sellingPrice ?? "0",
+                                          productImage: productData.productImage ?? "",
+                                          categoryName: productData.categoryName ?? "",
+                                          subCategory: productData.subCategory ?? "",
+                                          productMrp: productData.productMrp ?? "0",
+                                          contentId: productData.contentId ?? "",
+                                          taxPercentage: productData.taxPercent ?? "0",
+                                          sellingPrice: productData.sellingPrice ?? "0",
+                                        );
+                                        _addProduct(newProduct);
+                                      }
+                                    });
+                                  } else {
+                                    Common.toastMessaage("Product not found", Colors.red);
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

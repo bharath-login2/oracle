@@ -15,19 +15,15 @@ import '../../../models/lead_management/districtModel.dart';
 class QuickAddCustomerDialog extends StatefulWidget {
   final String token;
   final Function(bool)? onCustomerAdded;
-
   const QuickAddCustomerDialog({
     Key? key,
     required this.token,
     this.onCustomerAdded,
   }) : super(key: key);
-
   @override
   _QuickAddCustomerDialogState createState() => _QuickAddCustomerDialogState();
 }
-
 class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
-  // Essential fields controllers
   TextEditingController clientName = TextEditingController();
   TextEditingController phoneNumber = TextEditingController();
   TextEditingController email = TextEditingController();
@@ -38,13 +34,9 @@ class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
   TextEditingController gstNumber = TextEditingController();
   TextEditingController remarks = TextEditingController();
   TextEditingController postOffice = TextEditingController();
-
-  // Additional fields
   List<Map<String, dynamic>> additionalFields = [];
   TextEditingController fieldName = TextEditingController();
   TextEditingController fieldValue = TextEditingController();
-
-  // State/District
   List<StateList> stateList = [];
   List<DistrictList> districtList = [];
   String? selectedStateId;
@@ -52,8 +44,6 @@ class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
   bool isLoadingState = true;
   bool isLoadingDistrict = false;
   String selectedTaxType = "Intrastate";
-
-  // Other properties
   var code = '91';
   bool isExists = false;
   String? branch;
@@ -63,7 +53,6 @@ class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
   AddLeadCommonDataModel? commonDetails;
   PostalCodeModel? postal;
   IsCustomerExistModel? isExist;
-
   @override
   void initState() {
     super.initState();
@@ -73,21 +62,13 @@ class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
   Future<void> _initializeData() async {
     roleId = await Common.getSharedPref("roleId") ?? '';
     multiBranch = await Common.getSharedPref("multiBranch") ?? '';
-
-    // Get branch list
     branchList = await HttpService.getBranchList(widget.token);
-
-    // Get common details
     commonDetails = await HttpService.addLeadCommonData(widget.token);
-
-    // Get states
     await _getStates();
-
     if (mounted) {
       setState(() {});
     }
   }
-
   Future<void> _getStates() async {
     setState(() => isLoadingState = true);
     final response = await HttpService.getState();
@@ -129,7 +110,6 @@ class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
   }
 
   Future<void> _addCustomer() async {
-    // Validation
     if (clientName.text.isEmpty) {
       Common.toastMessaage('Customer Name cannot be empty', Colors.red);
       return;
@@ -146,10 +126,7 @@ class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
       Common.toastMessaage('Address1 cannot be empty', Colors.red);
       return;
     }
-
-    // Show loading
     Common.showProgressDialog(context, "Adding customer...");
-
     try {
       var body = FormData.fromMap({
         "token": widget.token,
@@ -171,9 +148,7 @@ class _QuickAddCustomerDialogState extends State<QuickAddCustomerDialog> {
         'additional_fields': jsonEncode(additionalFields),
         "create_sales": false,
       });
-
       AddClientsModel response = await HttpService.addClients(body);
-
       if (mounted) {
         Navigator.pop(context);
         if (response.status == true) {

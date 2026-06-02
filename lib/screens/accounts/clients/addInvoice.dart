@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/models/clients/invoiceListTempModel.dart';
 import 'package:lottie/lottie.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 import '../../../core/common.dart';
 import '../../../models/clients/addInvoiceModel.dart';
 import '../../../models/clients/ivoiceAddCommonDetailsModel.dart';
@@ -2218,24 +2219,118 @@ class _AddInvoiceState extends State<AddInvoice> {
                           padding: const EdgeInsets.only(right: 10),
                           child: Align(
                             alignment: Alignment.topRight,
-                            child: InkWell(
-                              onTap: () async {
-                                addProductsDialog(context).then((_) {
-                                  setState(() {});
-                                });
-                              },
-                              child: Container(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: () async {
+                                    addProductsDialog(context).then((_) {
+                                      setState(() {});
+                                    });
+                                  },
+                                  child: Container(
+                                      decoration: BoxDecoration(
+                                          color: Colors.green,
+                                          borderRadius: BorderRadius.circular(5)),
+                                      child: const Padding(
+                                        padding: EdgeInsets.only(
+                                            top: 5, bottom: 5, left: 10, right: 10),
+                                        child: Text(
+                                          'Add Product',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      )),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  height: 28,
+                                  width: 40,
                                   decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.circular(5)),
-                                  child: const Padding(
-                                    padding: EdgeInsets.only(
-                                        top: 5, bottom: 5, left: 10, right: 10),
-                                    child: Text(
-                                      'Add Product',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  )),
+                                    color: const Color(0xFF2a86c9),
+                                    borderRadius: BorderRadius.circular(5),
+                                  ),
+                                  child: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    onPressed: () async {
+                                      var res = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => const SimpleBarcodeScannerPage(),
+                                        ),
+                                      );
+                                      if (res is String && res != '-1') {
+                                        Common.showProgressDialog(
+                                            context, "Fetching product...");
+                                        final productRes = await HttpService
+                                            .getQrcodeproductDetails(res);
+                                        Navigator.pop(context); // close dialog
+                                        if (productRes != null &&
+                                            productRes.data != null) {
+                                          final productData = productRes.data!;
+                                          
+                                          setState(() {
+                                            String qty = "1";
+                                            String rate = productData.sellingPrice ?? "0";
+                                            String taxPercent = productData.taxPercent ?? "0";
+                                            
+                                            double rateVal = double.tryParse(rate) ?? 0.0;
+                                            double taxPct = double.tryParse(taxPercent) ?? 0.0;
+                                            double taxAmt = rateVal * (taxPct / 100);
+                                            String taxAmount = taxAmt.toStringAsFixed(2);
+                                            
+                                            String totalAmount = ((rateVal + taxAmt) * double.parse(qty)).toStringAsFixed(2);
+                                            String duration = "0"; // Defaulting to 0 since QrCodeProductData does not contain noOfDays
+                                            
+                                            products.add({
+                                              "product_name": productData.productName ?? "",
+                                              "product_id": productData.id ?? "",
+                                              "description": "",
+                                              "product_rate": rate,
+                                              "quantity": qty,
+                                              "tax_percent": taxPercent,
+                                              "total_tax_amount": taxAmount,
+                                              "total_amount": totalAmount,
+                                              "discount_amount": "0.00",
+                                              "shipping_charge": "0.00",
+                                              "duration": duration,
+                                            });
+
+                                            renProducts.add({
+                                              "product_name": productData.productName ?? "",
+                                              "product_id": productData.id ?? "",
+                                              "description": "",
+                                              "product_rate": rate,
+                                              "quantity": qty,
+                                              "tax_percent": taxPercent,
+                                              "total_tax_amount": taxAmount,
+                                              "total_amount": totalAmount,
+                                              "discount_amount": "0.00",
+                                              "shipping_charge": "0.00",
+                                              "duration": duration,
+                                            });
+                                            
+                                            _updateTotals();
+                                            
+                                            if (createRenewal) {
+                                              if (renProducts.length == 1) {
+                                                typeDuration = duration;
+                                                _recalculateRenewalEndDate();
+                                              } else {
+                                                _showDurationConfirmationDialog(productData.productName ?? "", duration);
+                                              }
+                                            }
+                                          });
+                                          
+                                        } else {
+                                          Common.toastMessaage(
+                                              "Product not found", Colors.red);
+                                        }
+                                      }
+                                    },
+                                    icon: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

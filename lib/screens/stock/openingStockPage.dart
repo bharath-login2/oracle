@@ -7,6 +7,7 @@ import 'package:login2/models/rental/rentalLocationModel.dart';
 import 'package:login2/models/stock/opening_stock_model.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 import 'package:login2/service/service.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 
 class OpeningStockPage extends StatefulWidget {
   const OpeningStockPage({super.key});
@@ -158,10 +159,10 @@ class _OpeningStockPageState extends State<OpeningStockPage>
       Common.toastMessaage("Add items first", Colors.red);
       return;
     }
-    if (_selectedLocationId == null) {
-      Common.toastMessaage("Select location", Colors.red);
-      return;
-    }
+    // if (_selectedLocationId == null) {
+    //   Common.toastMessaage("Select location", Colors.red);
+    //   return;
+    // }
 
     Common.showProgressDialog(context, "Submitting Opening Stock...");
 
@@ -177,7 +178,7 @@ class _OpeningStockPageState extends State<OpeningStockPage>
         .toList();
     final response = await HttpService.postOpeningStocks(
         DateFormat('yyyy-MM-dd').format(_selectedDate),
-        _selectedLocationId!,
+        _selectedLocationId ?? "",
         productsJson);
     Navigator.pop(context);
     if (response != null && response.status) {
@@ -1017,6 +1018,42 @@ Row(
         isHighlight: true,
       ),
     ),
+    const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2a86c9).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () async {
+                            var res = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SimpleBarcodeScannerPage(),
+                              ),
+                            );
+                            if (res is String && res != '-1') {
+                              Common.showProgressDialog(context, "Fetching product...");
+                              final productRes = await HttpService.getQrcodeproductDetails(res);
+                              Navigator.pop(context);
+                              if (productRes != null && productRes.data != null) {
+                                final productData = productRes.data!;
+                                final material = MaterialData(
+                                  materialId: productData.id,
+                                  materialName: productData.productName,
+                                  unitName: productData.unitName,
+                                  unitPrice: productData.purchaseAmount ?? productData.sellingPrice,
+                                  gstPercentage: productData.taxPercent,
+                                );
+                                _showQuantityDialog(material);
+                              } else {
+                                Common.toastMessaage("Product not found", Colors.red);
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
+                        ),
+                      ),
     const SizedBox(width: 8),
                       Container(
                         decoration: BoxDecoration(

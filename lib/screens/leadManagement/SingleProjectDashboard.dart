@@ -414,50 +414,50 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard>
     );
   }
 
-  Widget _buildStaffList() {
-    final staffs = _projectData?.projectHandledStaffs ?? [];
-    if (staffs.isEmpty) return const SizedBox();
-
-    final int maxAvatarsToShow = 4;
-    final int avatarsCount = staffs.length > maxAvatarsToShow ? maxAvatarsToShow : staffs.length;
-    final double avatarRadius = 20.0;
-    final double overlap = 14.0;
-    final double borderSize = 2.0;
-
-    List<Widget> stackChildren = [];
-
-    final List<Color> avatarColors = [
-      const Color(0xFF4A90E2),
-      const Color(0xFF50E3C2),
-      const Color(0xFFF5A623),
-      const Color(0xFF9013FE),
-    ];
-
-    for (int i = 0; i < avatarsCount; i++) {
-      stackChildren.add(
-        Positioned(
-          left: i * (avatarRadius * 2 - overlap),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: const Color(0xFF0F172A), width: borderSize),
-            ),
-            child: CircleAvatar(
-              radius: avatarRadius - borderSize,
-              backgroundColor: avatarColors[i % avatarColors.length].withOpacity(0.9),
-              child: Text(
-                staffs[i].staffName.isNotEmpty ? staffs[i].staffName[0].toUpperCase() : '?',
-                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
+Widget _buildStaffList() {
+  final staffs = _projectData?.projectHandledStaffs ?? [];
+  
+  if (staffs.isEmpty) {
+    return GestureDetector(
+      onTap: _showStaffPopup,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF0F172A), width: 1),
         ),
-      );
-    }
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.person_off, color: Colors.white70, size: 16),
+            SizedBox(width: 4),
+            Text(
+              'No staffs',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+  final int maxAvatarsToShow = 4;
+  final int avatarsCount = staffs.length > maxAvatarsToShow ? maxAvatarsToShow : staffs.length;
+  final double avatarRadius = 20.0;
+  final double overlap = 14.0;
+  final double borderSize = 2.0;
+  List<Widget> stackChildren = [];
+  final List<Color> avatarColors = [
+    const Color(0xFF4A90E2),
+    const Color(0xFF50E3C2),
+    const Color(0xFFF5A623),
+    const Color(0xFF9013FE),
+  ];
+  for (int i = 0; i < avatarsCount; i++) {
     stackChildren.add(
       Positioned(
-        left: avatarsCount * (avatarRadius * 2 - overlap),
+        left: i * (avatarRadius * 2 - overlap),
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -465,31 +465,52 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard>
           ),
           child: CircleAvatar(
             radius: avatarRadius - borderSize,
-            backgroundColor: Colors.white.withOpacity(0.1),
-            child: const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white,
-              size: 14,
+            backgroundColor: avatarColors[i % avatarColors.length].withOpacity(0.9),
+            child: Text(
+              staffs[i].staffName.isNotEmpty ? staffs[i].staffName[0].toUpperCase() : '?',
+              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ),
         ),
       ),
     );
+  }
 
-    final double totalWidth = (avatarsCount + 1) * (avatarRadius * 2) - (avatarsCount * overlap);
-
-    return GestureDetector(
-      onTap: _showStaffPopup,
-      child: SizedBox(
-        height: avatarRadius * 2,
-        width: totalWidth,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: stackChildren,
+  stackChildren.add(
+    Positioned(
+      left: avatarsCount * (avatarRadius * 2 - overlap),
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF0F172A), width: borderSize),
+        ),
+        child: CircleAvatar(
+          radius: avatarRadius - borderSize,
+          backgroundColor: Colors.white.withOpacity(0.1),
+          child: const Icon(
+            Icons.arrow_forward_ios,
+            color: Colors.white,
+            size: 14,
+          ),
         ),
       ),
-    );
-  }
+    ),
+  );
+
+  final double totalWidth = (avatarsCount + 1) * (avatarRadius * 2) - (avatarsCount * overlap);
+
+  return GestureDetector(
+    onTap: _showStaffPopup,
+    child: SizedBox(
+      height: avatarRadius * 2,
+      width: totalWidth,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: stackChildren,
+      ),
+    ),
+  );
+}
 
   void _showStaffPopup() {
     final staffs = _projectData?.projectHandledStaffs ?? [];
@@ -1680,7 +1701,77 @@ class _SingleProjectDashboardState extends State<SingleProjectDashboard>
                   Icons.timer_outlined, task.totalDuration, "Duration"),
             ],
           ),
-          if (task.remarks != null && task.remarks!.isNotEmpty) ...[
+          if (task.remarksList.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1),
+            ),
+            const Row(
+              children: [
+                Icon(Icons.notes, size: 16, color: Color(0xFF94A3B8)),
+                SizedBox(width: 8),
+                Text(
+                  "Remarks History",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: task.remarksList.length,
+              itemBuilder: (context, index) {
+                final remark = task.remarksList[index];
+                final isNotLast = index < task.remarksList.length - 1;
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(top: 6),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF6366F1),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          if (isNotLast)
+                            Expanded(
+                              child: Container(
+                                width: 2,
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            remark,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF475569),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ] else if (task.remarks != null && task.remarks!.isNotEmpty) ...[
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Divider(height: 1),

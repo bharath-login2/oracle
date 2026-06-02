@@ -2173,40 +2173,40 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
               },
             ),
 
-          const SizedBox(height: 20),
-          if (salaryDetails != null) ...[
-            const Divider(),
-            const SizedBox(height: 12),
-            const Text(
-              "Monthly Breakdown",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildSalaryDetailCard(
-                "Monthly Salary",
-                "₹${salaryDetails!.data.salaryDetails.monthlySalary}",
-                LucideIcons.banknote,
-                Colors.blue),
-            _buildSalaryDetailCard(
-                "Incentives",
-                "₹${salaryDetails!.data.salaryDetails.incentives}",
-                LucideIcons.plusCircle,
-                Colors.orange),
-            _buildSalaryDetailCard(
-                "Deductions",
-                "₹${salaryDetails!.data.salaryDetails.deductions}",
-                LucideIcons.minusCircle,
-                Colors.red),
-            _buildSalaryDetailCard(
-                "Net Salary",
-                "₹${salaryDetails!.data.salaryDetails.netSalary}",
-                LucideIcons.wallet,
-                Colors.green),
-          ]
+          // const SizedBox(height: 20),
+          // if (salaryDetails != null) ...[
+          //   const Divider(),
+          //   const SizedBox(height: 12),
+          //   const Text(
+          //     "Monthly Breakdown",
+          //     style: TextStyle(
+          //       fontSize: 18,
+          //       fontWeight: FontWeight.bold,
+          //       color: Colors.black87,
+          //     ),
+          //   ),
+          //   const SizedBox(height: 12),
+          //   _buildSalaryDetailCard(
+          //       "Monthly Salary",
+          //       "₹${salaryDetails!.data.salaryDetails.monthlySalary}",
+          //       LucideIcons.banknote,
+          //       Colors.blue),
+          //   _buildSalaryDetailCard(
+          //       "Incentives",
+          //       "₹${salaryDetails!.data.salaryDetails.incentives}",
+          //       LucideIcons.plusCircle,
+          //       Colors.orange),
+          //   _buildSalaryDetailCard(
+          //       "Deductions",
+          //       "₹${salaryDetails!.data.salaryDetails.deductions}",
+          //       LucideIcons.minusCircle,
+          //       Colors.red),
+          //   _buildSalaryDetailCard(
+          //       "Net Salary",
+          //       "₹${salaryDetails!.data.salaryDetails.netSalary}",
+          //       LucideIcons.wallet,
+          //       Colors.green),
+          // ]
         ],
       ),
     );
@@ -2481,6 +2481,19 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
               children: [
                 Expanded(
                   child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF406dbe),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text("Cancel"),
+                  ),
+                ),
+                 const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
                     onPressed: () async {
                       if (amountController.text.isEmpty ||
                           fromDateController.text.isEmpty) {
@@ -2498,11 +2511,10 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                         toDate: toDateController.text,
                         remark: remarkController.text,
                       );
-                      Navigator.pop(context); // Close progress
-
+                      Navigator.pop(context); 
                       if (success) {
-                        Navigator.pop(context); // Close dialog
-                        getSalaryDetails(); // Refresh
+                        Navigator.pop(context); 
+                        getSalaryDetails(); 
                         Common.toastMessaage(
                             "Salary saved successfully", Colors.green);
                       } else {
@@ -2519,19 +2531,6 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
                     child: const Text("Save"),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF406dbe),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text("Cancel"),
-                  ),
-                ),
               ],
             ),
           ],
@@ -2544,13 +2543,10 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
     Common.showProgressDialog(context, "Fetching account details...");
     final details = await HttpService.getStaffAccountDetails(widget.id);
     Navigator.pop(context);
-
     bool hasSalaryData = details?.data.salary.accountId.isNotEmpty ?? false;
     bool hasPettyData = details?.data.petty.accountId.isNotEmpty ?? false;
-
     bool isSalary = hasSalaryData;
     bool isPettyCash = hasPettyData;
-
     final TextEditingController openingBalanceController =
         TextEditingController(text: details?.data.salary.openingBalance ?? "0");
     final TextEditingController dateController = TextEditingController(
@@ -2561,19 +2557,16 @@ class _StaffReportDashboardNewState extends State<StaffReportDashboardNew>
     final TextEditingController pettyDateController = TextEditingController(
         text: details?.data.petty.openingDate ??
             DateFormat('yyyy-MM-dd').format(DateTime.now()));
-
     String salaryType = "Advance";
     if (details != null && details.data.salary.debitOrCredit.isNotEmpty) {
       salaryType =
           details.data.salary.debitOrCredit == "Credit" ? "Advance" : "Pending";
     }
-
     String pettyType = "Advance";
     if (details != null && details.data.petty.debitOrCredit.isNotEmpty) {
       pettyType =
           details.data.petty.debitOrCredit == "Credit" ? "Advance" : "Pending";
     }
-
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(

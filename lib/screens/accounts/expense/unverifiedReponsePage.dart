@@ -560,7 +560,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       children: [
                         _buildInfoChip(
                           icon: Icons.create_rounded,
-                          label: 'By ${receipt.createdName}',
+                          label: 'Created By: ${receipt.createdName}',
                         ),
                         const Spacer(),
                         if (title == "Verified Receipt" ||
@@ -655,6 +655,14 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                               ),
                             ),
                           ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.create_rounded,
+                          label: 'Created At: ${receipt.createdAt}',
+                        ),
                       ],
                     ),
                   ],
@@ -945,7 +953,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            expense.toAccountPerson,
+                            'Account Head: ${expense.toAccountPerson}',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w800,
@@ -1017,13 +1025,13 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                   children: [
                     _buildInfoChip(
                       icon: Icons.account_circle_outlined,
-                      label: expense.fromAccountPerson,
+                      label: 'From Account: ${expense.fromAccountPerson}',
                     ),
                     Row(
                       children: [
                         _buildInfoChip(
                           icon: Icons.person_outline_rounded,
-                          label: 'By ${expense.staffName}',
+                          label: 'Created By: ${expense.staffName}',
                         ),
                         const Spacer(),
                         if (title == "Verified Receipt" ||
@@ -1118,6 +1126,15 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                               ),
                             ),
                           ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.person_outline_rounded,
+                          label: 'Created At: ${expense.createdAt}',
+                        ),
+                        const Spacer(),
                       ],
                     ),
                   ],
@@ -1240,6 +1257,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       icon: Icons.verified_user_outlined,
                       label: 'Verified by: ${salary.verifiedByName}',
                     ),
+                    
                     salary.lopDays != ""
                         ? _buildInfoChip(
                             icon: Icons.location_searching_sharp,
@@ -1250,7 +1268,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                       children: [
                         _buildInfoChip(
                           icon: Icons.calendar_today_outlined,
-                          label: 'Created: ${salary.createdAt.split(' ')[0]}',
+                          label: 'Created At: ${salary.createdAt.split(' ')[0]}',
                         ),
                         const Spacer(),
                         Container(
@@ -1268,6 +1286,7 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                             ],
                           ),
                           child: Material(
+                            
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () {
@@ -1297,6 +1316,36 @@ class _UnverifiedTransactionsPageState extends State<UnverifiedTransactionsPage>
                             ),
                           ),
                         )
+                      ],
+                    ),
+
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.calendar_today_outlined,
+                          label: 'Verified At: ${salary.createdAt.split(' ')[0]}',
+                        ),
+
+                        //   _buildInfoChip(
+                        //   icon: Icons.calendar_today_outlined,
+                        //   label: 'Total Working Days: ${salary.workingDays}',
+                        // ),
+                       
+                      ],
+                    ),
+                    
+                    Row(
+                      children: [
+                        // _buildInfoChip(
+                        //   icon: Icons.calendar_today_outlined,
+                        //   label: 'Verified At: ${salary.createdAt.split(' ')[0]}',
+                        // ),
+
+                          _buildInfoChip(
+                          icon: Icons.calendar_today_outlined,
+                          label: 'Total Working Days: ${salary.workingDays}',
+                        ),
+                       
                       ],
                     ),
                   ],

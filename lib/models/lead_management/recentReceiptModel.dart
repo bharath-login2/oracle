@@ -68,7 +68,7 @@ class ReceiptItem {
   String? invType;
   String? isRenewed;
   String? createdName;
-
+String? accountHead;
   ReceiptItem({
     this.id,
     this.clientId,
@@ -86,6 +86,7 @@ class ReceiptItem {
     this.invType,
     this.isRenewed,
     this.createdName,
+    this.accountHead,
   });
 
   ReceiptItem.fromJson(Map<String, dynamic> json) {
@@ -105,6 +106,7 @@ class ReceiptItem {
     invType = json['inv_type'];
     isRenewed = json['is_renewed'];
     createdName = json['created_name'];
+    accountHead = json['account_head'];
   }
 
   Map<String, dynamic> toJson() {
@@ -125,6 +127,7 @@ class ReceiptItem {
     data['inv_type'] = invType;
     data['is_renewed'] = isRenewed;
     data['created_name'] = createdName;
+    data['account_head'] = accountHead;
     return data;
   }
 }

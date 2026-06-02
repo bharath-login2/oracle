@@ -607,17 +607,17 @@ class _CreateNewJobPageState extends State<CreateNewJobPage> {
                       _whatsappNotify,
                       (val) => setState(() => _whatsappNotify = val!),
                     ),
-                    _buildCheckbox(
-                      "Push Notification",
-                      _pushNotify,
-                      (val) => setState(() => _pushNotify = val!),
-                    ),
+                    // _buildCheckbox(
+                    //   "Push Notification",
+                    //   _pushNotify,
+                    //   (val) => setState(() => _pushNotify = val!),
+                    // ),
 
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Participants in Chat: All Participants",
-                      style: TextStyle(fontWeight: FontWeight.w500),
-                    ),
+                    // const SizedBox(height: 10),
+                    // const Text(
+                    //   "Participants in Chat: All Participants",
+                    //   style: TextStyle(fontWeight: FontWeight.w500),
+                    // ),
 
                     const SizedBox(height: 30),
                     Center(

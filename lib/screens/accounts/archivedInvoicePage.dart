@@ -36,10 +36,12 @@ class _ArchivedInvoicePageState extends State<ArchivedInvoicePage> {
   _unhideInvoice(String invoiceId) async {
     final result = await HttpService.unhideInvoice(invoiceId);
     if (result != null && result.status == true) {
-      Common.toastMessaage(result.message ?? "Invoice Unarchived", Colors.green);
+      Common.toastMessaage(
+          result.message ?? "Invoice Unarchived", Colors.green);
       _fetchArchivedInvoices();
     } else {
-      Common.toastMessaage(result?.message ?? "Error unarchiving invoice", Colors.red);
+      Common.toastMessaage(
+          result?.message ?? "Error unarchiving invoice", Colors.red);
     }
   }
 
@@ -135,7 +137,9 @@ class _ArchivedInvoicePageState extends State<ArchivedInvoicePage> {
                 child: Text(
                   item.paymentStatus ?? "",
                   style: TextStyle(
-                    color: item.paymentStatus == "Paid" ? Colors.green : Colors.orange,
+                    color: item.paymentStatus == "Paid"
+                        ? Colors.green
+                        : Colors.orange,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -144,10 +148,18 @@ class _ArchivedInvoicePageState extends State<ArchivedInvoicePage> {
             ],
           ),
           const SizedBox(height: 12),
-          _buildInfoRow(Icons.receipt_long_rounded, "Invoice No", item.invoiceNumber ?? ""),
-          _buildInfoRow(Icons.calendar_month_rounded, "Date", item.invoiceDate ?? ""),
-          _buildInfoRow(Icons.person_pin_rounded, "Hidden By", item.hiddenStaffName ?? ""),
-          _buildInfoRow(Icons.history_rounded, "Hidden Date", item.hiddenDate ?? ""),
+          _buildInfoRow(Icons.receipt_long_rounded, "Invoice No",
+              '${item.invoiceNumber ?? ""}'),
+          _buildInfoRow(Icons.calendar_month_rounded, "Invoice Date",
+              item.invoiceDate ?? ""),
+          _buildInfoRow(Icons.person_pin_rounded, "Hidden By",
+              item.hiddenStaffName ?? ""),
+          _buildInfoRow(
+              Icons.history_rounded, "Hidden Date", item.hiddenDate ?? ""),
+          _buildInfoRow(
+              Icons.currency_rupee, "Total Paid", item.totalPaid ?? ""),
+          _buildInfoRow(
+              Icons.currency_rupee, "Balance", item.balance ?? ""),
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,15 +167,19 @@ class _ArchivedInvoicePageState extends State<ArchivedInvoicePage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Sub Total", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  Text("₹ ${item.subTotal}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text("Total Amount",
+                      style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text("₹ ${item.totalPaidAmount ?? '0'}",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14)),
                 ],
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2a86c9),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
                 onPressed: () => _showUnhideConfirmation(item),
@@ -184,8 +200,13 @@ class _ArchivedInvoicePageState extends State<ArchivedInvoicePage> {
         children: [
           Icon(icon, size: 14, color: Colors.grey),
           const SizedBox(width: 8),
-          Text("$label: ", style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(value, style: const TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w500)),
+          Text("$label: ",
+              style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -196,14 +217,16 @@ class _ArchivedInvoicePageState extends State<ArchivedInvoicePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Confirm Unhide"),
-        content: Text("Are you sure you want to unhide invoice ${item.invoiceNumber}?"),
+        content: Text(
+            "Are you sure you want to unhide invoice ${item.invoiceNumber}?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text("Cancel"),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2a86c9)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2a86c9)),
             onPressed: () {
               Navigator.pop(context);
               _unhideInvoice(item.id ?? "");

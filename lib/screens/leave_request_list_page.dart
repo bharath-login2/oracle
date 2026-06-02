@@ -3218,7 +3218,7 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                                 final p = await showDatePicker(
                                   context: context,
                                   initialDate: DateTime.now(),
-                                  firstDate: DateTime(2000),
+                                  firstDate: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day),
                                   lastDate: DateTime(2100),
                                   builder: (context, child) {
                                     return Theme(
@@ -3425,32 +3425,23 @@ class _LeaveRequestListPageState extends State<LeaveRequestListPage>
                               : () async {
                                   if (leaveType == null ||
                                       selectedDates.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text(
-                                            "Please select leave type and at least one date"),
-                                        backgroundColor: softRed,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
-                                      ),
-                                    );
+                                    Common.toastMessaage(
+                                        "Please select leave type and at least one date",
+                                        Colors.red);
                                     return;
                                   }
 
                                   if (isHalfDay && selectedSession == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text(
-                                            "Please select Morning or Afternoon for half day leave"),
-                                        backgroundColor: softRed,
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
-                                      ),
-                                    );
+                                    Common.toastMessaage(
+                                        "Please select Morning or Afternoon for half day leave",
+                                        Colors.red);
+                                    return;
+                                  }
+
+                                  if (remarkCtrl.text.trim().isEmpty) {
+                                    Common.toastMessaage(
+                                        "Please enter reason / remarks for leave",
+                                        Colors.red);
                                     return;
                                   }
 

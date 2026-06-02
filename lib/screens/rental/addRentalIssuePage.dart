@@ -337,14 +337,15 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
     }
     final discount = double.tryParse(_discountController.text) ?? 0;
     final otherExpenses = double.tryParse(_otherExpensesController.text) ?? 0;
-    final totalPaid = double.tryParse(_totalPaidAmountController.text) ?? 0;
-    final advance = double.tryParse(_advanceAmountController.text) ?? 0;
     setState(() {
       _totalGrossAmount = totalGross;
       _gstAmount = totalGST;
       _grandTotal = totalGross + totalGST - discount + otherExpenses;
-      _totalPaidAmountController.text =
-          (advance + totalPaid).toStringAsFixed(2);
+      if (_selectedPaymentStatus == 'Paid') {
+        _totalPaidAmountController.text = _grandTotal.toStringAsFixed(2);
+      } else if (_selectedPaymentStatus == 'Unpaid') {
+        _totalPaidAmountController.text = "0.00";
+      }
     });
   }
 
@@ -932,7 +933,7 @@ class _AddRentalIssuePageState extends State<AddRentalIssuePage> {
                           children: [
                             Expanded(
                               child: _buildFormRow(
-                                "Customer Staff :",
+                                "Contact Person :",
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 8),

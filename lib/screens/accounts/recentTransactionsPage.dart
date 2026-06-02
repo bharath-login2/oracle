@@ -495,7 +495,12 @@ class _RecentInvoiceTabState extends State<RecentInvoiceTab> {
           const SizedBox(height: 8),
           Text("Invoice No: ${item.invoiceNumber}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 4),
-          Text("Date: ${item.invoiceDate}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          Text("Invoice Date: ${item.invoiceDate}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+             const SizedBox(height: 4),
+           Text("Created By: ${item.createdBy}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+        const SizedBox(height: 4),
+           Text("Created At: ${item.createdAt}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+       
           const Divider(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -932,9 +937,14 @@ class _RecentReceiptTabState extends State<RecentReceiptTab> {
           const SizedBox(height: 8),
           Text("Receipt No: ${item.receiptNumber}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 4),
-          Text("Date: ${item.receiptDate}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          Text("Receipt Date: ${item.receiptDate}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 4),
+            Text("Account Head: ${item.staffName}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 4),
           Text("Created By: ${item.createdName ?? ""}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+             const SizedBox(height: 4),
+         Text("Created At: ${item.createdAt}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+      
           const Divider(height: 16),
           Row(
             children: [
@@ -1191,7 +1201,14 @@ class _RecentExpenseTabState extends State<RecentExpenseTab> {
           const SizedBox(height: 4),
           Text("Date: ${item.trnDate}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 4),
-          Text("To: ${item.toAccountPerson ?? ''}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          Text("From Account: ${item.fromAccount}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 4),
+          Text("Account Head: ${item.toAccountPerson ?? ''}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 4),
+          Text("Created By: ${item.staffName}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 4),
+          Text("Created At: ${item.createdAt}", style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          
           if (item.remarks != null && item.remarks!.isNotEmpty) ...[
             const Divider(height: 16),
             Text("Remarks: ${item.remarks}", style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),

@@ -1529,7 +1529,6 @@ class _WorkListPageState extends State<WorkListPage>
                   children: [
                     const Text("Are you sure you want to proceed?"),
                     const SizedBox(height: 16),
-
                     if (isLoadingWorkTypes)
                       const Center(child: CircularProgressIndicator())
                     else if (selectedProduct != null && workTypes.isNotEmpty)
@@ -1564,9 +1563,7 @@ class _WorkListPageState extends State<WorkListPage>
                         "No products available",
                         style: TextStyle(color: Colors.grey),
                       ),
-
                     const SizedBox(height: 12),
-
                     if (selectedMilestone != null)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1602,9 +1599,7 @@ class _WorkListPageState extends State<WorkListPage>
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),
-
                     const SizedBox(height: 12),
-
                     DropdownButtonFormField<String>(
                       value: selectedStatus,
                       hint: const Text("Select Status"),
@@ -1624,10 +1619,7 @@ class _WorkListPageState extends State<WorkListPage>
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
-                    // Show existing materials info if available
                     if (work.addProducts?.isNotEmpty == true)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1651,7 +1643,6 @@ class _WorkListPageState extends State<WorkListPage>
                           const SizedBox(height: 8),
                         ],
                       ),
-
                     const Text(
                       "Select Materials",
                       style: TextStyle(
@@ -1660,7 +1651,6 @@ class _WorkListPageState extends State<WorkListPage>
                       ),
                     ),
                     const SizedBox(height: 6),
-
                     if (isLoadingMaterials)
                       const Center(child: CircularProgressIndicator())
                     else if (materialsList.isNotEmpty)
@@ -1694,9 +1684,7 @@ class _WorkListPageState extends State<WorkListPage>
                         "No materials available",
                         style: TextStyle(color: Colors.grey),
                       ),
-
                     const SizedBox(height: 10),
-
                     if (selectedMaterials.isNotEmpty)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1899,9 +1887,7 @@ class _WorkListPageState extends State<WorkListPage>
                           ),
                         ],
                       ),
-
                     const SizedBox(height: 12),
-
                     TextField(
                       controller: remarkController,
                       maxLines: 3,
@@ -2936,4 +2922,3 @@ class _WorkListPageState extends State<WorkListPage>
     );
   }
 }
-

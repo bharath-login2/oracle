@@ -64,9 +64,7 @@ class _CustomerProjectPageState extends State<CustomerProjectPage> {
       _isLoading = true;
       _errorMessage = '';
     });
-
     _projectsFuture = HttpService.getCustomerProjects(widget.customerId);
-
     _projectsFuture.then((response) {
       if (mounted) {
         setState(() {

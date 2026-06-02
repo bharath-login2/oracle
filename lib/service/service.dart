@@ -88,6 +88,7 @@ import 'package:login2/models/lead_management/fileManagerPermissionModel.dart';
 import 'package:login2/models/lead_management/getActiveStatusModel.dart';
 import 'package:login2/models/lead_management/getArchievedInvoiceModel.dart';
 import 'package:login2/models/lead_management/getAttendanceReportModel.dart';
+import 'package:login2/models/lead_management/getCheckStockMaterialsModel.dart';
 import 'package:login2/models/lead_management/getCompanyInvoiceModel.dart';
 import 'package:login2/models/lead_management/getLeadSourceModel.dart';
 import 'package:login2/models/lead_management/getLeaveApprovalRejectTemplate.dart';
@@ -109,6 +110,8 @@ import 'package:login2/models/lead_management/getStaffDocumentListModel.dart';
 import 'package:login2/models/lead_management/getStaffSalaryDetailsModel.dart';
 import 'package:login2/models/lead_management/getStockRegisterListModel.dart';
 import 'package:login2/models/lead_management/getStockRequestModel.dart';
+import 'package:login2/models/lead_management/getSupplierDashboardModel.dart';
+import 'package:login2/models/lead_management/getSupplierLedgerModel.dart';
 import 'package:login2/models/lead_management/getSupplierListMode.dart';
 import 'package:login2/models/lead_management/getTaskListModel.dart';
 import 'package:login2/models/lead_management/get_chat_id.dart';
@@ -140,6 +143,7 @@ import 'package:login2/models/lead_management/projectDetailsModel.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/projectTraceModel.dart';
 import 'package:login2/models/lead_management/purchaseBillModel.dart';
+import 'package:login2/models/lead_management/qrCodeProductModel.dart';
 import 'package:login2/models/lead_management/quotationDetailsModel.dart';
 import 'package:login2/models/lead_management/quotationEditModel.dart';
 import 'package:login2/models/lead_management/quotationListModel.dart';
@@ -170,13 +174,16 @@ import 'package:login2/models/lead_management/stagewiseTableModel.dart';
 import 'package:login2/models/lead_management/stateModel.dart';
 import 'package:login2/models/lead_management/stockCounsumptionListModel.dart';
 import 'package:login2/models/lead_management/stockRequestEditDetails.dart';
+import 'package:login2/models/lead_management/supplierDetailsModel.dart';
 import 'package:login2/models/lead_management/tagListForFilterModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/unhideInvoiceModel.dart';
+import 'package:login2/models/lead_management/unitModel.dart';
 import 'package:login2/models/lead_management/unverifiedTransactionModel.dart';
 import 'package:login2/models/lead_management/updatePendingList.dart';
 import 'package:login2/models/lead_management/uploadGoogleFilesModel.dart';
 import 'package:login2/models/lead_management/uploadedQuotationModel.dart';
+import 'package:login2/models/lead_management/viewPurcahseBillModel.dart';
 import 'package:login2/models/lead_management/workCountModel.dart';
 import 'package:login2/models/lead_management/workMessageModel.dart';
 import 'package:login2/models/lead_management/workOrderIdModel.dart';
@@ -2052,7 +2059,6 @@ class HttpService {
       "call_master_id": callMasterId,
       "phoneNumber": phoneNumber,
     });
-
     try {
       var result = await _dio.post("${await Config.getUrl()}add_cloud_call",
           data: formData);
@@ -3753,15 +3759,39 @@ class HttpService {
     }
   }
 
-  static Future fetchPostOffice(postalCode) async {
+  // static Future fetchPostOffice(postalCode) async {
+  //   try {
+  //     var result =
+  //         // ignore: prefer_interpolation_to_compose_strings
+  //         await _dio.get("https://api.postalpincode.in/pincode/" + postalCode);
+  //     PostalCodeModel model = PostalCodeModel.fromJson(result.data[0]);
+  //     return model;
+  //   } catch (e) {
+  //     log("error: $e");
+  //   }
+  // }
+
+  static Future<PostalCodeModel> fetchPostOffice(postalCode) async {
     try {
-      var result =
-          // ignore: prefer_interpolation_to_compose_strings
-          await _dio.get("https://api.postalpincode.in/pincode/" + postalCode);
-      PostalCodeModel model = PostalCodeModel.fromJson(result.data[0]);
-      return model;
+      FormData formData = FormData.fromMap({
+        'id': postalCode,
+      });
+
+      var result = await _dio.post("${await Config.getUrl()}get_post_office",
+          data: formData);
+
+      if (result.data is List && result.data.isNotEmpty) {
+        return PostalCodeModel.fromJson(result.data[0]);
+      } else {
+        return PostalCodeModel(
+            message: "No details found", status: "Error", postOffice: []);
+      }
     } catch (e) {
-      log("error: $e");
+      log('Error in fetchPostOffice: $e');
+      return PostalCodeModel(
+          message: "Error loading post office: $e",
+          status: "Error",
+          postOffice: []);
     }
   }
 
@@ -6326,6 +6356,8 @@ class HttpService {
     String noOfDays,
     String remindBefore,
     String sellingPrice,
+    String purchasePrice,
+    String barcode,
     String taxPercent,
     String totalAmount,
     String description,
@@ -6334,13 +6366,14 @@ class HttpService {
     String hsnCode,
     String brand,
     String discount,
-    String expiryDays,
-    String addStock,
-    String checkStock,
-    String openingStock,
-    String currentStock,
-    String stockStatus, {
+    String expiryDays, {
+    String addStock = "0",
+    String checkStock = "0",
+    String openingStock = "",
+    String currentStock = "",
+    String stockStatus = "In Stock",
     String? unit,
+    String? unitId,
     bool? hasWarranty,
     List<String>? pipelines,
     bool? addPublish,
@@ -6368,6 +6401,8 @@ class HttpService {
       "product_mrp": productMrp,
       "no_of_days": noOfDays,
       "remind_before": remindBefore,
+      "purchase_price": purchasePrice,
+      "barcode": barcode,
       "tax_percent": taxPercent,
       "total_amount": totalAmount,
       "description": description,
@@ -6392,6 +6427,7 @@ class HttpService {
       data["rentalPrice"] = sellingPrice;
       data["hsnSacCode"] = hsnCode;
       data["unit"] = unit ?? "";
+      data["unit_id"] = unitId ?? "";
       data["is_publish"] = addPublish == true ? 1 : 0;
       if (addPublish == true) {
         data["publish_status"] = publishStatus;
@@ -6401,6 +6437,7 @@ class HttpService {
       data["selling_price"] = sellingPrice;
       data["hsn_code"] = hsnCode;
       data["unit"] = unit ?? "";
+      data["unit_id"] = unitId ?? "";
       data["is_publish"] = addPublish == true ? 1 : 0;
       if (addPublish == true) {
         data["publish_status"] = publishStatus;
@@ -6437,6 +6474,7 @@ class HttpService {
       data["selling_price"] = sellingPrice;
       data["hsnSacCode"] = hsnCode;
       data["unit"] = unit ?? "";
+      data["unit_id"] = unitId ?? "";
     } else {
       data["selling_price"] = sellingPrice;
       data["hsn_code"] = hsnCode;
@@ -6481,6 +6519,8 @@ class HttpService {
     String noOfDays,
     String remindBefore,
     String sellingPrice,
+    String purchasePrice,
+    String barcode,
     String taxPercent,
     String totalAmount,
     String description,
@@ -6496,6 +6536,7 @@ class HttpService {
     String currentStock = "",
     String stockStatus = "In Stock",
     String unit = "",
+    String unitId = "",
     bool hasWarranty = false,
     List<String>? pipelines,
     bool addPublish = false,
@@ -6523,6 +6564,10 @@ class HttpService {
       "product_mrp": productMrp,
       "no_of_days": noOfDays,
       "remind_before": remindBefore,
+      "purchase_price": purchasePrice,
+      "purchase_amount": purchasePrice,
+      "barcode": barcode,
+      "bar_code": barcode,
       "tax_percent": taxPercent,
       "total_amount": totalAmount,
       "description": description,
@@ -6549,6 +6594,7 @@ class HttpService {
       data["rentalPrice"] = sellingPrice;
       data["hsnSacCode"] = productCode;
       data["unit"] = unit;
+      data["unit_id"] = unitId;
       data["is_publish"] = addPublish ? 1 : 0;
       if (addPublish) {
         data["publish_status"] = publishStatus;
@@ -6558,6 +6604,7 @@ class HttpService {
       data["selling_price"] = sellingPrice;
       data["hsn_code"] = productCode;
       data["unit"] = unit;
+      data["unit_id"] = unitId;
       data["is_publish"] = addPublish ? 1 : 0;
       if (addPublish) {
         data["publish_status"] = publishStatus;
@@ -6594,6 +6641,7 @@ class HttpService {
       data["selling_price"] = sellingPrice;
       data["hsnSacCode"] = productCode;
       data["unit"] = unit;
+      data["unit_id"] = unitId;
     } else {
       data["selling_price"] = sellingPrice;
       data["hsn_code"] = productCode;
@@ -9499,15 +9547,12 @@ class HttpService {
   static Future<MaterialListModel?> getMaterials() async {
     try {
       final token = await Common.getSharedPref("token");
-
       final response = await _dio.post(
         "${await Config.getUrl()}get_materials",
         data: FormData.fromMap({"token": token}),
         options: Options(contentType: "multipart/form-data"),
       );
-
       print("🟢 Materials Response: ${response.data}");
-
       if (response.statusCode == 200 && response.data != null) {
         return MaterialListModel.fromJson(response.data);
       }
@@ -9515,7 +9560,6 @@ class HttpService {
       log("🔥 getMaterials error: $e");
       log("StackTrace: $stackTrace");
     }
-
     return null;
   }
 
@@ -15521,10 +15565,14 @@ class HttpService {
         data: FormData.fromMap(data),
       );
       if (response.statusCode == 200) {
-        return PurchaseBillModel.fromJson(response.data);
+        var responseData = response.data;
+        if (responseData is String) {
+          responseData = jsonDecode(responseData);
+        }
+        return PurchaseBillModel.fromJson(responseData);
       }
     } catch (e) {
-      log("updateStockRequest error: $e");
+      log("purchaseBillList error: $e");
     }
     return null;
   }
@@ -15597,6 +15645,23 @@ class HttpService {
     return null;
   }
 
+  static Future<dynamic> postPurchaseBillPayment(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_purchase_bill_payment",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("postPurchaseBillPayment error: $e");
+    }
+    return null;
+  }
+
   static Future<dynamic> updatePurchaseBill(Map<String, dynamic> data) async {
     final token = await Common.getSharedPref("token");
     data['token'] = token;
@@ -15621,7 +15686,7 @@ class HttpService {
         "${await Config.getUrl()}delete_purchase_bill",
         data: FormData.fromMap({
           "token": token,
-          "bill_id": billId,
+          "id": billId,
         }),
       );
       if (response.statusCode == 200) {
@@ -15629,6 +15694,25 @@ class HttpService {
       }
     } catch (e) {
       log("deletePurchaseBill error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> deletePurchaseOrder(String orderId) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_purchase_order",
+        data: FormData.fromMap({
+          "token": token,
+          "id": orderId,
+        }),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("deletePurchaseOrder error: $e");
     }
     return null;
   }
@@ -15647,6 +15731,23 @@ class HttpService {
       }
     } catch (e) {
       log("getSupplierList error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> addSupplier(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_supplier",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("addSupplier error: $e");
     }
     return null;
   }
@@ -16021,11 +16122,11 @@ class HttpService {
 
   static Future<DeletePurchaseOrderEditProductModel?>
       deletePurchaseOrderProduct({
-    required String productId,
+    required String pmrId,
   }) async {
     final token = await Common.getSharedPref("token");
     final data = {
-      'id': productId,
+      'id': pmrId,
       'token': token,
     };
 
@@ -16046,11 +16147,13 @@ class HttpService {
 
   static Future<DeletePurchaseOrderEditProductModel?>
       deletePurchaseOrderRealProduct({
-    required String productId,
+   // required String productId,
+    required String purchaseOrderId,
   }) async {
     final token = await Common.getSharedPref("token");
     final data = {
-      'item_id': productId,
+    //  'item_id': productId,
+      'item_id': purchaseOrderId,
       'token': token,
     };
 
@@ -16140,7 +16243,6 @@ class HttpService {
         "${await Config.getUrl()}update_attendance_remark",
         data: FormData.fromMap(data),
       );
-
     } catch (e) {
       log("updateAttendanceRemark error: $e");
     }
@@ -16175,4 +16277,207 @@ class HttpService {
     }
     return null;
   }
+
+  static Future<ViewPurchaseBillResponse?> viewPurcahseBillDetails({
+    required String billId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'bill_id': billId,
+      'token': token,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_purchase_bill_view",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return ViewPurchaseBillResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("viewPurcahseBillDetails error: $e");
+    }
+    return null;
+  }
+
+
+    static Future<UnitResponse?> getUnits() async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}getUnits",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return UnitResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getUnits error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> addUnit(String unitName) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+      'unit_name': unitName,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_unit",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("addUnit error: $e");
+    }
+    return null;
+  }
+
+
+     static Future<SupplierDetailsResponse?> getSuppliersDetails() async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_supplier_list",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return SupplierDetailsResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("get_supplier_list error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> deleteSupplier(String id) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'id': id,
+      'token': token,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_supplier",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("deleteSupplier error: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> editSupplier(Map<String, dynamic> data) async {
+    final token = await Common.getSharedPref("token");
+    data['token'] = token;
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_supplier",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+    } catch (e) {
+      log("editSupplier error: $e");
+    }
+    return null;
+  }
+
+
+   static Future<QrCodeProductResponse?> getQrcodeproductDetails(String barCode) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+      'bar_code': barCode,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_product_by_barcode",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return QrCodeProductResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("get_product_by_barcode error: $e");
+    }
+    return null;
+  }
+
+
+     static Future<GetCheckStockMaterialsResponse?> getCheckStockMaterial(String materialId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+      'material_id': materialId,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_CheckStock",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return GetCheckStockMaterialsResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("GetCheckStockMaterialsResponse error: $e");
+    }
+    return null;
+  }
+
+
+      static Future<SupplierDashboardResponse?> getSupplierDashboard(String supplierId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+      'supplier_id': supplierId,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_suppler_dashboard",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return SupplierDashboardResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("SupplierDashboardResponse error: $e");
+    }
+    return null;
+  }
+
+   static Future<SupplierLedgerResponse?> getSupplierLedger(String supplierId) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+      'supplier_id': supplierId,
+    };
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_supplier_ledger",
+        data: FormData.fromMap(data),
+      );
+      if (response.statusCode == 200) {
+        return SupplierLedgerResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("SupplierLedgerResponse error: $e");
+    }
+    return null;
+  }
+
 }

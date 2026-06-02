@@ -554,15 +554,16 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   const SizedBox(height: 12),
                 _buildRemarksField(),
                 const SizedBox(height: 12),
-                if (leadSettings != null
-                    ? leadSettings!.isFollowupRequiredBool ||
-                        callResultId == '2' ||
-                        callResultId == '3' ||
-                        callResultId == '4'
-                    : (callResultId == '2' ||
-                        callResultId == '3' ||
-                        callResultId == '4'))
-                  _buildCallResponseField(),
+                // if (leadSettings != null
+                //     ? leadSettings!.isFollowupRequiredBool ||
+                //         callResultId == '2' ||
+                //         callResultId == '3' ||
+                //         callResultId == '4'
+                //     : (callResultId == '2' ||
+                //         callResultId == '3' ||
+                //         callResultId == '4'))
+                //   _buildCallResponseField(),
+                if (callResultId != '1') _buildCallResponseField(),
               ],
             ),
             const SizedBox(height: 12),
