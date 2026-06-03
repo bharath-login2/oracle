@@ -30,6 +30,7 @@ class GetStockRegisterListModel {
 }
 
 class StockRegisterData {
+  
   String materialName;
   String unit;
   String unitPrice;

@@ -15,6 +15,7 @@ import 'package:login2/screens/purchase/purchaseBillPage.dart';
 import 'package:login2/screens/purchase/purchaseReturnPage.dart';
 import 'package:login2/models/lead_management/getPurchaseRequestListModel.dart';
 import 'package:login2/models/lead_management/purchaseBillModel.dart';
+import 'package:login2/screens/stock/stockRegisterPage.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/models/lead_management/getCheckStockMaterialsModel.dart';
 import 'package:dropdown_search/dropdown_search.dart';
@@ -22,6 +23,7 @@ import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:login2/models/lead_management/supplierDetailsModel.dart';
 import 'package:login2/screens/purchase/supplierManagementPage.dart';
 import 'package:login2/screens/purchase/supplierDashboardPage.dart';
+
 class PurchaseDashboard extends StatefulWidget {
   final String token;
   final String name;
@@ -188,7 +190,7 @@ class _PurchaseDashboardState extends State<PurchaseDashboard> {
                         mainAxisSpacing: 15,
                         childAspectRatio: 1.1,
                         children: [
-                            _buildDashboardBox(
+                          _buildDashboardBox(
                             context,
                             title: 'Purchase Bill',
                             icon: Icons.receipt_long_outlined,
@@ -260,48 +262,155 @@ class _PurchaseDashboardState extends State<PurchaseDashboard> {
                               );
                             },
                           ),
-                        
                         ],
                       ),
                       const SizedBox(height: 25),
-                      InkWell(
-                        onTap: () => _showCheckStockPopup(context),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.blue.shade400, Colors.blue.shade700],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.inventory_2_outlined, color: Colors.white, size: 24),
-                              SizedBox(width: 10),
-                              Text(
-                                "Check Stock Available",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
+                      // InkWell(
+                      //   onTap: () => _showCheckStockPopup(context),
+                      //   borderRadius: BorderRadius.circular(12),
+                      //   child: Container(
+                      //     width: double.infinity,
+                      //     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      //     decoration: BoxDecoration(
+                      //       gradient: LinearGradient(
+                      //         colors: [Colors.blue.shade400, Colors.blue.shade700],
+                      //         begin: Alignment.topLeft,
+                      //         end: Alignment.bottomRight,
+                      //       ),
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       boxShadow: [
+                      //         BoxShadow(
+                      //           color: Colors.blue.withOpacity(0.3),
+                      //           blurRadius: 10,
+                      //           offset: const Offset(0, 4),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //     child: const Row(
+                      //       mainAxisAlignment: MainAxisAlignment.center,
+                      //       children: [
+                      //         Icon(Icons.inventory_2_outlined, color: Colors.white, size: 24),
+                      //         SizedBox(width: 10),
+                      //         Text(
+                      //           "Check Stock Available",
+                      //           style: TextStyle(
+                      //             color: Colors.white,
+                      //             fontSize: 16,
+                      //             fontWeight: FontWeight.bold,
+                      //             letterSpacing: 0.5,
+                      //           ),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
+                      const SizedBox(height: 25),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _showCheckStockPopup(context),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 16, horizontal: 20),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.blue.shade400,
+                                      Colors.blue.shade700
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.blue.withOpacity(0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.inventory_2_outlined,
+                                        color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      "Check Stock",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                             
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => StockRegisterPage(
+                                      token: widget.token,
+                                      name: widget.name,
+                                      userId: widget.userId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 16, horizontal: 20),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.green.shade400,
+                                      Colors.green.shade700
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.green.withOpacity(0.3),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.visibility_outlined,
+                                        color: Colors.white, size: 20),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      "Stock View",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       // const SizedBox(height: 25),
                       // InkWell(
@@ -352,7 +461,8 @@ class _PurchaseDashboardState extends State<PurchaseDashboard> {
                       //     ),
                       //   ),
                       // ),
-                      const SizedBox(height: 25),                      Row(
+                      const SizedBox(height: 25),
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
@@ -420,29 +530,36 @@ class _PurchaseDashboardState extends State<PurchaseDashboard> {
                                         borderRadius: BorderRadius.circular(16),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.02),
+                                            color:
+                                                Colors.black.withOpacity(0.02),
                                             blurRadius: 10,
                                             offset: const Offset(0, 4),
                                           ),
                                         ],
-                                        border: Border.all(color: Colors.grey.shade100),
+                                        border: Border.all(
+                                            color: Colors.grey.shade100),
                                       ),
                                       child: ListTile(
                                         onTap: () {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => SupplierDashboardPage(
+                                              builder: (context) =>
+                                                  SupplierDashboardPage(
                                                 supplier: supplier,
                                               ),
                                             ),
                                           );
                                         },
                                         leading: CircleAvatar(
-                                          backgroundColor: const Color(0xFFE0F2FE),
+                                          backgroundColor:
+                                              const Color(0xFFE0F2FE),
                                           child: Text(
-                                            (supplier.supplierName?.isNotEmpty == true)
-                                                ? supplier.supplierName![0].toUpperCase()
+                                            (supplier.supplierName
+                                                        ?.isNotEmpty ==
+                                                    true)
+                                                ? supplier.supplierName![0]
+                                                    .toUpperCase()
                                                 : "S",
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
@@ -465,7 +582,9 @@ class _PurchaseDashboardState extends State<PurchaseDashboard> {
                                             fontSize: 13,
                                           ),
                                         ),
-                                        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                                        trailing: const Icon(
+                                            Icons.chevron_right,
+                                            color: Colors.grey),
                                       ),
                                     );
                                   },
@@ -529,7 +648,8 @@ class _PurchaseDashboardState extends State<PurchaseDashboard> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   itemCount: recentBills.length,
                                   itemBuilder: (context, index) {
-                                    return _buildRecentBillCard(recentBills[index]);
+                                    return _buildRecentBillCard(
+                                        recentBills[index]);
                                   },
                                 ),
                     ],
@@ -680,170 +800,200 @@ class _PurchaseDashboardState extends State<PurchaseDashboard> {
     );
   }
 
-void _showCheckStockPopup(BuildContext context) {
-  MaterialData? selectedMaterial;
-  bool isLoading = false;
-  GetCheckStockMaterialsData? stockData;
-  bool isFetchingMaterials = false;
-  List<MaterialData> popupMaterials = [];
+  void _showCheckStockPopup(BuildContext context) {
+    MaterialData? selectedMaterial;
+    bool isLoading = false;
+    GetCheckStockMaterialsData? stockData;
+    bool isFetchingMaterials = false;
+    List<MaterialData> popupMaterials = [];
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          if (popupMaterials.isEmpty && !isFetchingMaterials) {
-            isFetchingMaterials = true;
-            HttpService.getMaterials().then((val) {
-              if (val != null && val.data != null && context.mounted) {
-                setState(() {
-                  popupMaterials = val.data!;
-                  isFetchingMaterials = false;
-                });
-              }
-            });
-          }
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            if (popupMaterials.isEmpty && !isFetchingMaterials) {
+              isFetchingMaterials = true;
+              HttpService.getMaterials().then((val) {
+                if (val != null && val.data != null && context.mounted) {
+                  setState(() {
+                    popupMaterials = val.data!;
+                    isFetchingMaterials = false;
+                  });
+                }
+              });
+            }
 
-          return Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.9,
-              constraints: const BoxConstraints(
-                maxWidth: 700,
-                maxHeight: 650,
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 18,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2a86c9), Color(0xFF1e6a9e)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                constraints: const BoxConstraints(
+                  maxWidth: 700,
+                  maxHeight: 650,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 18,
                       ),
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2a86c9), Color(0xFF1e6a9e)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.inventory_2_outlined,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                "Check Stock",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
+                                shape: BoxShape.circle,
                               ),
                               child: const Icon(
-                                Icons.inventory_2_outlined,
+                                Icons.close,
                                 color: Colors.white,
-                                size: 22,
+                                size: 18,
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Text(
-                              "Check Stock",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 18,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  
-                  // Content
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Product Selection Card
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.grey.shade200,
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.search,
-                                      size: 18,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Select Product",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                        color: Colors.grey.shade800,
-                                      ),
-                                    ),
-                                  ],
+
+                    // Content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Product Selection Card
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.grey.shade200,
                                 ),
-                                const SizedBox(height: 12),
-                                // Row 1: Dropdown
-                                if (isFetchingMaterials)
-                                  Container(
-                                    height: 50,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Colors.grey.shade300,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.search,
+                                        size: 18,
+                                        color: Colors.grey.shade600,
                                       ),
-                                    ),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  )
-                                else
-                                  DropdownSearch<MaterialData>(
-                                    popupProps: PopupProps.menu(
-                                      showSearchBox: true,
-                                      searchFieldProps: TextFieldProps(
-                                        decoration: InputDecoration(
-                                          hintText: "Search product...",
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey.shade500,
-                                            fontSize: 13,
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "Select Product",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: Colors.grey.shade800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Row 1: Dropdown
+                                  if (isFetchingMaterials)
+                                    Container(
+                                      height: 50,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    )
+                                  else
+                                    DropdownSearch<MaterialData>(
+                                      popupProps: PopupProps.menu(
+                                        showSearchBox: true,
+                                        searchFieldProps: TextFieldProps(
+                                          decoration: InputDecoration(
+                                            hintText: "Search product...",
+                                            hintStyle: TextStyle(
+                                              color: Colors.grey.shade500,
+                                              fontSize: 13,
+                                            ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 14,
+                                            ),
                                           ),
+                                        ),
+                                      ),
+                                      items: (filter, loadProps) {
+                                        if (filter.isEmpty) {
+                                          return popupMaterials;
+                                        }
+                                        return popupMaterials
+                                            .where((m) => (m.materialName ?? "")
+                                                .toLowerCase()
+                                                .contains(filter.toLowerCase()))
+                                            .toList();
+                                      },
+                                      itemAsString: (MaterialData m) =>
+                                          m.materialName ?? "",
+                                      compareFn: (i, s) =>
+                                          i?.materialId == s?.materialId,
+                                      selectedItem: selectedMaterial,
+                                      decoratorProps: DropDownDecoratorProps(
+                                        decoration: InputDecoration(
+                                          hintText: "Select Product",
                                           border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(12),
@@ -855,280 +1005,254 @@ void _showCheckStockPopup(BuildContext context) {
                                           ),
                                         ),
                                       ),
+                                      onChanged: (MaterialData? newValue) {
+                                        setState(() {
+                                          selectedMaterial = newValue;
+                                          stockData = null;
+                                        });
+                                      },
                                     ),
-                                    items: (filter, loadProps) {
-                                      if (filter.isEmpty) {
-                                        return popupMaterials;
-                                      }
-                                      return popupMaterials
-                                          .where((m) =>
-                                              (m.materialName ?? "")
-                                                  .toLowerCase()
-                                                  .contains(filter.toLowerCase()))
-                                          .toList();
-                                    },
-                                    itemAsString: (MaterialData m) =>
-                                        m.materialName ?? "",
-                                    compareFn: (i, s) =>
-                                        i?.materialId == s?.materialId,
-                                    selectedItem: selectedMaterial,
-                                    decoratorProps: DropDownDecoratorProps(
-                                      decoration: InputDecoration(
-                                        hintText: "Select Product",
-                                        border: OutlineInputBorder(
+                                  const SizedBox(height: 12),
+                                  // Row 2: Check Button
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: selectedMaterial == null ||
+                                              isLoading
+                                          ? null
+                                          : () async {
+                                              setState(() => isLoading = true);
+                                              final res = await HttpService
+                                                  .getCheckStockMaterial(
+                                                      selectedMaterial!
+                                                          .materialId!);
+                                              setState(() {
+                                                isLoading = false;
+                                                if (res != null &&
+                                                    res.data != null) {
+                                                  stockData = res.data;
+                                                } else {
+                                                  Common.toastMessaage(
+                                                      "Failed to get stock details",
+                                                      Colors.red);
+                                                }
+                                              });
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0xFF2a86c9),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(12),
                                         ),
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                          horizontal: 14,
-                                          vertical: 14,
-                                        ),
+                                        elevation: 0,
                                       ),
-                                    ),
-                                    onChanged: (MaterialData? newValue) {
-                                      setState(() {
-                                        selectedMaterial = newValue;
-                                        stockData = null;
-                                      });
-                                    },
-                                  ),
-                                const SizedBox(height: 12),
-                                // Row 2: Check Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: selectedMaterial == null ||
-                                            isLoading
-                                        ? null
-                                        : () async {
-                                            setState(() => isLoading = true);
-                                            final res = await HttpService
-                                                .getCheckStockMaterial(
-                                                    selectedMaterial!
-                                                        .materialId!);
-                                            setState(() {
-                                              isLoading = false;
-                                              if (res != null &&
-                                                  res.data != null) {
-                                                stockData = res.data;
-                                              } else {
-                                                Common.toastMessaage(
-                                                    "Failed to get stock details",
-                                                    Colors.red);
-                                              }
-                                            });
-                                          },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF2a86c9),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(12),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    child: isLoading
-                                        ? const SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.search,
-                                                  color: Colors.white,
-                                                  size: 18),
-                                              SizedBox(width: 8),
-                                              Text(
-                                                "Check Stock",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 14,
-                                                ),
+                                      child: isLoading
+                                          ? const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
                                               ),
-                                            ],
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 20),
-                          
-                          // Stock Details Card
-                          if (stockData != null) ...[
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: const Color(0xFF2a86c9).withOpacity(0.3),
-                                ),
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color.fromARGB(255, 164, 214, 250).withOpacity(0.05),
-                                    Colors.white,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  // Header
-                                  Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF2a86c9)
-                                          .withOpacity(0.1),
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(15),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.check_circle_outline,
-                                          size: 20,
-                                          color: const Color(0xFF2a86c9),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          "Stock Details",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 15,
-                                            color: const Color(0xFF2a86c9),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  
-                                  // Content
-                                  Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      children: [
-                                        _buildStockInfoRow(
-                                          Icons.shopping_bag_outlined,
-                                          "Product Name",
-                                          stockData!.materialName ?? "-",
-                                        ),
-                                        const Divider(height: 20),
-                                        _buildStockInfoRow(
-                                          Icons.category_outlined,
-                                          "Product Type",
-                                          stockData!.productType ?? "-",
-                                        ),
-                                        const Divider(height: 20),
-                                        _buildStockInfoRow(
-                                          Icons.scale_outlined,
-                                          "Unit",
-                                          stockData!.unitName ?? "-",
-                                        ),
-                                        const Divider(height: 20),
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.shade50,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            border: Border.all(
-                                              color: Colors.green.shade200,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.inventory,
-                                                size: 24,
-                                                color: Colors.green.shade700,
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                  "Available Stock",
+                                            )
+                                          : const Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.search,
+                                                    color: Colors.white,
+                                                    size: 18),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  "Check Stock",
                                                   style: TextStyle(
+                                                    color: Colors.white,
                                                     fontWeight: FontWeight.w600,
                                                     fontSize: 14,
-                                                    color: Colors.grey.shade700,
                                                   ),
                                                 ),
-                                              ),
-                                              Text(
-                                                "${stockData!.currentStock ?? "0"}",
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 22,
-                                                  color: Colors.green.shade700,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                                              ],
+                                            ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+
+                            const SizedBox(height: 20),
+
+                            // Stock Details Card
+                            if (stockData != null) ...[
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: const Color(0xFF2a86c9)
+                                        .withOpacity(0.3),
+                                  ),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      const Color.fromARGB(255, 164, 214, 250)
+                                          .withOpacity(0.05),
+                                      Colors.white,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    // Header
+                                    Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF2a86c9)
+                                            .withOpacity(0.1),
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                          top: Radius.circular(15),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle_outline,
+                                            size: 20,
+                                            color: const Color(0xFF2a86c9),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            "Stock Details",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                              color: const Color(0xFF2a86c9),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Content
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        children: [
+                                          _buildStockInfoRow(
+                                            Icons.shopping_bag_outlined,
+                                            "Product Name",
+                                            stockData!.materialName ?? "-",
+                                          ),
+                                          const Divider(height: 20),
+                                          _buildStockInfoRow(
+                                            Icons.category_outlined,
+                                            "Product Type",
+                                            stockData!.productType ?? "-",
+                                          ),
+                                          const Divider(height: 20),
+                                          _buildStockInfoRow(
+                                            Icons.scale_outlined,
+                                            "Unit",
+                                            stockData!.unitName ?? "-",
+                                          ),
+                                          const Divider(height: 20),
+                                          Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.shade50,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: Colors.green.shade200,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.inventory,
+                                                  size: 24,
+                                                  color: Colors.green.shade700,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    "Available Stock",
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 14,
+                                                      color:
+                                                          Colors.grey.shade700,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  "${stockData!.currentStock ?? "0"}",
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 22,
+                                                    color:
+                                                        Colors.green.shade700,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        },
-      );
-    },
-  );
-}
+            );
+          },
+        );
+      },
+    );
+  }
 
 // Helper widget for stock info rows
-Widget _buildStockInfoRow(IconData icon, String label, String value) {
-  return Row(
-    children: [
-      Icon(icon, size: 18, color: Colors.grey.shade500),
-      const SizedBox(width: 12),
-      SizedBox(
-        width: 110,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.bold,
+  Widget _buildStockInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade500),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-      Expanded(
-        child: Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
           ),
         ),
-      ),
-    ],
-  );
-}
-
-
+      ],
+    );
+  }
 
   Widget _buildDashboardBox(
     BuildContext context, {
@@ -1255,7 +1379,8 @@ Widget _buildStockInfoRow(IconData icon, String label, String value) {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),

@@ -6,6 +6,7 @@ import 'package:login2/models/lead_management/getOpeningModel.dart' as history;
 import 'package:login2/models/rental/rentalLocationModel.dart';
 import 'package:login2/models/stock/opening_stock_model.dart';
 import 'package:login2/screens/product_mannagement/add_products.dart';
+import 'package:login2/screens/product_mannagement/product_view.dart';
 import 'package:login2/service/service.dart';
 import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 
@@ -207,25 +208,25 @@ class _OpeningStockPageState extends State<OpeningStockPage>
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.7),
-          labelStyle:
-              const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          tabs: const [
-            Tab(text: 'History'),
-            Tab(text: 'Add New'),
-          ],
-        ),
+        // bottom: TabBar(
+        //   controller: _tabController,
+        //   indicatorColor: Colors.white,
+        //   indicatorWeight: 3,
+        //   labelColor: Colors.white,
+        //   unselectedLabelColor: Colors.white.withOpacity(0.7),
+        //   labelStyle:
+        //       const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        //   tabs: const [
+        //     Tab(text: ''),
+        //   //  Tab(text: 'Add New'),
+        //   ],
+        // ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
           _buildHistoryTab(),
-          _buildAddTab(),
+        //  _buildAddTab(),
         ],
       ),
     );
@@ -700,23 +701,23 @@ class _OpeningStockPageState extends State<OpeningStockPage>
                         },
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildHistoryFilterChip(
-                  label: _historyLocationName ?? "All Locations",
-                  icon: Icons.location_on_outlined,
-                  onTap: _showHistoryLocationPicker,
-                  onClear: _historyLocationId == null
-                      ? null
-                      : () {
-                          setState(() {
-                            _historyLocationId = null;
-                            _historyLocationName = null;
-                          });
-                          _loadHistory();
-                        },
-                ),
-              ),
+           //   const SizedBox(width: 8),
+              // Expanded(
+              //   child: _buildHistoryFilterChip(
+              //     label: _historyLocationName ?? "All Locations",
+              //     icon: Icons.location_on_outlined,
+              //     onTap: _showHistoryLocationPicker,
+              //     onClear: _historyLocationId == null
+              //         ? null
+              //         : () {
+              //             setState(() {
+              //               _historyLocationId = null;
+              //               _historyLocationName = null;
+              //             });
+              //             _loadHistory();
+              //           },
+              //   ),
+              // ),
             ],
           ),
         ],
@@ -796,13 +797,29 @@ class _OpeningStockPageState extends State<OpeningStockPage>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Text(
-                              item.materialName,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          InkWell(
+                           onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ProductView(
+                                          productId: item.materialId,
+                                          title:
+                                              item.materialName,
+                                        ),
+                                      ),
+                                    ).then((_) {
+                                      //getProductLists();
+                                    });
+                                  },
+                            child: Expanded(
+                              child: Text(
+                                item.materialName,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                           PopupMenuButton<String>(
@@ -986,15 +1003,15 @@ class _OpeningStockPageState extends State<OpeningStockPage>
                   onTap: () => _selectDate(context),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildClickableField(
-                  label: "Location",
-                  value: _selectedLocationName ?? "Select",
-                  icon: Icons.store_outlined,
-                  onTap: () => _showLocationPicker(),
-                ),
-              ),
+              // const SizedBox(width: 12),
+              // Expanded(
+              //   child: _buildClickableField(
+              //     label: "Location",
+              //     value: _selectedLocationName ?? "Select",
+              //     icon: Icons.store_outlined,
+              //     onTap: () => _showLocationPicker(),
+              //   ),
+              // ),
             ],
           ),
           // const SizedBox(height: 16),

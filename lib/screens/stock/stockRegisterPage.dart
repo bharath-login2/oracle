@@ -504,20 +504,33 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.materialName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF1E293B),
-                          letterSpacing: -0.5,
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductView(
+                          productId: item.materialId,
+                          title: item.materialName,
                         ),
                       ),
-                    ],
+                    ).then((_) => _fetchStockRegister());
+                  },
+                  child: Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.materialName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1E293B),
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Row(
@@ -576,15 +589,15 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       Expanded(
                         child: InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ProductView(
-                                  productId: item.materialId,
-                                  title: item.materialName,
-                                ),
-                              ),
-                            ).then((_) => _fetchStockRegister());
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => ProductView(
+                            //       productId: item.materialId,
+                            //       title: item.materialName,
+                            //     ),
+                            //   ),
+                            // ).then((_) => _fetchStockRegister());
                           },
                           child: _buildStockStat(
                             'Current',
@@ -622,15 +635,15 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       Expanded(
                         child: InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StockConsumptionPage(
-                                  initialProductId: item.materialId,
-                                  initialProductName: item.materialName,
-                                ),
-                              ),
-                            );
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => StockConsumptionPage(
+                            //       initialProductId: item.materialId,
+                            //       initialProductName: item.materialName,
+                            //     ),
+                            //   ),
+                            // );
                           },
                           child: _buildStockStat(
                             'Consumed',
@@ -1024,255 +1037,592 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
     );
   }
 
-  void _showAddStockDialog() {
-    StockRegisterData? selectedMaterial;
-    TextEditingController qtyController = TextEditingController();
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 20,
-                right: 20,
-                top: 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Add to Stock List',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+  void _showAddStockDialog() {
+  StockRegisterData? selectedMaterial;
+  int quantityValue = 1; // Default quantity
+  TextEditingController qtyController = TextEditingController(text: "1");
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 20,
+              right: 20,
+              top: 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Add to Stock List',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                const Text('Select Product',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () {
+                          _showSearchProductDialog(context, materials, (val) {
+                            setModalState(() {
+                              selectedMaterial = val;
+                            });
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade400),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  selectedMaterial != null
+                                      ? selectedMaterial!.materialName
+                                      : 'Choose a product',
+                                  style: TextStyle(
+                                    color: selectedMaterial != null ? Colors.black87 : Colors.grey.shade600,
+                                    fontSize: 15,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                            ],
+                          ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2a86c9).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
+                      child: IconButton(
+                        onPressed: () async {
+                          var res = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SimpleBarcodeScannerPage(),
+                            ),
+                          );
+                          if (res is String && res != '-1') {
+                            Common.showProgressDialog(context, "Fetching product...");
+                            final productRes = await HttpService.getQrcodeproductDetails(res);
+                            Navigator.pop(context);
+                            if (productRes != null && productRes.data != null) {
+                              final productData = productRes.data!;
+                              int existingIndex = materials.indexWhere((m) => m.materialId == productData.id);
+                              if (existingIndex != -1) {
+                                setModalState(() {
+                                  selectedMaterial = materials[existingIndex];
+                                });
+                              } else {
+                                Common.toastMessaage("Product not found in register", Colors.red);
+                              }
+                            } else {
+                              Common.toastMessaage("Product not found", Colors.red);
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2a86c9).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddProducts(),
+                            ),
+                          );
+                          if (result == true) {
+                            await _fetchStockRegister();
+                            setModalState(() {});
+                          }
+                        },
+                        icon: const Icon(Icons.add, color: Color(0xFF2a86c9)),
+                      ),
+                    ),
+                  ],
+                ),
+                if (selectedMaterial != null) ...[
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2a86c9).withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: const Color(0xFF2a86c9).withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildModalInfoRow(
+                            'Product Name', selectedMaterial!.materialName),
+                        const SizedBox(height: 8),
+                        _buildModalInfoRow(
+                            'Current Stock', selectedMaterial!.currentQty),
+                        const SizedBox(height: 8),
+                        _buildModalInfoRow('Unit', selectedMaterial!.unit),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Select Product',
+                  const Text('Quantity to Add',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
+                  // Quantity selector with +/- buttons
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        // Minus Button
+                        InkWell(
                           onTap: () {
-                            _showSearchProductDialog(context, materials, (val) {
+                            if (quantityValue > 1) {
                               setModalState(() {
-                                selectedMaterial = val;
+                                quantityValue--;
+                                qtyController.text = quantityValue.toString();
                               });
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: quantityValue > 1 
+                                  ? const Color(0xFF2a86c9).withOpacity(0.1)
+                                  : Colors.grey.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.remove,
+                              size: 20,
+                              color: quantityValue > 1 
+                                  ? const Color(0xFF2a86c9)
+                                  : Colors.grey[400],
+                            ),
+                          ),
+                        ),
+                        
+                        // Quantity Display
+                        Expanded(
+                          child: TextField(
+                            controller: qtyController,
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0F172A),
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onChanged: (value) {
+                              if (value.isNotEmpty) {
+                                int? newValue = int.tryParse(value);
+                                if (newValue != null && newValue > 0) {
+                                  setModalState(() {
+                                    quantityValue = newValue;
+                                  });
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                        
+                        // Plus Button
+                        InkWell(
+                          onTap: () {
+                            setModalState(() {
+                              quantityValue++;
+                              qtyController.text = quantityValue.toString();
                             });
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade400),
+                              color: const Color(0xFF2a86c9).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    selectedMaterial != null
-                                        ? selectedMaterial!.materialName
-                                        : 'Choose a product',
-                                    style: TextStyle(
-                                      color: selectedMaterial != null ? Colors.black87 : Colors.grey.shade600,
-                                      fontSize: 15,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                              ],
+                            child: const Icon(
+                              Icons.add,
+                              size: 20,
+                              color: Color(0xFF2a86c9),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2a86c9).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          onPressed: () async {
-                            var res = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SimpleBarcodeScannerPage(),
-                              ),
-                            );
-                            if (res is String && res != '-1') {
-                              Common.showProgressDialog(context, "Fetching product...");
-                              final productRes = await HttpService.getQrcodeproductDetails(res);
-                              Navigator.pop(context);
-                              if (productRes != null && productRes.data != null) {
-                                final productData = productRes.data!;
-                                int existingIndex = materials.indexWhere((m) => m.materialId == productData.id);
-                                if (existingIndex != -1) {
-                                  setModalState(() {
-                                    selectedMaterial = materials[existingIndex];
-                                  });
-                                } else {
-                                  Common.toastMessaage("Product not found in register", Colors.red);
-                                }
-                              } else {
-                                Common.toastMessaage("Product not found", Colors.red);
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2a86c9).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          onPressed: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AddProducts(),
-                              ),
-                            );
-                            if (result == true) {
-                              await _fetchStockRegister();
-                              setModalState(() {});
-                            }
-                          },
-                          icon: const Icon(Icons.add, color: Color(0xFF2a86c9)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (selectedMaterial != null) ...[
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2a86c9).withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                            color: const Color(0xFF2a86c9).withOpacity(0.2)),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildModalInfoRow(
-                              'Product Name', selectedMaterial!.materialName),
-                          const SizedBox(height: 8),
-                          _buildModalInfoRow(
-                              'Current Stock', selectedMaterial!.currentQty),
-                          const SizedBox(height: 8),
-                          _buildModalInfoRow('Unit', selectedMaterial!.unit),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text('Quantity to Add',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: qtyController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'Enter Quantity',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        suffixText: selectedMaterial!.unit,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: selectedMaterial == null
-                          ? null
-                          : () {
-                              if (qtyController.text.isEmpty) {
-                                Common.toastMessaage(
-                                    "Please enter quantity", Colors.red);
-                                return;
-                              }
-
-                              setState(() {
-                                int existingIndex =
-                                    pendingStockItems.indexWhere((item) =>
-                                        item['product_id'] ==
-                                        selectedMaterial!.materialId);
-
-                                if (existingIndex != -1) {
-                                  int oldQty = int.tryParse(
-                                          pendingStockItems[existingIndex]
-                                                  ['quantity']
-                                              .toString()) ??
-                                      0;
-                                  int addQty =
-                                      int.tryParse(qtyController.text) ?? 0;
-                                  pendingStockItems[existingIndex]['quantity'] =
-                                      (oldQty + addQty).toString();
-                                } else {
-                                  pendingStockItems.add({
-                                    "product_id": selectedMaterial!.materialId,
-                                    "product_name":
-                                        selectedMaterial!.materialName,
-                                    "quantity": qtyController.text,
-                                    "unit_price": selectedMaterial!.unitPrice,
-                                    "unit": selectedMaterial!.unit,
-                                  });
-                                }
-                              });
-
-                              Navigator.pop(context);
-                              Common.toastMessaage(
-                                  "Added to list", Colors.blue);
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2a86c9),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Add to List',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 20),
                 ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: selectedMaterial == null
+                        ? null
+                        : () {
+                            if (qtyController.text.isEmpty || quantityValue <= 0) {
+                              Common.toastMessaage(
+                                  "Please enter a valid quantity", Colors.red);
+                              return;
+                            }
+
+                            setState(() {
+                              int existingIndex =
+                                  pendingStockItems.indexWhere((item) =>
+                                      item['product_id'] ==
+                                      selectedMaterial!.materialId);
+
+                              if (existingIndex != -1) {
+                                int oldQty = int.tryParse(
+                                        pendingStockItems[existingIndex]
+                                                ['quantity']
+                                            .toString()) ??
+                                    0;
+                                pendingStockItems[existingIndex]['quantity'] =
+                                    (oldQty + quantityValue).toString();
+                              } else {
+                                pendingStockItems.add({
+                                  "product_id": selectedMaterial!.materialId,
+                                  "product_name":
+                                      selectedMaterial!.materialName,
+                                  "quantity": quantityValue.toString(),
+                                  "unit_price": selectedMaterial!.unitPrice,
+                                  "unit": selectedMaterial!.unit,
+                                });
+                              }
+                            });
+
+                            Navigator.pop(context);
+                            Common.toastMessaage(
+                                "Added ${quantityValue} ${selectedMaterial!.unit} to list", 
+                                Colors.blue);
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2a86c9),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      selectedMaterial != null 
+                          ? 'Add ${quantityValue} ${selectedMaterial!.unit} to List'
+                          : 'Add to List',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+  // void _showAddStockDialog() {
+  //   StockRegisterData? selectedMaterial;
+  //   TextEditingController qtyController = TextEditingController();
+
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  //     ),
+  //     builder: (context) {
+  //       return StatefulBuilder(
+  //         builder: (context, setModalState) {
+  //           return Padding(
+  //             padding: EdgeInsets.only(
+  //               bottom: MediaQuery.of(context).viewInsets.bottom,
+  //               left: 20,
+  //               right: 20,
+  //               top: 20,
+  //             ),
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Row(
+  //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                   children: [
+  //                     const Text(
+  //                       'Add to Stock List',
+  //                       style: TextStyle(
+  //                         fontSize: 20,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                     IconButton(
+  //                       icon: const Icon(Icons.close),
+  //                       onPressed: () => Navigator.pop(context),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 const SizedBox(height: 20),
+  //                 const Text('Select Product',
+  //                     style: TextStyle(fontWeight: FontWeight.bold)),
+  //                 const SizedBox(height: 8),
+  //                 Row(
+  //                   children: [
+  //                     Expanded(
+  //                       child: InkWell(
+  //                         onTap: () {
+  //                           _showSearchProductDialog(context, materials, (val) {
+  //                             setModalState(() {
+  //                               selectedMaterial = val;
+  //                             });
+  //                           });
+  //                         },
+  //                         borderRadius: BorderRadius.circular(12),
+  //                         child: Container(
+  //                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+  //                           decoration: BoxDecoration(
+  //                             border: Border.all(color: Colors.grey.shade400),
+  //                             borderRadius: BorderRadius.circular(12),
+  //                           ),
+  //                           child: Row(
+  //                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                             children: [
+  //                               Expanded(
+  //                                 child: Text(
+  //                                   selectedMaterial != null
+  //                                       ? selectedMaterial!.materialName
+  //                                       : 'Choose a product',
+  //                                   style: TextStyle(
+  //                                     color: selectedMaterial != null ? Colors.black87 : Colors.grey.shade600,
+  //                                     fontSize: 15,
+  //                                   ),
+  //                                   maxLines: 1,
+  //                                   overflow: TextOverflow.ellipsis,
+  //                                 ),
+  //                               ),
+  //                               const Icon(Icons.arrow_drop_down, color: Colors.grey),
+  //                             ],
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 8),
+  //                     Container(
+  //                       decoration: BoxDecoration(
+  //                         color: const Color(0xFF2a86c9).withOpacity(0.1),
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                       child: IconButton(
+  //                         onPressed: () async {
+  //                           var res = await Navigator.push(
+  //                             context,
+  //                             MaterialPageRoute(
+  //                               builder: (context) => const SimpleBarcodeScannerPage(),
+  //                             ),
+  //                           );
+  //                           if (res is String && res != '-1') {
+  //                             Common.showProgressDialog(context, "Fetching product...");
+  //                             final productRes = await HttpService.getQrcodeproductDetails(res);
+  //                             Navigator.pop(context);
+  //                             if (productRes != null && productRes.data != null) {
+  //                               final productData = productRes.data!;
+  //                               int existingIndex = materials.indexWhere((m) => m.materialId == productData.id);
+  //                               if (existingIndex != -1) {
+  //                                 setModalState(() {
+  //                                   selectedMaterial = materials[existingIndex];
+  //                                 });
+  //                               } else {
+  //                                 Common.toastMessaage("Product not found in register", Colors.red);
+  //                               }
+  //                             } else {
+  //                               Common.toastMessaage("Product not found", Colors.red);
+  //                             }
+  //                           }
+  //                         },
+  //                         icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 8),
+  //                     Container(
+  //                       decoration: BoxDecoration(
+  //                         color: const Color(0xFF2a86c9).withOpacity(0.1),
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                       child: IconButton(
+  //                         onPressed: () async {
+  //                           final result = await Navigator.push(
+  //                             context,
+  //                             MaterialPageRoute(
+  //                               builder: (context) => const AddProducts(),
+  //                             ),
+  //                           );
+  //                           if (result == true) {
+  //                             await _fetchStockRegister();
+  //                             setModalState(() {});
+  //                           }
+  //                         },
+  //                         icon: const Icon(Icons.add, color: Color(0xFF2a86c9)),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 if (selectedMaterial != null) ...[
+  //                   const SizedBox(height: 20),
+  //                   Container(
+  //                     padding: const EdgeInsets.all(15),
+  //                     decoration: BoxDecoration(
+  //                       color: const Color(0xFF2a86c9).withOpacity(0.05),
+  //                       borderRadius: BorderRadius.circular(12),
+  //                       border: Border.all(
+  //                           color: const Color(0xFF2a86c9).withOpacity(0.2)),
+  //                     ),
+  //                     child: Column(
+  //                       children: [
+  //                         _buildModalInfoRow(
+  //                             'Product Name', selectedMaterial!.materialName),
+  //                         const SizedBox(height: 8),
+  //                         _buildModalInfoRow(
+  //                             'Current Stock', selectedMaterial!.currentQty),
+  //                         const SizedBox(height: 8),
+  //                         _buildModalInfoRow('Unit', selectedMaterial!.unit),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 20),
+  //                   const Text('Quantity to Add',
+  //                       style: TextStyle(fontWeight: FontWeight.bold)),
+  //                   const SizedBox(height: 8),
+  //                   TextField(
+  //                     controller: qtyController,
+  //                     keyboardType: TextInputType.number,
+  //                     decoration: InputDecoration(
+  //                       hintText: 'Enter Quantity',
+  //                       border: OutlineInputBorder(
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                       suffixText: selectedMaterial!.unit,
+  //                     ),
+  //                   ),
+  //                 ],
+  //                 const SizedBox(height: 30),
+  //                 SizedBox(
+  //                   width: double.infinity,
+  //                   child: ElevatedButton(
+  //                     onPressed: selectedMaterial == null
+  //                         ? null
+  //                         : () {
+  //                             if (qtyController.text.isEmpty) {
+  //                               Common.toastMessaage(
+  //                                   "Please enter quantity", Colors.red);
+  //                               return;
+  //                             }
+
+  //                             setState(() {
+  //                               int existingIndex =
+  //                                   pendingStockItems.indexWhere((item) =>
+  //                                       item['product_id'] ==
+  //                                       selectedMaterial!.materialId);
+
+  //                               if (existingIndex != -1) {
+  //                                 int oldQty = int.tryParse(
+  //                                         pendingStockItems[existingIndex]
+  //                                                 ['quantity']
+  //                                             .toString()) ??
+  //                                     0;
+  //                                 int addQty =
+  //                                     int.tryParse(qtyController.text) ?? 0;
+  //                                 pendingStockItems[existingIndex]['quantity'] =
+  //                                     (oldQty + addQty).toString();
+  //                               } else {
+  //                                 pendingStockItems.add({
+  //                                   "product_id": selectedMaterial!.materialId,
+  //                                   "product_name":
+  //                                       selectedMaterial!.materialName,
+  //                                   "quantity": qtyController.text,
+  //                                   "unit_price": selectedMaterial!.unitPrice,
+  //                                   "unit": selectedMaterial!.unit,
+  //                                 });
+  //                               }
+  //                             });
+
+  //                             Navigator.pop(context);
+  //                             Common.toastMessaage(
+  //                                 "Added to list", Colors.blue);
+  //                           },
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: const Color(0xFF2a86c9),
+  //                       foregroundColor: Colors.white,
+  //                       padding: const EdgeInsets.symmetric(vertical: 15),
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                     ),
+  //                     child: const Text('Add to List',
+  //                         style: TextStyle(
+  //                             fontSize: 16, fontWeight: FontWeight.bold)),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 20),
+  //               ],
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
   Widget _buildModalInfoRow(String label, String value) {
     return Row(

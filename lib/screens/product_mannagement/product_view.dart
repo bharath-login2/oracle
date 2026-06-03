@@ -1039,8 +1039,6 @@ class _ProductViewState extends State<ProductView>
         ),
 
         const SizedBox(height: 12),
-
-        // Stock History Timeline Builder
         Expanded(
           child: FutureBuilder<ProductHistoryRentalModel?>(
             future: _historyFuture,
@@ -1236,7 +1234,7 @@ class _ProductViewState extends State<ProductView>
                           int.parse(hist.addedQuantity) > 0)
                         _buildHistoryBadge(
                             "Added: ${hist.addedQuantity}", Colors.blue),
-                      _buildHistoryBadge("Stock: ${hist.currentStock}",
+                      _buildHistoryBadge("Current: ${hist.currentStock}",
                           const Color.fromARGB(255, 33, 243, 121)),
                       _buildHistoryBadge("By: ${hist.companyName}",
                           const Color.fromARGB(255, 26, 117, 145)),

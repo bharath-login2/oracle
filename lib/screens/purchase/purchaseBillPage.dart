@@ -1036,7 +1036,6 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                             ),
                           ),
                             const SizedBox(height: 20),
-                        // Summary Card
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -1068,7 +1067,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                       0) ...[
                                 const Divider(),
                                 _buildSummaryRow("Discount:",
-                                    "-₹${billData.discount ?? '0'}"),
+                                    "₹${billData.discount ?? '0'}"),
                               ],
                               if (double.tryParse(billData.tdsAmt ?? '0') !=
                                       null &&
@@ -1447,10 +1446,16 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                       billIdController.text = d.billDetails!.purchaseBillId ?? "";
                       invoiceNoController.text = d.billDetails!.invoiceNo ?? "";
                       final tdsStr = d.billDetails!.tdsAmount ?? "";
+                        final otherStr = d.billDetails!.otherAmt ?? "";
+                      othersController.text =
+                          (otherStr == "0" || otherStr == "0.00") ? "" : otherStr;
+                      final discountStr = d.billDetails!.discountAmt ?? "";
+                      discountController.text =
+                          (discountStr == "0" || discountStr == "0.00") ? "" : discountStr;
                       tdsController.text =
                           (tdsStr == "0" || tdsStr == "0.00") ? "" : tdsStr;
                       remarkController.text =
-                          d.billDetails!.transactionRemarks ?? "";
+                          d.billDetails!.remarks ?? "";
                       billAddressController.text =
                           d.billDetails!.billAddress ?? "";
                       if (d.billDetails!.taxType != null &&
@@ -2078,11 +2083,11 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                         DataColumn(label: Text("Unit Price")),
                                         DataColumn(label: Text("Total")),
                                         DataColumn(label: Text("GST %")),
-                                        if (taxType == 'Interstate') ...[
+                                        if (taxType == 'Intrastate') ...[
                                           DataColumn(label: Text("CGST (Amt)")),
                                           DataColumn(label: Text("SGST (Amt)")),
                                         ],
-                                        if (taxType == 'Intrastate')
+                                        if (taxType == 'Interstate')
                                           DataColumn(label: Text("IGST (Amt)")),
                                         DataColumn(label: Text("GST Amount")),
                                         DataColumn(label: Text("Sub Total")),
@@ -2233,7 +2238,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                                       isDense: true,
                                                       border:
                                                           OutlineInputBorder())))),
-                                          if (taxType == 'Interstate') ...[
+                                          if (taxType == 'Intrastate') ...[
                                             DataCell(Text(
                                                 "₹${(item.gstAmount / 2).toStringAsFixed(2)}",
                                                 style: const TextStyle(
@@ -2243,7 +2248,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                                 style: const TextStyle(
                                                     fontSize: 12))),
                                           ],
-                                          if (taxType == 'Intrastate')
+                                          if (taxType == 'Interstate')
                                             DataCell(Text(
                                                 "₹${item.gstAmount.toStringAsFixed(2)}",
                                                 style: const TextStyle(
@@ -2990,7 +2995,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
           style: TextStyle(
             fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
             fontSize: isHighlight ? 14 : 12,
-            color: isHighlight ? Colors.green.shade700 : Colors.black87,
+            color: isHighlight ? const Color.fromARGB(255, 187, 71, 71) : Colors.black87,
           ),
         ),
       ],

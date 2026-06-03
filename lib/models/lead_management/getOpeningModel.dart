@@ -33,6 +33,7 @@ class OpeningStockData {
   String stockOpeningItemId;
   String date;
   String location;
+  String materialId;
   String materialName;
   String unit;
   String quantity;
@@ -44,6 +45,7 @@ class OpeningStockData {
     required this.stockOpeningItemId,
     required this.date,
     required this.location,
+    required this.materialId,
     required this.materialName,
     required this.unit,
     required this.quantity,
@@ -57,6 +59,7 @@ class OpeningStockData {
       stockOpeningItemId: json['stock_opening_item_id']?.toString() ?? '',
       date: json['date']?.toString() ?? '',
       location: json['location']?.toString() ?? '',
+      materialId: json['material_id']?.toString() ?? '',
       materialName: json['material_name']?.toString() ?? '',
       unit: json['unit']?.toString() ?? '',
       quantity: json['quantity']?.toString() ?? '0',
@@ -71,6 +74,7 @@ class OpeningStockData {
       'stock_opening_item_id': stockOpeningItemId,
       'date': date,
       'location': location,
+       'material_id': materialId,
       'material_name': materialName,
       'unit': unit,
       'quantity': quantity,

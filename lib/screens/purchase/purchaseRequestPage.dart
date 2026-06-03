@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:login2/screens/purchase/purchaseOrderPage.dart';
 import 'package:login2/screens/purchase/supplierManagementPage.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   final String token;
@@ -494,72 +495,104 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                   ),
                                   child: Column(
                                     children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade50,
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                          border: Border.all(
-                                              color: Colors.grey.shade200),
-                                        ),
-                                        child: DropdownSearch<MaterialData>(
-                                          items: (filter, loadProps) =>
-                                              materials
-                                                  .where((m) =>
-                                                      m.materialName
-                                                          ?.toLowerCase()
-                                                          .contains(filter
-                                                              .toLowerCase()) ??
-                                                      true)
-                                                  .toList(),
-                                          itemAsString: (MaterialData m) =>
-                                              m.materialName ?? "",
-                                          compareFn: (i, s) =>
-                                              i.materialId == s?.materialId,
-                                          decoratorProps:
-                                              DropDownDecoratorProps(
-                                            decoration: InputDecoration(
-                                              hintText:
-                                                  "Search and select a material",
-                                              hintStyle: TextStyle(
-                                                  color: Colors.grey.shade500,
-                                                  fontSize: 14),
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 8),
-                                              border: InputBorder.none,
-                                            ),
-                                          ),
-                                          popupProps: PopupProps.menu(
-                                            showSearchBox: true,
-                                            searchFieldProps: TextFieldProps(
-                                              decoration: InputDecoration(
-                                                hintText: "Search material...",
-                                                prefixIcon: const Icon(
-                                                    Icons.search,
-                                                    size: 20),
-                                                contentPadding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 16),
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade50,
+                                                borderRadius: BorderRadius.circular(15),
+                                                border: Border.all(color: Colors.grey.shade200),
+                                              ),
+                                              child: DropdownSearch<MaterialData>(
+                                                items: (filter, loadProps) => materials
+                                                    .where((m) =>
+                                                        m.materialName?.toLowerCase().contains(filter.toLowerCase()) ?? true)
+                                                    .toList(),
+                                                itemAsString: (MaterialData m) => m.materialName ?? "",
+                                                compareFn: (i, s) => i.materialId == s?.materialId,
+                                                decoratorProps: DropDownDecoratorProps(
+                                                  decoration: InputDecoration(
+                                                    hintText: "Search and select a material",
+                                                    hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                                    border: InputBorder.none,
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                            menuProps: const MenuProps(
-                                              elevation: 10,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(20)),
+                                                popupProps: PopupProps.menu(
+                                                  showSearchBox: true,
+                                                  searchFieldProps: TextFieldProps(
+                                                    decoration: InputDecoration(
+                                                      hintText: "Search material...",
+                                                      prefixIcon: const Icon(Icons.search, size: 20),
+                                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(12),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  menuProps: const MenuProps(
+                                                    elevation: 10,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                                                    ),
+                                                  ),
+                                                ),
+                                                onChanged: (val) => setDialogState(() => selectedMaterial = val),
+                                                selectedItem: selectedMaterial,
                                               ),
                                             ),
                                           ),
-                                          onChanged: (val) => setDialogState(
-                                              () => selectedMaterial = val),
-                                          selectedItem: selectedMaterial,
-                                        ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            height: 48,
+                                            width: 48,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF2a86c9),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: IconButton(
+                                              onPressed: () async {
+                                                var res = await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => const SimpleBarcodeScannerPage(),
+                                                  ),
+                                                );
+                                                if (res is String && res != '-1') {
+                                                  Common.showProgressDialog(context, "Fetching product...");
+                                                  final productRes = await HttpService.getQrcodeproductDetails(res);
+                                                  Navigator.pop(context);
+                                                  if (productRes != null && productRes.data != null) {
+                                                    final productData = productRes.data!;
+                                                    setDialogState(() {
+                                                      int existingIndex = cartItems.indexWhere((item) =>
+                                                          item.material.materialId == productData.id);
+                                                      if (existingIndex != -1) {
+                                                        cartItems[existingIndex].quantity += 1;
+                                                        cartItems[existingIndex].quantityController.text = cartItems[existingIndex].quantity == cartItems[existingIndex].quantity.toInt() ? cartItems[existingIndex].quantity.toInt().toString() : cartItems[existingIndex].quantity.toString();
+                                                      } else {
+                                                        cartItems.add(CartItem(
+                                                          material: MaterialData(
+                                                            materialId: productData.id,
+                                                            materialName: productData.productName,
+                                                            unitName: productData.unitName,
+                                                            unitPrice: productData.purchaseAmount ?? productData.sellingPrice,
+                                                            gstPercentage: productData.taxPercent,
+                                                          ),
+                                                        ));
+                                                      }
+                                                    });
+                                                  } else {
+                                                    Common.toastMessaage("Product not found", Colors.red);
+                                                  }
+                                                }
+                                              },
+                                              icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                                              tooltip: 'Scan Barcode',
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 16),
                                       SizedBox(

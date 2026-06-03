@@ -514,8 +514,9 @@ class _StockRequestPageState extends State<StockRequestPage> {
     String? locationName = editData?.locationName;
     String priority = editData?.priority ?? "Normal";
     String status = editData?.status ?? "Pending";
+    int quantityValue = int.tryParse(editData?.quantity ?? "0") ?? 0;
     final TextEditingController qtyController =
-        TextEditingController(text: editData?.quantity ?? "");
+        TextEditingController(text: quantityValue.toString());
     final TextEditingController remarkController =
         TextEditingController(text: editData?.remarks ?? "");
     final TextEditingController requestedByController = TextEditingController(
@@ -670,8 +671,10 @@ class _StockRequestPageState extends State<StockRequestPage> {
                                               .map((p) => p.materialName ?? "")
                                               .toList(), (index) {
                                         setDialogState(() {
-                                          productId = _products[index].materialId;
-                                          productName = _products[index].materialName;
+                                          productId =
+                                              _products[index].materialId;
+                                          productName =
+                                              _products[index].materialName;
                                         });
                                       }),
                                     ),
@@ -681,31 +684,40 @@ class _StockRequestPageState extends State<StockRequestPage> {
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFF8FAFC),
                                       borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      border: Border.all(
+                                          color: const Color(0xFFE2E8F0)),
                                     ),
                                     child: IconButton(
                                       onPressed: () async {
                                         var res = await Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => const SimpleBarcodeScannerPage(),
+                                            builder: (context) =>
+                                                const SimpleBarcodeScannerPage(),
                                           ),
                                         );
                                         if (res is String && res != '-1') {
-                                          Common.showProgressDialog(context, "Fetching product...");
-                                          final productRes = await HttpService.getQrcodeproductDetails(res);
+                                          Common.showProgressDialog(
+                                              context, "Fetching product...");
+                                          final productRes = await HttpService
+                                              .getQrcodeproductDetails(res);
                                           Navigator.pop(context);
-                                          if (productRes != null && productRes.data != null) {
+                                          if (productRes != null &&
+                                              productRes.data != null) {
                                             setDialogState(() {
                                               productId = productRes.data!.id;
-                                              productName = productRes.data!.productName;
+                                              productName =
+                                                  productRes.data!.productName;
                                             });
                                           } else {
-                                            Common.toastMessaage("Product not found", Colors.red);
+                                            Common.toastMessaage(
+                                                "Product not found",
+                                                Colors.red);
                                           }
                                         }
                                       },
-                                      icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF2a86c9)),
+                                      icon: const Icon(Icons.qr_code_scanner,
+                                          color: Color(0xFF2a86c9)),
                                     ),
                                   ),
                                 ],
@@ -718,11 +730,27 @@ class _StockRequestPageState extends State<StockRequestPage> {
                                 Expanded(
                                   child: _buildFormField(
                                     label: "Quantity*",
-                                    child: _buildInputField(qtyController,
-                                        "0.00", Icons.add_shopping_cart_rounded,
-                                        keyboardType: TextInputType.number),
+                                    child: _buildQuantityField(
+                                      qtyController,
+                                      quantityValue,
+                                      (newValue) {
+                                        setDialogState(() {
+                                          quantityValue = newValue;
+                                          qtyController.text =
+                                              newValue.toString();
+                                        });
+                                      },
+                                    ),
                                   ),
                                 ),
+                                // Expanded(
+                                //   child: _buildFormField(
+                                //     label: "Quantity*",
+                                //     child: _buildInputField(qtyController,
+                                //         "0.00", Icons.add_shopping_cart_rounded,
+                                //         keyboardType: TextInputType.number),
+                                //   ),
+                                // ),
                                 if (!isSmall) const SizedBox(width: 16),
                                 if (!isSmall)
                                   Expanded(
@@ -809,33 +837,31 @@ class _StockRequestPageState extends State<StockRequestPage> {
                               }).toList(),
                             ),
                             const SizedBox(height: 24),
-
-                            // Section 4: Location & Person
                             _buildSectionHeader("Source & Logistics",
                                 Icons.location_on_outlined),
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                Expanded(
-                                  child: _buildFormField(
-                                    label: "Stock Location",
-                                    child: _buildClickableField(
-                                        locationName ?? "Select Location",
-                                        Icons.store_rounded, () {
-                                      _showItemPicker(
-                                          "Location",
-                                          _locations
-                                              .map((l) => l.locationName)
-                                              .toList(), (index) {
-                                        setDialogState(() {
-                                          locationId = _locations[index].id;
-                                          locationName =
-                                              _locations[index].locationName;
-                                        });
-                                      });
-                                    }),
-                                  ),
-                                ),
+                                // Expanded(
+                                //   child: _buildFormField(
+                                //     label: "Stock Location",
+                                //     child: _buildClickableField(
+                                //         locationName ?? "Select Location",
+                                //         Icons.store_rounded, () {
+                                //       _showItemPicker(
+                                //           "Location",
+                                //           _locations
+                                //               .map((l) => l.locationName)
+                                //               .toList(), (index) {
+                                //         setDialogState(() {
+                                //           locationId = _locations[index].id;
+                                //           locationName =
+                                //               _locations[index].locationName;
+                                //         });
+                                //       });
+                                //     }),
+                                //   ),
+                                // ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: _buildFormField(
@@ -995,6 +1021,99 @@ class _StockRequestPageState extends State<StockRequestPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildQuantityField(
+    TextEditingController controller,
+    int currentValue,
+    Function(int) onQuantityChanged,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          // Minus Button
+          InkWell(
+            onTap: () {
+              if (currentValue > 1) {
+                int newValue = currentValue - 1;
+                onQuantityChanged(newValue);
+              }
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: currentValue > 1
+                    ? const Color(0xFF2a86c9).withOpacity(0.1)
+                    : Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.remove,
+                size: 20,
+                color: currentValue > 1
+                    ? const Color(0xFF2a86c9)
+                    : Colors.grey[400],
+              ),
+            ),
+          ),
+
+          // Quantity Display
+          Expanded(
+            child: TextField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
+              ),
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  int? newValue = int.tryParse(value);
+                  if (newValue != null && newValue > 0) {
+                    onQuantityChanged(newValue);
+                  }
+                }
+              },
+            ),
+          ),
+
+          // Plus Button
+          InkWell(
+            onTap: () {
+              int newValue = currentValue + 1;
+              onQuantityChanged(newValue);
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2a86c9).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.add,
+                size: 20,
+                color: Color(0xFF2a86c9),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -113,435 +113,931 @@ class _SupplierManagementPageState extends State<SupplierManagementPage> {
   }
 
   void _showAddEditSupplierDialog({SupplierData? editSupplier}) {
-    final bool isEdit = editSupplier != null;
-    final TextEditingController nameCtrl =
-        TextEditingController(text: editSupplier?.supplierName);
-    final TextEditingController contactPersonCtrl =
-        TextEditingController(text: editSupplier?.contactPerson);
-    final TextEditingController contactNoCtrl =
-        TextEditingController(text: editSupplier?.contactNo);
-    final TextEditingController addressCtrl =
-        TextEditingController(text: editSupplier?.address);
-    final TextEditingController aadharCtrl =
-        TextEditingController(text: editSupplier?.adharNo);
-    final TextEditingController gstCtrl =
-        TextEditingController(text: editSupplier?.gstNo);
-    final TextEditingController accountCtrl =
-        TextEditingController(text: editSupplier?.accNo);
-    final TextEditingController ifscCtrl =
-        TextEditingController(text: editSupplier?.ifscCode);
-    final TextEditingController beneficiaryCtrl =
-        TextEditingController(text: editSupplier?.beneficiaryName);
-    final TextEditingController openingBalanceCtrl =
-        TextEditingController(text: editSupplier?.openingBalance);
+  final bool isEdit = editSupplier != null;
+  final TextEditingController nameCtrl =
+      TextEditingController(text: editSupplier?.supplierName);
+  final TextEditingController contactPersonCtrl =
+      TextEditingController(text: editSupplier?.contactPerson);
+  final TextEditingController contactNoCtrl =
+      TextEditingController(text: editSupplier?.contactNo);
+  final TextEditingController addressCtrl =
+      TextEditingController(text: editSupplier?.address);
+  final TextEditingController aadharCtrl =
+      TextEditingController(text: editSupplier?.adharNo);
+  final TextEditingController gstCtrl =
+      TextEditingController(text: editSupplier?.gstNo);
+  final TextEditingController accountCtrl =
+      TextEditingController(text: editSupplier?.accNo);
+  final TextEditingController ifscCtrl =
+      TextEditingController(text: editSupplier?.ifscCode);
+  final TextEditingController beneficiaryCtrl =
+      TextEditingController(text: editSupplier?.beneficiaryName);
+  final TextEditingController openingBalanceCtrl =
+      TextEditingController(text: editSupplier?.openingBalance);
+  
+  String supplierType = editSupplier?.supplierType ?? "Intrastate"; 
 
-    List<MaterialData> selectedMaterials = [];
-    List<MaterialData> materialsList = [];
-    bool isMaterialsLoading = false;
+  List<MaterialData> selectedMaterials = [];
+  List<MaterialData> materialsList = [];
+  bool isMaterialsLoading = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) {
-        return StatefulBuilder(
-          builder: (dialogCtx, setDialogState) {
-            if (materialsList.isEmpty && !isMaterialsLoading) {
-              isMaterialsLoading = true;
-              HttpService.getMaterials().then((val) {
-                if (val != null && val.data != null && dialogCtx.mounted) {
-                  setDialogState(() {
-                    materialsList = val.data!;
-                    isMaterialsLoading = false;
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogCtx) {
+      return StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          if (materialsList.isEmpty && !isMaterialsLoading) {
+            isMaterialsLoading = true;
+            HttpService.getMaterials().then((val) {
+              if (val != null && val.data != null && dialogCtx.mounted) {
+                setDialogState(() {
+                  materialsList = val.data!;
+                  isMaterialsLoading = false;
 
-                    // Preselect materials in edit mode
-                    if (isEdit && editSupplier.materialId != null) {
-                      final ids = editSupplier.materialId!
-                          .split(",")
-                          .map((e) => e.trim())
-                          .where((e) => e.isNotEmpty)
-                          .toList();
-                      selectedMaterials = materialsList
-                          .where((m) =>
-                              m.materialId != null &&
-                              ids.contains(m.materialId!.trim()))
-                          .toList();
-                    }
-                  });
-                }
-              }).catchError((e) {
-                if (dialogCtx.mounted) {
-                  setDialogState(() {
-                    isMaterialsLoading = false;
-                  });
-                }
-              });
-            }
+                  // Preselect materials in edit mode
+                  if (isEdit && editSupplier.materialId != null) {
+                    final ids = editSupplier.materialId!
+                        .split(",")
+                        .map((e) => e.trim())
+                        .where((e) => e.isNotEmpty)
+                        .toList();
+                    selectedMaterials = materialsList
+                        .where((m) =>
+                            m.materialId != null &&
+                            ids.contains(m.materialId!.trim()))
+                        .toList();
+                  }
+                });
+              }
+            }).catchError((e) {
+              if (dialogCtx.mounted) {
+                setDialogState(() {
+                  isMaterialsLoading = false;
+                });
+              }
+            });
+          }
 
-            Widget _buildCustomField({
-              required String label,
-              required String hint,
-              required TextEditingController controller,
-              bool isRequired = false,
-              IconData? prefixIcon,
-              bool isMultiline = false,
-              TextInputType keyboardType = TextInputType.text,
-            }) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF475569)),
-                      ),
-                      if (isRequired)
-                        const Text(" *",
-                            style: TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: TextField(
-                      controller: controller,
-                      maxLines: isMultiline ? 3 : 1,
-                      keyboardType: keyboardType,
-                      decoration: InputDecoration(
-                        hintText: hint,
-                        hintStyle: TextStyle(
-                            color: Colors.grey.shade400, fontSize: 13),
-                        prefixIcon: prefixIcon != null
-                            ? Icon(prefixIcon, color: Colors.grey, size: 18)
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              );
-            }
-
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-              insetPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+          Widget _buildCustomField({
+            required String label,
+            required String hint,
+            required TextEditingController controller,
+            bool isRequired = false,
+            IconData? prefixIcon,
+            bool isMultiline = false,
+            TextInputType keyboardType = TextInputType.text,
+          }) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF2a86c9), Color(0xFF1e6091)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            isEdit ? "Edit Supplier" : "Add Supplier",
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close_rounded,
-                                color: Colors.white),
-                            onPressed: () => Navigator.pop(dialogCtx),
-                          ),
-                        ],
-                      ),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF475569)),
                     ),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Choose Material *",
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF475569)),
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              constraints: const BoxConstraints(minHeight: 44),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              child:
-                                  DropdownSearch<MaterialData>.multiSelection(
-                                items: (f, p) => materialsList,
-                                itemAsString: (m) => m.materialName ?? "",
-                                compareFn: (i, s) =>
-                                    i.materialId == s.materialId,
-                                selectedItems: selectedMaterials,
-                                onChanged: (val) => setDialogState(
-                                    () => selectedMaterials = val),
-                                popupProps: PopupPropsMultiSelection.menu(
-                                  showSearchBox: true,
-                                  onItemAdded: (selectedItems, addedItem) {
-                                    setDialogState(() {
-                                      selectedMaterials = selectedItems;
-                                    });
-                                  },
-                                  onItemRemoved: (selectedItems, removedItem) {
-                                    setDialogState(() {
-                                      selectedMaterials = selectedItems;
-                                    });
-                                  },
-                                  validationBuilder: (ctx, selectedItems) =>
-                                      const SizedBox.shrink(),
-                                ),
-                                decoratorProps: DropDownDecoratorProps(
-                                  decoration: InputDecoration(
-                                    hintText: isMaterialsLoading
-                                        ? "Loading materials..."
-                                        : "Choose Material...",
-                                    hintStyle: TextStyle(
-                                        color: Colors.grey.shade400,
-                                        fontSize: 13),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    border: InputBorder.none,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildCustomField(
-                              label: "Supplier Name",
-                              hint: "Enter supplier name",
-                              controller: nameCtrl,
-                              isRequired: true,
-                              prefixIcon: Icons.business,
-                            ),
-                            _buildCustomField(
-                              label: "Contact Person",
-                              hint: "Enter contact person",
-                              controller: contactPersonCtrl,
-                              prefixIcon: Icons.person_outline,
-                            ),
-                            _buildCustomField(
-                              label: "Contact No",
-                              hint: "Enter contact phone number",
-                              controller: contactNoCtrl,
-                              isRequired: true,
-                              keyboardType: TextInputType.phone,
-                              prefixIcon: Icons.phone_android,
-                            ),
-                            _buildCustomField(
-                              label: "Address",
-                              hint: "Enter physical address",
-                              controller: addressCtrl,
-                              isMultiline: true,
-                              prefixIcon: Icons.location_on_outlined,
-                            ),
-                            _buildCustomField(
-                              label: "Aadhar No",
-                              hint: "Enter Aadhar card number",
-                              controller: aadharCtrl,
-                              keyboardType: TextInputType.number,
-                              prefixIcon: Icons.credit_card,
-                            ),
-                            _buildCustomField(
-                              label: "GST No",
-                              hint: "Enter GST registration number",
-                              controller: gstCtrl,
-                              prefixIcon: Icons.percent,
-                            ),
-                            _buildCustomField(
-                              label: "Account No",
-                              hint: "Enter bank account number",
-                              controller: accountCtrl,
-                              keyboardType: TextInputType.number,
-                              prefixIcon: Icons.account_balance,
-                            ),
-                            _buildCustomField(
-                              label: "IFSC Code",
-                              hint: "Enter bank IFSC code",
-                              controller: ifscCtrl,
-                              prefixIcon: Icons.code,
-                            ),
-                            _buildCustomField(
-                              label: "Beneficiary Name",
-                              hint: "Enter beneficiary account name",
-                              controller: beneficiaryCtrl,
-                              prefixIcon: Icons.badge_outlined,
-                            ),
-                            _buildCustomField(
-                              label: "Opening Balance",
-                              hint: "0.00",
-                              controller: openingBalanceCtrl,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
-                              prefixIcon: Icons.monetization_on_outlined,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      color: const Color(0xFFF8FAFC),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(dialogCtx),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey.shade200,
-                              foregroundColor: Colors.grey.shade700,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                            ),
-                            child: const Text("Cancel",
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () async {
-                              final name = nameCtrl.text.trim();
-                              final contactNo = contactNoCtrl.text.trim();
-
-                              if (selectedMaterials.isEmpty) {
-                                Common.toastMessaage(
-                                    "Please choose at least one material",
-                                    Colors.orange);
-                                return;
-                              }
-                              if (name.isEmpty) {
-                                Common.toastMessaage(
-                                    "Supplier name is required", Colors.orange);
-                                return;
-                              }
-                              if (contactNo.isEmpty) {
-                                Common.toastMessaage(
-                                    "Contact number is required",
-                                    Colors.orange);
-                                return;
-                              }
-                              if (contactNo.length != 10) {
-                                Common.toastMessaage(
-                                    "Contact number must be exactly 10 digits", Colors.orange);
-                                return;
-                              }
-                              final aadharNo = aadharCtrl.text.trim();
-                              if (aadharNo.isNotEmpty && aadharNo.length != 12) {
-                                Common.toastMessaage(
-                                    "Aadhar number must be exactly 12 digits", Colors.orange);
-                                return;
-                              }
-
-                              showDialog(
-                                context: dialogCtx,
-                                barrierDismissible: false,
-                                builder: (ctx) => const Center(
-                                    child: CircularProgressIndicator()),
-                              );
-
-                              try {
-                                final payload = {
-                                  if (isEdit) "id": editSupplier.id,
-                                  "material_id": selectedMaterials
-                                      .map((m) => m.materialId)
-                                      .join(","),
-                                  "supplier_name": name,
-                                  "contact_person":
-                                      contactPersonCtrl.text.trim(),
-                                  "contact_no": contactNo,
-                                  "supplier_address": addressCtrl.text.trim(),
-                                  "aadhar_no": aadharCtrl.text.trim(),
-                                  "gst_no": gstCtrl.text.trim(),
-                                  "account_no": accountCtrl.text.trim(),
-                                  "ifsc_code": ifscCtrl.text.trim(),
-                                  "beneficiary_name":
-                                      beneficiaryCtrl.text.trim(),
-                                  "opening_balance":
-                                      openingBalanceCtrl.text.trim(),
-                                };
-
-                                final response = isEdit
-                                    ? await HttpService.editSupplier(payload)
-                                    : await HttpService.addSupplier(payload);
-
-                                Navigator.pop(dialogCtx);
-                                if (response != null &&
-                                    (response['status'] == true ||
-                                        response['status'] == 'success')) {
-                                  Common.toastMessaage(
-                                    isEdit
-                                        ? "Supplier updated successfully"
-                                        : "Supplier added successfully",
-                                    Colors.green,
-                                  );
-                                  Navigator.pop(dialogCtx);
-                                  _loadSuppliers();
-                                } else {
-                                  Common.toastMessaage(
-                                      response?['message'] ??
-                                          "Failed to save supplier",
-                                      Colors.red);
-                                }
-                              } catch (e) {
-                                Navigator.pop(dialogCtx);
-                                Common.toastMessaage(
-                                    "Error saving supplier: $e", Colors.red);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2a86c9),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 12),
-                            ),
-                            child: Text(isEdit ? "Update" : "Save",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    ),
+                    if (isRequired)
+                      const Text(" *",
+                          style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold)),
                   ],
                 ),
-              ),
+                const SizedBox(height: 6),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    maxLines: isMultiline ? 3 : 1,
+                    keyboardType: keyboardType,
+                    decoration: InputDecoration(
+                      hintText: hint,
+                      hintStyle: TextStyle(
+                          color: Colors.grey.shade400, fontSize: 13),
+                      prefixIcon: prefixIcon != null
+                          ? Icon(prefixIcon, color: Colors.grey, size: 18)
+                          : null,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
             );
-          },
-        );
-      },
-    );
-  }
+          }
+
+          return Dialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24)),
+            insetPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 20),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF2a86c9), Color(0xFF1e6091)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isEdit ? "Edit Supplier" : "Add Supplier",
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded,
+                              color: Colors.white),
+                          onPressed: () => Navigator.pop(dialogCtx),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Choose Material *",
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF475569)),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            constraints: const BoxConstraints(minHeight: 44),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child:
+                                DropdownSearch<MaterialData>.multiSelection(
+                              items: (f, p) => materialsList,
+                              itemAsString: (m) => m.materialName ?? "",
+                              compareFn: (i, s) =>
+                                  i.materialId == s.materialId,
+                              selectedItems: selectedMaterials,
+                              onChanged: (val) => setDialogState(
+                                  () => selectedMaterials = val),
+                              popupProps: PopupPropsMultiSelection.menu(
+                                showSearchBox: true,
+                                onItemAdded: (selectedItems, addedItem) {
+                                  setDialogState(() {
+                                    selectedMaterials = selectedItems;
+                                  });
+                                },
+                                onItemRemoved: (selectedItems, removedItem) {
+                                  setDialogState(() {
+                                    selectedMaterials = selectedItems;
+                                  });
+                                },
+                                validationBuilder: (ctx, selectedItems) =>
+                                    const SizedBox.shrink(),
+                              ),
+                              decoratorProps: DropDownDecoratorProps(
+                                decoration: InputDecoration(
+                                  hintText: isMaterialsLoading
+                                      ? "Loading materials..."
+                                      : "Choose Material...",
+                                  hintStyle: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 13),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildCustomField(
+                            label: "Supplier Name",
+                            hint: "Enter supplier name",
+                            controller: nameCtrl,
+                            isRequired: true,
+                            prefixIcon: Icons.business,
+                          ),
+                          _buildCustomField(
+                            label: "Contact Person",
+                            hint: "Enter contact person",
+                            controller: contactPersonCtrl,
+                            prefixIcon: Icons.person_outline,
+                          ),
+                          _buildCustomField(
+                            label: "Contact No",
+                            hint: "Enter contact phone number",
+                            controller: contactNoCtrl,
+                            isRequired: true,
+                            keyboardType: TextInputType.phone,
+                            prefixIcon: Icons.phone_android,
+                          ),
+                          _buildCustomField(
+                            label: "Address",
+                            hint: "Enter physical address",
+                            controller: addressCtrl,
+                            isMultiline: true,
+                            prefixIcon: Icons.location_on_outlined,
+                          ),
+                          
+                          // Radio buttons for Intrastate/Interstate
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Supplier Type *",
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF475569)),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: RadioListTile<String>(
+                                        title: const Text("Intrastate",
+                                            style: TextStyle(fontSize: 14)),
+                                        value: "Intrastate",
+                                        groupValue: supplierType,
+                                        onChanged: (value) {
+                                          setDialogState(() {
+                                            supplierType = value!;
+                                          });
+                                        },
+                                        activeColor: const Color(0xFF2a86c9),
+                                        contentPadding: EdgeInsets.zero,
+                                        dense: true,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: RadioListTile<String>(
+                                        title: const Text("Other State",
+                                            style: TextStyle(fontSize: 14)),
+                                        value: "Interstate",
+                                        groupValue: supplierType,
+                                        onChanged: (value) {
+                                          setDialogState(() {
+                                            supplierType = value!;
+                                          });
+                                        },
+                                        activeColor: const Color(0xFF2a86c9),
+                                        contentPadding: EdgeInsets.zero,
+                                        dense: true,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          _buildCustomField(
+                            label: "Aadhar No",
+                            hint: "Enter Aadhar card number",
+                            controller: aadharCtrl,
+                            keyboardType: TextInputType.number,
+                            prefixIcon: Icons.credit_card,
+                          ),
+                          _buildCustomField(
+                            label: "GST No",
+                            hint: "Enter GST registration number",
+                            controller: gstCtrl,
+                            prefixIcon: Icons.percent,
+                          ),
+                          _buildCustomField(
+                            label: "Account No",
+                            hint: "Enter bank account number",
+                            controller: accountCtrl,
+                            keyboardType: TextInputType.number,
+                            prefixIcon: Icons.account_balance,
+                          ),
+                          _buildCustomField(
+                            label: "IFSC Code",
+                            hint: "Enter bank IFSC code",
+                            controller: ifscCtrl,
+                            prefixIcon: Icons.code,
+                          ),
+                          _buildCustomField(
+                            label: "Beneficiary Name",
+                            hint: "Enter beneficiary account name",
+                            controller: beneficiaryCtrl,
+                            prefixIcon: Icons.badge_outlined,
+                          ),
+                          _buildCustomField(
+                            label: "Opening Balance",
+                            hint: "0.00",
+                            controller: openingBalanceCtrl,
+                            keyboardType:
+                                const TextInputType.numberWithOptions(
+                                    decimal: true),
+                            prefixIcon: Icons.monetization_on_outlined,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    color: const Color(0xFFF8FAFC),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(dialogCtx),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey.shade200,
+                            foregroundColor: Colors.grey.shade700,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 12),
+                          ),
+                          child: const Text("Cancel",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () async {
+                            final name = nameCtrl.text.trim();
+                            final contactNo = contactNoCtrl.text.trim();
+
+                            if (selectedMaterials.isEmpty) {
+                              Common.toastMessaage(
+                                  "Please choose at least one material",
+                                  Colors.orange);
+                              return;
+                            }
+                            if (name.isEmpty) {
+                              Common.toastMessaage(
+                                  "Supplier name is required", Colors.orange);
+                              return;
+                            }
+                            if (contactNo.isEmpty) {
+                              Common.toastMessaage(
+                                  "Contact number is required",
+                                  Colors.orange);
+                              return;
+                            }
+                            if (contactNo.length != 10) {
+                              Common.toastMessaage(
+                                  "Contact number must be exactly 10 digits", Colors.orange);
+                              return;
+                            }
+                            final aadharNo = aadharCtrl.text.trim();
+                            if (aadharNo.isNotEmpty && aadharNo.length != 12) {
+                              Common.toastMessaage(
+                                  "Aadhar number must be exactly 12 digits", Colors.orange);
+                              return;
+                            }
+
+                            showDialog(
+                              context: dialogCtx,
+                              barrierDismissible: false,
+                              builder: (ctx) => const Center(
+                                  child: CircularProgressIndicator()),
+                            );
+
+                            try {
+                              final payload = {
+                                if (isEdit) "id": editSupplier.id,
+                                "material_id": selectedMaterials
+                                    .map((m) => m.materialId)
+                                    .join(","),
+                                "supplier_name": name,
+                                "contact_person":
+                                    contactPersonCtrl.text.trim(),
+                                "contact_no": contactNo,
+                                "supplier_address": addressCtrl.text.trim(),
+                                "aadhar_no": aadharCtrl.text.trim(),
+                                "gst_no": gstCtrl.text.trim(),
+                                "account_no": accountCtrl.text.trim(),
+                                "ifsc_code": ifscCtrl.text.trim(),
+                                "beneficiary_name":
+                                    beneficiaryCtrl.text.trim(),
+                                "opening_balance":
+                                    openingBalanceCtrl.text.trim(),
+                                "supplier_type": supplierType, // Add supplier type
+                              };
+
+                              final response = isEdit
+                                  ? await HttpService.editSupplier(payload)
+                                  : await HttpService.addSupplier(payload);
+
+                              Navigator.pop(dialogCtx);
+                              if (response != null &&
+                                  (response['status'] == true ||
+                                      response['status'] == 'success')) {
+                                Common.toastMessaage(
+                                  isEdit
+                                      ? "Supplier updated successfully"
+                                      : "Supplier added successfully",
+                                  Colors.green,
+                                );
+                                Navigator.pop(dialogCtx);
+                                _loadSuppliers();
+                              } else {
+                                Common.toastMessaage(
+                                    response?['message'] ??
+                                        "Failed to save supplier",
+                                    Colors.red);
+                              }
+                            } catch (e) {
+                              Navigator.pop(dialogCtx);
+                              Common.toastMessaage(
+                                  "Error saving supplier: $e", Colors.red);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2a86c9),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                          ),
+                          child: Text(isEdit ? "Update" : "Save",
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+  // void _showAddEditSupplierDialog({SupplierData? editSupplier}) {
+  //   final bool isEdit = editSupplier != null;
+  //   final TextEditingController nameCtrl =
+  //       TextEditingController(text: editSupplier?.supplierName);
+  //   final TextEditingController contactPersonCtrl =
+  //       TextEditingController(text: editSupplier?.contactPerson);
+  //   final TextEditingController contactNoCtrl =
+  //       TextEditingController(text: editSupplier?.contactNo);
+  //   final TextEditingController addressCtrl =
+  //       TextEditingController(text: editSupplier?.address);
+  //   final TextEditingController aadharCtrl =
+  //       TextEditingController(text: editSupplier?.adharNo);
+  //   final TextEditingController gstCtrl =
+  //       TextEditingController(text: editSupplier?.gstNo);
+  //   final TextEditingController accountCtrl =
+  //       TextEditingController(text: editSupplier?.accNo);
+  //   final TextEditingController ifscCtrl =
+  //       TextEditingController(text: editSupplier?.ifscCode);
+  //   final TextEditingController beneficiaryCtrl =
+  //       TextEditingController(text: editSupplier?.beneficiaryName);
+  //   final TextEditingController openingBalanceCtrl =
+  //       TextEditingController(text: editSupplier?.openingBalance);
+
+  //   List<MaterialData> selectedMaterials = [];
+  //   List<MaterialData> materialsList = [];
+  //   bool isMaterialsLoading = false;
+
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (dialogCtx) {
+  //       return StatefulBuilder(
+  //         builder: (dialogCtx, setDialogState) {
+  //           if (materialsList.isEmpty && !isMaterialsLoading) {
+  //             isMaterialsLoading = true;
+  //             HttpService.getMaterials().then((val) {
+  //               if (val != null && val.data != null && dialogCtx.mounted) {
+  //                 setDialogState(() {
+  //                   materialsList = val.data!;
+  //                   isMaterialsLoading = false;
+
+  //                   // Preselect materials in edit mode
+  //                   if (isEdit && editSupplier.materialId != null) {
+  //                     final ids = editSupplier.materialId!
+  //                         .split(",")
+  //                         .map((e) => e.trim())
+  //                         .where((e) => e.isNotEmpty)
+  //                         .toList();
+  //                     selectedMaterials = materialsList
+  //                         .where((m) =>
+  //                             m.materialId != null &&
+  //                             ids.contains(m.materialId!.trim()))
+  //                         .toList();
+  //                   }
+  //                 });
+  //               }
+  //             }).catchError((e) {
+  //               if (dialogCtx.mounted) {
+  //                 setDialogState(() {
+  //                   isMaterialsLoading = false;
+  //                 });
+  //               }
+  //             });
+  //           }
+
+  //           Widget _buildCustomField({
+  //             required String label,
+  //             required String hint,
+  //             required TextEditingController controller,
+  //             bool isRequired = false,
+  //             IconData? prefixIcon,
+  //             bool isMultiline = false,
+  //             TextInputType keyboardType = TextInputType.text,
+  //           }) {
+  //             return Column(
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               children: [
+  //                 Row(
+  //                   children: [
+  //                     Text(
+  //                       label,
+  //                       style: const TextStyle(
+  //                           fontSize: 13,
+  //                           fontWeight: FontWeight.bold,
+  //                           color: Color(0xFF475569)),
+  //                     ),
+  //                     if (isRequired)
+  //                       const Text(" *",
+  //                           style: TextStyle(
+  //                               color: Colors.red,
+  //                               fontWeight: FontWeight.bold)),
+  //                   ],
+  //                 ),
+  //                 const SizedBox(height: 6),
+  //                 Container(
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.white,
+  //                     borderRadius: BorderRadius.circular(10),
+  //                     border: Border.all(color: Colors.grey.shade300),
+  //                   ),
+  //                   child: TextField(
+  //                     controller: controller,
+  //                     maxLines: isMultiline ? 3 : 1,
+  //                     keyboardType: keyboardType,
+  //                     decoration: InputDecoration(
+  //                       hintText: hint,
+  //                       hintStyle: TextStyle(
+  //                           color: Colors.grey.shade400, fontSize: 13),
+  //                       prefixIcon: prefixIcon != null
+  //                           ? Icon(prefixIcon, color: Colors.grey, size: 18)
+  //                           : null,
+  //                       contentPadding: const EdgeInsets.symmetric(
+  //                           horizontal: 16, vertical: 12),
+  //                       border: InputBorder.none,
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //               ],
+  //             );
+  //           }
+
+  //           return Dialog(
+  //             shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.circular(24)),
+  //             insetPadding:
+  //                 const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+  //             child: ClipRRect(
+  //               borderRadius: BorderRadius.circular(24),
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   Container(
+  //                     padding: const EdgeInsets.symmetric(
+  //                         horizontal: 20, vertical: 20),
+  //                     decoration: const BoxDecoration(
+  //                       gradient: LinearGradient(
+  //                         colors: [Color(0xFF2a86c9), Color(0xFF1e6091)],
+  //                         begin: Alignment.topLeft,
+  //                         end: Alignment.bottomRight,
+  //                       ),
+  //                     ),
+  //                     child: Row(
+  //                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                       children: [
+  //                         Text(
+  //                           isEdit ? "Edit Supplier" : "Add Supplier",
+  //                           style: const TextStyle(
+  //                               color: Colors.white,
+  //                               fontWeight: FontWeight.bold,
+  //                               fontSize: 18),
+  //                         ),
+  //                         IconButton(
+  //                           icon: const Icon(Icons.close_rounded,
+  //                               color: Colors.white),
+  //                           onPressed: () => Navigator.pop(dialogCtx),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                   Expanded(
+  //                     child: SingleChildScrollView(
+  //                       padding: const EdgeInsets.all(20),
+  //                       child: Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           const Text(
+  //                             "Choose Material *",
+  //                             style: TextStyle(
+  //                                 fontSize: 13,
+  //                                 fontWeight: FontWeight.bold,
+  //                                 color: Color(0xFF475569)),
+  //                           ),
+  //                           const SizedBox(height: 6),
+  //                           Container(
+  //                             constraints: const BoxConstraints(minHeight: 44),
+  //                             decoration: BoxDecoration(
+  //                               color: Colors.white,
+  //                               borderRadius: BorderRadius.circular(10),
+  //                               border: Border.all(color: Colors.grey.shade300),
+  //                             ),
+  //                             child:
+  //                                 DropdownSearch<MaterialData>.multiSelection(
+  //                               items: (f, p) => materialsList,
+  //                               itemAsString: (m) => m.materialName ?? "",
+  //                               compareFn: (i, s) =>
+  //                                   i.materialId == s.materialId,
+  //                               selectedItems: selectedMaterials,
+  //                               onChanged: (val) => setDialogState(
+  //                                   () => selectedMaterials = val),
+  //                               popupProps: PopupPropsMultiSelection.menu(
+  //                                 showSearchBox: true,
+  //                                 onItemAdded: (selectedItems, addedItem) {
+  //                                   setDialogState(() {
+  //                                     selectedMaterials = selectedItems;
+  //                                   });
+  //                                 },
+  //                                 onItemRemoved: (selectedItems, removedItem) {
+  //                                   setDialogState(() {
+  //                                     selectedMaterials = selectedItems;
+  //                                   });
+  //                                 },
+  //                                 validationBuilder: (ctx, selectedItems) =>
+  //                                     const SizedBox.shrink(),
+  //                               ),
+  //                               decoratorProps: DropDownDecoratorProps(
+  //                                 decoration: InputDecoration(
+  //                                   hintText: isMaterialsLoading
+  //                                       ? "Loading materials..."
+  //                                       : "Choose Material...",
+  //                                   hintStyle: TextStyle(
+  //                                       color: Colors.grey.shade400,
+  //                                       fontSize: 13),
+  //                                   contentPadding: const EdgeInsets.symmetric(
+  //                                       horizontal: 12, vertical: 6),
+  //                                   border: InputBorder.none,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 16),
+  //                           _buildCustomField(
+  //                             label: "Supplier Name",
+  //                             hint: "Enter supplier name",
+  //                             controller: nameCtrl,
+  //                             isRequired: true,
+  //                             prefixIcon: Icons.business,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "Contact Person",
+  //                             hint: "Enter contact person",
+  //                             controller: contactPersonCtrl,
+  //                             prefixIcon: Icons.person_outline,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "Contact No",
+  //                             hint: "Enter contact phone number",
+  //                             controller: contactNoCtrl,
+  //                             isRequired: true,
+  //                             keyboardType: TextInputType.phone,
+  //                             prefixIcon: Icons.phone_android,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "Address",
+  //                             hint: "Enter physical address",
+  //                             controller: addressCtrl,
+  //                             isMultiline: true,
+  //                             prefixIcon: Icons.location_on_outlined,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "Aadhar No",
+  //                             hint: "Enter Aadhar card number",
+  //                             controller: aadharCtrl,
+  //                             keyboardType: TextInputType.number,
+  //                             prefixIcon: Icons.credit_card,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "GST No",
+  //                             hint: "Enter GST registration number",
+  //                             controller: gstCtrl,
+  //                             prefixIcon: Icons.percent,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "Account No",
+  //                             hint: "Enter bank account number",
+  //                             controller: accountCtrl,
+  //                             keyboardType: TextInputType.number,
+  //                             prefixIcon: Icons.account_balance,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "IFSC Code",
+  //                             hint: "Enter bank IFSC code",
+  //                             controller: ifscCtrl,
+  //                             prefixIcon: Icons.code,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "Beneficiary Name",
+  //                             hint: "Enter beneficiary account name",
+  //                             controller: beneficiaryCtrl,
+  //                             prefixIcon: Icons.badge_outlined,
+  //                           ),
+  //                           _buildCustomField(
+  //                             label: "Opening Balance",
+  //                             hint: "0.00",
+  //                             controller: openingBalanceCtrl,
+  //                             keyboardType:
+  //                                 const TextInputType.numberWithOptions(
+  //                                     decimal: true),
+  //                             prefixIcon: Icons.monetization_on_outlined,
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                   ),
+  //                   Container(
+  //                     padding: const EdgeInsets.all(20),
+  //                     color: const Color(0xFFF8FAFC),
+  //                     child: Row(
+  //                       mainAxisAlignment: MainAxisAlignment.end,
+  //                       children: [
+  //                         ElevatedButton(
+  //                           onPressed: () => Navigator.pop(dialogCtx),
+  //                           style: ElevatedButton.styleFrom(
+  //                             backgroundColor: Colors.grey.shade200,
+  //                             foregroundColor: Colors.grey.shade700,
+  //                             elevation: 0,
+  //                             shape: RoundedRectangleBorder(
+  //                                 borderRadius: BorderRadius.circular(12)),
+  //                             padding: const EdgeInsets.symmetric(
+  //                                 horizontal: 20, vertical: 12),
+  //                           ),
+  //                           child: const Text("Cancel",
+  //                               style: TextStyle(fontWeight: FontWeight.bold)),
+  //                         ),
+  //                         const SizedBox(width: 12),
+  //                         ElevatedButton(
+  //                           onPressed: () async {
+  //                             final name = nameCtrl.text.trim();
+  //                             final contactNo = contactNoCtrl.text.trim();
+
+  //                             if (selectedMaterials.isEmpty) {
+  //                               Common.toastMessaage(
+  //                                   "Please choose at least one material",
+  //                                   Colors.orange);
+  //                               return;
+  //                             }
+  //                             if (name.isEmpty) {
+  //                               Common.toastMessaage(
+  //                                   "Supplier name is required", Colors.orange);
+  //                               return;
+  //                             }
+  //                             if (contactNo.isEmpty) {
+  //                               Common.toastMessaage(
+  //                                   "Contact number is required",
+  //                                   Colors.orange);
+  //                               return;
+  //                             }
+  //                             if (contactNo.length != 10) {
+  //                               Common.toastMessaage(
+  //                                   "Contact number must be exactly 10 digits", Colors.orange);
+  //                               return;
+  //                             }
+  //                             final aadharNo = aadharCtrl.text.trim();
+  //                             if (aadharNo.isNotEmpty && aadharNo.length != 12) {
+  //                               Common.toastMessaage(
+  //                                   "Aadhar number must be exactly 12 digits", Colors.orange);
+  //                               return;
+  //                             }
+
+  //                             showDialog(
+  //                               context: dialogCtx,
+  //                               barrierDismissible: false,
+  //                               builder: (ctx) => const Center(
+  //                                   child: CircularProgressIndicator()),
+  //                             );
+
+  //                             try {
+  //                               final payload = {
+  //                                 if (isEdit) "id": editSupplier.id,
+  //                                 "material_id": selectedMaterials
+  //                                     .map((m) => m.materialId)
+  //                                     .join(","),
+  //                                 "supplier_name": name,
+  //                                 "contact_person":
+  //                                     contactPersonCtrl.text.trim(),
+  //                                 "contact_no": contactNo,
+  //                                 "supplier_address": addressCtrl.text.trim(),
+  //                                 "aadhar_no": aadharCtrl.text.trim(),
+  //                                 "gst_no": gstCtrl.text.trim(),
+  //                                 "account_no": accountCtrl.text.trim(),
+  //                                 "ifsc_code": ifscCtrl.text.trim(),
+  //                                 "beneficiary_name":
+  //                                     beneficiaryCtrl.text.trim(),
+  //                                 "opening_balance":
+  //                                     openingBalanceCtrl.text.trim(),
+  //                               };
+
+  //                               final response = isEdit
+  //                                   ? await HttpService.editSupplier(payload)
+  //                                   : await HttpService.addSupplier(payload);
+
+  //                               Navigator.pop(dialogCtx);
+  //                               if (response != null &&
+  //                                   (response['status'] == true ||
+  //                                       response['status'] == 'success')) {
+  //                                 Common.toastMessaage(
+  //                                   isEdit
+  //                                       ? "Supplier updated successfully"
+  //                                       : "Supplier added successfully",
+  //                                   Colors.green,
+  //                                 );
+  //                                 Navigator.pop(dialogCtx);
+  //                                 _loadSuppliers();
+  //                               } else {
+  //                                 Common.toastMessaage(
+  //                                     response?['message'] ??
+  //                                         "Failed to save supplier",
+  //                                     Colors.red);
+  //                               }
+  //                             } catch (e) {
+  //                               Navigator.pop(dialogCtx);
+  //                               Common.toastMessaage(
+  //                                   "Error saving supplier: $e", Colors.red);
+  //                             }
+  //                           },
+  //                           style: ElevatedButton.styleFrom(
+  //                             backgroundColor: const Color(0xFF2a86c9),
+  //                             foregroundColor: Colors.white,
+  //                             elevation: 0,
+  //                             shape: RoundedRectangleBorder(
+  //                                 borderRadius: BorderRadius.circular(12)),
+  //                             padding: const EdgeInsets.symmetric(
+  //                                 horizontal: 24, vertical: 12),
+  //                           ),
+  //                           child: Text(isEdit ? "Update" : "Save",
+  //                               style: const TextStyle(
+  //                                   fontWeight: FontWeight.bold)),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {

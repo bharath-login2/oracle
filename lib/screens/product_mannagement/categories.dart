@@ -268,76 +268,151 @@ class _ProductCategoriesState extends State<ProductCategories> {
         });
   }
 
+
   categoriesBottomSheet(String title, String rowId) {
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (context) {
-        return Padding(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: SingleChildScrollView(
-            child: Form(
-                key: formKey,
-                child: Container(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.green,
-                          fontSize: 20,
-                          fontStyle: FontStyle.normal,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      TextFormField(
-                        controller: category,
-                        decoration: const InputDecoration(
-                            labelText: 'Category *',
-                            prefixIcon:
-                                Icon(Icons.category, color: Colors.grey),
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.grey),
-                            ),
-                            labelStyle: TextStyle(color: Colors.grey)),
-                      ),
-                      const SizedBox(height: 20.0),
-                      Container(
-                        height: 40,
-                        width: double.maxFinite,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF3375e0),
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
-                        child: RawMaterialButton(
-                          onPressed: () async {
-                            if (formKey.currentState!.validate()) {
-                              if (title == 'Add Category') {
-                                postProductCategory();
-                              } else {
-                                updateProductCategory(rowId);
-                              }
-                              category.clear();
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: const Text("Submit",
-                              style: TextStyle(color: Colors.white)),
-                        ),
-                      )
-                    ],
+  showModalBottomSheet(
+    isScrollControlled: true,
+    context: context,
+    builder: (context) {
+      return Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Container(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontSize: 20,
+                      fontStyle: FontStyle.normal,
+                    ),
                   ),
-                )),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: category,
+                    decoration: const InputDecoration(
+                        labelText: 'Category *',
+                        prefixIcon: Icon(Icons.category, color: Colors.grey),
+                        border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        labelStyle: TextStyle(color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 20.0),
+                  Container(
+                    height: 40,
+                    width: double.maxFinite,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF3375e0),
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    child: RawMaterialButton(
+                      onPressed: () async {
+                        if (formKey.currentState!.validate()) {
+                          if (title == 'Add Category') {
+                            await postProductCategory();
+                            Navigator.pop(context, {
+                              'name': category.text,
+                           //  'id': postResponse?.data?.id ?? ''
+                            });
+                          } else {
+                            await updateProductCategory(rowId);
+                            Navigator.pop(context);
+                          }
+                          category.clear();
+                        }
+                      },
+                      child: const Text("Submit",
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                  )
+                ],
+              ),
+            ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
+  // categoriesBottomSheet(String title, String rowId) {
+  //   showModalBottomSheet(
+  //     isScrollControlled: true,
+  //     context: context,
+  //     builder: (context) {
+  //       return Padding(
+  //         padding:
+  //             EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+  //         child: SingleChildScrollView(
+  //           child: Form(
+  //               key: formKey,
+  //               child: Container(
+  //                 padding: const EdgeInsets.all(20.0),
+  //                 child: Column(
+  //                   mainAxisSize: MainAxisSize.min,
+  //                   crossAxisAlignment: CrossAxisAlignment.stretch,
+  //                   children: [
+  //                     Text(
+  //                       title,
+  //                       style: const TextStyle(
+  //                         color: Colors.green,
+  //                         fontSize: 20,
+  //                         fontStyle: FontStyle.normal,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(
+  //                       height: 20,
+  //                     ),
+  //                     TextFormField(
+  //                       controller: category,
+  //                       decoration: const InputDecoration(
+  //                           labelText: 'Category *',
+  //                           prefixIcon:
+  //                               Icon(Icons.category, color: Colors.grey),
+  //                           border: OutlineInputBorder(),
+  //                           focusedBorder: OutlineInputBorder(
+  //                             borderSide: BorderSide(color: Colors.grey),
+  //                           ),
+  //                           labelStyle: TextStyle(color: Colors.grey)),
+  //                     ),
+  //                     const SizedBox(height: 20.0),
+  //                     Container(
+  //                       height: 40,
+  //                       width: double.maxFinite,
+  //                       decoration: const BoxDecoration(
+  //                         color: Color(0xFF3375e0),
+  //                         borderRadius: BorderRadius.all(Radius.circular(8)),
+  //                       ),
+  //                       child: RawMaterialButton(
+  //                         onPressed: () async {
+  //                           if (formKey.currentState!.validate()) {
+  //                             if (title == 'Add Category') {
+  //                               postProductCategory();
+  //                             } else {
+  //                               updateProductCategory(rowId);
+  //                             }
+  //                             category.clear();
+  //                             Navigator.pop(context);
+  //                           }
+  //                         },
+  //                         child: const Text("Submit",
+  //                             style: TextStyle(color: Colors.white)),
+  //                       ),
+  //                     )
+  //                   ],
+  //                 ),
+  //               )),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 }

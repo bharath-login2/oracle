@@ -26,6 +26,7 @@ import 'package:dropdown_search/dropdown_search.dart';
 import 'package:login2/models/lead_management/getPurchaseRequestDetailsModel.dart';
 
 import 'package:login2/screens/purchase/purchaseBillPage.dart';
+import 'package:simple_barcode_scanner/simple_barcode_scanner.dart';
 
 class PurchaseOrderPage extends StatefulWidget {
   final String token;
@@ -1199,34 +1200,77 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                   ),
                                   child: Column(
                                     children: [
-                                      DropdownSearch<MaterialData>(
-                                        compareFn: (i, s) =>
-                                            i?.materialId == s?.materialId,
-                                        items: (f, p) => dialogMaterials
-                                            .where((m) =>
-                                                m.materialName
-                                                    ?.toLowerCase()
-                                                    .contains(
-                                                        f.toLowerCase()) ??
-                                                true)
-                                            .toList(),
-                                        itemAsString: (m) =>
-                                            m.materialName ?? "",
-                                        decoratorProps:
-                                            const DropDownDecoratorProps(
-                                          decoration: InputDecoration(
-                                            hintText: "Search material",
-                                            border: OutlineInputBorder(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(15))),
-                                            prefixIcon: Icon(
-                                                Icons.inventory_2_outlined),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: DropdownSearch<MaterialData>(
+                                              compareFn: (i, s) => i?.materialId == s?.materialId,
+                                              items: (f, p) => dialogMaterials
+                                                  .where((m) => m.materialName?.toLowerCase().contains(f.toLowerCase()) ?? true)
+                                                  .toList(),
+                                              itemAsString: (m) => m.materialName ?? "",
+                                              decoratorProps: const DropDownDecoratorProps(
+                                                decoration: InputDecoration(
+                                                  hintText: "Search material",
+                                                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(15))),
+                                                  prefixIcon: Icon(Icons.inventory_2_outlined),
+                                                ),
+                                              ),
+                                              popupProps: const PopupProps.menu(showSearchBox: true),
+                                              onChanged: (val) => setDialogState(() => selectedMaterial = val),
+                                              selectedItem: selectedMaterial,
+                                            ),
                                           ),
-                                        ),
-                                        popupProps: const PopupProps.menu(
-                                            showSearchBox: true),
-                                        onChanged: (val) => setDialogState(
-                                            () => selectedMaterial = val),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            height: 48,
+                                            width: 48,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF2a86c9),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: IconButton(
+                                              onPressed: () async {
+                                                var res = await Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => const SimpleBarcodeScannerPage(),
+                                                  ),
+                                                );
+                                                if (res is String && res != '-1') {
+                                                  Common.showProgressDialog(context, "Fetching product...");
+                                                  final productRes = await HttpService.getQrcodeproductDetails(res);
+                                                  Navigator.pop(context);
+                                                  if (productRes != null && productRes.data != null) {
+                                                    final productData = productRes.data!;
+                                                    setDialogState(() {
+                                                      int existingIndex = cartItems.indexWhere((item) => item.material.materialId == productData.id);
+                                                      if (existingIndex != -1) {
+                                                        cartItems[existingIndex].quantity += 1;
+                                                        cartItems[existingIndex].quantityController.text = cartItems[existingIndex].quantity == cartItems[existingIndex].quantity.toInt() ? cartItems[existingIndex].quantity.toInt().toString() : cartItems[existingIndex].quantity.toString();
+                                                      } else {
+                                                        cartItems.add(CartItem(
+                                                          material: MaterialData(
+                                                            materialId: productData.id,
+                                                            materialName: productData.productName,
+                                                            unitName: productData.unitName,
+                                                            unitPrice: productData.purchaseAmount ?? productData.sellingPrice,
+                                                            gstPercentage: productData.taxPercent,
+                                                          ),
+                                                          unitPrice: double.tryParse(productData.purchaseAmount ?? productData.sellingPrice ?? "0") ?? 0.0,
+                                                        ));
+                                                      }
+                                                    });
+                                                  } else {
+                                                    Common.toastMessaage("Product not found", Colors.red);
+                                                  }
+                                                }
+                                              },
+                                              icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                                              tooltip: 'Scan Barcode',
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 16),
                                       SizedBox(
@@ -1239,7 +1283,7 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                                   material: selectedMaterial!,
                                                   unitPrice: double.tryParse(
                                                           selectedMaterial!
-                                                                  .unitPrice ??
+                                                                  .purchasePrice ??
                                                               "0") ??
                                                       0.0,
                                                 ));

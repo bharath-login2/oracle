@@ -827,8 +827,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
           leadType: widget.leadType,
           autoExpandFollowup: autoExpandFollowup,
           onDataChanged: () {
-            _updateSingleLead(
-                index, displayItem.callMasterId, _searchQuery.isNotEmpty);
+            _refreshList();
           },
         ),
       );

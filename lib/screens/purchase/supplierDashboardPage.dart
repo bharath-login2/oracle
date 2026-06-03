@@ -278,6 +278,12 @@ class _SupplierDashboardPageState extends State<SupplierDashboardPage>
                     "GST Number",
                     widget.supplier.gstNo ?? "N/A",
                     const Color(0xFF0EA5E9)),
+                    const SizedBox(height: 12),
+                _buildProfileDetailRow(
+                    Icons.person_outline,
+                    "Inter or Other state",
+                    widget.supplier.supplierType ?? "N/A",
+                    const Color(0xFF0EA5E9)),
               ],
             ),
           ),

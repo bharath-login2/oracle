@@ -46,6 +46,7 @@ class SupplierData {
   String? openingBalance;
   String? balanceAmt;
   String? companyId;
+   String? supplierType;
 
   SupplierData({
     this.id,
@@ -62,6 +63,7 @@ class SupplierData {
     this.openingBalance,
     this.balanceAmt,
     this.companyId,
+    this.supplierType,
   });
 
   SupplierData.fromJson(Map<String, dynamic> json) {
@@ -79,6 +81,7 @@ class SupplierData {
     openingBalance = json['opening_balance']?.toString();
     balanceAmt = json['balance_amt']?.toString();
     companyId = json['company_id']?.toString();
+    supplierType = json['supplier_type'];
   }
 
   Map<String, dynamic> toJson() {
@@ -97,6 +100,7 @@ class SupplierData {
     data['opening_balance'] = openingBalance;
     data['balance_amt'] = balanceAmt;
     data['company_id'] = companyId;
+    data['supplier_type'] = supplierType;
     return data;
   }
 

@@ -89,6 +89,8 @@ class BillDetails {
   String? remarks;
   String? billFile;
   String? tdsAmount;
+   String? otherAmt;
+    String? discountAmt;
   String? invoiceDate;
   String? taxType;
   String? billAddress;
@@ -114,6 +116,8 @@ class BillDetails {
     this.paymentMethod,
     this.remarks,
     this.billFile,
+    this.otherAmt,
+    this.discountAmt,
     this.tdsAmount,
     this.invoiceDate,
     this.taxType,
@@ -142,6 +146,8 @@ class BillDetails {
     remarks = json['remarks'];
     billFile = json['bill_file'];
     tdsAmount = json['tds_amount'];
+    otherAmt = json['other_amt'];
+    discountAmt = json['discount'];
     invoiceDate = json['invoice_date'];
     taxType = json['tax_type'];
     billAddress = json['bill_address'];
@@ -170,6 +176,8 @@ class BillDetails {
     data['remarks'] = remarks;
     data['bill_file'] = billFile;
     data['tds_amount'] = tdsAmount;
+    data['other_amt'] = otherAmt;
+    data['discount'] = discountAmt;
     data['invoice_date'] = invoiceDate;
     data['tax_type'] = taxType;
     data['bill_address'] = billAddress;

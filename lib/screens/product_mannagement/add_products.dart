@@ -357,6 +357,7 @@ class _AddProductsState extends State<AddProducts> {
     getProductCategory();
     getProductTypes();
     getUnitsList();
+    checkStock = true;
     super.initState();
   }
 
@@ -461,58 +462,58 @@ class _AddProductsState extends State<AddProducts> {
                           ),
                         ],
                       ),
-                       const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: _buildTextField(
-                          controller: barcodeController,
-                          label: "Barcode value",
-                          icon: Icons.qr_code,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Transform.translate(
-                        offset: const Offset(0, 24),
-                        child: Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: const Color(0xFF2a86c9),
-                          ),
-                          child: IconButton(
-                            onPressed: () async {
-                              var res = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SimpleBarcodeScannerPage(),
-                                ),
-                              );
-                              if (res is String && res != '-1') {
-                                setState(() {
-                                  barcodeController.text = res;
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.qr_code_scanner,
-                                color: Colors.white, size: 24),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFF2a86c9),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
-                              minimumSize: const Size(50, 50),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              controller: barcodeController,
+                              label: "Barcode value",
+                              icon: Icons.qr_code,
                             ),
-                            tooltip: "Scan Barcode",
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Transform.translate(
+                            offset: const Offset(0, 24),
+                            child: Container(
+                              height: 50,
+                              width: 50,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                color: const Color(0xFF2a86c9),
+                              ),
+                              child: IconButton(
+                                onPressed: () async {
+                                  var res = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const SimpleBarcodeScannerPage(),
+                                    ),
+                                  );
+                                  if (res is String && res != '-1') {
+                                    setState(() {
+                                      barcodeController.text = res;
+                                    });
+                                  }
+                                },
+                                icon: const Icon(Icons.qr_code_scanner,
+                                    color: Colors.white, size: 24),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2a86c9),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8)),
+                                  minimumSize: const Size(50, 50),
+                                ),
+                                tooltip: "Scan Barcode",
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -528,8 +529,7 @@ class _AddProductsState extends State<AddProducts> {
                               icon: Icons.qr_code_outlined,
                               keyboardType: TextInputType.number,
                               inputFormatters: [
-                                FilteringTextInputFormatter
-                                    .digitsOnly, 
+                                FilteringTextInputFormatter.digitsOnly,
                               ],
                             ),
                           ),
@@ -1286,46 +1286,108 @@ class _AddProductsState extends State<AddProducts> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Checkbox(
-            value: addPublish,
-            onChanged: (val) {
+          IconButton(
+            icon: Icon(
+              addPublish
+                  ? Icons.remove_circle_outline
+                  : Icons.add_circle_outline,
+              color: addPublish ? Colors.red : const Color(0xFF2a86c9),
+              size: 28,
+            ),
+            onPressed: () {
               setState(() {
-                addPublish = val!;
+                addPublish = !addPublish;
+                if (!addPublish) {
+                  // Reset values when closing
+                  selectedStatus = "Published";
+                  selectedVisibility = "Public";
+                }
               });
             },
-            activeColor: const Color(0xFF2a86c9),
           ),
-          const Text("Add Publish",
-              style: TextStyle(fontWeight: FontWeight.w600)),
+          // const SizedBox(width: 4),
+          // Text(
+          //   addPublish ? "Hide Publish" : "Add Publish",
+          //   style: TextStyle(
+          //     fontWeight: FontWeight.w600,
+          //     color: addPublish ? Colors.red : const Color(0xFF2a86c9),
+          //   ),
+          // ),
         ],
       ),
-      children: [
-        if (addPublish) ...[
-          _buildDropdownField(
-            label: "Status",
-            value: selectedStatus,
-            items: ["Published", "Draft"],
-            onChanged: (val) {
-              setState(() {
-                selectedStatus = val!;
-              });
-            },
-          ),
-          const SizedBox(height: 16),
-          _buildDropdownField(
-            label: "Visibility",
-            value: selectedVisibility,
-            items: ["Public", "Private"],
-            onChanged: (val) {
-              setState(() {
-                selectedVisibility = val!;
-              });
-            },
-          ),
-        ]
-      ],
+      children: addPublish
+          ? [
+              _buildDropdownField(
+                label: "Status",
+                value: selectedStatus,
+                items: ["Published", "Draft"],
+                onChanged: (val) {
+                  setState(() {
+                    selectedStatus = val!;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildDropdownField(
+                label: "Visibility",
+                value: selectedVisibility,
+                items: ["Public", "Private"],
+                onChanged: (val) {
+                  setState(() {
+                    selectedVisibility = val!;
+                  });
+                },
+              ),
+            ]
+          : [],
     );
   }
+  // Widget _buildPublishSection() {
+  //   return _buildSectionCard(
+  //     title: "Publish",
+  //     trailing: Row(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Checkbox(
+  //           value: addPublish,
+  //           onChanged: (val) {
+  //             setState(() {
+  //               addPublish = val!;
+  //             });
+  //           },
+  //           activeColor: const Color(0xFF2a86c9),
+  //         ),
+  //         const Text("Add Publish",
+  //             style: TextStyle(fontWeight: FontWeight.w600)),
+  //       ],
+  //     ),
+  //     children: [
+  //       if (addPublish) ...[
+  //         _buildDropdownField(
+  //           label: "Status",
+  //           value: selectedStatus,
+  //           items: ["Published", "Draft"],
+  //           onChanged: (val) {
+  //             setState(() {
+  //               selectedStatus = val!;
+  //             });
+  //           },
+  //         ),
+  //         const SizedBox(height: 16),
+  //         _buildDropdownField(
+  //           label: "Visibility",
+  //           value: selectedVisibility,
+  //           items: ["Public", "Private"],
+  //           onChanged: (val) {
+  //             setState(() {
+  //               selectedVisibility = val!;
+  //             });
+  //           },
+  //         ),
+  //       ]
+  //     ],
+  //   );
+  // }
 
   Widget _buildSectionCard(
       {required String title,
@@ -1364,73 +1426,72 @@ class _AddProductsState extends State<AddProducts> {
     );
   }
 
-
   Widget _buildTextField({
-  required TextEditingController controller,
-  required String label,
-  required IconData icon,
-  TextInputType keyboardType = TextInputType.text,
-  int maxLines = 1,
-  bool readOnly = false,
-  Color? fillColor,
-  ValueChanged<String>? onChanged,
-  FormFieldValidator<String>? validator,
-  Widget? actionWidget,
-  List<TextInputFormatter>? inputFormatters, // Add this parameter
-}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _buildLabel(label),
-      const SizedBox(height: 8),
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: controller,
-              keyboardType: keyboardType,
-              maxLines: maxLines,
-              readOnly: readOnly,
-              onChanged: onChanged,
-              validator: validator,
-              inputFormatters: inputFormatters, // Add this line
-              decoration: InputDecoration(
-                hintText: label.replaceAll('*', '').trim(),
-                prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
-                filled: fillColor != null,
-                fillColor: fillColor,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: Color(0xFF2a86c9), width: 2),
-                ),
-                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                errorMaxLines: 2,
-                errorStyle: const TextStyle(
-                  fontSize: 11,
-                  height: 1.2,
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    bool readOnly = false,
+    Color? fillColor,
+    ValueChanged<String>? onChanged,
+    FormFieldValidator<String>? validator,
+    Widget? actionWidget,
+    List<TextInputFormatter>? inputFormatters, // Add this parameter
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel(label),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                keyboardType: keyboardType,
+                maxLines: maxLines,
+                readOnly: readOnly,
+                onChanged: onChanged,
+                validator: validator,
+                inputFormatters: inputFormatters, // Add this line
+                decoration: InputDecoration(
+                  hintText: label.replaceAll('*', '').trim(),
+                  prefixIcon: Icon(icon, size: 20, color: Colors.grey[600]),
+                  filled: fillColor != null,
+                  fillColor: fillColor,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFF2a86c9), width: 2),
+                  ),
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  errorMaxLines: 2,
+                  errorStyle: const TextStyle(
+                    fontSize: 11,
+                    height: 1.2,
+                  ),
                 ),
               ),
             ),
-          ),
-          if (actionWidget != null) ...[
-            const SizedBox(width: 8),
-            actionWidget,
+            if (actionWidget != null) ...[
+              const SizedBox(width: 8),
+              actionWidget,
+            ],
           ],
-        ],
-      ),
-    ],
-  );
-}
+        ),
+      ],
+    );
+  }
 
   // Widget _buildTextField({
   //   required TextEditingController controller,
