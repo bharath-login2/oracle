@@ -15645,7 +15645,8 @@ class HttpService {
     return null;
   }
 
-  static Future<dynamic> postPurchaseBillPayment(Map<String, dynamic> data) async {
+  static Future<dynamic> postPurchaseBillPayment(
+      Map<String, dynamic> data) async {
     final token = await Common.getSharedPref("token");
     data['token'] = token;
     try {
@@ -16147,12 +16148,12 @@ class HttpService {
 
   static Future<DeletePurchaseOrderEditProductModel?>
       deletePurchaseOrderRealProduct({
-   // required String productId,
+    // required String productId,
     required String purchaseOrderId,
   }) async {
     final token = await Common.getSharedPref("token");
     final data = {
-    //  'item_id': productId,
+      //  'item_id': productId,
       'item_id': purchaseOrderId,
       'token': token,
     };
@@ -16300,8 +16301,7 @@ class HttpService {
     return null;
   }
 
-
-    static Future<UnitResponse?> getUnits() async {
+  static Future<UnitResponse?> getUnits() async {
     final token = await Common.getSharedPref("token");
     final data = {
       'token': token,
@@ -16340,8 +16340,7 @@ class HttpService {
     return null;
   }
 
-
-     static Future<SupplierDetailsResponse?> getSuppliersDetails() async {
+  static Future<SupplierDetailsResponse?> getSuppliersDetails() async {
     final token = await Common.getSharedPref("token");
     final data = {
       'token': token,
@@ -16397,8 +16396,8 @@ class HttpService {
     return null;
   }
 
-
-   static Future<QrCodeProductResponse?> getQrcodeproductDetails(String barCode) async {
+  static Future<QrCodeProductResponse?> getQrcodeproductDetails(
+      String barCode) async {
     final token = await Common.getSharedPref("token");
     final data = {
       'token': token,
@@ -16418,8 +16417,8 @@ class HttpService {
     return null;
   }
 
-
-     static Future<GetCheckStockMaterialsResponse?> getCheckStockMaterial(String materialId) async {
+  static Future<GetCheckStockMaterialsResponse?> getCheckStockMaterial(
+      String materialId) async {
     final token = await Common.getSharedPref("token");
     final data = {
       'token': token,
@@ -16439,8 +16438,8 @@ class HttpService {
     return null;
   }
 
-
-      static Future<SupplierDashboardResponse?> getSupplierDashboard(String supplierId) async {
+  static Future<SupplierDashboardResponse?> getSupplierDashboard(
+      String supplierId) async {
     final token = await Common.getSharedPref("token");
     final data = {
       'token': token,
@@ -16460,7 +16459,8 @@ class HttpService {
     return null;
   }
 
-   static Future<SupplierLedgerResponse?> getSupplierLedger(String supplierId) async {
+  static Future<SupplierLedgerResponse?> getSupplierLedger(
+      String supplierId) async {
     final token = await Common.getSharedPref("token");
     final data = {
       'token': token,
@@ -16479,5 +16479,4 @@ class HttpService {
     }
     return null;
   }
-
 }

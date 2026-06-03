@@ -280,61 +280,61 @@ class _SupplierManagementPageState extends State<SupplierManagementPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Choose Material *",
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF475569)),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            constraints: const BoxConstraints(minHeight: 44),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child:
-                                DropdownSearch<MaterialData>.multiSelection(
-                              items: (f, p) => materialsList,
-                              itemAsString: (m) => m.materialName ?? "",
-                              compareFn: (i, s) =>
-                                  i.materialId == s.materialId,
-                              selectedItems: selectedMaterials,
-                              onChanged: (val) => setDialogState(
-                                  () => selectedMaterials = val),
-                              popupProps: PopupPropsMultiSelection.menu(
-                                showSearchBox: true,
-                                onItemAdded: (selectedItems, addedItem) {
-                                  setDialogState(() {
-                                    selectedMaterials = selectedItems;
-                                  });
-                                },
-                                onItemRemoved: (selectedItems, removedItem) {
-                                  setDialogState(() {
-                                    selectedMaterials = selectedItems;
-                                  });
-                                },
-                                validationBuilder: (ctx, selectedItems) =>
-                                    const SizedBox.shrink(),
-                              ),
-                              decoratorProps: DropDownDecoratorProps(
-                                decoration: InputDecoration(
-                                  hintText: isMaterialsLoading
-                                      ? "Loading materials..."
-                                      : "Choose Material...",
-                                  hintStyle: TextStyle(
-                                      color: Colors.grey.shade400,
-                                      fontSize: 13),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  border: InputBorder.none,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
+                          // const Text(
+                          //   "Choose Material *",
+                          //   style: TextStyle(
+                          //       fontSize: 13,
+                          //       fontWeight: FontWeight.bold,
+                          //       color: Color(0xFF475569)),
+                          // ),
+                          // const SizedBox(height: 6),
+                          // Container(
+                          //   constraints: const BoxConstraints(minHeight: 44),
+                          //   decoration: BoxDecoration(
+                          //     color: Colors.white,
+                          //     borderRadius: BorderRadius.circular(10),
+                          //     border: Border.all(color: Colors.grey.shade300),
+                          //   ),
+                          //   child:
+                          //       DropdownSearch<MaterialData>.multiSelection(
+                          //     items: (f, p) => materialsList,
+                          //     itemAsString: (m) => m.materialName ?? "",
+                          //     compareFn: (i, s) =>
+                          //         i.materialId == s.materialId,
+                          //     selectedItems: selectedMaterials,
+                          //     onChanged: (val) => setDialogState(
+                          //         () => selectedMaterials = val),
+                          //     popupProps: PopupPropsMultiSelection.menu(
+                          //       showSearchBox: true,
+                          //       onItemAdded: (selectedItems, addedItem) {
+                          //         setDialogState(() {
+                          //           selectedMaterials = selectedItems;
+                          //         });
+                          //       },
+                          //       onItemRemoved: (selectedItems, removedItem) {
+                          //         setDialogState(() {
+                          //           selectedMaterials = selectedItems;
+                          //         });
+                          //       },
+                          //       validationBuilder: (ctx, selectedItems) =>
+                          //           const SizedBox.shrink(),
+                          //     ),
+                          //     decoratorProps: DropDownDecoratorProps(
+                          //       decoration: InputDecoration(
+                          //         hintText: isMaterialsLoading
+                          //             ? "Loading materials..."
+                          //             : "Choose Material...",
+                          //         hintStyle: TextStyle(
+                          //             color: Colors.grey.shade400,
+                          //             fontSize: 13),
+                          //         contentPadding: const EdgeInsets.symmetric(
+                          //             horizontal: 12, vertical: 6),
+                          //         border: InputBorder.none,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 16),
                           _buildCustomField(
                             label: "Supplier Name",
                             hint: "Enter supplier name",
@@ -496,12 +496,12 @@ class _SupplierManagementPageState extends State<SupplierManagementPage> {
                             final name = nameCtrl.text.trim();
                             final contactNo = contactNoCtrl.text.trim();
 
-                            if (selectedMaterials.isEmpty) {
-                              Common.toastMessaage(
-                                  "Please choose at least one material",
-                                  Colors.orange);
-                              return;
-                            }
+                            // if (selectedMaterials.isEmpty) {
+                            //   Common.toastMessaage(
+                            //       "Please choose at least one material",
+                            //       Colors.orange);
+                            //   return;
+                            // }
                             if (name.isEmpty) {
                               Common.toastMessaage(
                                   "Supplier name is required", Colors.orange);

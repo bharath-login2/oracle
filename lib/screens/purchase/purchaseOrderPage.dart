@@ -1096,16 +1096,16 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
-                                _buildInputLabelField(
-                                  label: "Billing Address*",
-                                  child: TextField(
-                                    controller: addressController,
-                                    maxLines: 2,
-                                    decoration: _inputDecoration(
-                                        "Enter full billing address..."),
-                                  ),
-                                ),
+                                // const SizedBox(height: 16),
+                                // _buildInputLabelField(
+                                //   label: "Billing Address*",
+                                //   child: TextField(
+                                //     controller: addressController,
+                                //     maxLines: 2,
+                                //     decoration: _inputDecoration(
+                                //         "Enter full billing address..."),
+                                //   ),
+                                // ),
                                 const Divider(height: 40),
                                 Row(
                                   mainAxisAlignment:
@@ -1694,17 +1694,16 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                 if (selectedSupplier == null) {
                                   Common.toastMessaage(
                                       "Please select a supplier", Colors.red);
-
                                   return;
                                 }
 
-                                if (addressController.text.trim().isEmpty) {
-                                  Common.toastMessaage(
-                                      "Please enter billing address",
-                                      Colors.red);
+                                // if (addressController.text.trim().isEmpty) {
+                                //   Common.toastMessaage(
+                                //       "Please enter billing address",
+                                //       Colors.red);
 
-                                  return;
-                                }
+                                //   return;
+                                // }
 
                                 if (cartItems.isEmpty) {
                                   Common.toastMessaage(
@@ -1713,7 +1712,6 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
 
                                   return;
                                 }
-
                                 showDialog(
                                   context: dialogContext,
                                   barrierDismissible: false,
@@ -1721,25 +1719,18 @@ class _PurchaseOrderPageState extends State<PurchaseOrderPage> {
                                     child: CircularProgressIndicator(),
                                   ),
                                 );
-
                                 try {
                                   Map<String, dynamic> postData = {};
-
                                   postData['order_date'] =
                                       DateFormat('yyyy-MM-dd')
                                           .format(orderDate);
-
                                   postData['supplier_id'] =
                                       selectedSupplier!.supplierId;
-
                                   postData['ref_no'] =
                                       refNoController.text.trim();
-
                                   postData['address'] =
                                       addressController.text.trim();
-
                                   List<Map<String, dynamic>> itemsList = [];
-
                                   for (var item in cartItems) {
                                     itemsList.add({
                                       'material_id': item.material.materialId,

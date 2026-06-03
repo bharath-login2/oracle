@@ -537,11 +537,11 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                   onPressed: () =>
                                       _showAddBillDialog(editBill: bill),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline,
-                                      color: Colors.red, size: 20),
-                                  onPressed: () => _confirmDelete(bill),
-                                ),
+                                // IconButton(
+                                //   icon: const Icon(Icons.delete_outline,
+                                //       color: Colors.red, size: 20),
+                                //   onPressed: () => _confirmDelete(bill),
+                                // ),
                               ],
                             ),
                           ],
@@ -1793,49 +1793,49 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
-                                _buildInputLabelField(
-                                  label: "Bill Address",
-                                  child: TextField(
-                                    controller: billAddressController,
-                                    maxLines: 3,
-                                    decoration: InputDecoration(
-                                      hintText: "Enter bill address",
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
-                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                      fillColor: Colors.white,
-                                      filled: true,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                _buildInputLabelField(
-                                  label: "Tax Type",
-                                  child: Row(
-                                    children: [
-                                      Radio<String>(
-                                        value: 'Intrastate',
-                                        groupValue: taxType,
-                                        activeColor: const Color(0xFF2a86c9),
-                                        onChanged: (val) {
-                                          if (val != null) setDialogState(() => taxType = val);
-                                        },
-                                      ),
-                                      const Text("Intrastate"),
-                                      const SizedBox(width: 20),
-                                      Radio<String>(
-                                        value: 'Interstate',
-                                        groupValue: taxType,
-                                        activeColor: const Color(0xFF2a86c9),
-                                        onChanged: (val) {
-                                          if (val != null) setDialogState(() => taxType = val);
-                                        },
-                                      ),
-                                      const Text("Interstate"),
-                                    ],
-                                  ),
-                                ),
+                                // const SizedBox(height: 16),
+                                // _buildInputLabelField(
+                                //   label: "Bill Address",
+                                //   child: TextField(
+                                //     controller: billAddressController,
+                                //     maxLines: 3,
+                                //     decoration: InputDecoration(
+                                //       hintText: "Enter bill address",
+                                //       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                //       enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                //       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                //       fillColor: Colors.white,
+                                //       filled: true,
+                                //     ),
+                                //   ),
+                                // ),
+                                // const SizedBox(height: 16),
+                                // _buildInputLabelField(
+                                //   label: "Tax Type",
+                                //   child: Row(
+                                //     children: [
+                                //       Radio<String>(
+                                //         value: 'Intrastate',
+                                //         groupValue: taxType,
+                                //         activeColor: const Color(0xFF2a86c9),
+                                //         onChanged: (val) {
+                                //           if (val != null) setDialogState(() => taxType = val);
+                                //         },
+                                //       ),
+                                //       const Text("Intrastate"),
+                                //       const SizedBox(width: 20),
+                                //       Radio<String>(
+                                //         value: 'Interstate',
+                                //         groupValue: taxType,
+                                //         activeColor: const Color(0xFF2a86c9),
+                                //         onChanged: (val) {
+                                //           if (val != null) setDialogState(() => taxType = val);
+                                //         },
+                                //       ),
+                                //       const Text("Interstate"),
+                                //     ],
+                                //   ),
+                                // ),
                                 const SizedBox(height: 30),
                                 const Text("ADD ITEMS TO CART",
                                     style: TextStyle(
