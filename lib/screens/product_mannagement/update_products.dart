@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -53,6 +53,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
   TextEditingController freeService = TextEditingController();
   TextEditingController paidService = TextEditingController();
   List<TextEditingController> complaintControllers = [];
+  TextEditingController rentalPrice = TextEditingController();
   List<String?> selectedComplaintTypes = [];
   List<String> complaintTypeOptions = [
     "Complaint Type",
@@ -61,7 +62,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
     "Warranty Issue",
     "Technical Issue"
   ];
-
+  
   List<UnitData> unitList = [];
   List<UnitData> filteredUnits = [];
   bool isUnitsLoading = false;
@@ -76,7 +77,9 @@ class _UpdateProductsState extends State<UpdateProducts> {
   TextEditingController serviceNoOfDays = TextEditingController();
   TextEditingController serviceMonthDays = TextEditingController();
   TextEditingController serviceYearDays = TextEditingController();
-
+  int? productId;
+  String? barcodeError;
+  bool isBarcodeDuplicate = false;
   List<String> serviceCycles = [
     "Daily",
     "N Days",
@@ -188,25 +191,36 @@ class _UpdateProductsState extends State<UpdateProducts> {
           d.publishStatus.isNotEmpty ? d.publishStatus : "Published";
       selectedVisibility = d.visibility.isNotEmpty ? d.visibility : "Public";
       addPublish = d.publishStatus.isNotEmpty;
+      purchasePrice.text = d.purchasePrice;
 
-      // Pipeline handling
-      if (d.pipelineName.isNotEmpty) {
-        pipelineControllers =
-            d.pipelineName.map((e) => TextEditingController(text: e)).toList();
-      } else {
-        pipelineControllers = [TextEditingController()];
-      }
+      selectedProductType =
+          d.productType.isNotEmpty ? d.productType : null;
+
+      rentalPrice.text = d.rentalPrice;
+
+      // Set correct value based on product type
+      sellingPrice.text = selectedProductType == "Rental"
+          ? d.rentalPrice
+          : d.sellingPrice;
+            // Pipeline handling
+            if (d.pipelineName.isNotEmpty) {
+              pipelineControllers =
+                  d.pipelineName.map((e) => TextEditingController(text: e)).toList();
+            } else {
+              pipelineControllers = [TextEditingController()];
+            }
 
       // Complaints handling
-      if (d.complaintType.isNotEmpty) {
-        complaintControllers = d.complaintType
-            .map((e) => TextEditingController(text: e.remark))
-            .toList();
-        selectedComplaintTypes = d.complaintType.map((e) => e.type).toList();
-      } else {
-        complaintControllers = [TextEditingController()];
-        selectedComplaintTypes = ["Complaint Type"];
-      }
+    if (d.complaintType.isNotEmpty) {
+      complaintControllers = d.complaintType
+          .map((e) => TextEditingController(text: e))
+          .toList();
+
+      selectedComplaintTypes = List<String>.from(d.complaintType);
+    } else {
+      complaintControllers = [TextEditingController()];
+      selectedComplaintTypes = ["Complaint Type"];
+    }
 
       getProductSubCategory();
       setState(() {
@@ -244,7 +258,31 @@ class _UpdateProductsState extends State<UpdateProducts> {
       setState(() {});
     }
   }
+  Future<void> checkBarcodeValidation() async {
+  if (barcodeController.text.trim().isEmpty) {
+    setState(() {
+      barcodeError = null;
+      isBarcodeDuplicate = false;
+    });
+    return;
+  }
 
+  final result = await HttpService.checkBarcodeDuplicate(
+    barcodeController.text.trim(),
+    "0",
+  );
+
+  setState(() {
+    if (result != null && result.duplicate == true) {
+      barcodeError = result.message ?? "Barcode already exists";
+      isBarcodeDuplicate = true;
+    } else {
+      barcodeError = null;
+      isBarcodeDuplicate = false;
+    }
+  });
+}
+  
   void filterCategories(String query) {
     if (categories != null) {
       setState(() {
@@ -557,56 +595,113 @@ class _UpdateProductsState extends State<UpdateProducts> {
                             ),
                              const SizedBox(height: 16),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _buildTextField(
-                                controller: barcodeController,
-                                label: "Barcode value",
-                                icon: Icons.qr_code,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Transform.translate(
-                              offset: const Offset(0, 24),
-                              child: Container(
-                                height: 50,
-                                width: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: const Color(0xFF2a86c9),
-                                ),
-                                child: IconButton(
-                                  onPressed: () async {
-                                    var res = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const SimpleBarcodeScannerPage(),
-                                      ),
-                                    );
-                                    if (res is String && res != '-1') {
-                                      setState(() {
-                                        barcodeController.text = res;
-                                      });
-                                    }
-                                  },
-                                  icon: const Icon(Icons.qr_code_scanner,
-                                      color: Colors.white, size: 24),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2a86c9),
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8)),
-                                    minimumSize: const Size(50, 50),
-                                  ),
-                                  tooltip: "Scan Barcode",
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTextField(
+  controller: barcodeController,
+  label: "Barcode value",
+  icon: Icons.qr_code,
+  onChanged: (value) async {
+    if (value.trim().isEmpty) {
+      setState(() {
+        barcodeError = null;
+      });
+      return;
+    }
+
+    final result = await HttpService.checkBarcodeDuplicate(
+      value.trim(),
+      productId?.toString() ?? "0",
+    );
+
+    setState(() {
+      if (result?.duplicate == true) {
+        barcodeError = result?.message;
+      } else {
+        barcodeError = null;
+      }
+    });
+  },
+),
+
+          if (barcodeError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Text(
+                barcodeError!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+    const SizedBox(width: 12),
+    Transform.translate(
+      offset: const Offset(0, 24),
+      child: Container(
+        height: 50,
+        width: 50,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: const Color(0xFF2a86c9),
+        ),
+        child: IconButton(
+          onPressed: () async {
+            var res = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    const SimpleBarcodeScannerPage(),
+              ),
+            );
+
+            if (res is String && res != '-1') {
+              barcodeController.text = res;
+
+              final result =
+                  await HttpService.checkBarcodeDuplicate(
+                res,
+                productId?.toString() ?? "0", // Current Product ID
+              );
+
+              setState(() {
+                if (result?.duplicate == true) {
+                  barcodeError = result?.message;
+                  isBarcodeDuplicate = true;
+                } else {
+                  barcodeError = null;
+                  isBarcodeDuplicate = false;
+                }
+              });
+            }
+          },
+          icon: const Icon(
+            Icons.qr_code_scanner,
+            color: Colors.white,
+            size: 24,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFF2a86c9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            minimumSize: const Size(50, 50),
+          ),
+          tooltip: "Scan Barcode",
+        ),
+      ),
+    ),
+  ],
+),
                             const SizedBox(height: 16),
                             Row(
                               children: [
@@ -646,24 +741,29 @@ class _UpdateProductsState extends State<UpdateProducts> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: _buildTextField(
-                                    controller: sellingPrice,
-                                    label: selectedProductType == "Rental"
-                                        ? "Rental Price *"
-                                        : "Selling Price *",
-                                    icon: Icons.currency_rupee_outlined,
-                                    keyboardType: TextInputType.number,
-                                    onChanged: (val) {
-                                      _updateTotalAmount();
-                                      formKey.currentState?.validate();
-                                    },
-                                    validator: (val) => val!.isEmpty
-                                        ? (selectedProductType == "Rental"
-                                            ? "Enter Rental Price"
-                                            : "Enter Selling Price")
-                                        : null,
-                                  ),
-                                ),
+  child: _buildTextField(
+    controller: sellingPrice,
+    label: selectedProductType == "Rental"
+        ? "Rental Price *"
+        : "Selling Price *",
+    icon: Icons.currency_rupee_outlined,
+    keyboardType: const TextInputType.numberWithOptions(
+      decimal: true,
+    ),
+    onChanged: (val) {
+      _updateTotalAmount();
+      formKey.currentState?.validate();
+    },
+    validator: (val) {
+      if (val == null || val.trim().isEmpty) {
+        return selectedProductType == "Rental"
+            ? "Enter Rental Price"
+            : "Enter Selling Price";
+      }
+      return null;
+    },
+  ),
+),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: _buildTextField(

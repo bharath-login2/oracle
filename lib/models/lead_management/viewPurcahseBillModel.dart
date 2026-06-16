@@ -48,6 +48,7 @@ class PurchaseBillData {
   String? payableAmount;
   String? paidDate;
   String? balancePaidAmount;
+  String? otherCharges;
   String? paymentMode;
   String? trReferenceNo;
   String? trReferenceDate;
@@ -56,7 +57,7 @@ class PurchaseBillData {
   String? createddt;
   String? file;
   List<PurchaseBillItem>? items;
-
+List<PaymentList>? paymentList;
   PurchaseBillData({
     this.purchaseBillId,
     this.billId,
@@ -79,6 +80,7 @@ class PurchaseBillData {
     this.payableAmount,
     this.paidDate,
     this.balancePaidAmount,
+    this.otherCharges,
     this.paymentMode,
     this.trReferenceNo,
     this.trReferenceDate,
@@ -87,6 +89,7 @@ class PurchaseBillData {
     this.createddt,
     this.file,
     this.items,
+     this.paymentList,
   });
 
   PurchaseBillData.fromJson(Map<String, dynamic> json) {
@@ -111,6 +114,7 @@ class PurchaseBillData {
     payableAmount = json['payable_amount']?.toString();
     paidDate = json['paid_date'];
     balancePaidAmount = json['balance_paid_amount']?.toString();
+    otherCharges = json['other_amt']?.toString();
     paymentMode = json['payment_mode'];
     trReferenceNo = json['tr_reference_no'];
     trReferenceDate = json['tr_reference_date'];
@@ -122,6 +126,12 @@ class PurchaseBillData {
       items = <PurchaseBillItem>[];
       json['items'].forEach((v) {
         items!.add(PurchaseBillItem.fromJson(v));
+      });
+    }
+    if (json['payment_list'] != null) {
+      paymentList = <PaymentList>[];
+      json['payment_list'].forEach((v) {
+        paymentList!.add(PaymentList.fromJson(v));
       });
     }
   }
@@ -159,6 +169,10 @@ class PurchaseBillData {
     if (items != null) {
       data['items'] = items!.map((v) => v.toJson()).toList();
     }
+    if (paymentList != null) {
+  data['payment_list'] =
+      paymentList!.map((v) => v.toJson()).toList();
+}
     return data;
   }
 }
@@ -214,5 +228,50 @@ class PurchaseBillItem {
     data['gst_amt'] = gstAmt;
     data['item_total'] = itemTotal;
     return data;
+  }
+}
+class PaymentList {
+  String? id;
+  String? paidDate;
+  String? advanceAmountPaid;
+  String? paymentMode;
+  String? trReferenceDate;
+  String? trReferenceNo;
+  String? transactionRemarks;
+  String? accountName;
+
+  PaymentList({
+    this.id,
+    this.paidDate,
+    this.advanceAmountPaid,
+    this.paymentMode,
+    this.trReferenceDate,
+    this.trReferenceNo,
+    this.transactionRemarks,
+    this.accountName,
+  });
+
+  PaymentList.fromJson(Map<String, dynamic> json) {
+    id = json['id']?.toString();
+    paidDate = json['paid_date'];
+    advanceAmountPaid = json['advance_amount_paid']?.toString();
+    paymentMode = json['payment_mode'];
+    trReferenceDate = json['tr_reference_date'];
+    trReferenceNo = json['tr_reference_no'];
+    transactionRemarks = json['transaction_remarks'];
+    accountName = json['account_name'];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'paid_date': paidDate,
+      'advance_amount_paid': advanceAmountPaid,
+      'payment_mode': paymentMode,
+      'tr_reference_date': trReferenceDate,
+      'tr_reference_no': trReferenceNo,
+      'transaction_remarks': transactionRemarks,
+      'account_name': accountName,
+    };
   }
 }

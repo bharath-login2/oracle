@@ -2,7 +2,7 @@ class PurchaseBillModel {
   final bool? status;
   final String? message;
   final List<PurchaseBillData>? data;
-
+  
   PurchaseBillModel({
     this.status,
     this.message,
@@ -33,6 +33,7 @@ class PurchaseBillData {
    final String? id;
   final String? billId;
   final String? billNo;
+  final String? supplierId;
   final String? billDate;
   final String? supplierName;
   final String? gst;
@@ -51,6 +52,7 @@ class PurchaseBillData {
      this.id,
     this.billId,
     this.billNo,
+    this.supplierId,
     this.billDate,
     this.supplierName,
     this.gst,
@@ -73,6 +75,7 @@ class PurchaseBillData {
       billId: json['bill_id'],
       billNo: json['bill_no'],
       billDate: json['bill_date'],
+      supplierId: json['supplier_id'],
       supplierName: json['supplier_name'],
       gst: json['gst'],
       cgst: json['cgst'],
@@ -95,6 +98,7 @@ class PurchaseBillData {
       'bill_id': billId,
       'bill_no': billNo,
       'bill_date': billDate,
+      'supplier_id': supplierId,
       'supplier_name': supplierName,
       'gst': gst,
       'cgst': cgst,

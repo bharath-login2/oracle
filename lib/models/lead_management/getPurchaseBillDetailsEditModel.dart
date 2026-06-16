@@ -28,7 +28,7 @@ class GetPurchaseBillDetailsModel {
 
 class PurchaseBillData {
   BillDetails? billDetails;
-  PaymentDetails? paymentDetails;
+  List<PaymentDetails>? paymentDetails;
   List<BillItem>? items;
 
   PurchaseBillData({
@@ -41,9 +41,14 @@ class PurchaseBillData {
     billDetails = json['bill_details'] != null
         ? BillDetails.fromJson(json['bill_details'])
         : null;
-    paymentDetails = json['payment_details'] != null
-        ? PaymentDetails.fromJson(json['payment_details'])
-        : null;
+
+    if (json['payment_details'] != null) {
+      paymentDetails = <PaymentDetails>[];
+      json['payment_details'].forEach((v) {
+        paymentDetails!.add(PaymentDetails.fromJson(v));
+      });
+    }
+
     if (json['items'] != null) {
       items = <BillItem>[];
       json['items'].forEach((v) {
@@ -54,19 +59,23 @@ class PurchaseBillData {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
+
     if (billDetails != null) {
       data['bill_details'] = billDetails!.toJson();
     }
+
     if (paymentDetails != null) {
-      data['payment_details'] = paymentDetails!.toJson();
+      data['payment_details'] =
+          paymentDetails!.map((v) => v.toJson()).toList();
     }
+
     if (items != null) {
       data['items'] = items!.map((v) => v.toJson()).toList();
     }
+
     return data;
   }
 }
-
 class BillDetails {
   String? purchaseBillId;
   String? billId;
@@ -94,6 +103,7 @@ class BillDetails {
   String? invoiceDate;
   String? taxType;
   String? billAddress;
+  String? id;
 
   BillDetails({
     this.purchaseBillId,
@@ -122,6 +132,7 @@ class BillDetails {
     this.invoiceDate,
     this.taxType,
     this.billAddress,
+    this.id,
   });
 
   BillDetails.fromJson(Map<String, dynamic> json) {
@@ -151,6 +162,7 @@ class BillDetails {
     invoiceDate = json['invoice_date'];
     taxType = json['tax_type'];
     billAddress = json['bill_address'];
+    id = json['id'];
   }
 
   Map<String, dynamic> toJson() {
@@ -181,11 +193,13 @@ class BillDetails {
     data['invoice_date'] = invoiceDate;
     data['tax_type'] = taxType;
     data['bill_address'] = billAddress;
+    data['id'] = id;
     return data;
   }
 }
 
 class PaymentDetails {
+    String? id;
   String? paidDate;
   String? advanceAmountPaid;
   String? accountName;
@@ -195,6 +209,7 @@ class PaymentDetails {
   String? transactionRemarks;
 
   PaymentDetails({
+    this.id,
     this.paidDate,
     this.advanceAmountPaid,
     this.accountName,
@@ -212,6 +227,7 @@ class PaymentDetails {
     trReferenceDate = json['tr_reference_date'];
     trReferenceNo = json['tr_reference_no'];
     transactionRemarks = json['transaction_remarks'];
+    id = json['id'];
   }
 
   Map<String, dynamic> toJson() {
@@ -223,6 +239,7 @@ class PaymentDetails {
     data['tr_reference_date'] = trReferenceDate;
     data['tr_reference_no'] = trReferenceNo;
     data['transaction_remarks'] = transactionRemarks;
+    data['id'] = id;
     return data;
   }
 }

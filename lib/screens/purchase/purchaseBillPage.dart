@@ -55,8 +55,10 @@ class BillItem {
 class PaymentItem {
   DateTime paidDate;
   double paidAmount;
-  String debitAccount;
+
+  String debitAccountId;
   String debitAccountName;
+
   String paymentMode;
   String trRefNo;
   DateTime? trRefDate;
@@ -65,7 +67,7 @@ class PaymentItem {
   PaymentItem({
     required this.paidDate,
     required this.paidAmount,
-    required this.debitAccount,
+    required this.debitAccountId,
     required this.debitAccountName,
     required this.paymentMode,
     this.trRefNo = "",
@@ -82,7 +84,7 @@ class PurchaseBillPage extends StatefulWidget {
   final bool showAddDialogOnArrive;
   final String? initialSearchQuery;
   final MaterialData? initialProductToCart;
-
+  
   const PurchaseBillPage({
     super.key,
     required this.token,
@@ -102,6 +104,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
   bool isLoading = true;
   List<PurchaseBillData> bills = [];
   List<PurchaseBillData> filteredBills = [];
+  
   String searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
 
@@ -634,41 +637,55 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
     final accRes = await HttpService.getAccountHead();
     Navigator.pop(context);
     if (accRes != null && accRes.data != null) {
-      _showAddPaymentPopup(
-        context,
-        accRes.data!.lists,
-        (PaymentItem payment) async {
-          Map<String, dynamic> body = {
-            "bill_id": bill.billId,
-            "paid_date": DateFormat('yyyy-MM-dd').format(payment.paidDate),
-            "paid_amount": payment.paidAmount,
-            "debit_account": payment.debitAccount,
-            "payment_mode": payment.paymentMode,
-            "tr_ref_no": payment.trRefNo,
-            "payment_remarks": payment.remarks,
-          };
-          if (payment.trRefDate != null) {
-            body["tr_ref_date"] =
-                DateFormat('yyyy-MM-dd').format(payment.trRefDate!);
-          }
+     _showAddPaymentPopup(
+  context,
+  accRes.data!.lists,
+  (PaymentItem payment) async {
+    Map<String, dynamic> body = {
+      "bill_id": bill.billId,
+      "paid_date":
+          DateFormat('yyyy-MM-dd').format(payment.paidDate),
+      "paid_amount": payment.paidAmount.toString(),
 
-          Common.showProgressDialog(context, "Saving payment...");
-          final res = await HttpService.postPurchaseBillPayment(body);
-          Navigator.pop(context);
-          if (res != null &&
-              (res['status'] == true || res['status'] == 'success')) {
-            Common.toastMessaage(
-                res['message'] ?? "Payment added successfully", Colors.green);
-            _fetchBills();
-          } else {
-            Common.toastMessaage(
-                res?['message'] ?? "Failed to add payment", Colors.red);
-          }
-        },
-        totalAmount: bill.itemTotal ?? '0',
-        paidAmount: bill.paidAmount ?? '0',
-        balanceAmount: bill.balanceAmount ?? '0',
+      // Send account ID
+      "debit_account": payment.debitAccountId,
+
+      "payment_mode": payment.paymentMode,
+      "tr_ref_no": payment.trRefNo,
+      "payment_remarks": payment.remarks,
+    };
+
+    if (payment.trRefDate != null) {
+      body["tr_ref_date"] =
+          DateFormat('yyyy-MM-dd').format(payment.trRefDate!);
+    }
+
+    Common.showProgressDialog(context, "Saving payment...");
+
+    final res = await HttpService.postPurchaseBillPayment(body);
+
+    Navigator.pop(context);
+
+    if (res != null &&
+        (res['status'] == true ||
+            res['status'] == 'success')) {
+      Common.toastMessaage(
+        res['message'] ?? "Payment added successfully",
+        Colors.green,
       );
+
+      _fetchBills();
+    } else {
+      Common.toastMessaage(
+        res?['message'] ?? "Failed to add payment",
+        Colors.red,
+      );
+    }
+  },
+  totalAmount: bill.itemTotal ?? '0',
+  paidAmount: bill.paidAmount ?? '0',
+  balanceAmount: bill.balanceAmount ?? '0',
+);
     } else {
       Common.toastMessaage("Failed to load accounts", Colors.red);
     }
@@ -725,6 +742,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
 
     final billData = response.data!;
     final items = billData.items ?? [];
+    final payments = billData.paymentList ?? [];
 
     showModalBottomSheet(
       context: context,
@@ -788,12 +806,12 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                               // const SizedBox(height: 12),
                               // _buildInfoRow(
                               //     "Bill Date:", billData.billDate ?? 'N/A'),
+                              // const SizedBox(height: 12),
+                              // _buildInfoRow(
+                              //     "Invoice No:", billData.invoiceNo ?? 'N/A'),
                               const SizedBox(height: 12),
-                              _buildInfoRow(
-                                  "Invoice No:", billData.invoiceNo ?? 'N/A'),
-                              const SizedBox(height: 12),
-                              _buildInfoRow("Invoice Date:",
-                                  billData.invoiceDate ?? 'N/A'),
+                              _buildInfoRow("Bill Date:",
+                                  billData.billDate ?? 'N/A'),
                             ],
                           ),
                         ),
@@ -925,67 +943,139 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        // Payment Info
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(Icons.payment,
-                                      size: 18, color: Color(0xFF2a86c9)),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    "Payment Information",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Divider(height: 20),
-                              _buildInfoRow("Payment Mode:",
-                                  billData.paymentMode ?? 'N/A'),
-                              const SizedBox(height: 12),
-                              _buildInfoRow("Paid Amount:",
-                                  "₹${billData.paidAmount ?? '0'}"),
-                              const SizedBox(height: 12),
-                              _buildInfoRow(
-                                  "Paid Date:", billData.paidDate ?? 'N/A'),
-                              const SizedBox(height: 12),
-                              if (billData.trReferenceNo != null &&
-                                  billData.trReferenceNo!.isNotEmpty)
-                                _buildInfoRow(
-                                    "TR Ref No:", billData.trReferenceNo!),
-                              if (billData.trReferenceDate != null &&
-                                  billData.trReferenceDate!.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                _buildInfoRow(
-                                    "TR Ref Date:", billData.trReferenceDate!),
-                              ],
-                              if (billData.accountName != null &&
-                                  billData.accountName!.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                _buildInfoRow(
-                                    "Account:", billData.accountName!),
-                              ],
-                              if (billData.transactionRemarks != null &&
-                                  billData.transactionRemarks!.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                _buildInfoRow(
-                                    "Remarks:", billData.transactionRemarks!),
-                              ],
-                            ],
-                          ),
+                        // final payments = billData.paymentList ?? [];
+
+Container(
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: Colors.grey.shade50,
+    borderRadius: BorderRadius.circular(15),
+    border: Border.all(color: Colors.grey.shade200),
+  ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Row(
+        children: [
+          Icon(
+            Icons.payment,
+            size: 18,
+            color: Color(0xFF2a86c9),
+          ),
+          SizedBox(width: 8),
+          Text(
+            "Payment Information",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+      const Divider(height: 20),
+
+      if (payments.isNotEmpty)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columnSpacing: 20,
+            headingRowColor: WidgetStateProperty.all(
+              const Color(0xFF2a86c9).withOpacity(0.1),
+            ),
+            columns: const [
+              DataColumn(label: Text("#")),
+              DataColumn(label: Text("Paid Date")),
+              DataColumn(label: Text("Amount")),
+              DataColumn(label: Text("Mode")),
+              DataColumn(label: Text("Reference Date")),
+              DataColumn(label: Text("Reference No")),
+              DataColumn(label: Text("Remarks")),
+              DataColumn(label: Text("Account")),
+            ],
+            rows: List.generate(
+              payments.length,
+              (index) {
+                final payment = payments[index];
+
+                return DataRow(
+                  cells: [
+                    DataCell(Text("${index + 1}")),
+
+                    DataCell(
+                      Text(payment.paidDate ?? "-"),
+                    ),
+
+                    DataCell(
+                      Text(
+                        "₹${payment.advanceAmountPaid ?? '0'}",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
+                    ),
+
+                    DataCell(
+                      Text(payment.paymentMode ?? "-"),
+                    ),
+
+                    DataCell(
+                      Text(
+                        (payment.trReferenceDate?.isNotEmpty ?? false)
+                            ? payment.trReferenceDate!
+                            : "-",
+                      ),
+                    ),
+
+                    DataCell(
+                      Text(
+                        (payment.trReferenceNo?.isNotEmpty ?? false)
+                            ? payment.trReferenceNo!
+                            : "-",
+                      ),
+                    ),
+
+                    DataCell(
+                      SizedBox(
+                        width: 150,
+                        child: Text(
+                          (payment.transactionRemarks?.isNotEmpty ?? false)
+                              ? payment.transactionRemarks!
+                              : "-",
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+
+                    DataCell(
+                      SizedBox(
+                        width: 120,
+                        child: Text(
+                          (payment.accountName?.isNotEmpty ?? false)
+                              ? payment.accountName!
+                              : "-",
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        )
+      else
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.all(12),
+            child: Text(
+              "No payment history available",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+        ),
+    ],
+  ),
+),
                         const SizedBox(height: 20),
                         
                         // Bill Document Card
@@ -1052,6 +1142,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                 color:
                                     const Color(0xFF2a86c9).withOpacity(0.3)),
                           ),
+                          
                           child: Column(
                             children: [
                                 const Divider(thickness: 2),
@@ -1076,10 +1167,17 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                 _buildSummaryRow("TDS Amount:",
                                     "₹${billData.tdsAmt ?? '0'}"),
                              ],
+                              if (double.tryParse(billData.otherCharges ?? '0') !=
+                                      null &&
+                                  double.parse(billData.otherCharges ?? '0') > 0) ...[
+                                const Divider(),
+                                _buildSummaryRow("Other Charges:",
+                                    "₹${billData.otherCharges ?? '0'}"),
+                             ],
                               const Divider(thickness: 2),
                               // _buildSummaryRow(
-                              //   "Paid Amount:",
-                              //   "₹${billData.paidAmount ?? '0'}",
+                              //   "Other Charges:",
+                              //   "₹${billData.otherCharges ?? '0'}",
                               //   isBold: true,
                               //   isLarge: true,
                               // ),
@@ -1186,7 +1284,9 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                       ],
                     ),
                   ),
+                
                 ),
+              
               ],
             ),
           );
@@ -1439,6 +1539,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
             if (editBill != null && !isDetailsFetched) {
               isDetailsFetched = true;
               HttpService.getPurchaseBillDetailsEdit(editBill.id!).then((val) {
+                print("Purchase Bill Details for Edit Response: $val");
                 if (val != null && val.data != null && dialogContext.mounted) {
                   setDialogState(() {
                     final d = val.data!;
@@ -1489,64 +1590,74 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                     }
 
                     // Load payment details
-                    if (d.paymentDetails != null) {
-                      final payment = d.paymentDetails!;
-                      if (payment.paidDate != null &&
-                          payment.paidDate!.isNotEmpty) {
-                        try {
-                          DateTime paidDate =
-                              DateFormat('yyyy-MM-dd').parse(payment.paidDate!);
-                          double paidAmount = double.tryParse(
-                                  payment.advanceAmountPaid ?? "0") ??
-                              0.0;
-                          String debitAccount = payment.accountName ?? "N/A";
-                          String debitAccountName =
-                              payment.accountName ?? "N/A";
-                          String paymentMode = payment.paymentMode ?? "Cash";
-                          String trRefNo = payment.trReferenceNo ?? "";
-                          DateTime? trRefDate;
-                          if (payment.trReferenceDate != null &&
-                              payment.trReferenceDate!.isNotEmpty) {
-                            trRefDate = DateFormat('yyyy-MM-dd')
-                                .parse(payment.trReferenceDate!);
-                          }
-                          String remarks = payment.transactionRemarks ?? "";
+                    // Load payment details
+if (d.paymentDetails != null && d.paymentDetails!.isNotEmpty) {
+  paymentItems.clear();
 
-                          paymentItems.add(PaymentItem(
-                            paidDate: paidDate,
-                            paidAmount: paidAmount,
-                            debitAccount: debitAccount,
-                            debitAccountName: debitAccountName,
-                            paymentMode: paymentMode,
-                            trRefNo: trRefNo,
-                            trRefDate: trRefDate,
-                            remarks: remarks,
-                          ));
-                        } catch (e) {
-                          print("Error parsing payment details: $e");
-                        }
-                      }
-                    }
+  for (final payment in d.paymentDetails!) {
+    try {
+      DateTime paidDate = DateTime.now();
+
+      if (payment.paidDate != null &&
+          payment.paidDate!.isNotEmpty) {
+        paidDate =
+            DateFormat('dd-MM-yyyy').parse(payment.paidDate!);
+      }
+
+      DateTime? trRefDate;
+
+      if (payment.trReferenceDate != null &&
+          payment.trReferenceDate!.isNotEmpty) {
+        trRefDate = DateFormat('dd-MM-yyyy')
+            .parse(payment.trReferenceDate!);
+      }
+
+      paymentItems.add(
+        PaymentItem(
+          paidDate: paidDate,
+          paidAmount:
+              double.tryParse(
+                    payment.advanceAmountPaid ?? "0",
+                  ) ??
+                  0.0,
+
+          // Payment/Account ID from API
+          debitAccountId: payment.id?.toString() ?? "",
+
+          // Account Name
+          debitAccountName:
+              payment.accountName ?? "",
+
+          paymentMode:
+              (payment.paymentMode?.isNotEmpty ?? false)
+                  ? payment.paymentMode!
+                  : "Cash",
+
+          trRefNo: payment.trReferenceNo ?? "",
+          trRefDate: trRefDate,
+          remarks:
+              payment.transactionRemarks ?? "",
+        ),
+      );
+    } catch (e) {
+      print("Error parsing payment details: $e");
+    }
+  }
+}
 
                     if (d.items != null) {
-                      cartItems = d.items!
-                          .map((item) => BillItem(
-                                material: MaterialData(
-                                    materialId: item.materialId,
-                                    materialName: item.materialName,
-                                    unitName: item.unitName,
-                                    unitPrice: item.unitPrice,
-                                    gstPercentage: item.gst),
-                                quantity:
-                                    double.tryParse(item.quantity ?? "1") ??
-                                        1.0,
-                                unitPrice:
-                                    double.tryParse(item.unitPrice ?? "0") ??
-                                        0.0,
-                                gstPercentage:
-                                    double.tryParse(item.gst ?? "0") ?? 0.0,
-                              ))
-                          .toList();
+                      cartItems = d.items!.map((item) {
+                        return BillItem(
+                          material: MaterialData(
+                            materialId: item.materialId,
+                            materialName: item.materialName,
+                            unitName: item.unitName,
+                          ),
+                          quantity: double.tryParse(item.quantity.toString()) ?? 1.0,
+                          unitPrice: double.tryParse(item.unitPrice.toString()) ?? 0.0,
+                          gstPercentage: double.tryParse(item.gst.toString()) ?? 0.0,
+                        );
+                      }).toList();
                     }
                   });
                 }
@@ -2481,40 +2592,53 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                         .withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  child:Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      const Text("Payment Details",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16)),
-                                      ElevatedButton.icon(
-                                        onPressed: () => _showAddPaymentPopup(
-                                            context, accountHeads,
-                                            (PaymentItem newItem) {
-                                          setDialogState(() {
-                                            paymentItems.add(newItem);
-                                          });
-                                        }),
-                                        icon: const Icon(Icons.add,
-                                            size: 16, color: Colors.white),
-                                        label: const Text("Add Payment",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12)),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              const Color(0xFF2a86c9),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 8),
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8)),
+                                      const Text(
+                                        "Payment Details",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
                                         ),
                                       ),
+
+                                      if (editBill == null)
+                                        ElevatedButton.icon(
+                                          onPressed: () => _showAddPaymentPopup(
+                                            context,
+                                            accountHeads,
+                                            (PaymentItem newItem) {
+                                              setDialogState(() {
+                                                paymentItems.add(newItem);
+                                              });
+                                            },
+                                          ),
+                                          icon: const Icon(
+                                            Icons.add,
+                                            size: 16,
+                                            color: Colors.white,
+                                          ),
+                                          label: const Text(
+                                            "Add Payment",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF2a86c9),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                        ),
                                     ],
-                                  ),
+                                  )
                                 ),
                                 const SizedBox(height: 12),
                                 SingleChildScrollView(
@@ -2777,7 +2901,7 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                             selectedSupplier!.supplierId,
                                         "invoice_no": invoiceNoController.text,
                                         "invoice_date": DateFormat('yyyy-MM-dd')
-                                            .format(invoiceDate),
+                                            .format(billDate),
                                         "sub_total": totalSubtotal,
                                         "gst_amount": totalGst,
                                         "grand_total": payableAmount,
@@ -2826,26 +2950,33 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                             cartItems[i].gstPercentage;
                                       }
 
-                                      for (int i = 0;
-                                          i < paymentItems.length;
-                                          i++) {
-                                        body["paid_date[$i]"] =
+                                      for (int i = 0; i < paymentItems.length; i++) {
+                                        body["payments[$i][id]"] =
+                                            paymentItems[i].debitAccountId;
+
+                                        body["payments[$i][debit_account]"] =
+                                            paymentItems[i].debitAccountName;
+
+                                        body["payments[$i][paid_date]"] =
                                             DateFormat('yyyy-MM-dd').format(
                                                 paymentItems[i].paidDate);
-                                        body["paid_amount[$i]"] =
-                                            paymentItems[i].paidAmount;
-                                        body["debit_account[$i]"] =
-                                            paymentItems[i].debitAccount;
-                                        body["payment_mode[$i]"] =
+
+                                        body["payments[$i][paid_amount]"] =
+                                            paymentItems[i].paidAmount.toString();
+
+                                        body["payments[$i][payment_mode]"] =
                                             paymentItems[i].paymentMode;
-                                        body["tr_ref_no[$i]"] =
+
+                                        body["payments[$i][tr_reference_no]"] =
                                             paymentItems[i].trRefNo;
-                                        if (paymentItems[i].trRefDate != null) {
-                                          body["tr_ref_date[$i]"] =
-                                              DateFormat('yyyy-MM-dd').format(
-                                                  paymentItems[i].trRefDate!);
-                                        }
-                                        body["payment_remarks[$i]"] =
+
+                                        body["payments[$i][tr_reference_date]"] =
+                                            paymentItems[i].trRefDate != null
+                                                ? DateFormat('yyyy-MM-dd')
+                                                    .format(paymentItems[i].trRefDate!)
+                                                : "";
+
+                                        body["payments[$i][transaction_remarks]"] =
                                             paymentItems[i].remarks;
                                       }
 
@@ -3563,18 +3694,26 @@ class _PurchaseBillPageState extends State<PurchaseBillPage> {
                                 Common.toastMessaage("Amount cannot exceed balance (₹$balanceAmount)", Colors.orange);
                                 return;
                               }
-                              onAdd(PaymentItem(
-                                paidDate: paidDate,
-                                paidAmount: enteredAmt,
-                                debitAccount:
-                                    selectedAccount?.accountId ?? "N/A",
-                                debitAccountName:
-                                    selectedAccount?.accountName ?? "N/A",
-                                paymentMode: paymentMode,
-                                trRefNo: trRefNoController.text,
-                                trRefDate: trRefDate,
-                                remarks: remarksController.text,
-                              ));
+                             onAdd(
+  PaymentItem(
+    paidDate: paidDate,
+    paidAmount: enteredAmt,
+
+    debitAccountId:
+        selectedAccount?.accountId.toString() ?? "",
+
+    debitAccountName:
+        selectedAccount?.accountName ?? "N/A",
+
+    paymentMode: paymentMode,
+
+    trRefNo: trRefNoController.text,
+
+    trRefDate: trRefDate,
+
+    remarks: remarksController.text,
+  ),
+);
                               Navigator.pop(context);
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(

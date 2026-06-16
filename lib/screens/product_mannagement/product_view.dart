@@ -205,6 +205,28 @@ class _ProductViewState extends State<ProductView>
                             ],
                           ),
                         ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Purchase Price",
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "₹ ${product.purchasePrice}",
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2563EB)),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -680,10 +702,13 @@ class _ProductViewState extends State<ProductView>
             _buildInfoSection(
               "Complaint Reminders",
               product.complaintType
-                  .map((comp) => _buildInfoRow(
+                  .map(
+                    (comp) => _buildInfoRow(
                       Icons.notification_important_outlined,
-                      comp.type,
-                      comp.remark))
+                      comp,
+                      "",
+                    ),
+                  )
                   .toList(),
             ),
 

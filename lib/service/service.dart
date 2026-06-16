@@ -424,6 +424,7 @@ import '../models/userManagement/deleteDesignationModel.dart';
 import '../models/userManagement/postEditStaffPermissionModel.dart';
 import '../models/userManagement/postEditStaffSubmenuModel.dart';
 import '../models/userManagement/staffDetailsModel.dart';
+import '../models/Product_mannagement/checkBarcodeDuplicateModel.dart';
 import '../models/userPermissionModel.dart';
 import '../models/verifyPhoneModel.dart';
 
@@ -636,6 +637,7 @@ class HttpService {
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
       LeadDashboardModel model = LeadDashboardModel.fromJson(result.data);
+      print("Lead Dashboard Data: ${result.data}");
       return model;
     } catch (e) {
       log(e.toString());
@@ -936,6 +938,7 @@ class HttpService {
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           data: jsonEncode(body));
       if (result.statusCode == 200) {
+        print(result.data);
         ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
         return model;
       }
@@ -3903,22 +3906,43 @@ class HttpService {
     }
   }
 
-  static Future leadNotificationList(token) async {
-    var params = {
-      "token": token,
-    };
+  // static Future leadNotificationList(token) async {
+  //   var params = {
+  //     "token": token,
+  //   };
 
-    try {
-      var result = await _dio.get(
-          "${await Config.getUrl()}get_all_lead_milestones",
-          queryParameters: params);
-      LeadNotificationListModel model =
-          LeadNotificationListModel.fromJson(result.data);
-      return model;
-    } catch (e) {
-      log("error: $e");
-    }
+  //   try {
+  //     var result = await _dio.get(
+  //         "${await Config.getUrl()}get_all_lead_milestones",
+  //         queryParameters: params);
+  //     LeadNotificationListModel model =
+  //         LeadNotificationListModel.fromJson(result.data);
+  //     return model;
+  //   } catch (e) {
+  //     log("error: $e");
+  //   }
+  // }
+  static Future leadNotificationList(token) async {
+  print("API Token: $token");
+
+  var params = {
+    "token": token,
+  };
+
+  try {
+    var result = await _dio.get(
+      "${await Config.getUrl()}get_all_lead_milestones",
+      queryParameters: params,
+    );
+
+    print("URL: ${result.realUri}");
+    print("Response: ${result.data}");
+
+    return LeadNotificationListModel.fromJson(result.data);
+  } catch (e) {
+    log("error: $e");
   }
+}
 
   static Future deleteNotification(token, String notificaionId) async {
     var params = {
@@ -6501,6 +6525,8 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}getProductById",
           data: formData);
       if (result.statusCode == 200) {
+        
+        print("product by id response: ${result.data}");
         ProdectsByIdModel response = ProdectsByIdModel.fromJson(result.data);
         return response;
       }
@@ -7802,6 +7828,7 @@ class HttpService {
       );
 
       if (response.statusCode == 200 && response.data['status'] == true) {
+        // print("Telecaller List Response: ${response.data}");
         return StaffListModel.fromJson(response.data);
       } else {
         log("getStaffs failed: ${response.data}");
@@ -15086,6 +15113,7 @@ class HttpService {
       if (response.statusCode == 200 &&
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
+                print("getStockRegisterList response: ${response.data}");
         return GetStockRegisterListModel.fromJson(response.data);
       }
       log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
@@ -15565,6 +15593,7 @@ class HttpService {
         data: FormData.fromMap(data),
       );
       if (response.statusCode == 200) {
+        print("purchaseBillList response: ${response.data}");
         var responseData = response.data;
         if (responseData is String) {
           responseData = jsonDecode(responseData);
@@ -16011,16 +16040,22 @@ class HttpService {
     final data = {'id': requestId};
     data['token'] = token;
     try {
-      final response = await _dio.post(
-        "${await Config.getUrl()}edit_purchase_bill",
-        data: FormData.fromMap(data),
-      );
-      if (response.statusCode == 200) {
-        return GetPurchaseBillDetailsModel.fromJson(response.data);
-      }
-    } catch (e) {
-      log("getPurchaseOrderDetails error: $e");
-    }
+  final response = await _dio.post(
+    "${await Config.getUrl()}edit_purchase_bill",
+    data: FormData.fromMap(data),
+  );
+
+  print("RAW RESPONSE => ${response.data}");
+
+  final model = GetPurchaseBillDetailsModel.fromJson(response.data);
+
+  print("MODEL PARSED SUCCESSFULLY");
+
+  return model;
+} catch (e, s) {
+  print("PARSING ERROR => $e");
+  print("STACK => $s");
+}
     return null;
   }
 
@@ -16293,6 +16328,7 @@ class HttpService {
         data: FormData.fromMap(data),
       );
       if (response.statusCode == 200) {
+        print("RAW View => ${response.data}");
         return ViewPurchaseBillResponse.fromJson(response.data);
       }
     } catch (e) {
@@ -16477,6 +16513,43 @@ class HttpService {
     } catch (e) {
       log("SupplierLedgerResponse error: $e");
     }
+    return null;
+  }
+
+  static Future<CheckBarcodeDuplicateModel?> checkBarcodeDuplicate(
+    String barCode,
+    String productId,
+  ) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'bar_code': barCode,
+      'product_id': productId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}checkBarcodeDuplicate",
+        data: FormData.fromMap(data),
+      );
+
+      print("TYPE = ${response.data.runtimeType}");
+      print("DATA = ${response.data}");
+
+      if (response.statusCode == 200) {
+        if (response.data is String) {
+          return checkBarcodeDuplicateModelFromJson(response.data);
+        }
+
+        return CheckBarcodeDuplicateModel.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
+      }
+    } catch (e) {
+      log("checkBarcodeDuplicate error: $e");
+    }
+
     return null;
   }
 }

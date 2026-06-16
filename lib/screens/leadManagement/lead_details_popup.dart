@@ -2733,9 +2733,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         if (result.status == true) {
           Common.toastMessaage(result.message, Colors.green);
           widget.onDataChanged();
-          if (mounted) {
-            Navigator.pop(context); // Close the details popup
-          }
+          // if (mounted) {
+          //   Navigator.pop(context); // Close the details popup
+          // }
           setState(() {
             remarks.clear();
             isExpand = false;

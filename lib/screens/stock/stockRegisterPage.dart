@@ -501,22 +501,22 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                 topRight: Radius.circular(24),
               ),
             ),
-            child: Row(
+            child:Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProductView(
-                          productId: item.materialId,
-                          title: item.materialName,
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductView(
+                            productId: item.materialId,
+                            title: item.materialName,
+                          ),
                         ),
-                      ),
-                    ).then((_) => _fetchStockRegister());
-                  },
-                  child: Expanded(
+                      ).then((_) => _fetchStockRegister());
+                    },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -540,37 +540,10 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       onPressed: () => _showRentalTimeline(item),
                       tooltip: "View History",
                     ),
-                    // const SizedBox(width: 8),
-                    // item.unit != ""
-                    //     ? Container(
-                    //         padding: const EdgeInsets.symmetric(
-                    //             horizontal: 12, vertical: 6),
-                    //         decoration: BoxDecoration(
-                    //           color: const Color(0xFF2a86c9),
-                    //           borderRadius: BorderRadius.circular(12),
-                    //           boxShadow: [
-                    //             BoxShadow(
-                    //               color:
-                    //                   const Color(0xFF2a86c9).withOpacity(0.3),
-                    //               blurRadius: 8,
-                    //               offset: const Offset(0, 4),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //         child: Text(
-                    //           item.unit,
-                    //           style: const TextStyle(
-                    //             color: Colors.white,
-                    //             fontSize: 11,
-                    //             fontWeight: FontWeight.w900,
-                    //           ),
-                    //         ),
-                    //       )
-                    //     : SizedBox(),
                   ],
                 ),
               ],
-            ),
+            )
           ),
 
           Padding(
@@ -589,15 +562,15 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       Expanded(
                         child: InkWell(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => ProductView(
-                            //       productId: item.materialId,
-                            //       title: item.materialName,
-                            //     ),
-                            //   ),
-                            // ).then((_) => _fetchStockRegister());
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProductView(
+                                  productId: item.materialId,
+                                  title: item.materialName,
+                                ),
+                              ),
+                            ).then((_) => _fetchStockRegister());
                           },
                           child: _buildStockStat(
                             'Current',
@@ -611,17 +584,17 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       Expanded(
                         child: InkWell(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => PurchaseBillPage(
-                            //       token: widget.token,
-                            //       name: widget.name,
-                            //       userId: widget.userId,
-                            //       initialSearchQuery: item.materialName,
-                            //     ),
-                            //   ),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PurchaseBillPage(
+                                  token: widget.token,
+                                  name: widget.name,
+                                  userId: widget.userId,
+                                  initialSearchQuery: item.materialName,
+                                ),
+                              ),
+                            );
                           },
                           child: _buildStockStat(
                             'Purchased',
@@ -635,15 +608,15 @@ class _StockRegisterPageState extends State<StockRegisterPage> {
                       Expanded(
                         child: InkWell(
                           onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => StockConsumptionPage(
-                            //       initialProductId: item.materialId,
-                            //       initialProductName: item.materialName,
-                            //     ),
-                            //   ),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StockConsumptionPage(
+                                  initialProductId: item.materialId,
+                                  initialProductName: item.materialName,
+                                ),
+                              ),
+                            );
                           },
                           child: _buildStockStat(
                             'Consumed',

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -70,7 +71,9 @@ class _AddProductsState extends State<AddProducts> {
   TextEditingController serviceNoOfDays = TextEditingController();
   TextEditingController serviceMonthDays = TextEditingController();
   TextEditingController serviceYearDays = TextEditingController();
-
+  int? productId;
+  String? barcodeError;
+  bool isBarcodeDuplicate = false;
   List<String> serviceCycles = [
     "Daily",
     "N Days",
@@ -159,7 +162,56 @@ class _AddProductsState extends State<AddProducts> {
             map.categoryName.toLowerCase().contains(query.toLowerCase()))
         .toList();
   }
+  Future<bool> validateBarcode() async {
+  if (barcodeController.text.trim().isEmpty) {
+    return true;
+  }
 
+  final result = await HttpService.checkBarcodeDuplicate(
+    barcodeController.text.trim(),
+    "0",
+  );
+
+  print("result = $result");
+  print("duplicate = ${result?.duplicate}");
+  print("message = ${result?.message}");
+
+  if (result != null && result.duplicate == true) {
+    Common.toastMessaage(
+      result.message ?? "Barcode already exists",
+      Colors.red,
+    );
+
+    return false;
+  }
+
+  return true;
+}
+  Future<void> checkBarcodeValidation() async {
+  if (barcodeController.text.trim().isEmpty) {
+    setState(() {
+      barcodeError = null;
+      isBarcodeDuplicate = false;
+    });
+    return;
+  }
+
+  final result = await HttpService.checkBarcodeDuplicate(
+    barcodeController.text.trim(),
+    "0",
+  );
+
+  setState(() {
+    if (result != null && result.duplicate == true) {
+      barcodeError = result.message ?? "Barcode already exists";
+      isBarcodeDuplicate = true;
+    } else {
+      barcodeError = null;
+      isBarcodeDuplicate = false;
+    }
+  });
+}
+  
   void filterSubCategories(
     String query,
   ) {
@@ -360,7 +412,7 @@ class _AddProductsState extends State<AddProducts> {
     checkStock = true;
     super.initState();
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -467,12 +519,50 @@ class _AddProductsState extends State<AddProducts> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: _buildTextField(
-                              controller: barcodeController,
-                              label: "Barcode value",
-                              icon: Icons.qr_code,
-                            ),
-                          ),
+                          child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTextField(
+  controller: barcodeController,
+  label: "Barcode value",
+  icon: Icons.qr_code,
+  onChanged: (value) async {
+    if (value.trim().isEmpty) {
+      setState(() {
+        barcodeError = null;
+      });
+      return;
+    }
+
+    final result = await HttpService.checkBarcodeDuplicate(
+      value.trim(),
+      productId?.toString() ?? "0",
+    );
+
+    setState(() {
+      if (result?.duplicate == true) {
+        barcodeError = result?.message;
+      } else {
+        barcodeError = null;
+      }
+    });
+  },
+),
+
+                            if (barcodeError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 5),
+                                child: Text(
+                                  barcodeError!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        )
+                        ),
                           const SizedBox(width: 12),
                           Transform.translate(
                             offset: const Offset(0, 24),
@@ -485,19 +575,38 @@ class _AddProductsState extends State<AddProducts> {
                               ),
                               child: IconButton(
                                 onPressed: () async {
-                                  var res = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SimpleBarcodeScannerPage(),
-                                    ),
-                                  );
-                                  if (res is String && res != '-1') {
-                                    setState(() {
-                                      barcodeController.text = res;
-                                    });
-                                  }
-                                },
+  var res = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const SimpleBarcodeScannerPage(),
+    ),
+  );
+
+  if (res is String && res != '-1') {
+  barcodeController.text = res;
+
+  print("Scanned Barcode = $res");
+
+  final result = await HttpService.checkBarcodeDuplicate(
+    res,
+    "0",
+  );
+
+  print("API Result = $result");
+  print("Duplicate = ${result?.duplicate}");
+  print("Message = ${result?.message}");
+
+  setState(() {
+    if (result?.duplicate == true) {
+      barcodeError = result?.message;
+    } else {
+      barcodeError = null;
+    }
+  });
+
+  print("barcodeError = $barcodeError");
+}
+},
                                 icon: const Icon(Icons.qr_code_scanner,
                                     color: Colors.white, size: 24),
                                 padding: EdgeInsets.zero,

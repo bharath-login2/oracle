@@ -47,14 +47,19 @@ class _OpeningStockPageState extends State<OpeningStockPage>
   String? _historyLocationId;
   String? _historyLocationName;
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _loadInitialData();
-    _loadHistory();
-    _searchController.addListener(_filterHistory);
-  }
+@override
+void initState() {
+  super.initState();
+
+  _tabController = TabController(
+    length: 1,
+    vsync: this,
+  );
+
+  _loadInitialData();
+  _loadHistory();
+  _searchController.addListener(_filterHistory);
+}
 
   @override
   void dispose() {
@@ -797,26 +802,27 @@ class _OpeningStockPageState extends State<OpeningStockPage>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          InkWell(
-                           onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ProductView(
-                                          productId: item.materialId,
-                                          title:
-                                              item.materialName,
-                                        ),
-                                      ),
-                                    ).then((_) {
-                                      //getProductLists();
-                                    });
-                                  },
-                            child: Expanded(
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProductView(
+                                      productId: item.materialId,
+                                      title: item.materialName,
+                                    ),
+                                  ),
+                                ).then((_) {
+                                  // getProductLists();
+                                });
+                              },
                               child: Text(
                                 item.materialName,
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 16),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
