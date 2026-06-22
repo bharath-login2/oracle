@@ -54,6 +54,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
   TextEditingController paidService = TextEditingController();
   List<TextEditingController> complaintControllers = [];
   TextEditingController rentalPrice = TextEditingController();
+  final TextEditingController productUCode = TextEditingController();
   List<String?> selectedComplaintTypes = [];
   List<String> complaintTypeOptions = [
     "Complaint Type",
@@ -141,6 +142,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
       subCategoryId = d.subCategoryId;
       productName.text = d.productName;
       productCode.text = d.productCode;
+      productUCode.text = d.productUCode;
       mrp.text = d.productMrp;
       noOfDays.text = d.noOfDays;
       remindBefore.text = d.remindBefore;
@@ -312,6 +314,7 @@ class _UpdateProductsState extends State<UpdateProducts> {
       subCategoryId,
       productName.text,
       productCode.text,
+      productUCode.text,
       mrp.text,
       noOfDays.text,
       remindBefore.text,
@@ -593,6 +596,21 @@ class _UpdateProductsState extends State<UpdateProducts> {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 12),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: productUCode,
+                                label: "Product Code *",
+                                icon: Icons.qr_code_outlined,
+                                validator: (val) =>
+                                    val!.isEmpty ? "Enter Product Code" : null,
+                              ),
+                            ),
+                          ],
+                        ),
                              const SizedBox(height: 16),
                         Row(
   crossAxisAlignment: CrossAxisAlignment.start,
@@ -735,132 +753,159 @@ class _UpdateProductsState extends State<UpdateProducts> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        _buildSectionCard(
-                          title: "Pricing & Tax",
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-  child: _buildTextField(
-    controller: sellingPrice,
-    label: selectedProductType == "Rental"
-        ? "Rental Price *"
-        : "Selling Price *",
-    icon: Icons.currency_rupee_outlined,
-    keyboardType: const TextInputType.numberWithOptions(
-      decimal: true,
+_buildSectionCard(
+  title: "Pricing & Tax",
+  children: [
+    Row(
+      children: [
+        Expanded(
+          child: _buildTextField(
+            controller: sellingPrice,
+            label: selectedProductType == "Rental"
+                ? "Rental Price *"
+                : "Selling Price *",
+            icon: Icons.currency_rupee_outlined,
+            keyboardType:
+                const TextInputType.numberWithOptions(
+              decimal: true,
+            ),
+            onChanged: (val) {
+              _updateTotalAmount();
+              formKey.currentState?.validate();
+            },
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) {
+                return selectedProductType == "Rental"
+                    ? "Enter Rental Price"
+                    : "Enter Selling Price";
+              }
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildTextField(
+            controller: tax,
+            label: "Tax (%)",
+            icon: Icons.percent_outlined,
+            keyboardType: TextInputType.number,
+            onChanged: (val) {
+              _updateTotalAmount();
+            },
+          ),
+        ),
+      ],
     ),
-    onChanged: (val) {
-      _updateTotalAmount();
-      formKey.currentState?.validate();
-    },
-    validator: (val) {
-      if (val == null || val.trim().isEmpty) {
-        return selectedProductType == "Rental"
-            ? "Enter Rental Price"
-            : "Enter Selling Price";
-      }
-      return null;
-    },
-  ),
+
+    const SizedBox(height: 16),
+
+    Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              _buildTextField(
+                controller: purchasePrice,
+                label: "Purchase Amount",
+                icon: Icons.currency_rupee_outlined,
+                keyboardType: TextInputType.number,
+                onChanged: (val) {
+                  formKey.currentState?.validate();
+                },
+                validator: (val) {
+                  if (val != null &&
+                      val.isNotEmpty &&
+                      sellingPrice.text.isNotEmpty) {
+                    double pPrice =
+                        double.tryParse(val) ?? 0;
+
+                    double sPrice =
+                        double.tryParse(
+                              sellingPrice.text,
+                            ) ??
+                            0;
+
+                    if (pPrice > sPrice) {
+                      return "Purchase price > selling price";
+                    }
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildTextField(
+            controller: discount,
+            label: "Discount (%)",
+            icon: Icons.discount_outlined,
+            keyboardType: TextInputType.number,
+            onChanged: (val) {
+              _updateTotalAmount();
+            },
+          ),
+        ),
+      ],
+    ),
+
+    const SizedBox(height: 16),
+
+    if (selectedProductType != "Rental") ...[
+      Row(
+        children: [
+          Expanded(
+            child: _buildTextField(
+              controller: mrp,
+              label: "MRP",
+              icon: Icons.price_check_outlined,
+              keyboardType: TextInputType.number,
+              onChanged: (val) {
+                formKey.currentState?.validate();
+              },
+              validator: (val) {
+                if (val == null ||
+                    val.trim().isEmpty) {
+                  return "Please enter MRP";
+                }
+
+                double mrpValue =
+                    double.tryParse(val) ?? 0;
+
+                double sellingValue =
+                    double.tryParse(
+                          sellingPrice.text,
+                        ) ??
+                        0;
+
+                if (mrpValue < sellingValue) {
+                  return "MRP must be greater than Selling Price";
+                }
+
+                return null;
+              },
+            ),
+          ),
+        ],
+      ),
+
+      const SizedBox(height: 16),
+    ],
+
+    _buildTextField(
+      controller: totalAmount,
+      label: "Total Amount",
+      icon:
+          Icons.account_balance_wallet_outlined,
+      readOnly: true,
+      fillColor: Colors.grey[100],
+    ),
+  ],
 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: tax,
-                                    label: "Tax (%)",
-                                    icon: Icons.percent_outlined,
-                                    keyboardType: TextInputType.number,
-                                    onChanged: (val) => _updateTotalAmount(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      _buildTextField(
-                                        controller: purchasePrice,
-                                        label: "Purchase Amount",
-                                        icon: Icons.currency_rupee_outlined,
-                                        keyboardType: TextInputType.number,
-                                        onChanged: (val) {
-                                          formKey.currentState?.validate();
-                                        },
-                                        validator: (val) {
-                                          if (val != null &&
-                                              val.isNotEmpty &&
-                                              sellingPrice.text.isNotEmpty) {
-                                            double pPrice =
-                                                double.tryParse(val) ?? 0;
-                                            double sPrice = double.tryParse(
-                                                    sellingPrice.text) ??
-                                                0;
-                                            if (pPrice > sPrice) {
-                                              //return "Should not be smaller than selling price";
-                                               return "Purchase price > selling price";
-                                            }
-                                          }
-                                          return null;
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: discount,
-                                    label: "Discount (%)",
-                                    icon: Icons.discount_outlined,
-                                    keyboardType: TextInputType.number,
-                                    onChanged: (val) => _updateTotalAmount(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildTextField(
-                                    controller: mrp,
-                                    label: "MRP",
-                                    icon: Icons.price_check_outlined,
-                                    keyboardType: TextInputType.number,
-                                    validator: (val) {
-                                      if (val == null || val.isEmpty)
-                                        return null;
-                                      double mrpValue =
-                                          double.tryParse(val) ?? 0;
-                                      double totalValue =
-                                          double.tryParse(totalAmount.text) ??
-                                              0;
-                                      if (mrpValue < totalValue) {
-                                        return "MRP < Total Amount";
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              controller: totalAmount,
-                              label: "Total Amount",
-                              icon: Icons.account_balance_wallet_outlined,
-                              readOnly: true,
-                              fillColor: Colors.grey[100],
-                            ),
-                          ],
-                        ),
-                       
                         const SizedBox(height: 16),
                         _buildSectionCard(
                           title: "Other Details",
@@ -1265,19 +1310,37 @@ class _UpdateProductsState extends State<UpdateProducts> {
     );
   }
 
-  void _updateTotalAmount() {
-    double selling = double.tryParse(sellingPrice.text) ?? 0;
-    double taxVal = double.tryParse(tax.text) ?? 0;
-    double discVal = double.tryParse(discount.text) ?? 0;
+ void _updateTotalAmount() {
+  double selling =
+      double.tryParse(sellingPrice.text) ?? 0;
 
-    double total =
-        (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
-    setState(() {
-      totalAmount.text = total.roundToDouble().toString();
-      mrp.text = totalAmount.text;
-    });
-  }
+  double taxVal =
+      double.tryParse(tax.text) ?? 0;
 
+  double discVal =
+      double.tryParse(discount.text) ?? 0;
+
+  double amountWithTax =
+      selling + (selling * taxVal / 100);
+
+  double discountAmount =
+      amountWithTax * discVal / 100;
+
+  double total =
+      amountWithTax - discountAmount;
+
+  setState(() {
+    totalAmount.text =
+        total.toStringAsFixed(2);
+
+    if (selectedProductType != "Rental") {
+      mrp.text =
+          total.toStringAsFixed(2);
+    }
+  });
+
+  formKey.currentState?.validate();
+}
   Widget _buildLabel(String label) {
     bool hasAsterisk = label.contains('*');
     String cleanLabel = label.replaceAll('*', '').trim();

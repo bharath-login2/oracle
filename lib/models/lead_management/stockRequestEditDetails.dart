@@ -29,53 +29,52 @@ class StockRequestEditDetails {
 class StockRequestData {
   final String id;
   final String requestId;
-  final String productId;
-  final String productName;
-   final String remarks;
-   
-    final String locationId;
-      final String locationName;
-  final String quantity;
+  final String locationId;
+  final String locationName;
   final String requiredDate;
   final String requestedBy;
   final String createdAt;
   final String priority;
+  final String remarks;
   final String status;
-  final String remark;
+
+  final List<StockRequestItem> items;
 
   StockRequestData({
     required this.id,
     required this.requestId,
-    required this.productId,
-    required this.productName,
-      required this.remarks,
-        required this.locationId,
-          required this.locationName,
-    required this.quantity,
+    required this.locationId,
+    required this.locationName,
     required this.requiredDate,
     required this.requestedBy,
     required this.createdAt,
     required this.priority,
+    required this.remarks,
     required this.status,
-    required this.remark,
+    required this.items,
   });
 
-  factory StockRequestData.fromJson(Map<String, dynamic> json) {
+  factory StockRequestData.fromJson(
+      Map<String, dynamic> json) {
     return StockRequestData(
       id: json['id']?.toString() ?? '',
       requestId: json['request_id'] ?? '',
-      productId: json['product_id']?.toString() ?? '',
-      productName: json['product_name'] ?? '',
-      remarks: json['remarks'] ?? '',
-      locationId: json['location_id']?.toString() ?? '',
+      locationId:
+          json['location_id']?.toString() ?? '',
       locationName: json['location_name'] ?? '',
-      quantity: json['quantity']?.toString() ?? '',
       requiredDate: json['required_date'] ?? '',
       requestedBy: json['requested_by'] ?? '',
       createdAt: json['created_at'] ?? '',
       priority: json['priority'] ?? 'Normal',
+      remarks: json['remarks'] ?? '',
       status: json['status'] ?? 'Pending',
-      remark: json['remark'] ?? '',
+
+      items: (json['items'] as List?)
+              ?.map(
+                (e) => StockRequestItem.fromJson(e),
+              )
+              .toList() ??
+          [],
     );
   }
 
@@ -83,15 +82,61 @@ class StockRequestData {
     return {
       'id': id,
       'request_id': requestId,
-      'product_id': productId,
-      'product_name': productName,
-      'quantity': quantity,
+      'location_id': locationId,
+      'location_name': locationName,
       'required_date': requiredDate,
       'requested_by': requestedBy,
       'created_at': createdAt,
       'priority': priority,
       'status': status,
-      'remark': remark,
+      'items': items
+          .map((e) => e.toJson())
+          .toList(),
+    };
+  }
+}
+class StockRequestItem {
+  final String detailId;
+  final String productId;
+  final String productName;
+  final String quantity;
+  final String remarks;
+  final String purchasePrice;
+  final String unitId;
+
+  StockRequestItem({
+    required this.detailId,
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.remarks,
+    required this.purchasePrice,
+    required this.unitId,
+  });
+
+  factory StockRequestItem.fromJson(
+      Map<String, dynamic> json) {
+    return StockRequestItem(
+      detailId: json['detail_id']?.toString() ?? '',
+      productId: json['product_id']?.toString() ?? '',
+      productName: json['product_name'] ?? '',
+      quantity: json['quantity']?.toString() ?? '',
+      remarks: json['remarks'] ?? '',
+      purchasePrice:
+          json['purchase_price']?.toString() ?? '',
+      unitId: json['unit_id']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'detail_id': detailId,
+      'product_id': productId,
+      'product_name': productName,
+      'quantity': quantity,
+      'remarks': remarks,
+      'purchase_price': purchasePrice,
+      'unit_id': unitId,
     };
   }
 }

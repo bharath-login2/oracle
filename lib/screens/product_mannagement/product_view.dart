@@ -13,6 +13,7 @@ import 'package:login2/service/service.dart';
 import 'package:login2/screens/purchase/purchaseBillPage.dart';
 import 'package:login2/models/lead_management/materialModel.dart';
 import 'package:barcode_widget/barcode_widget.dart';
+import 'package:html/parser.dart';
 
 class ProductView extends StatefulWidget {
   final String productId;
@@ -83,7 +84,9 @@ class _ProductViewState extends State<ProductView>
       Common.toastMessaage("Error: $e", Colors.red);
     }
   }
-
+String removeHtmlTags(String htmlText) {
+  return htmlText.replaceAll(RegExp(r'<[^>]*>'), '');
+}
   void _showAddStockDialog() {
     if (productsResponse == null) return;
     final qtyController = TextEditingController();
@@ -650,14 +653,33 @@ class _ProductViewState extends State<ProductView>
                 product.productCode.isNotEmpty
                     ? product.productCode
                     : "Not Set"),
+            _buildInfoRow(
+                Icons.code_outlined,
+                "Product Code",
+                product.productUCode.isNotEmpty
+                    ? product.productUCode
+                    : "Not Set"),
             _buildInfoRow(Icons.fingerprint_outlined, "Content ID",
                 product.contentId.isNotEmpty ? product.contentId : "Not Set"),
             _buildInfoRow(Icons.scale_outlined, "Unit",
                 product.unitName.isNotEmpty ? product.unitName : "Not Set"),
             _buildInfoRow(Icons.inventory_2_outlined, "Check Stock Status",
                 product.checkStock == "1" ? "Active" : "Inactive"),
-            // _buildInfoRow(Icons.published_with_changes_outlined, "Publish Status", product.publishStatus == "1" ? "Published" : "Draft"),
-            // _buildInfoRow(Icons.visibility_outlined, "Visibility", product.visibility == "1" ? "Public" : "Private"),
+            _buildInfoRow(
+              Icons.published_with_changes_outlined,
+              "Publish Status",
+              product.publishStatus.isNotEmpty
+                  ? product.publishStatus
+                  : "Draft",
+            ),
+
+            _buildInfoRow(
+              Icons.visibility_outlined,
+              "Visibility",
+              product.visibility.isNotEmpty
+                  ? product.visibility
+                  : "Private",
+            ),
           ]),
           const SizedBox(height: 16),
 
@@ -729,7 +751,7 @@ class _ProductViewState extends State<ProductView>
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: Text(
-                product.description,
+                removeHtmlTags(product.description),
                 style: const TextStyle(
                     fontSize: 14, height: 1.5, color: Color(0xFF475569)),
               ),

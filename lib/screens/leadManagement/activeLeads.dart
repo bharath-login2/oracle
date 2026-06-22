@@ -407,7 +407,7 @@ class _ActiveLeadsState extends State<ActiveLeads>
         .toList();
   }
 
-  Future<void> getData(String sort, bool isFirst, dynamic status1) async {
+  Future<void> getData(String sort, bool isFirst, dynamic status1, {String? search}) async {
     if (isLoading) return;
 
     setState(() {
@@ -448,7 +448,8 @@ class _ActiveLeadsState extends State<ActiveLeads>
             currentPage,
             pageSize,
             isFirst,
-            branch);
+            branch,
+            search);
       } else {
         Map<String, dynamic> body =
             _buildRequestBody(status1, sort, currentPage, isFirst);

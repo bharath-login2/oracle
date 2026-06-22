@@ -39,6 +39,7 @@ class Data {
   String subCategoryId;
   String subCategory;
   String productCode;
+  String productUCode;
   String productMrp;
   String sellingPrice;
   String purchasePrice;
@@ -89,6 +90,7 @@ class Data {
     required this.subCategoryId,
     required this.subCategory,
     required this.productCode,
+    required this.productUCode,
     required this.productMrp,
     required this.sellingPrice,
     required this.purchasePrice,
@@ -139,6 +141,7 @@ class Data {
         subCategoryId: json["sub_category_id"]?.toString() ?? "",
         subCategory: json["sub_category"]?.toString() ?? "",
         productCode: json["product_code"]?.toString() ?? "",
+        productUCode: json["product_u_code"]?.toString() ?? "",
         productMrp: json["product_mrp"]?.toString() ?? "",
         sellingPrice: json["selling_price"]?.toString() ?? "",
         purchasePrice: json["purchase_price"]?.toString() ?? "",
@@ -196,6 +199,7 @@ class Data {
         "sub_category_id": subCategoryId,
         "sub_category": subCategory,
         "product_code": productCode,
+        "product_u_code": productUCode,
         "product_mrp": productMrp,
         "selling_price": sellingPrice,
         "purchase_price": purchasePrice,

@@ -15,6 +15,8 @@ import 'package:intl/intl.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:login2/models/lead_management/getPurchaseOrderDetailsModel.dart'
     as order_details_model;
+import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 
 class BillItem {
   MaterialData material;
@@ -2241,9 +2243,10 @@ if (d.paymentDetails != null && d.paymentDetails!.isNotEmpty) {
                                                             .quantity
                                                             .toInt()
                                                             .toString(),
-                                                        keyboardType:
-                                                            TextInputType
-                                                                .number,
+                                                        keyboardType: TextInputType.number,
+                                                          inputFormatters: [
+                                                            FilteringTextInputFormatter.digitsOnly,
+                                                          ],
                                                         textAlign:
                                                             TextAlign.center,
                                                         decoration:
@@ -2305,8 +2308,12 @@ if (d.paymentDetails != null && d.paymentDetails!.isNotEmpty) {
                                                   child: TextField(
                                                       controller:
                                                           item.unitPriceController,
-                                                      keyboardType:
-                                                          TextInputType.number,
+                                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                      inputFormatters: [
+                                                        FilteringTextInputFormatter.allow(
+                                                          RegExp(r'^\d*\.?\d*'),
+                                                        ),
+                                                      ],
                                                       onChanged: (v) =>
                                                           setDialogState(() => item
                                                                   .unitPrice =
@@ -2338,8 +2345,12 @@ if (d.paymentDetails != null && d.paymentDetails!.isNotEmpty) {
                                               child: TextField(
                                                   controller:
                                                       item.gstController,
-                                                  keyboardType:
-                                                      TextInputType.number,
+                                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                    inputFormatters: [
+                                                      FilteringTextInputFormatter.allow(
+                                                        RegExp(r'^\d*\.?\d*'),
+                                                      ),
+                                                    ],
                                                   onChanged: (v) =>
                                                       setDialogState(() => item
                                                               .gstPercentage =
@@ -3032,43 +3043,99 @@ if (d.paymentDetails != null && d.paymentDetails!.isNotEmpty) {
     );
   }
 
-  Widget _buildFinancialRow(String label, TextEditingController controller,
-      StateSetter setDialogState) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 100,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade300)),
-            child: Text(label,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+  // Widget _buildFinancialRow(String label, TextEditingController controller,
+  //     StateSetter setDialogState) {
+  //   return Padding(
+  //     padding: const EdgeInsets.only(bottom: 8),
+  //     child: Row(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         Container(
+  //           width: 100,
+  //           padding: const EdgeInsets.all(12),
+  //           decoration: BoxDecoration(
+  //               color: Colors.white,
+  //               border: Border.all(color: Colors.grey.shade300)),
+  //           child: Text(label,
+  //               style:
+  //                   const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+  //         ),
+  //         Container(
+  //           width: 150,
+  //           padding: const EdgeInsets.symmetric(horizontal: 12),
+  //           decoration: BoxDecoration(
+  //               color: Colors.white,
+  //               border: Border.all(color: Colors.grey.shade300)),
+  //           child: TextField(
+  //             controller: controller,
+  //             keyboardType: TextInputType.number,
+  //             onChanged: (v) => setDialogState(() {}),
+  //             textAlign: TextAlign.right,
+  //             decoration: const InputDecoration(
+  //                 border: InputBorder.none, prefixText: "₹", hintText: "0"),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+Widget _buildFinancialRow(
+  String label,
+  TextEditingController controller,
+  StateSetter setDialogState,
+) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 100,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade300),
           ),
-          Container(
-            width: 150,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade300)),
-            child: TextField(
-              controller: controller,
-              keyboardType: TextInputType.number,
-              onChanged: (v) => setDialogState(() {}),
-              textAlign: TextAlign.right,
-              decoration: const InputDecoration(
-                  border: InputBorder.none, prefixText: "₹", hintText: "0"),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+        Container(
+          width: 150,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+            ),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(
+                RegExp(r'^\d*\.?\d*'),
+              ),
+            ],
+            onChanged: (v) {
+              setDialogState(() {});
+            },
+            textAlign: TextAlign.right,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              prefixText: "₹",
+              hintText: "0",
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildReadOnlyField(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

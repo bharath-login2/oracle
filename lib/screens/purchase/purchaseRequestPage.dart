@@ -15,12 +15,15 @@ class PurchaseRequestPage extends StatefulWidget {
   final String name;
   final String userId;
 
-  const PurchaseRequestPage({
-    super.key,
-    required this.token,
-    required this.name,
-    required this.userId,
-  });
+final String? openRequestId;
+
+const PurchaseRequestPage({
+  Key? key,
+  required this.token,
+  required this.name,
+  required this.userId,
+  this.openRequestId,
+}) : super(key: key);
 
   @override
   State<PurchaseRequestPage> createState() => _PurchaseRequestPageState();
@@ -68,7 +71,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   DateTime? fromDate;
   DateTime? toDate;
   String? selectedStatus;
-
+bool _popupOpened = false;
   @override
   void initState() {
     super.initState();
@@ -89,36 +92,53 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     }
   }
 
-  Future<void> _fetchRequests() async {
-    setState(() => isLoading = true);
-    try {
-      Map<String, dynamic> data = {};
-      if (fromDate != null)
-        data['from_date'] = DateFormat('yyyy-MM-dd').format(fromDate!);
-      if (toDate != null)
-        data['to_date'] = DateFormat('yyyy-MM-dd').format(toDate!);
-      if (selectedStatus != null && selectedStatus != "All")
-        data['status'] = selectedStatus;
+Future<void> _fetchRequests() async {
+  setState(() => isLoading = true);
 
-      final response = await HttpService.purchaseRequestList(data);
-      if (response != null && response.data != null) {
-        setState(() {
-          requests = response.data!;
-          _applySearch();
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          requests = [];
-          filteredRequests = [];
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("Error fetching purchase requests: $e");
-      setState(() => isLoading = false);
+  try {
+    Map<String, dynamic> data = {};
+
+    if (fromDate != null) {
+      data['from_date'] =
+          DateFormat('yyyy-MM-dd').format(fromDate!);
     }
+
+    if (toDate != null) {
+      data['to_date'] =
+          DateFormat('yyyy-MM-dd').format(toDate!);
+    }
+
+    if (selectedStatus != null &&
+        selectedStatus != "All") {
+      data['status'] = selectedStatus;
+    }
+
+    final response =
+        await HttpService.purchaseRequestList(data);
+
+    if (response != null &&
+        response.data != null) {
+      setState(() {
+        requests = response.data!;
+        _applySearch();
+        isLoading = false;
+      });
+
+      // Auto open newly created Purchase Request
+      _openRequestedPurchaseView();
+    } else {
+      setState(() {
+        requests = [];
+        filteredRequests = [];
+        isLoading = false;
+      });
+    }
+  } catch (e) {
+    print("Error fetching purchase requests: $e");
+
+    setState(() => isLoading = false);
   }
+}
 
   void _applySearch() {
     setState(() {
@@ -311,7 +331,32 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       editId: request.id,
     );
   }
+void _openRequestedPurchaseView() {
+  if (_popupOpened ||
+      widget.openRequestId == null ||
+      widget.openRequestId!.isEmpty) {
+    return;
+  }
 
+  try {
+    final request = requests.firstWhere(
+      (item) =>
+          item.id.toString() ==
+          widget.openRequestId.toString(),
+    );
+
+    _popupOpened = true;
+
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) {
+      _showViewDrawer(request);
+    });
+  } catch (e) {
+    print(
+      "Purchase Request not found: ${widget.openRequestId}",
+    );
+  }
+}
   void _showAddRequestDialog() {
     String requestId = "REQ-${DateFormat('HHmmss').format(DateTime.now())}";
     DateTime requestDate = DateTime.now();

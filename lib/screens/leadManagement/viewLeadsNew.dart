@@ -161,6 +161,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
   DateTime? todateUpdated;
   bool isDateFilteredUpdated = false;
   // State variables
+  String searchText = '';
   bool? result = true;
   bool? result1 = true;
   DateTime? fromdate;
@@ -433,7 +434,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
         .toList();
   }
 
-  Future<void> getData(String sort, bool isFirst, dynamic status1) async {
+  Future<void> getData(String sort, bool isFirst, dynamic status1,{String search = ''}) async {
     if (isLoading) return;
 
     setState(() {
@@ -474,7 +475,9 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
             currentPage,
             pageSize,
             isFirst,
-            branch);
+            branch,
+            search
+            );
       } else {
         Map<String, dynamic> body =
             _buildRequestBody(status1, sort, currentPage, isFirst);
@@ -586,6 +589,7 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
       // 'updated_to_date': todateUpdated != null
       //     ? DateFormat('dd-MM-yyyy').format(todateUpdated!)
       //     : "",
+      "search": searchText,
     };
 
     bool shouldSendDates = isFilterApplied ||
@@ -1849,140 +1853,173 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
 
               // Action Buttons Section (Filter and Search)
               Row(
-                children: [
-                  // Filter Button
-                  InkWell(
-                    onTap: () {
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => ViewLeadsFilterWidget(
-                          currentTab: widget.pageName,
-                          isActiveLeads: widget.isFollowup == "1" ? "1" : "",
-                          commonDetails: commonDetails,
-                          productSectionModel: productSectionModel,
-                          initialFilters: {
-                            'isDateFiltered': isDateFiltered,
-                            'fromDate': fromdate,
-                            'toDate': todate,
-                            'statusIds':
-                                (status != null) ? [status.toString()] : [],
-                            'staffIds': checkedAssignedStaffItems,
-                            'categoryIds': checkedCategoryItems,
-                            'priorityIds': checkedPriorityItems,
-                            'productIds': checkedProductItems,
-                            'dateType': selectedDateType,
-                          },
-                          onApplyFilters: (filters) {
-                            setState(() {
-                              fromdate = filters['fromDate'];
-                              todate = filters['toDate'];
-                              selectedDateType =
-                                  filters['dateType'] ?? 'created';
-                              checkedAssignedStaffItems =
-                                  List<String>.from(filters['staffIds']);
-                              checkedCategoryItems =
-                                  List<String>.from(filters['categoryIds']);
-                              checkedPriorityItems =
-                                  List<String>.from(filters['priorityIds']);
-                              checkedProductItems =
-                                  List<String>.from(filters['productIds']);
+  children: [
+    // Filter Button
+    InkWell(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => ViewLeadsFilterWidget(
+            currentTab: widget.pageName,
+            isActiveLeads: widget.isFollowup == "1" ? "1" : "",
+            commonDetails: commonDetails,
+            productSectionModel: productSectionModel,
+            initialFilters: {
+              'isDateFiltered': isDateFiltered,
+              'fromDate': fromdate,
+              'toDate': todate,
+              'statusIds':
+                  (status != null) ? [status.toString()] : [],
+              'staffIds': checkedAssignedStaffItems,
+              'categoryIds': checkedCategoryItems,
+              'priorityIds': checkedPriorityItems,
+              'productIds': checkedProductItems,
+              'dateType': selectedDateType,
+            },
+            onApplyFilters: (filters) {
+              setState(() {
+                fromdate = filters['fromDate'];
+                todate = filters['toDate'];
+                selectedDateType =
+                    filters['dateType'] ?? 'created';
 
-                              final statusIds =
-                                  List<String>.from(filters['statusIds']);
-                              status =
-                                  statusIds.isNotEmpty ? statusIds.first : null;
+                checkedAssignedStaffItems =
+                    List<String>.from(filters['staffIds']);
 
-                              //  isDateFiltered = filters['isDateFiltered'];
-                              fromdateUpdated = filters['fromDateUpdated'];
-                              todateUpdated = filters['toDateUpdated'];
-                              selectedTagIds =
-                                  List<String>.from(filters['tagIds'] ?? []);
-                              isDateFiltered =
-                                  filters['isDateFiltered'] ?? false;
-                              isDateFilteredUpdated =
-                                  filters['isDateFilteredUpdated'] ?? false;
-                              isFilterApplied = true;
-                              _isDataLoaded = false;
-                              items.clear();
-                              page = 1;
-                            });
-                            getData(currentSortOrder, true, status);
-                          },
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: borderLight, width: 1.5),
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.filter_alt_outlined,
-                          size: 22,
-                          color: Colors.blue, // change if needed
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                checkedCategoryItems =
+                    List<String>.from(filters['categoryIds']);
 
-                  // Search Toggle Button
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        searchField = !searchField;
-                        if (!searchField) {
-                          _searchController.clear();
-                          _searchQuery = '';
-                          _filterItems();
-                        }
-                      });
-                    },
-                    child: Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: searchField ? appBarStart : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: searchField ? appBarStart : borderLight,
-                            width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          searchField
-                              ? Icons.close_rounded
-                              : Icons.search_rounded,
-                          color: searchField
-                              ? Colors.white
-                              : appBarStart.withOpacity(0.8),
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                checkedPriorityItems =
+                    List<String>.from(filters['priorityIds']);
+
+                checkedProductItems =
+                    List<String>.from(filters['productIds']);
+
+                final statusIds =
+                    List<String>.from(filters['statusIds']);
+
+                status =
+                    statusIds.isNotEmpty ? statusIds.first : null;
+
+                fromdateUpdated = filters['fromDateUpdated'];
+                todateUpdated = filters['toDateUpdated'];
+
+                selectedTagIds =
+                    List<String>.from(filters['tagIds'] ?? []);
+
+                isDateFiltered =
+                    filters['isDateFiltered'] ?? false;
+
+                isDateFilteredUpdated =
+                    filters['isDateFilteredUpdated'] ?? false;
+
+                isFilterApplied = true;
+                _isDataLoaded = false;
+
+                page = 1;
+                items.clear();
+              });
+
+              getData(
+                currentSortOrder,
+                true,
+                status,
+              );
+            },
+          ),
+        );
+      },
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: borderLight,
+            width: 1.5,
+          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Icon(
+            Icons.filter_alt_outlined,
+            size: 22,
+            color: Colors.blue,
+          ),
+        ),
+      ),
+    ),
+
+    const SizedBox(width: 8),
+
+    // Search Toggle Button
+    InkWell(
+      onTap: () {
+        setState(() {
+          searchField = !searchField;
+
+          if (!searchField) {
+            _searchController.clear();
+            searchText = '';
+
+            page = 1;
+            items.clear();
+            _isDataLoaded = false;
+
+            getData(
+              currentSortOrder,
+              true,
+              status,
+            );
+          }
+        });
+      },
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: searchField
+              ? appBarStart
+              : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: searchField
+                ? appBarStart
+                : borderLight,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Icon(
+            searchField
+                ? Icons.close_rounded
+                : Icons.search_rounded,
+            color: searchField
+                ? Colors.white
+                : appBarStart.withOpacity(0.8),
+            size: 24,
+          ),
+        ),
+      ),
+    ),
+  ],
+)
             ],
           ),
         ),
@@ -1990,45 +2027,123 @@ class _ViewLeadsNewState extends State<ViewLeadsNew>
         // Expandable Search Bar
         if (searchField)
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+  child: Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _searchController,
+            autofocus: true,
+
+            onChanged: (value) {
+              searchText = value.trim();
+              setState(() {});
+            },
+
+            onSubmitted: (value) async {
+              searchText = value.trim();
+
+              page = 1;
+              items.clear();
+              _isDataLoaded = false;
+
+              await getData(
+                currentSortOrder,
+                true,
+                status,
+              );
+            },
+
+            decoration: InputDecoration(
+              hintText: 'Search by name, phone or staff...',
+              hintStyle: TextStyle(
+                color: textSecondary.withOpacity(0.5),
+                fontSize: 14,
               ),
-              child: TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Search by name, phone or staff...',
-                  hintStyle: TextStyle(
-                      color: textSecondary.withOpacity(0.5), fontSize: 14),
-                  prefixIcon:
-                      const Icon(Icons.search, color: appBarStart, size: 20),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 18),
-                          onPressed: () {
-                            _searchController.clear();
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: appBarStart,
+                size: 20,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Search Button
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              searchText = _searchController.text.trim();
+
+              page = 1;
+              items.clear();
+              _isDataLoaded = false;
+
+              await getData(
+                currentSortOrder,
+                true,
+                status,
+              );
+            },
+            icon: const Icon(Icons.search, size: 18),
+            label: const Text('Search'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
               ),
             ),
           ),
+        ),
+
+        // Clear Button
+        if (_searchController.text.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.clear, size: 18),
+            onPressed: () async {
+              _searchController.clear();
+              searchText = '';
+
+              page = 1;
+              items.clear();
+              _isDataLoaded = false;
+
+              await getData(
+                currentSortOrder,
+                true,
+                status,
+              );
+
+              setState(() {});
+            },
+          ),
+      ],
+    ),
+  ),
+)
       ],
     );
   }

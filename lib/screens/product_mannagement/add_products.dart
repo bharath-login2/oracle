@@ -48,6 +48,7 @@ class _AddProductsState extends State<AddProducts> {
   TextEditingController freeService = TextEditingController();
   TextEditingController paidService = TextEditingController();
   List<TextEditingController> complaintControllers = [TextEditingController()];
+  final TextEditingController productUCode = TextEditingController();
   List<String?> selectedComplaintTypes = ["Complaint Type"];
   List<String> complaintTypeOptions = [
     "Complaint Type",
@@ -81,7 +82,7 @@ class _AddProductsState extends State<AddProducts> {
     "Monthly",
     "Yearly"
   ];
-
+  bool _mrpEdited = false;
   List<String> weekDays = [
     "Sunday",
     "Monday",
@@ -228,6 +229,7 @@ class _AddProductsState extends State<AddProducts> {
       subCategoryId,
       productName.text,
       productCode.text,
+      productUCode.text,
       mrp.text,
       noOfDays.text,
       remindBefore.text,
@@ -404,14 +406,19 @@ class _AddProductsState extends State<AddProducts> {
     );
   }
 
-  @override
-  void initState() {
-    getProductCategory();
-    getProductTypes();
-    getUnitsList();
-    checkStock = true;
-    super.initState();
-  }
+@override
+void initState() {
+  super.initState();
+
+  getProductCategory();
+  getProductTypes();
+  getUnitsList();
+
+  checkStock = true;
+  addPublish = true;
+  selectedStatus = "Published";
+  selectedVisibility = "Public";
+}
   
   @override
   Widget build(BuildContext context) {
@@ -514,6 +521,19 @@ class _AddProductsState extends State<AddProducts> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 12),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildTextField(
+                                controller: productUCode,
+                                label: "Product Code ",
+                                icon: Icons.qr_code_outlined,
+                              ),
+                            ),
+                          ],
+                        ),
                       const SizedBox(height: 16),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,31 +543,31 @@ class _AddProductsState extends State<AddProducts> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildTextField(
-  controller: barcodeController,
-  label: "Barcode value",
-  icon: Icons.qr_code,
-  onChanged: (value) async {
-    if (value.trim().isEmpty) {
-      setState(() {
-        barcodeError = null;
-      });
-      return;
-    }
+                              controller: barcodeController,
+                              label: "Barcode value",
+                              icon: Icons.qr_code,
+                              onChanged: (value) async {
+                                if (value.trim().isEmpty) {
+                                  setState(() {
+                                    barcodeError = null;
+                                  });
+                                  return;
+                                }
 
-    final result = await HttpService.checkBarcodeDuplicate(
-      value.trim(),
-      productId?.toString() ?? "0",
-    );
+                                final result = await HttpService.checkBarcodeDuplicate(
+                                  value.trim(),
+                                  productId?.toString() ?? "0",
+                                );
 
-    setState(() {
-      if (result?.duplicate == true) {
-        barcodeError = result?.message;
-      } else {
-        barcodeError = null;
-      }
-    });
-  },
-),
+                                setState(() {
+                                  if (result?.duplicate == true) {
+                                    barcodeError = result?.message;
+                                  } else {
+                                    barcodeError = null;
+                                  }
+                                });
+                              },
+                            ),
 
                             if (barcodeError != null)
                               Padding(
@@ -575,38 +595,38 @@ class _AddProductsState extends State<AddProducts> {
                               ),
                               child: IconButton(
                                 onPressed: () async {
-  var res = await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const SimpleBarcodeScannerPage(),
-    ),
-  );
+                                  var res = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const SimpleBarcodeScannerPage(),
+                                    ),
+                                  );
 
-  if (res is String && res != '-1') {
-  barcodeController.text = res;
+                                  if (res is String && res != '-1') {
+                                  barcodeController.text = res;
 
-  print("Scanned Barcode = $res");
+                                  // print("Scanned Barcode = $res");
 
-  final result = await HttpService.checkBarcodeDuplicate(
-    res,
-    "0",
-  );
+                                  final result = await HttpService.checkBarcodeDuplicate(
+                                    res,
+                                    "0",
+                                  );
 
-  print("API Result = $result");
-  print("Duplicate = ${result?.duplicate}");
-  print("Message = ${result?.message}");
+                                  // print("API Result = $result");
+                                  // print("Duplicate = ${result?.duplicate}");
+                                  // print("Message = ${result?.message}");
 
-  setState(() {
-    if (result?.duplicate == true) {
-      barcodeError = result?.message;
-    } else {
-      barcodeError = null;
-    }
-  });
+                                  setState(() {
+                                    if (result?.duplicate == true) {
+                                      barcodeError = result?.message;
+                                    } else {
+                                      barcodeError = null;
+                                    }
+                                  });
 
-  print("barcodeError = $barcodeError");
-}
-},
+                                  print("barcodeError = $barcodeError");
+                                }
+                                },
                                 icon: const Icon(Icons.qr_code_scanner,
                                     color: Colors.white, size: 24),
                                 padding: EdgeInsets.zero,
@@ -661,24 +681,37 @@ class _AddProductsState extends State<AddProducts> {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildTextField(
-                              controller: sellingPrice,
-                              label: selectedProductType == "Rental"
-                                  ? "Rental Price *"
-                                  : "Selling Price *",
-                              icon: Icons.currency_rupee_outlined,
-                              keyboardType: TextInputType.number,
-                              onChanged: (val) {
-                                _updateTotalAmount();
-                                formKey.currentState?.validate();
-                              },
-                              validator: (val) => val!.isEmpty
-                                  ? (selectedProductType == "Rental"
-                                      ? "Enter Rental Price"
-                                      : "Enter Selling Price")
-                                  : null,
-                            ),
-                          ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildTextField(
+        controller: sellingPrice,
+        label: selectedProductType == "Rental"
+            ? "Rental Price *"
+            : "Selling Price *",
+        icon: Icons.currency_rupee_outlined,
+        keyboardType: TextInputType.number,
+        onChanged: (val) {
+          _updateTotalAmount();
+          formKey.currentState?.validate();
+        },
+        validator: (val) => val!.isEmpty
+            ? (selectedProductType == "Rental"
+                ? "Enter Rental Price"
+                : "Enter Selling Price")
+            : null,
+      ),
+
+      if (selectedProductType != "Rental")
+        const Padding(
+          padding: EdgeInsets.only(
+            left: 4,
+            top: 4,
+          ),
+        ),
+    ],
+  ),
+),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _buildTextField(
@@ -737,28 +770,47 @@ class _AddProductsState extends State<AddProducts> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildTextField(
-                              controller: mrp,
-                              label: "MRP",
-                              icon: Icons.price_check_outlined,
-                              keyboardType: TextInputType.number,
-                              validator: (val) {
-                                if (val == null || val.isEmpty) return null;
-                                double mrpValue = double.tryParse(val) ?? 0;
-                                double totalValue =
-                                    double.tryParse(totalAmount.text) ?? 0;
-                                if (mrpValue < totalValue) {
-                                  return "MRP < Total Amount";
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                    if (selectedProductType != "Rental") ...[
+  Row(
+    children: [
+      Expanded(
+        child: _buildTextField(
+          controller: mrp,
+          label: "MRP",
+          icon: Icons.price_check_outlined,
+          keyboardType: TextInputType.number,
+
+          onChanged: (val) {
+            formKey.currentState?.validate();
+          },
+
+         validator: (val) {
+  if (val == null || val.trim().isEmpty) {
+    return "Please enter MRP";
+  }
+
+  double mrpValue =
+      double.tryParse(val) ?? 0;
+
+  double sellingValue =
+      double.tryParse(
+        sellingPrice.text,
+      ) ??
+      0;
+
+  if (mrpValue < sellingValue) {
+    return "MRP must be greater than Selling Price";
+  }
+
+  return null;
+},
+        ),
+      ),
+    ],
+  ),
+
+  const SizedBox(height: 16),
+],
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: totalAmount,
@@ -769,6 +821,7 @@ class _AddProductsState extends State<AddProducts> {
                       ),
                     ],
                   ),
+                  
                   //  const SizedBox(height: 16),
                   // Row(
                   //   children: [
@@ -1244,19 +1297,50 @@ class _AddProductsState extends State<AddProducts> {
     );
   }
 
-  void _updateTotalAmount() {
-    double selling = double.tryParse(sellingPrice.text) ?? 0;
-    double taxVal = double.tryParse(tax.text) ?? 0;
-    double discVal = double.tryParse(discount.text) ?? 0;
+  // void _updateTotalAmount() {
+  //   double selling = double.tryParse(sellingPrice.text) ?? 0;
+  //   double taxVal = double.tryParse(tax.text) ?? 0;
+  //   double discVal = double.tryParse(discount.text) ?? 0;
 
-    double total =
-        (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
-    setState(() {
-      totalAmount.text = total.roundToDouble().toString();
-      mrp.text = totalAmount.text;
-    });
-  }
+  //   double total =
+  //       (selling + (selling * taxVal / 100)) - (selling * discVal / 100);
+  //   setState(() {
+  //     totalAmount.text = total.roundToDouble().toString();
+  //     mrp.text = totalAmount.text;
+  //   });
+  // }
+void _updateTotalAmount() {
+  double selling =
+      double.tryParse(sellingPrice.text) ?? 0;
 
+  double taxVal =
+      double.tryParse(tax.text) ?? 0;
+
+  double discVal =
+      double.tryParse(discount.text) ?? 0;
+
+  double amountWithTax =
+      selling + (selling * taxVal / 100);
+
+  double discountAmount =
+      amountWithTax * discVal / 100;
+
+  double total =
+      amountWithTax - discountAmount;
+
+  setState(() {
+    totalAmount.text =
+        total.toStringAsFixed(2);
+
+    // Always update MRP from total
+    if (selectedProductType != "Rental") {
+      mrp.text =
+          total.toStringAsFixed(2);
+    }
+  });
+
+  formKey.currentState?.validate();
+}
   Widget _buildLabel(String label) {
     bool hasAsterisk = label.contains('*');
     String cleanLabel = label.replaceAll('*', '').trim();
@@ -1389,114 +1473,114 @@ class _AddProductsState extends State<AddProducts> {
     );
   }
 
-  Widget _buildPublishSection() {
-    return _buildSectionCard(
-      title: "Publish",
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: Icon(
-              addPublish
-                  ? Icons.remove_circle_outline
-                  : Icons.add_circle_outline,
-              color: addPublish ? Colors.red : const Color(0xFF2a86c9),
-              size: 28,
-            ),
-            onPressed: () {
-              setState(() {
-                addPublish = !addPublish;
-                if (!addPublish) {
-                  // Reset values when closing
-                  selectedStatus = "Published";
-                  selectedVisibility = "Public";
-                }
-              });
-            },
-          ),
-          // const SizedBox(width: 4),
-          // Text(
-          //   addPublish ? "Hide Publish" : "Add Publish",
-          //   style: TextStyle(
-          //     fontWeight: FontWeight.w600,
-          //     color: addPublish ? Colors.red : const Color(0xFF2a86c9),
-          //   ),
-          // ),
-        ],
-      ),
-      children: addPublish
-          ? [
-              _buildDropdownField(
-                label: "Status",
-                value: selectedStatus,
-                items: ["Published", "Draft"],
-                onChanged: (val) {
-                  setState(() {
-                    selectedStatus = val!;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildDropdownField(
-                label: "Visibility",
-                value: selectedVisibility,
-                items: ["Public", "Private"],
-                onChanged: (val) {
-                  setState(() {
-                    selectedVisibility = val!;
-                  });
-                },
-              ),
-            ]
-          : [],
-    );
-  }
   // Widget _buildPublishSection() {
   //   return _buildSectionCard(
   //     title: "Publish",
   //     trailing: Row(
   //       mainAxisSize: MainAxisSize.min,
   //       children: [
-  //         Checkbox(
-  //           value: addPublish,
-  //           onChanged: (val) {
+  //         IconButton(
+  //           icon: Icon(
+  //             addPublish
+  //                 ? Icons.remove_circle_outline
+  //                 : Icons.add_circle_outline,
+  //             color: addPublish ? Colors.red : const Color(0xFF2a86c9),
+  //             size: 28,
+  //           ),
+  //           onPressed: () {
   //             setState(() {
-  //               addPublish = val!;
+  //               addPublish = !addPublish;
+  //               if (!addPublish) {
+  //                 // Reset values when closing
+  //                 selectedStatus = "Published";
+  //                 selectedVisibility = "Public";
+  //               }
   //             });
   //           },
-  //           activeColor: const Color(0xFF2a86c9),
   //         ),
-  //         const Text("Add Publish",
-  //             style: TextStyle(fontWeight: FontWeight.w600)),
+  //         // const SizedBox(width: 4),
+  //         // Text(
+  //         //   addPublish ? "Hide Publish" : "Add Publish",
+  //         //   style: TextStyle(
+  //         //     fontWeight: FontWeight.w600,
+  //         //     color: addPublish ? Colors.red : const Color(0xFF2a86c9),
+  //         //   ),
+  //         // ),
   //       ],
   //     ),
-  //     children: [
-  //       if (addPublish) ...[
-  //         _buildDropdownField(
-  //           label: "Status",
-  //           value: selectedStatus,
-  //           items: ["Published", "Draft"],
-  //           onChanged: (val) {
-  //             setState(() {
-  //               selectedStatus = val!;
-  //             });
-  //           },
-  //         ),
-  //         const SizedBox(height: 16),
-  //         _buildDropdownField(
-  //           label: "Visibility",
-  //           value: selectedVisibility,
-  //           items: ["Public", "Private"],
-  //           onChanged: (val) {
-  //             setState(() {
-  //               selectedVisibility = val!;
-  //             });
-  //           },
-  //         ),
-  //       ]
-  //     ],
+  //     children: addPublish
+  //         ? [
+  //             _buildDropdownField(
+  //               label: "Status",
+  //               value: selectedStatus,
+  //               items: ["Published", "Draft"],
+  //               onChanged: (val) {
+  //                 setState(() {
+  //                   selectedStatus = val!;
+  //                 });
+  //               },
+  //             ),
+  //             const SizedBox(height: 16),
+  //             _buildDropdownField(
+  //               label: "Visibility",
+  //               value: selectedVisibility,
+  //               items: ["Public", "Private"],
+  //               onChanged: (val) {
+  //                 setState(() {
+  //                   selectedVisibility = val!;
+  //                 });
+  //               },
+  //             ),
+  //           ]
+  //         : [],
   //   );
   // }
+  Widget _buildPublishSection() {
+    return _buildSectionCard(
+      title: "Publish",
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Checkbox(
+            value: addPublish,
+            onChanged: (val) {
+              setState(() {
+                addPublish = val!;
+              });
+            },
+            activeColor: const Color(0xFF2a86c9),
+          ),
+          const Text("Add Publish",
+              style: TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+      children: [
+        if (addPublish) ...[
+          _buildDropdownField(
+            label: "Status",
+            value: selectedStatus,
+            items: ["Published", "Draft"],
+            onChanged: (val) {
+              setState(() {
+                selectedStatus = val!;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          _buildDropdownField(
+            label: "Visibility",
+            value: selectedVisibility,
+            items: ["Public", "Private"],
+            onChanged: (val) {
+              setState(() {
+                selectedVisibility = val!;
+              });
+            },
+          ),
+        ]
+      ],
+    );
+  }
 
   Widget _buildSectionCard(
       {required String title,

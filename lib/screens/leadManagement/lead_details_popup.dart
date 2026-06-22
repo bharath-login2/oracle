@@ -2661,15 +2661,22 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         return;
       }
     }
-    setState(() {
-      isSavingFollowup = true;
-    });
+    // setState(() {
+    //   isSavingFollowup = true;
+    // });
 
+    // if (commonDetails == null) {
+    //   Common.toastMessaage('Common data not loaded yet', Colors.red);
+    //   return;
+    // }
     if (commonDetails == null) {
       Common.toastMessaage('Common data not loaded yet', Colors.red);
       return;
     }
 
+    setState(() {
+      isSavingFollowup = true;
+    });
     _additionalValues.clear();
     for (int i = 0; i < _additionalCtrls.length; i++) {
       if (i < commonDetails!.data.additionalFields.length) {
@@ -2730,19 +2737,41 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           emailLead: emailLead.text);
       if (context.mounted) {
         Navigator.pop(context);
+        // if (result.status == true) {
+        //   Common.toastMessaage(result.message, Colors.green);
+        //   widget.onDataChanged();
+        //   // if (mounted) {
+        //   //   Navigator.pop(context); // Close the details popup
+        //   // }
+        //   setState(() {
+        //     remarks.clear();
+        //     isExpand = false;
+        //     isChecked = false;
+        //     checked = false;
+        //   });
+        // } 
         if (result.status == true) {
           Common.toastMessaage(result.message, Colors.green);
+
+          // Refresh popup data
+          await _refreshData(callMasterId ?? widget.callMasterId);
+
+          // Refresh parent page
           widget.onDataChanged();
-          // if (mounted) {
-          //   Navigator.pop(context); // Close the details popup
-          // }
+
           setState(() {
             remarks.clear();
+            nextFollowupDate1.clear();
+
+            callResponseId = '';
+            callResultReasonId = '';
+
             isExpand = false;
             isChecked = false;
             checked = false;
           });
-        } else {
+        }
+        else {
           Common.toastMessaage(result.message, Colors.red);
         }
       }

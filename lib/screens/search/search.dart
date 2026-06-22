@@ -177,7 +177,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> getData(sort, isFirst, status1) async {
+  Future<void> getData(sort, isFirst, status1, {String? search}) async {
     setState(() => isLoading = true);
     try {
       name = await Common.getSharedPref("name");
@@ -209,6 +209,7 @@ class _SearchState extends State<Search> with TickerProviderStateMixin {
           pageSize,
           isFirst,
           branch,
+          search
         );
         if (mounted) {
           setState(() {

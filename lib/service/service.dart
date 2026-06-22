@@ -948,7 +948,7 @@ class HttpService {
   }
 
   static Future viewLeadsSts(token, fromdate, todate, type, id, status, sort,
-      page, pageSize, isFirst, branchId) async {
+      page, pageSize, isFirst, branchId,search) async {
     var params = {
       "token": token,
       "fromDate": fromdate,
@@ -961,6 +961,7 @@ class HttpService {
       "pageSize": pageSize,
       "isFirst": isFirst,
       "branchId": branchId,
+      "search": search,
     };
     try {
       var result = await _dio.get(
@@ -6376,6 +6377,7 @@ class HttpService {
     String subCategoryId,
     String productName,
     String productCode,
+    String productUCode,
     String productMrp,
     String noOfDays,
     String remindBefore,
@@ -6422,6 +6424,7 @@ class HttpService {
       "sub_category_id": subCategoryId,
       "product_name": productName,
       "product_code": productCode,
+      "product_u_code": productUCode,
       "product_mrp": productMrp,
       "no_of_days": noOfDays,
       "remind_before": remindBefore,
@@ -6541,6 +6544,7 @@ class HttpService {
     String subCategoryId,
     String productName,
     String productCode,
+    String productUCode,
     String productMrp,
     String noOfDays,
     String remindBefore,
@@ -6587,6 +6591,7 @@ class HttpService {
       "sub_category_id": subCategoryId,
       "product_name": productName,
       "product_code": productCode,
+      "product_u_code": productUCode,
       "product_mrp": productMrp,
       "no_of_days": noOfDays,
       "remind_before": remindBefore,
@@ -15238,6 +15243,7 @@ class HttpService {
       if (response.statusCode == 200 &&
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
+                print("getRequestStockList response: ${response.data}");
         return GetStockRequestModel.fromJson(response.data);
       }
     } catch (e) {
@@ -15444,6 +15450,7 @@ class HttpService {
       if (response.statusCode == 200 &&
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
+                print("getStockRequestEditDetails response: ${response.data}");
         return StockRequestEditDetails.fromJson(response.data);
       }
       log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
@@ -16552,4 +16559,32 @@ class HttpService {
 
     return null;
   }
+static Future<Map<String, dynamic>?> approveRejectStockRequest(
+  String requestId,
+  String status,
+) async {
+  final token = await Common.getSharedPref("token");
+
+  final data = {
+    'token': token,
+    'request_id': requestId,
+    'request_status': status == "Approved" ? 1 : 3,
+  };
+
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}approve_reject_stock_request",
+      data: FormData.fromMap(data),
+    );
+
+    if (response.statusCode == 200 &&
+        response.data['status'] == true) {
+      return response.data['data'];
+    }
+  } catch (e) {
+    log("approveRejectStockRequest error: $e");
+  }
+
+  return null;
+}
 }
