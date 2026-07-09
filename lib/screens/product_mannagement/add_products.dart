@@ -522,7 +522,6 @@ void initState() {
                         ],
                       ),
                       const SizedBox(height: 12),
-
                         Row(
                           children: [
                             Expanded(

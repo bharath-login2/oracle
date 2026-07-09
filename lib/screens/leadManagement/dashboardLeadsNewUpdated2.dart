@@ -4131,7 +4131,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
-  void _navigateToFilteredLeads({
+  Future<void> _navigateToFilteredLeads({
     required BuildContext context,
     String? staffName,
     String? staffId,
@@ -4147,7 +4147,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     DateTime? to,
     bool isGlobalContext = false,
   }) {
-    Navigator.push(
+    return Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ViewLeadsNew(
@@ -4177,10 +4177,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
           callStatus: callStatus,
         ),
       ),
-    ).then((r) => getData(widget.token, fromDate, toDate, isRefresh: true));
+    ).then((r) {
+      getData(widget.token, fromDate, toDate, isRefresh: true);
+    });
   }
 
-  void _navigateToFilteredLeadsActive({
+  Future<void> _navigateToFilteredLeadsActive({
     required BuildContext context,
     String? staffName,
     String? staffId,
@@ -4197,39 +4199,42 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     String? isFollowup,
     bool isGlobalContext = false,
   }) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ViewLeadsNew(
-          widget.token,
-          updateLeadPermission1,
-          deleteLeadPermission1,
-          cloudCallPermission1,
-          pageName: title ?? 'Leads',
-          fromDate: from != null
-              ? from.toString()
-              : (isGlobalContext
-                  ? (_isGlobalDateFiltered ? fromDate.toString() : null)
-                  : (_isListTabDateFiltered ? fromDate.toString() : null)),
-          toDate: to != null
-              ? to.toString()
-              : (isGlobalContext
-                  ? (_isGlobalDateFiltered ? toDate.toString() : null)
-                  : (_isListTabDateFiltered ? toDate.toString() : null)),
-          status: status ?? '0',
-          leadType: type ?? '',
-          staffName: staffName,
-          staff: staffId,
-          categoryName: categoryName,
-          category: categoryId,
-          callResId: callResId,
-          callResName: callResName,
-          isActiveReport: "1",
-          isFollowup: isFollowup,
-          callStatus: callStatus,
-        ),
-      ),
-    ).then((r) => getData(widget.token, fromDate, toDate, isRefresh: true));
+    return Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (context) => ViewLeadsNew(
+      widget.token,
+      updateLeadPermission1,
+      deleteLeadPermission1,
+      cloudCallPermission1,
+      pageName: title ?? 'Leads',
+      fromDate: from != null
+          ? from.toString()
+          : (isGlobalContext
+              ? (_isGlobalDateFiltered ? fromDate.toString() : null)
+              : (_isListTabDateFiltered ? fromDate.toString() : null)),
+      toDate: to != null
+          ? to.toString()
+          : (isGlobalContext
+              ? (_isGlobalDateFiltered ? toDate.toString() : null)
+              : (_isListTabDateFiltered ? toDate.toString() : null)),
+      status: status ?? '0',
+      leadType: type ?? '',
+      staffName: staffName,
+      staff: staffId,
+      categoryName: categoryName,
+      category: categoryId,
+      callResId: callResId,
+      callResName: callResName,
+      isActiveReport: "1",
+      isFollowup: isFollowup,
+      callStatus: callStatus,
+    ),
+  ),
+).then((r) {
+  getData(widget.token, fromDate, toDate, isRefresh: true);
+});
+  
   }
 
   void _navigateToFilteredLeadsActiveActive({
@@ -16072,7 +16077,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             margin: const EdgeInsets.only(bottom: 12),
                             child: GestureDetector(
                               onTap: () {
-                                Navigator.pop(context);
+                                // Navigator.pop(context);
                                 _navigateToFilteredLeads(
                                   context: context,
                                   staffName: staff.staffName,
@@ -17002,15 +17007,16 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             child: GestureDetector(
-                              onTap: () {
-                                Navigator.pop(context);
-                                _navigateToFilteredLeadsActive(
+                              onTap: () async {
+                                // Navigator.pop(context);
+
+                                await _navigateToFilteredLeadsActive(
                                   context: context,
                                   staffName: staff.staffName,
                                   staffId: staff.staffId,
-                                  title: title ?? 'Leads',
-                                  status: status ?? '0',
-                                  type: type ?? '',
+                                  title: title,
+                                  status: status,
+                                  type: type,
                                   callStatus: callStatus,
                                   isGlobalContext: true,
                                   isFollowup: "1",

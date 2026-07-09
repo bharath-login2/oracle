@@ -59,7 +59,7 @@ import 'package:login2/screens/authentication/googleDriveAccountsModel.dart';
 import 'package:login2/screens/authentication/googleDriveFilesModel.dart';
 import 'package:login2/models/lead_management/deleteGoogleDriveFileModel.dart';
 import 'package:login2/models/lead_management/renameGdriveApiModel.dart';
-
+import 'package:dropdown_search/dropdown_search.dart';
 class LeadDetailsPopup extends StatefulWidget {
   final String token;
   final bool editLead;
@@ -10270,41 +10270,59 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
                       // Dropdown Replacement / Themed Selection
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            hint: const Text("Choose staff member",
-                                style: TextStyle(fontSize: 14)),
-                            value: selectedStaff,
-                            icon: Icon(Icons.keyboard_arrow_down_rounded,
-                                color: Colors.grey.shade400),
-                            items:
-                                commonDetails?.data.transferStaffs.map((staff) {
-                              return DropdownMenuItem<String>(
-                                value: staff.tranStaffId,
-                                child: Text(
-                                  staff.tranStaffName,
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: textPrimary),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setDialogState(() {
-                                selectedStaff = value;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
+  decoration: BoxDecoration(
+    color: Colors.grey.shade50,
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: Colors.grey.shade200),
+  ),
+  child: DropdownSearch<String>(
+    selectedItem: selectedStaff,
+    items: (filter, infiniteScrollProps) {
+      return commonDetails?.data.transferStaffs
+              .map((staff) => staff.tranStaffId)
+              .toList() ??
+          [];
+    },
+
+    itemAsString: (id) {
+      try {
+        final staff = commonDetails!.data.transferStaffs.firstWhere(
+          (e) => e.tranStaffId == id,
+        );
+        return staff.tranStaffName ?? '';
+      } catch (e) {
+        return '';
+      }
+    },
+
+    decoratorProps: const DropDownDecoratorProps(
+      decoration: InputDecoration(
+        hintText: "Choose staff member",
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
+      ),
+    ),
+
+    popupProps: const PopupProps.menu(
+      showSearchBox: true,
+      searchFieldProps: TextFieldProps(
+        decoration: InputDecoration(
+          hintText: "Search staff...",
+          prefixIcon: Icon(Icons.search),
+        ),
+      ),
+    ),
+
+    onChanged: (value) {
+      setDialogState(() {
+        selectedStaff = value;
+      });
+    },
+  ),
+),
                       const SizedBox(height: 20),
 
                       // Remark Label
