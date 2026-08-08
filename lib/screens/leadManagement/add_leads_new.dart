@@ -605,7 +605,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   Widget _buildBranchField() {
     return DropdownButtonFormField<String>(
       value: branch,
-      decoration: _inputDecoration('Select Branch', Icons.business),
+      decoration: _inputDecoration('Select Branch *', Icons.business),
       items: commonDetails!.data.branch.map((b) {
         return DropdownMenuItem(
           value: b.branchId.toString(),

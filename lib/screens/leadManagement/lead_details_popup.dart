@@ -60,6 +60,8 @@ import 'package:login2/screens/authentication/googleDriveFilesModel.dart';
 import 'package:login2/models/lead_management/deleteGoogleDriveFileModel.dart';
 import 'package:login2/models/lead_management/renameGdriveApiModel.dart';
 import 'package:dropdown_search/dropdown_search.dart';
+import 'package:login2/models/expense/staffListModel.dart' as expense;
+
 class LeadDetailsPopup extends StatefulWidget {
   final String token;
   final bool editLead;
@@ -168,7 +170,6 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   TextEditingController folderName = TextEditingController();
   TextEditingController fileName = TextEditingController();
   TextEditingController fileNameEdit = TextEditingController();
-
   final AudioRecordController audioCreateController =
       Get.put(AudioRecordController());
   final ImageUploadController imageUploadController =
@@ -213,6 +214,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String? createLeadCategory = '';
   String? addLeadSource = '';
 
+List<expense.Staff> staffList = [];
+String? assignedTo;
   TextEditingController calledDate1 = TextEditingController();
   TextEditingController nextFollowupDate1 = TextEditingController();
   TextEditingController cost = TextEditingController();
@@ -472,20 +475,33 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   int _getTabCount() {
-    int count = 4; // Followup, Activities, Details, Documents
+    int count = 4; // Followup, Activities, Details, File Manager
     if (widget.leadDetails.data?.callHistoryPermission == true) count++;
+    if (widget.leadDetails.data?.createPricingDetails == true) count++;
     if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) count++;
     return count;
   }
 
   List<String> _getTabLabels() {
-    List<String> labels = ['Followup', 'Activities', 'Details', 'File Manager'];
+    List<String> labels = [
+      'Followup',
+      'Activities',
+      'Details',
+      'File Manager',
+    ];
+
     if (widget.leadDetails.data?.callHistoryPermission == true) {
       labels.insert(1, 'Call Logs');
     }
+
+    if (widget.leadDetails.data?.createPricingDetails == true) {
+      labels.add('Pricing Details');
+    }
+
     if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
       labels.add('Milestones');
     }
+
     return labels;
   }
 
@@ -1528,6 +1544,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               _buildActivitiesTab(),
               _buildDetailsTab(),
               _buildDocumentsTab(),
+              if (widget.leadDetails.data?.createPricingDetails == true)
+                _buildPricingDetailsTab(),
               if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false)
                 _buildMilestonesTab(),
             ],
@@ -1536,7 +1554,975 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       ),
     );
   }
+// ── Pricing Details Tab Controllers ────────────────────────────────────────
+  final TextEditingController _pQuotation = TextEditingController();
+  final TextEditingController _pClientName = TextEditingController();
+  final TextEditingController _pPhone = TextEditingController();
+  final TextEditingController _pLocation = TextEditingController();
+  final TextEditingController _pElevatorType = TextEditingController();
+  final TextEditingController _pTypeOfOpening = TextEditingController();
+  final TextEditingController _pCapacity = TextEditingController();
+  final TextEditingController _pPassengerCapacity = TextEditingController();
+  final TextEditingController _pShaftWidth = TextEditingController();
+  final TextEditingController _pShaftDepth = TextEditingController();
+  final TextEditingController _pPitDepth = TextEditingController();
+  final TextEditingController _pTravelHeight = TextEditingController();
+  final TextEditingController _pOverheadHeight = TextEditingController();
+  final TextEditingController _pWarranty = TextEditingController();
+  final TextEditingController _pAmc = TextEditingController();
+  final TextEditingController _pFactoryPrice = TextEditingController();
+  final TextEditingController _pTransportation = TextEditingController();
+  final TextEditingController _pInstallation = TextEditingController();
+  final TextEditingController _pTesting = TextEditingController();
+  final TextEditingController _pConsumables = TextEditingController();
+  final TextEditingController _pAdditionalFactory = TextEditingController();
+  final TextEditingController _pAdditional = TextEditingController();
+  final TextEditingController _pUnitPrice = TextEditingController();
+  final TextEditingController _pCompanyProfit = TextEditingController();
+  final TextEditingController _pCompanyProfitAmount = TextEditingController();
+  final TextEditingController _pSalesCommission = TextEditingController();
+  final TextEditingController _pSalesCommissionAmount = TextEditingController();
+  final TextEditingController _pSubTotal = TextEditingController();
+  final TextEditingController _pTaxPercentage = TextEditingController();
+  final TextEditingController _pTaxAmount = TextEditingController();
+  final TextEditingController _pTotalSalePrice = TextEditingController();
+  // Dropdown selections for pricing specs
+  String? _pLiftTypeId;
+  String? _pOpeningId;
+  String? _pDoorOpeningId;
+  String? _pCabinSideWallId;
+  String? _pLandingDoorId;
+  String? _pCopId;
+  String? _pLopId;
+  String? _pTaxType;
+  bool _pricingControllersInitialized = false;
+  bool _isSavingPricing = false;
 
+  void _initPricingControllers() {
+    if (_pricingControllersInitialized) return;
+    _pricingControllersInitialized = true;
+    final data = leadDetails?.data;
+    if (data == null) return;
+    _pQuotation.text = data.quotation ?? '';
+    _pClientName.text = data.clientName ?? '';
+    _pPhone.text = data.contactNumber1 ?? '';
+    _pLocation.text = data.location ?? '';
+    _pElevatorType.text = data.elevatorType ?? '';
+    _pTypeOfOpening.text = data.typeOfOpening ?? '';
+    _pCapacity.text = data.capacity ?? '';
+    _pPassengerCapacity.text = data.passengerCapacity ?? '';
+    _pShaftWidth.text = data.shaftWidth ?? '';
+    _pShaftDepth.text = data.shaftDepth ?? '';
+    _pPitDepth.text = data.pitDepth ?? '';
+    _pTravelHeight.text = data.travelHeight ?? '';
+    _pOverheadHeight.text = data.overheadHeight ?? '';
+    _pWarranty.text = data.warranty ?? '';
+    _pAmc.text = data.amc ?? '';
+    _pFactoryPrice.text = data.factoryPrice ?? '';
+    _pTransportation.text = data.transportationCharge ?? '';
+    _pInstallation.text = data.installationCharge ?? '';
+    _pTesting.text = data.testingCharge ?? '';
+    _pConsumables.text = data.consumables ?? '';
+    _pAdditionalFactory.text = data.additionalChargesApartFromFactory ?? '';
+    _pAdditional.text = data.additionalCharge ?? '';
+    _pUnitPrice.text = data.unitPrice ?? '';
+    _pCompanyProfit.text = data.companyProfit ?? '';
+    _pCompanyProfitAmount.text = data.companyProfitAmount ?? '';
+    _pSalesCommission.text = data.salesCommission ?? '';
+    _pSalesCommissionAmount.text = data.salesCommissionAmount ?? '';
+    _pSubTotal.text = data.subTotal ?? '';
+    _pTaxPercentage.text = data.taxPercentage ?? '';
+    _pTaxAmount.text = data.taxAmount ?? '';
+    _pTotalSalePrice.text = data.totalSalePrice ?? '';
+    // Spec dropdowns: model stores raw IDs from the API (e.g. "13", "105")
+    _pLiftTypeId = _validSpecId(data.liftValues, data.liftType);
+    _pOpeningId = _validSpecId(data.opening, data.openingName);
+    _pDoorOpeningId = _validSpecId(data.cabinOpening, data.doorOpening);
+    _pCabinSideWallId = _validSpecId(data.cabinSideWall, data.cabinSideWallName);
+    _pLandingDoorId = _validSpecId(data.landingDoor, data.landingDoorName);
+    _pCopId = _validSpecId(data.cop, data.copName);
+    _pLopId = _validSpecId(data.lop, data.lopName);
+    _pTaxType = data.taxType?.isEmpty == true ? null : data.taxType;
+  }
+
+  /// Returns [id] if it matches a valueId in [list], otherwise null.
+  String? _validSpecId(List<dynamic>? list, String? id) {
+    if (list == null || id == null || id.isEmpty) return null;
+    return list.any((e) => e.valueId == id) ? id : null;
+  }
+
+Future<void> _savePricingDetails() async {
+  if (_pQuotation.text.trim().isEmpty) {
+    Common.toastMessaage('Quotation Name is required', Colors.red);
+    return;
+  }
+
+  if (_pClientName.text.trim().isEmpty) {
+    Common.toastMessaage('Client Name is required', Colors.red);
+    return;
+  }
+
+  final token = await Common.getSharedPref('token');
+
+  final body = <String, dynamic>{
+      'token': token,
+      'lead_id': callMasterId ?? '',
+      'quotation_name': _pQuotation.text,
+      'client_name': _pClientName.text,
+      'phone': _pPhone.text,
+      'location': _pLocation.text,
+      'elevator_type': _pElevatorType.text,
+      'type_of_opening': _pTypeOfOpening.text,
+      'lift_capacity': _pCapacity.text,
+      'no_of_passenger': _pPassengerCapacity.text,
+      'shaft_width': _pShaftWidth.text,
+      'shaft_depth': _pShaftDepth.text,
+      'pit_depth': _pPitDepth.text,
+      'travel_height': _pTravelHeight.text,
+      'over_head_height': _pOverheadHeight.text,
+      'lift_type': _pLiftTypeId ?? '',
+      'opening_type': _pOpeningId ?? '',
+      'door_opening': _pDoorOpeningId ?? '',
+      'cabin_side_wall': _pCabinSideWallId ?? '',
+      'landing_door': _pLandingDoorId ?? '',
+      'cop': _pCopId ?? '',
+      'lop': _pLopId ?? '',
+      'wr': _pWarranty.text,
+      'amc': _pAmc.text,
+      'factory_price': _pFactoryPrice.text,
+      'transportation': _pTransportation.text,
+      'installation_charge': _pInstallation.text,
+      'testing_commissioning': _pTesting.text,
+      'consumables': _pConsumables.text,
+      'additional_factory_charges': _pAdditionalFactory.text,
+      'additional_amount': _pAdditional.text,
+      'price': _pUnitPrice.text,
+      'tax_type': _pTaxType ?? '',
+      'tax': _pTaxPercentage.text,
+      'tax_amount': _pTaxAmount.text,
+      'comp_profit': _pCompanyProfit.text,
+      'comp_profit_amount': _pCompanyProfitAmount.text,
+      'sales_commission': _pSalesCommission.text,
+      'sales_commission_amount': _pSalesCommissionAmount.text,
+      'sub_total': _pSubTotal.text,
+      'grand_total': _pTotalSalePrice.text,
+    };
+      setState(() => _isSavingPricing = true);
+
+    Common.showProgressDialog(context, "Saving Pricing...");
+
+    try {
+      final result = await HttpService.postPricing(body);
+
+      if (mounted) {
+        Navigator.pop(context); // Close progress dialog
+
+        if (result != null && result['status'] == true) {
+    Common.toastMessaage(
+      result['message'] ?? 'Pricing saved successfully',
+      Colors.green,
+    );
+
+    await _refreshData(callMasterId ?? widget.callMasterId);
+    widget.onDataChanged();
+
+    // Navigate to Followup tab
+    _tabController.animateTo(0);
+  }else {
+        Common.toastMessaage(
+          result?['message'] ?? 'Failed to save pricing',
+          Colors.red,
+        );
+      }
+    }
+  } catch (e) {
+    if (mounted) {
+      Navigator.pop(context); // Close progress dialog
+      Common.toastMessaage("Error: $e", Colors.red);
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isSavingPricing = false);
+    }
+  }
+}
+
+  String _getSpecName(List<dynamic>? list, String? id) {
+    if (list == null || id == null || id.isEmpty) return '-';
+    for (var item in list) {
+      if (item.valueId == id) {
+        return (item.valueName ?? id).toString();
+      }
+    }
+    return id;
+  }
+
+  void _showViewPricingDetailsDialog() {
+    final data = leadDetails?.data;
+    if (data == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          titlePadding: EdgeInsets.zero,
+          contentPadding: const EdgeInsets.all(16),
+          title: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF2a86c9), Color(0xFF1E6091)],
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.receipt_long_rounded, color: Colors.white, size: 22),
+                    SizedBox(width: 10),
+                    Text(
+                      'Pricing Details',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 22),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.85,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Estimation Section Summary
+                  // if (data.createEstimation == true) ...[
+                  //   _buildSummarySectionHeader('Estimation Details', Icons.assignment_outlined),
+                  //   const SizedBox(height: 10),
+                  //   _buildSummaryGrid([
+                  //     _buildSummaryTile('Quotation', _pQuotation.text),
+                  //     _buildSummaryTile('Client Name', _pClientName.text),
+                  //     _buildSummaryTile('Phone', _pPhone.text),
+                  //     _buildSummaryTile('Location', _pLocation.text),
+                  //     _buildSummaryTile('Elevator Type', _pElevatorType.text),
+                  //     _buildSummaryTile('Type of Opening', _pTypeOfOpening.text),
+                  //     _buildSummaryTile('Lift Type', _getSpecName(data.liftValues, _pLiftTypeId)),
+                  //     _buildSummaryTile('Capacity', _pCapacity.text),
+                  //     _buildSummaryTile('Passenger Capacity', _pPassengerCapacity.text),
+                  //     _buildSummaryTile('Shaft Width', _pShaftWidth.text),
+                  //     _buildSummaryTile('Shaft Depth', _pShaftDepth.text),
+                  //     _buildSummaryTile('Pit Depth', _pPitDepth.text),
+                  //     _buildSummaryTile('Travel Height', _pTravelHeight.text),
+                  //     _buildSummaryTile('Overhead Height', _pOverheadHeight.text),
+                  //     _buildSummaryTile('Opening', _getSpecName(data.opening, _pOpeningId)),
+                  //     _buildSummaryTile('Door Opening', _getSpecName(data.cabinOpening, _pDoorOpeningId)),
+                  //     _buildSummaryTile('Cabin (Side Wall)', _getSpecName(data.cabinSideWall, _pCabinSideWallId)),
+                  //     _buildSummaryTile('Landing Door', _getSpecName(data.landingDoor, _pLandingDoorId)),
+                  //     _buildSummaryTile('COP', _getSpecName(data.cop, _pCopId)),
+                  //     _buildSummaryTile('LOP', _getSpecName(data.lop, _pLopId)),
+                  //     _buildSummaryTile('Warranty (Years)', _pWarranty.text),
+                  //     _buildSummaryTile('AMC (Years)', _pAmc.text),
+                  //   ]),
+                  //   const SizedBox(height: 18),
+                  // ],
+
+                  // Pricing Section Summary
+                  if (data.createPricing == true) ...[
+                    _buildSummarySectionHeader('Pricing Details', Icons.payments_outlined),
+                    const SizedBox(height: 10),
+                    _buildSummaryGrid([
+                      _buildSummaryTile('Factory Price', _pFactoryPrice.text.isEmpty ? '-' : '₹ ${_pFactoryPrice.text}'),
+                      _buildSummaryTile('Transportation', _pTransportation.text.isEmpty ? '-' : '₹ ${_pTransportation.text}'),
+                      _buildSummaryTile('Installation Charge', _pInstallation.text.isEmpty ? '-' : '₹ ${_pInstallation.text}'),
+                      _buildSummaryTile('Testing & Comm.', _pTesting.text.isEmpty ? '-' : '₹ ${_pTesting.text}'),
+                      _buildSummaryTile('Consumables', _pConsumables.text.isEmpty ? '-' : '₹ ${_pConsumables.text}'),
+                      _buildSummaryTile('Add. Factory Charges', _pAdditionalFactory.text.isEmpty ? '-' : '₹ ${_pAdditionalFactory.text}'),
+                      _buildSummaryTile('Additional Charge', _pAdditional.text.isEmpty ? '-' : '₹ ${_pAdditional.text}'),
+                      _buildSummaryTile('Unit Price', _pUnitPrice.text.isEmpty ? '-' : '₹ ${_pUnitPrice.text}'),
+                      _buildSummaryTile('Company Profit (%)', _pCompanyProfit.text.isEmpty ? '-' : '${_pCompanyProfit.text}%'),
+                      _buildSummaryTile('Company Profit Amount', _pCompanyProfitAmount.text.isEmpty ? '-' : '₹ ${_pCompanyProfitAmount.text}'),
+                      _buildSummaryTile('Sales Commission (%)', _pSalesCommission.text.isEmpty ? '-' : '${_pSalesCommission.text}%'),
+                      _buildSummaryTile('Sales Comm. Amount', _pSalesCommissionAmount.text.isEmpty ? '-' : '₹ ${_pSalesCommissionAmount.text}'),
+                      _buildSummaryTile('Sub Total', _pSubTotal.text.isEmpty ? '-' : '₹ ${_pSubTotal.text}'),
+                      _buildSummaryTile('Tax Type', _pTaxType ?? '-'),
+                      _buildSummaryTile('Tax (%)', _pTaxPercentage.text.isEmpty ? '-' : '${_pTaxPercentage.text}%'),
+                      _buildSummaryTile('Tax Amount', _pTaxAmount.text.isEmpty ? '-' : '₹ ${_pTaxAmount.text}'),
+                      _buildSummaryTile('Total Sale Price', _pTotalSalePrice.text.isEmpty ? '-' : '₹ ${_pTotalSalePrice.text}', isHighlight: true),
+                    ]),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2a86c9),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSummarySectionHeader(String title, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2a86c9).withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF2a86c9)),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E6091),
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryGrid(List<Widget> children) {
+    List<Widget> rows = [];
+    for (int i = 0; i < children.length; i += 2) {
+      final leftItem = children[i];
+      final rightItem = (i + 1 < children.length) ? children[i + 1] : null;
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(
+            children: [
+              Expanded(child: leftItem),
+              const SizedBox(width: 10),
+              Expanded(
+                child: rightItem ?? const SizedBox(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Column(children: rows);
+  }
+
+  Widget _buildSummaryTile(String label, String value, {bool isHighlight = false}) {
+    final displayValue = value.trim().isEmpty ? '-' : value;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isHighlight ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isHighlight ? const Color(0xFF2a86c9) : const Color(0xFFE2E8F0),
+          width: isHighlight ? 1.5 : 1.0,
+        ),
+        boxShadow: isHighlight
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF2a86c9).withOpacity(0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                )
+              ]
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isHighlight ? const Color(0xFF1E6091) : const Color(0xFF64748B),
+              letterSpacing: 0.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            displayValue,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
+              color: isHighlight ? const Color(0xFF1E6091) : const Color(0xFF1E293B),
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPricingDetailsTab() {
+    if (leadDetails == null || leadDetails!.data == null) {
+      return const Center(
+        child: Text(
+          'No Pricing Details Available',
+          style: TextStyle(fontSize: 14, color: Colors.grey),
+        ),
+      );
+    }
+    _initPricingControllers();
+    final data = leadDetails!.data!;
+    final showEstimation = data.createEstimation == true;
+    final showPricing = data.createPricing == true;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Estimation & Pricing Section ──────────────────────────────
+          if (showEstimation) _buildEstimationCard(context, data),
+          // ── Pricing Section ───────────────────────────────────────────
+          if (showPricing) _buildPricingCard(context, data),
+          const SizedBox(height: 8),
+          // ── Save Button ───────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2a86c9), Color(0xFF1E6091)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF2a86c9).withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _isSavingPricing ? null : _savePricingDetails,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSavingPricing
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.save_rounded, color: Colors.white, size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Save Details',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // ── View Details Button ───────────────────────────────────────
+          Container(
+            width: double.infinity,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF2a86c9), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _showViewPricingDetailsDialog,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.visibility_outlined, color: Color(0xFF2a86c9), size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'View Pricing',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2a86c9),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEstimationCard(BuildContext context, dynamic data) {
+    return _pricingCardSection(
+      title: 'Estimation & Pricing',
+      icon: Icons.assignment_outlined,
+      children: [
+        _buildGridRow(context, [
+          _pricingField('Quotation', _pQuotation, prefixIcon: Icons.description_outlined,hintText: 'Home Lift'),
+          _pricingField('Client Name', _pClientName, prefixIcon: Icons.person_outline),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingField('Phone', _pPhone, keyboardType: TextInputType.phone, prefixIcon: Icons.phone_outlined),
+          _pricingField('Location', _pLocation, prefixIcon: Icons.location_on_outlined),
+          _pricingField('Elevator Type', _pElevatorType, prefixIcon: Icons.elevator_outlined),
+          _pricingField('Type of Opening', _pTypeOfOpening),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingDropdown(
+            label: 'Lift Type',
+            value: _pLiftTypeId,
+            items: data.liftValues ?? [],
+            onChanged: (v) => setState(() => _pLiftTypeId = v),
+          ),
+          _pricingField('Capacity', _pCapacity, keyboardType: TextInputType.number),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingField('Passenger Capacity', _pPassengerCapacity, keyboardType: TextInputType.number,hintText: '6'),
+          _pricingField('Shaft Width', _pShaftWidth, keyboardType: TextInputType.number,hintText: '1500'),
+          _pricingField('Shaft Depth', _pShaftDepth, keyboardType: TextInputType.number,hintText: '1700'),
+          _pricingField('Pit Depth', _pPitDepth, keyboardType: TextInputType.number,hintText: '1500'),
+          _pricingField('Travel Height', _pTravelHeight, keyboardType: TextInputType.number),
+          _pricingField('Overhead Height', _pOverheadHeight, keyboardType: TextInputType.number),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingDropdown(
+            label: 'Opening',
+            value: _pOpeningId,
+            items: data.opening ?? [],
+            onChanged: (v) => setState(() => _pOpeningId = v),
+          ),
+          _pricingDropdown(
+            label: 'Door Opening',
+            value: _pDoorOpeningId,
+            items: data.cabinOpening ?? [],
+            onChanged: (v) => setState(() => _pDoorOpeningId = v),
+          ),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingDropdown(
+            label: 'Cabin (Side Wall)',
+            value: _pCabinSideWallId,
+            items: data.cabinSideWall ?? [],
+            onChanged: (v) => setState(() => _pCabinSideWallId = v),
+          ),
+          _pricingDropdown(
+            label: 'Landing & Car Door',
+            value: _pLandingDoorId,
+            items: data.landingDoor ?? [],
+            onChanged: (v) => setState(() => _pLandingDoorId = v),
+          ),
+          _pricingDropdown(
+            label: 'COP',
+            value: _pCopId,
+            items: data.cop ?? [],
+            onChanged: (v) => setState(() => _pCopId = v),
+          ),
+          _pricingDropdown(
+            label: 'LOP',
+            value: _pLopId,
+            items: data.lop ?? [],
+            onChanged: (v) => setState(() => _pLopId = v),
+          ),
+          
+        // _buildGridRow(context, [
+          _pricingField('Warranty (Year)', _pWarranty, keyboardType: TextInputType.number,hintText: '5'),
+          _pricingField('AMC (Year)', _pAmc, keyboardType: TextInputType.number,hintText: '1'),
+        // ]),
+        ]),
+      ],
+    );
+  }
+
+  Widget _buildPricingCard(BuildContext context, dynamic data) {
+    return _pricingCardSection(
+      title: 'Pricing',
+      icon: Icons.payments_outlined,
+      children: [
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingField('Factory Price', _pFactoryPrice, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('Transportation & Off Loading', _pTransportation, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('Installation Charge', _pInstallation, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('Testing & Commissioning', _pTesting, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingField('Consumables', _pConsumables, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('Additional Charges (Factory)', _pAdditionalFactory, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('Additional', _pAdditional, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingField('Unit Price', _pUnitPrice,  readOnly: true, prefixText: '₹'),
+          _pricingField('Company Profit (%)', _pCompanyProfit, keyboardType: TextInputType.number, prefixText: '%', onChanged: (_) => _calculatePricing()),
+          _pricingField('Company Profit Amount', _pCompanyProfitAmount, readOnly: true, prefixText: '₹'),
+          _pricingField('Sales Commission (%)', _pSalesCommission, keyboardType: TextInputType.number, prefixText: '%', onChanged: (_) => _calculatePricing()),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingField('Sales Commission Amount', _pSalesCommissionAmount, readOnly: true, prefixText: '₹'),
+          _pricingField('Sub Total', _pSubTotal, readOnly: true, prefixText: '₹'),
+          _pricingDropdown(
+            label: 'Tax Type',
+            value: _pTaxType,
+            items: (data.taxTypes ?? []).map((e) => e).toList(),
+            onChanged: (v) => setState(() => _pTaxType = v),
+          ),
+          _pricingField('Tax (%)', _pTaxPercentage, keyboardType: TextInputType.number, prefixText: '%', onChanged: (_) => _calculatePricing()),
+        ]),
+        const SizedBox(height: 14),
+        _buildGridRow(context, [
+          _pricingField('Tax Amount', _pTaxAmount, readOnly: true, prefixText: '₹'),
+          _pricingField('Total Sale Price', _pTotalSalePrice, keyboardType: TextInputType.number, prefixText: '₹'),
+        ]),
+      ],
+    );
+  }
+void _calculatePricing() {
+  double factory = double.tryParse(_pFactoryPrice.text) ?? 0;
+  double transportation = double.tryParse(_pTransportation.text) ?? 0;
+  double installation = double.tryParse(_pInstallation.text) ?? 0;
+  double testing = double.tryParse(_pTesting.text) ?? 0;
+  double consumables = double.tryParse(_pConsumables.text) ?? 0;
+  double additionalFactory = double.tryParse(_pAdditionalFactory.text) ?? 0;
+  double additional = double.tryParse(_pAdditional.text) ?? 0;
+
+  // Unit Price
+  double unitPrice = factory +
+      transportation +
+      installation +
+      testing +
+      consumables +
+      additionalFactory +
+      additional;
+
+  _pUnitPrice.text = unitPrice.toStringAsFixed(2);
+
+  // Company Profit
+  double companyProfit =
+      double.tryParse(_pCompanyProfit.text) ?? 0;
+
+  double companyProfitAmount =
+      factory * companyProfit / 100;
+
+  _pCompanyProfitAmount.text =
+      companyProfitAmount.toStringAsFixed(2);
+
+  // Sales Commission
+  double salesCommission =
+      double.tryParse(_pSalesCommission.text) ?? 0;
+
+  double salesCommissionAmount =
+      companyProfitAmount * salesCommission / 100;
+
+  _pSalesCommissionAmount.text =
+      salesCommissionAmount.toStringAsFixed(2);
+
+  // Sub Total
+  double subTotal =
+      unitPrice + companyProfitAmount + salesCommissionAmount;
+
+  _pSubTotal.text = subTotal.toStringAsFixed(2);
+
+  // Tax
+  double tax =
+      double.tryParse(_pTaxPercentage.text) ?? 0;
+
+  double taxAmount =
+      subTotal * tax / 100;
+
+  _pTaxAmount.text = taxAmount.toStringAsFixed(2);
+
+  // Total Sale Price
+  double totalSalePrice =
+      subTotal + taxAmount;
+
+  _pTotalSalePrice.text =
+      totalSalePrice.toStringAsFixed(2);
+}
+  
+  Widget _pricingCardSection({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2a86c9).withOpacity(0.06),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border(bottom: BorderSide(color: const Color(0xFF2a86c9).withOpacity(0.12))),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2a86c9).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: const Color(0xFF2a86c9), size: 18),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E6091),
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridRow(BuildContext context, List<Widget> fields) {
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width < 600 ? 2 : (fields.length > 3 ? 4 : 3);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - ((crossAxisCount - 1) * 12)) / crossAxisCount;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: fields.map((field) => SizedBox(width: itemWidth, child: field)).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _pricingField(
+    String label,
+    TextEditingController ctrl, {
+    TextInputType keyboardType = TextInputType.text,
+    String? prefixText,
+    IconData? prefixIcon,
+     bool readOnly = false,
+    ValueChanged<String>? onChanged,
+    String? hintText,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF34495E),
+          ),
+        ),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: ctrl,
+          keyboardType: keyboardType,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF2C3E50)),
+          decoration: InputDecoration(
+             hintText: hintText,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 13,
+            ),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, size: 16, color: const Color(0xFF2a86c9))
+                : (prefixText != null
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 10, right: 4, top: 11, bottom: 11),
+                        child: Text(
+                          prefixText,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2a86c9)),
+                        ),
+                      )
+                    : null),
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+          ),
+          onChanged: onChanged,
+          readOnly: readOnly,
+        ),
+      ],
+    );
+  }
+
+  Widget _pricingDropdown({
+    required String label,
+    required String? value,
+    required List<dynamic> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final validValue = items.any((e) => e.valueId == value) ? value : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF34495E),
+          ),
+        ),
+        const SizedBox(height: 5),
+        DropdownButtonFormField<String>(
+          value: validValue,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2a86c9), size: 20),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF2C3E50)),
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
+            ),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+          ),
+          hint: Text(
+            'Select',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+          ),
+          items: items.map<DropdownMenuItem<String>>((e) {
+            return DropdownMenuItem<String>(
+              value: e.valueId as String?,
+              child: Text(
+                (e.valueName ?? '') as String,
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+  
   Widget _buildHeader() {
     return Container(
       padding:
@@ -2362,6 +3348,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                         ),
                       ).then((_) => widget.onDataChanged());
                       break;
+                        case 'quotation':
+                    _showQuotationDialog();
+                    break;
                     case 'delete':
                       _deleteDialog(context, "", "lead");
                       break;
@@ -2375,7 +3364,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       'Transfer', Colors.orange),
                   _buildPopupItem('add', Icons.person_add_rounded, 'Add Leads',
                       Colors.green),
-                  if (widget.deleteLead)
+                    if (leadDetails?.data?.sendQuoteRequest == true)
+                      _buildPopupItem(
+                        'quotation',
+                        Icons.request_quote_rounded,
+                        'Request Quotation',
+                        Colors.indigo,
+                      ),
                     _buildPopupItem('delete', Icons.delete_outline_rounded,
                         'Delete', Colors.red),
                 ],
@@ -2385,13 +3380,159 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                   color: Colors.blueGrey,
                 ),
               ),
+            
             ],
           ),
         ],
       ),
     );
   }
+Future<void> _loadStaffs() async {
+  final response = await HttpService.getStaffs();
 
+  if (response != null && response.status) {
+    setState(() {
+      staffList = response.data;
+    });
+  }
+}
+Future<void> _showQuotationDialog() async {
+  await _loadStaffs();
+
+  final parentContext = context;
+
+  final titleController = TextEditingController(
+    text: "Quotation Request",
+  );
+
+  final messageController = TextEditingController(
+    text: "Kindly prepare and send the quotation for this lead.",
+  );
+
+  showDialog(
+    context: parentContext,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            title: const Text(
+              "Send Quotation Request",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: SizedBox(
+              width: 420,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: "Request Title *",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  TextFormField(
+                    controller: messageController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: "Request Message *",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  DropdownButtonFormField<String>(
+                    value: assignedTo,
+                    decoration: const InputDecoration(
+                      labelText: "Assigned To *",
+                      border: OutlineInputBorder(),
+                    ),
+                    items: staffList.map((expense.Staff staff) {
+                      return DropdownMenuItem<String>(
+                        value: staff.userIdStaff,
+                        child: Text(staff.name),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      setStateDialog(() {
+                        assignedTo = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.send),
+                label: const Text("Send Request"),
+                onPressed: () async {
+                  if (assignedTo == null || assignedTo!.isEmpty) {
+                    ScaffoldMessenger.of(parentContext).showSnackBar(
+                      const SnackBar(
+                        content: Text("Please select Assigned To"),
+                      ),
+                    );
+                    return;
+                  }
+
+                  final response =
+                      await HttpService.sendQuotationRequest(
+                    token: widget.token,
+                    callMasterId: callMasterId!,
+                    assignedTo: assignedTo!,
+                    requestTitle: titleController.text.trim(),
+                    requestMessage: messageController.text.trim(),
+                  );
+
+                  print("Response: $response");
+
+                  if (response != null && response["status"] == true) {
+                    // Close quotation dialog
+                    Navigator.of(dialogContext).pop();
+
+                    await Future.delayed(const Duration(milliseconds: 150));
+
+                    Common.toastMessaage(
+                      response["message"]?.toString() ??
+                          "Quotation request sent successfully.",
+                      Colors.green,
+                    );
+
+                    // Refresh popup data
+                    await _refreshData(callMasterId ?? widget.callMasterId);
+
+                    if (!mounted) return;
+
+                    widget.onDataChanged();
+                    }else {
+                    Common.toastMessaage(
+                      response?["message"]?.toString() ??
+                          "Failed to send quotation request.",
+                      Colors.red,
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+  
   Widget _buildInfoItem(IconData icon, String text) {
     return Expanded(
       child: Row(

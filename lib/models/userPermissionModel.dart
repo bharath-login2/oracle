@@ -120,6 +120,7 @@ class Data {
   String? viewLeadCategoryOnly;
   String? viewAllCategory;
   String? addAttendanceRemarks;
+  String? createQuotationRequest;
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
@@ -318,6 +319,9 @@ class Data {
     viewLeadCategoryOnly = json['viewLeadCategoryOnly'];
     viewAllCategory = json['viewAllCategory'];
     addAttendanceRemarks = json['add_attendance_remark'];
+    createQuotationRequest = json['create_quotation_request'] != null
+        ? json['create_quotation_request'].toString()
+        : (json['createQuotationRequest']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {
@@ -414,6 +418,7 @@ class Data {
     data['viewLeadCategoryOnly'] = viewLeadCategoryOnly;
     data['viewAllCategory'] = viewAllCategory;
     data['add_attendance_remark'] = addAttendanceRemarks;
+    data['create_quotation_request'] = createQuotationRequest;
     return data;
   }
 }

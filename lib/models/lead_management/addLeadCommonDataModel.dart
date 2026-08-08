@@ -36,7 +36,7 @@ class Data {
     List<LeadCategory> leadCategory;
     List<CallResult> callResult;
     List<CallResultNew> callResultNew;
-    List<dynamic> branch;
+    List<Branch> branch;
     List<Staff> staff;
     List<ColloctedStaff> colloctedStaff;
     List<TransferStaff> transferStaffs;
@@ -77,7 +77,11 @@ class Data {
         leadCategory: List<LeadCategory>.from(json["lead_category"].map((x) => LeadCategory.fromJson(x))),
         callResult: List<CallResult>.from(json["call_result"].map((x) => CallResult.fromJson(x))),
         callResultNew: List<CallResultNew>.from(json["call_result_new"].map((x) => CallResultNew.fromJson(x))),
-        branch: List<dynamic>.from(json["branch"].map((x) => x)),
+        branch: json["branch"] == null
+          ? []
+          : List<Branch>.from(
+              json["branch"].map((x) => Branch.fromJson(x)),
+            ),
         staff: List<Staff>.from(json["staff"].map((x) => Staff.fromJson(x))),
         colloctedStaff: List<ColloctedStaff>.from(json["collocted_staff"].map((x) => ColloctedStaff.fromJson(x))),
         transferStaffs: List<TransferStaff>.from(json["transfer_staffs"].map((x) => TransferStaff.fromJson(x))),
@@ -98,7 +102,9 @@ class Data {
         "lead_category": List<dynamic>.from(leadCategory.map((x) => x.toJson())),
         "call_result": List<dynamic>.from(callResult.map((x) => x.toJson())),
         "call_result_new": List<dynamic>.from(callResultNew.map((x) => x.toJson())),
-        "branch": List<dynamic>.from(branch.map((x) => x)),
+        "branch": List<dynamic>.from(
+            branch.map((x) => x.toJson()),
+          ),
         "staff": List<dynamic>.from(staff.map((x) => x.toJson())),
         "collocted_staff": List<dynamic>.from(colloctedStaff.map((x) => x.toJson())),
         "transfer_staffs": List<dynamic>.from(transferStaffs.map((x) => x.toJson())),
@@ -318,6 +324,7 @@ class Branch {
         "branch_name": branchName,
     };
 }
+
 class TransferStaff {
     String tranStaffId;
     String tranStaffName;

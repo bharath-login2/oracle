@@ -968,7 +968,19 @@ class _HomePageState extends State<HomePage> {
                                                         DashboardLeadNewUpdatedTwo(
                                                             widget.token)),
                                               );
-                                            } else if (userDashboard!
+                                            } 
+                                            else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'call_management') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        DashboardLeadNewUpdatedTwo(
+                                                            widget.token)),
+                                              );
+                                            } 
+                                            else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Staff_management') {
                                               Navigator.push(
@@ -1262,16 +1274,17 @@ class _HomePageState extends State<HomePage> {
                                             //             QuotationPage(),
                                             //       ));
                                             //}
+                                            // else if (userDashboard!
+                                            //         .data.modules[i].menuName ==
+                                            //     'quotation') {
+                                            //   Navigator.push(
+                                            //       context,
+                                            //       MaterialPageRoute(
+                                            //         builder: (context) =>
+                                            //             QuotationDashboard(),
+                                            //       ));
+                                            // } 
                                             else if (userDashboard!
-                                                    .data.modules[i].menuName ==
-                                                'quotation') {
-                                              Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        QuotationDashboard(),
-                                                  ));
-                                            } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Staff Report') {
                                               Navigator.push(

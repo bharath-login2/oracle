@@ -1323,7 +1323,7 @@ class HttpService {
       var result = await _dio.get("${await Config.getUrl()}lead_details",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
-
+      print('leaddetails:${result}');
       if (result.statusCode == 200) {
         LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data);
         return model;
@@ -16587,4 +16587,54 @@ static Future<Map<String, dynamic>?> approveRejectStockRequest(
 
   return null;
 }
+static Future sendQuotationRequest({
+  required String token,
+  required String callMasterId,
+  required String assignedTo,
+  required String requestTitle,
+  required String requestMessage,
+}) async {
+  var formData = FormData.fromMap({
+    "token": token,
+    "call_master_id": callMasterId,
+    "assigned_to": assignedTo,
+    "request_title": requestTitle,
+    "request_message": requestMessage,
+  });
+
+  try {
+    var result = await _dio.post(
+      "${await Config.getUrl()}send_quotation_request",
+      data: formData,
+      options: Options(
+        receiveTimeout: const Duration(seconds: 30),
+      ),
+    );
+  print("sendQuotationRequest result: ${result.data}");
+    if (result.statusCode == 200) {
+      return result.data;
+    }
+  } catch (e) {
+    log("sendQuotationRequest error: $e");
+  }
+
+  return null;
+}
+
+  static Future postPricing(Map<String, dynamic> body) async {
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}post_pricing",
+        data: FormData.fromMap(body),
+        options: Options(receiveTimeout: const Duration(seconds: 30)),
+      );
+      print("postPricing result: ${result.data}");
+      if (result.statusCode == 200) {
+        return result.data;
+      }
+    } catch (e) {
+      log("postPricing error: $e");
+    }
+    return null;
+  }
 }

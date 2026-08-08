@@ -61,7 +61,60 @@ class Data {
   String? district;
   String? whatsappNumberCountryCode;
   List<CallHandledUsers>? callHandledUsers;
+bool? createPricingDetails;
+bool? createEstimation;
+bool? createPricing;
+bool? sendQuoteRequest;
 
+List<CommonValue>? taxTypes;
+List<CommonValue>? liftValues;
+List<CommonValue>? opening;
+List<CommonValue>? cabinOpening;
+List<CommonValue>? cabinSideWall;
+List<CommonValue>? landingDoor;
+List<CommonValue>? cop;
+List<CommonValue>? lop;
+// Estimation
+String? quotation;
+String? location;
+String? elevatorType;
+String? typeOfOpening;
+String? liftType;
+String? capacity;
+String? passengerCapacity;
+String? shaftWidth;
+String? shaftDepth;
+String? pitDepth;
+String? travelHeight;
+String? overheadHeight;
+String? openingName;
+String? doorOpening;
+String? cabinSideWallName;
+String? landingDoorName;
+String? copName;
+String? lopName;
+
+// Pricing
+String? warranty;
+String? amc;
+String? factoryPrice;
+String? transportationCharge;
+String? installationCharge;
+String? testingCharge;
+String? consumables;
+String? additionalChargesApartFromFactory;
+String? additionalCharge;
+String? quantity;
+String? unitPrice;
+String? companyProfit;
+String? companyProfitAmount;
+String? salesCommission;
+String? salesCommissionAmount;
+String? subTotal;
+String? taxType;
+String? taxPercentage;
+String? taxAmount;
+String? totalSalePrice;
   Data({
     this.callMasterId,
     this.leadCategoryId,
@@ -110,6 +163,57 @@ class Data {
     this.district,
     this.whatsappNumberCountryCode,
     this.callHandledUsers,
+    this.createPricingDetails,
+this.createEstimation,
+this.createPricing,
+this.sendQuoteRequest,
+this.taxTypes,
+this.liftValues,
+this.opening,
+this.cabinOpening,
+this.cabinSideWall,
+this.landingDoor,
+this.cop,
+this.lop,
+this.quotation,
+this.location,
+this.elevatorType,
+this.typeOfOpening,
+this.liftType,
+this.capacity,
+this.passengerCapacity,
+this.shaftWidth,
+this.shaftDepth,
+this.pitDepth,
+this.travelHeight,
+this.overheadHeight,
+this.openingName,
+this.doorOpening,
+this.cabinSideWallName,
+this.landingDoorName,
+this.copName,
+this.lopName,
+
+this.warranty,
+this.amc,
+this.factoryPrice,
+this.transportationCharge,
+this.installationCharge,
+this.testingCharge,
+this.consumables,
+this.additionalChargesApartFromFactory,
+this.additionalCharge,
+this.quantity,
+this.unitPrice,
+this.companyProfit,
+this.companyProfitAmount,
+this.salesCommission,
+this.salesCommissionAmount,
+this.subTotal,
+this.taxType,
+this.taxPercentage,
+this.taxAmount,
+this.totalSalePrice,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -139,6 +243,68 @@ class Data {
     branchId = json['branch_id'] ?? "";
     callHistoryPermission = json['callHistoryPermission'];
     fileManagerPermission = json['fileManagerPermission'];
+    createPricingDetails = json['createPricingDetails'] ?? false;
+    final pricing = json['leadPricing'] ?? {};
+final specs = json['leadPricingSpecs'] ?? {};
+createEstimation = json['createEstimation'] ?? false;
+createPricing = json['createPricing'] ?? false;
+sendQuoteRequest = json['sendQuoteRequest'] ?? false;
+
+if (json['tax_types'] != null) {
+  taxTypes = <CommonValue>[];
+  json['tax_types'].forEach((v) {
+    taxTypes!.add(CommonValue.fromJson(v));
+  });
+}
+
+if (json['lift_values'] != null) {
+  liftValues = <CommonValue>[];
+  json['lift_values'].forEach((v) {
+    liftValues!.add(CommonValue.fromJson(v));
+  });
+}
+
+if (json['opening'] != null) {
+  opening = <CommonValue>[];
+  json['opening'].forEach((v) {
+    opening!.add(CommonValue.fromJson(v));
+  });
+}
+
+if (json['cabin_opening'] != null) {
+  cabinOpening = <CommonValue>[];
+  json['cabin_opening'].forEach((v) {
+    cabinOpening!.add(CommonValue.fromJson(v));
+  });
+}
+
+if (json['cabin_side_wall'] != null) {
+  cabinSideWall = <CommonValue>[];
+  json['cabin_side_wall'].forEach((v) {
+    cabinSideWall!.add(CommonValue.fromJson(v));
+  });
+}
+
+if (json['landing_door'] != null) {
+  landingDoor = <CommonValue>[];
+  json['landing_door'].forEach((v) {
+    landingDoor!.add(CommonValue.fromJson(v));
+  });
+}
+
+if (json['cop'] != null) {
+  cop = <CommonValue>[];
+  json['cop'].forEach((v) {
+    cop!.add(CommonValue.fromJson(v));
+  });
+}
+
+if (json['lop'] != null) {
+  lop = <CommonValue>[];
+  json['lop'].forEach((v) {
+    lop!.add(CommonValue.fromJson(v));
+  });
+}
     if (json['leadCategories'] != null) {
       leadCategories = <LeadCategories>[];
       json['leadCategories'].forEach((v) {
@@ -179,9 +345,63 @@ class Data {
     state = json['state'] ?? "";
     district = json['district'] ?? "";
     whatsappNumberCountryCode = json['whatsapp_country_code'] ?? "";
+    quotation = pricing['quotation_name'] ?? "";
+location = pricing['location'] ?? "";
+elevatorType = pricing['elevator_type'] ?? "";
+typeOfOpening = pricing['type_of_opening'] ?? "";
+passengerCapacity = pricing['no_of_passenger'] ?? "";
+liftType = specs['lift_type'] ?? "";
+openingName = specs['opening_type'] ?? "";
+doorOpening = specs['door_opening'] ?? "";
+cabinSideWallName = specs['cabin_side_wall'] ?? "";
+landingDoorName = specs['landing_door'] ?? "";
+copName = specs['cop'] ?? "";
+lopName = specs['lop'] ?? "";
+
+capacity = specs['lift_capacity'] ?? "";
+shaftWidth = specs['shaft_width'] ?? "";
+shaftDepth = specs['shaft_depth'] ?? "";
+pitDepth = specs['pit_depth'] ?? "";
+travelHeight = specs['travel_height'] ?? "";
+overheadHeight = specs['over_head_height'] ?? "";
+warranty = pricing['wr'] ?? "";
+amc = pricing['amc'] ?? "";
+factoryPrice = pricing['factory_price'] ?? "";
+transportationCharge = pricing['transportation'] ?? "";
+installationCharge = pricing['installation_charge'] ?? "";
+testingCharge = pricing['testing_commissioning'] ?? "";
+consumables = pricing['consumables'] ?? "";
+additionalChargesApartFromFactory =
+    pricing['additional_factory_charges'] ?? "";
+additionalCharge = pricing['additional_amount'] ?? "";
+
+unitPrice = pricing['price'] ?? "";
+taxType = pricing['tax_type'] ?? "";
+taxPercentage = pricing['tax'] ?? "";
+taxAmount = pricing['tax_amount'] ?? "";
+companyProfit = pricing['comp_profit'] ?? "";
+companyProfitAmount = pricing['comp_profit_amount'] ?? "";
+salesCommission = pricing['sales_commission'] ?? "";
+salesCommissionAmount = pricing['sales_commission_amount'] ?? "";
+subTotal = pricing['sub_total'] ?? "";
+totalSalePrice = pricing['grand_total'] ?? "";
   }
 }
 
+class CommonValue {
+  String? valueId;
+  String? valueName;
+
+  CommonValue({
+    this.valueId,
+    this.valueName,
+  });
+
+  CommonValue.fromJson(Map<String, dynamic> json) {
+    valueId = (json['value_id'] ?? json['id'] ?? '').toString();
+    valueName = (json['value_name'] ?? json['value'] ?? '').toString();
+  }
+}
 class LeadCategories {
   String? callMasterId;
   String? leadCategoryId;
