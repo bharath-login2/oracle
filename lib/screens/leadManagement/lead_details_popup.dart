@@ -268,7 +268,7 @@ String? assignedTo;
   bool isExpand = false;
   bool isCreatingOrderOnly = false;
   String? creatingOrderFollowupId;
-
+bool _showPricingDetailsTab = false;
   bool refresh = false;
   String? permissionAccess = '';
   String? uploadPermission = '';
@@ -445,6 +445,8 @@ String? assignedTo;
   void initState() {
     super.initState();
     isExpand = widget.autoExpandFollowup;
+    _showPricingDetailsTab =
+      widget.leadDetails.data?.createPricingDetails == true;
     _initializeData();
 
     _tabController = TabController(length: _getTabCount(), vsync: this);
@@ -475,9 +477,12 @@ String? assignedTo;
   }
 
   int _getTabCount() {
-    int count = 4; // Followup, Activities, Details, File Manager
+    int count = 5; // Followup, Activities, Details, File Manager, Quotations
     if (widget.leadDetails.data?.callHistoryPermission == true) count++;
-    if (widget.leadDetails.data?.createPricingDetails == true) count++;
+    // if (widget.leadDetails.data?.createPricingDetails == true) count++;
+    if (_showPricingDetailsTab) {
+      count++;
+    }
     if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) count++;
     return count;
   }
@@ -494,9 +499,14 @@ String? assignedTo;
       labels.insert(1, 'Call Logs');
     }
 
-    if (widget.leadDetails.data?.createPricingDetails == true) {
+    // if (widget.leadDetails.data?.createPricingDetails == true) {
+    //   labels.add('Pricing Details');
+    // }
+    if (_showPricingDetailsTab) {
       labels.add('Pricing Details');
     }
+    // Quotations tab is always visible
+    labels.add('Quotations');
 
     if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
       labels.add('Milestones');
@@ -1546,6 +1556,7 @@ String? assignedTo;
               _buildDocumentsTab(),
               if (widget.leadDetails.data?.createPricingDetails == true)
                 _buildPricingDetailsTab(),
+              _buildQuotationsTab(),
               if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false)
                 _buildMilestonesTab(),
             ],
@@ -13677,6 +13688,303 @@ Future<void> _showQuotationDialog() async {
   //     child: Row(children: crumbs),
   //   );
   // }
+
+  Color _quoteStatusColor(String? sts) {
+    switch (sts) {
+      case '1': return const Color(0xFF2196F3); // Draft
+      case '2': return const Color(0xFFFF9800); // Sent
+      case '3': return const Color(0xFF9C27B0); // Viewed
+      case '4': return const Color(0xFFFF5722); // Rejected
+      case '5': return const Color(0xFF4CAF50); // Accepted
+      case '6': return const Color(0xFF00BCD4); // Revised
+      case '7': return const Color(0xFF4CAF50); // Approved
+      default:  return const Color(0xFF9E9E9E);
+    }
+  }
+
+  Widget _buildQuotationsTab() {
+    final quotations = leadDetails?.data?.quotationDetails
+        ?? widget.leadDetails.data?.quotationDetails
+        ?? [];
+
+    if (quotations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.receipt_long_outlined, size: 72, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(
+              'No Quotations Found',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade500,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Quotations will appear here once generated.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: quotations.length,
+      itemBuilder: (context, index) {
+        final q = quotations[index];
+        final statusColor = _quoteStatusColor(q.quoteSts);
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: Colors.grey.shade100),
+          ),
+          child: Column(
+            children: [
+              // ── Header ────────────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF2a86c9).withOpacity(0.08),
+                      const Color(0xFF1E6091).withOpacity(0.04),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2a86c9).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.receipt_long_rounded,
+                          size: 20, color: Color(0xFF2a86c9)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            q.customerName?.isNotEmpty == true
+                                ? q.customerName!
+                                : 'Quotation #${q.id ?? index + 1}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          if (q.project?.isNotEmpty == true)
+                            Text(
+                              q.project!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: statusColor.withOpacity(0.4), width: 1),
+                      ),
+                      child: Text(
+                        q.quoteStatusLabel?.isNotEmpty == true
+                            ? q.quoteStatusLabel!
+                            : 'Unknown',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Detail rows (2 per row) ────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  children: [
+                    _buildQuotationDetailRow(
+                      label1: 'Quotation Amount',
+                      value1: q.total?.isNotEmpty == true
+                          ? '₹ ${q.total}'
+                          : '-',
+                      label2: 'Created By',
+                      value2: q.quotationCreatedBy?.isNotEmpty == true
+                          ? q.quotationCreatedBy!
+                          : '-',
+                      icon1: Icons.currency_rupee_rounded,
+                      icon2: Icons.person_outline_rounded,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildQuotationDetailRow(
+                      label1: 'Created Date',
+                      value1: q.createdAt?.isNotEmpty == true
+                          ? q.createdAt!
+                          : '-',
+                      label2: 'Status',
+                      value2: q.quoteStatusLabel?.isNotEmpty == true
+                          ? q.quoteStatusLabel!
+                          : '-',
+                      icon1: Icons.calendar_today_outlined,
+                      icon2: Icons.flag_outlined,
+                      value2Color: statusColor,
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ── Print button ──────────────────────────────────────
+                    if (q.printQuotation?.isNotEmpty == true)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final url = Uri.tryParse(q.printQuotation ?? '');
+                            if (url != null) {
+                              await launchUrl(url,
+                                  mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          icon: const Icon(Icons.print_rounded,
+                              size: 18, color: Colors.white),
+                          label: const Text(
+                            'Print Quotation',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2a86c9),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
+                            shadowColor: Colors.transparent,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuotationDetailRow({
+    required String label1,
+    required String value1,
+    required String label2,
+    required String value2,
+    required IconData icon1,
+    required IconData icon2,
+    Color? value2Color,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildQuotationDetailTile(
+              label: label1, value: value1, icon: icon1),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildQuotationDetailTile(
+              label: label2,
+              value: value2,
+              icon: icon2,
+              valueColor: value2Color),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuotationDetailTile({
+    required String label,
+    required String value,
+    required IconData icon,
+    Color? valueColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF94A3B8)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  value.isNotEmpty ? value : '-',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: valueColor ?? const Color(0xFF1E293B),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {

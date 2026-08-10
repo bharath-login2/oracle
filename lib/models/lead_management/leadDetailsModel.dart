@@ -61,6 +61,7 @@ class Data {
   String? district;
   String? whatsappNumberCountryCode;
   List<CallHandledUsers>? callHandledUsers;
+  List<QuotationDetail>? quotationDetails;
 bool? createPricingDetails;
 bool? createEstimation;
 bool? createPricing;
@@ -163,6 +164,7 @@ String? totalSalePrice;
     this.district,
     this.whatsappNumberCountryCode,
     this.callHandledUsers,
+    this.quotationDetails,
     this.createPricingDetails,
 this.createEstimation,
 this.createPricing,
@@ -322,6 +324,13 @@ if (json['lop'] != null) {
       callHandledUsers = <CallHandledUsers>[];
       json['call_handled_users'].forEach((v) {
         callHandledUsers!.add(CallHandledUsers.fromJson(v));
+      });
+    }
+
+    if (json['quotationDetails'] != null) {
+      quotationDetails = <QuotationDetail>[];
+      json['quotationDetails'].forEach((v) {
+        quotationDetails!.add(QuotationDetail.fromJson(v));
       });
     }
 
@@ -496,5 +505,41 @@ class CallHandledUsers {
     phoneNo = json['phone_no'] ?? "";
     email = json['email'] ?? "";
     callCount = json['call_count'] ?? "";
+  }
+}
+
+class QuotationDetail {
+  String? id;
+  String? customerName;
+  String? project;
+  String? createdAt;
+  String? total;
+  String? quoteSts;
+  String? quotationCreatedBy;
+  String? quoteStatusLabel;
+  String? printQuotation;
+
+  QuotationDetail({
+    this.id,
+    this.customerName,
+    this.project,
+    this.createdAt,
+    this.total,
+    this.quoteSts,
+    this.quotationCreatedBy,
+    this.quoteStatusLabel,
+    this.printQuotation,
+  });
+
+  QuotationDetail.fromJson(Map<String, dynamic> json) {
+    id = json['id']?.toString() ?? '';
+    customerName = json['customer_name'] ?? '';
+    project = json['project'] ?? '';
+    createdAt = json['created_at'] ?? '';
+    total = json['total'] ?? '';
+    quoteSts = json['quote_sts']?.toString() ?? '';
+    quotationCreatedBy = json['quotation_created_by'] ?? '';
+    quoteStatusLabel = json['quote_status_label'] ?? '';
+    printQuotation = json['printQuotation'] ?? '';
   }
 }

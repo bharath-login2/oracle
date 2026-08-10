@@ -791,12 +791,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                             leadSubTypeId = '';
                             leadSubTypeList = null;
                           });
-                        },
+                        },  
                       )
                     : null,
               ),
             ),
-          ),
+          ),  
         ),
         if (createLeadCategory == 'true')
           Positioned(
