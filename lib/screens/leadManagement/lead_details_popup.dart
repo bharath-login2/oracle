@@ -1829,7 +1829,25 @@ Future<void> _initializeData() async {
   String? _pTaxType;
   bool _pricingControllersInitialized = false;
   bool _isSavingPricing = false;
-
+bool _hasPricingDetails() {
+  return _pFactoryPrice.text.trim().isNotEmpty ||
+      _pTransportation.text.trim().isNotEmpty ||
+      _pInstallation.text.trim().isNotEmpty ||
+      _pTesting.text.trim().isNotEmpty ||
+      _pConsumables.text.trim().isNotEmpty ||
+      _pAdditionalFactory.text.trim().isNotEmpty ||
+      _pAdditional.text.trim().isNotEmpty ||
+      _pAmcAmount.text.trim().isNotEmpty ||
+      _pUnitPrice.text.trim().isNotEmpty ||
+      _pCompanyProfit.text.trim().isNotEmpty ||
+      _pCompanyProfitAmount.text.trim().isNotEmpty ||
+      _pSalesCommission.text.trim().isNotEmpty ||
+      _pSalesCommissionAmount.text.trim().isNotEmpty ||
+      _pSubTotal.text.trim().isNotEmpty ||
+      _pTaxPercentage.text.trim().isNotEmpty ||
+      _pTaxAmount.text.trim().isNotEmpty ||
+      _pTotalSalePrice.text.trim().isNotEmpty;
+}
   void _initPricingControllers() {
     if (_pricingControllersInitialized) return;
     _pricingControllersInitialized = true;
@@ -2050,73 +2068,174 @@ Future<void> _savePricingDetails() async {
             ),
           ),
           content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.85,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Estimation Section Summary
-                  // if (data.createEstimation == true) ...[
-                  //   _buildSummarySectionHeader('Estimation Details', Icons.assignment_outlined),
-                  //   const SizedBox(height: 10),
-                  //   _buildSummaryGrid([
-                  //     _buildSummaryTile('Quotation', _pQuotation.text),
-                  //     _buildSummaryTile('Client Name', _pClientName.text),
-                  //     _buildSummaryTile('Phone', _pPhone.text),
-                  //     _buildSummaryTile('Location', _pLocation.text),
-                  //     _buildSummaryTile('Elevator Type', _pElevatorType.text),
-                  //     _buildSummaryTile('Type of Opening', _pTypeOfOpening.text),
-                  //     _buildSummaryTile('Lift Type', _getSpecName(data.liftValues, _pLiftTypeId)),
-                  //     _buildSummaryTile('Capacity', _pCapacity.text),
-                  //     _buildSummaryTile('Passenger Capacity', _pPassengerCapacity.text),
-                  //     _buildSummaryTile('Shaft Width', _pShaftWidth.text),
-                  //     _buildSummaryTile('Shaft Depth', _pShaftDepth.text),
-                  //     _buildSummaryTile('Pit Depth', _pPitDepth.text),
-                  //     _buildSummaryTile('Travel Height', _pTravelHeight.text),
-                  //     _buildSummaryTile('Overhead Height', _pOverheadHeight.text),
-                  //     _buildSummaryTile('Opening', _getSpecName(data.opening, _pOpeningId)),
-                  //     _buildSummaryTile('Door Opening', _getSpecName(data.cabinOpening, _pDoorOpeningId)),
-                  //     _buildSummaryTile('Cabin (Side Wall)', _getSpecName(data.cabinSideWall, _pCabinSideWallId)),
-                  //     _buildSummaryTile('Landing Door', _getSpecName(data.landingDoor, _pLandingDoorId)),
-                  //     _buildSummaryTile('COP', _getSpecName(data.cop, _pCopId)),
-                  //     _buildSummaryTile('LOP', _getSpecName(data.lop, _pLopId)),
-                  //     _buildSummaryTile('Warranty (Years)', _pWarranty.text),
-                  //     _buildSummaryTile('AMC (Years)', _pAmc.text),
-                  //   ]),
-                  //   const SizedBox(height: 18),
-                  // ],
-
-                  // Pricing Section Summary
-                  if (data.createPricing == true) ...[
-                    _buildSummarySectionHeader('Pricing Details', Icons.payments_outlined),
-                    const SizedBox(height: 10),
-                    _buildSummaryGrid([
-                      _buildSummaryTile('Factory Price', _pFactoryPrice.text.isEmpty ? '-' : '₹ ${_pFactoryPrice.text}'),
-                      _buildSummaryTile('Transportation', _pTransportation.text.isEmpty ? '-' : '₹ ${_pTransportation.text}'),
-                      _buildSummaryTile('Installation Charge', _pInstallation.text.isEmpty ? '-' : '₹ ${_pInstallation.text}'),
-                      _buildSummaryTile('Testing & Comm.', _pTesting.text.isEmpty ? '-' : '₹ ${_pTesting.text}'),
-                      _buildSummaryTile('Consumables', _pConsumables.text.isEmpty ? '-' : '₹ ${_pConsumables.text}'),
-                      _buildSummaryTile('Add. Factory Charges', _pAdditionalFactory.text.isEmpty ? '-' : '₹ ${_pAdditionalFactory.text}'),
-                      _buildSummaryTile('Additional Charge', _pAdditional.text.isEmpty ? '-' : '₹ ${_pAdditional.text}'),
-                      _buildSummaryTile('Quantity', _pQuantity.text.isEmpty ? '-' : '₹ ${_pQuantity.text}'),
-                      _buildSummaryTile('Amc Amount', _pAmcAmount.text.isEmpty ? '-' : '₹ ${_pAmcAmount.text}'),
-                      _buildSummaryTile('Unit Price', _pUnitPrice.text.isEmpty ? '-' : '₹ ${_pUnitPrice.text}'),
-                      _buildSummaryTile('Company Profit (%)', _pCompanyProfit.text.isEmpty ? '-' : '${_pCompanyProfit.text}%'),
-                      _buildSummaryTile('Company Profit Amount', _pCompanyProfitAmount.text.isEmpty ? '-' : '₹ ${_pCompanyProfitAmount.text}'),
-                      _buildSummaryTile('Sales Commission (%)', _pSalesCommission.text.isEmpty ? '-' : '${_pSalesCommission.text}%'),
-                      _buildSummaryTile('Sales Comm. Amount', _pSalesCommissionAmount.text.isEmpty ? '-' : '₹ ${_pSalesCommissionAmount.text}'),
-                      _buildSummaryTile('Sub Total', _pSubTotal.text.isEmpty ? '-' : '₹ ${_pSubTotal.text}'),
-                      _buildSummaryTile('Tax Type', _pTaxType ?? '-'),
-                      _buildSummaryTile('Tax (%)', _pTaxPercentage.text.isEmpty ? '-' : '${_pTaxPercentage.text}%'),
-                      _buildSummaryTile('Tax Amount', _pTaxAmount.text.isEmpty ? '-' : '₹ ${_pTaxAmount.text}'),
-                      _buildSummaryTile('Total Sale Price', _pTotalSalePrice.text.isEmpty ? '-' : '₹ ${_pTotalSalePrice.text}', isHighlight: true),
-                    ]),
-                  ],
-                ],
+  width: MediaQuery.of(context).size.width * 0.85,
+  child: _hasPricingDetails()
+      ? SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSummarySectionHeader(
+                'Pricing Details',
+                Icons.payments_outlined,
               ),
+              const SizedBox(height: 10),
+
+              _buildSummaryGrid([
+                _buildSummaryTile(
+                  'Factory Price',
+                  _pFactoryPrice.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pFactoryPrice.text}',
+                ),
+                _buildSummaryTile(
+                  'Transportation',
+                  _pTransportation.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pTransportation.text}',
+                ),
+                _buildSummaryTile(
+                  'Installation Charge',
+                  _pInstallation.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pInstallation.text}',
+                ),
+                _buildSummaryTile(
+                  'Testing & Comm.',
+                  _pTesting.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pTesting.text}',
+                ),
+                _buildSummaryTile(
+                  'Consumables',
+                  _pConsumables.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pConsumables.text}',
+                ),
+                _buildSummaryTile(
+                  'Add. Factory Charges',
+                  _pAdditionalFactory.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pAdditionalFactory.text}',
+                ),
+                _buildSummaryTile(
+                  'Additional Charge',
+                  _pAdditional.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pAdditional.text}',
+                ),
+
+                // Quantity should NOT have ₹
+                _buildSummaryTile(
+                  'Quantity',
+                  _pQuantity.text.isEmpty
+                      ? '-'
+                      : _pQuantity.text,
+                ),
+
+                _buildSummaryTile(
+                  'Amc Amount',
+                  _pAmcAmount.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pAmcAmount.text}',
+                ),
+                _buildSummaryTile(
+                  'Unit Price',
+                  _pUnitPrice.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pUnitPrice.text}',
+                ),
+                _buildSummaryTile(
+                  'Company Profit (%)',
+                  _pCompanyProfit.text.isEmpty
+                      ? '-'
+                      : '${_pCompanyProfit.text}%',
+                ),
+                _buildSummaryTile(
+                  'Company Profit Amount',
+                  _pCompanyProfitAmount.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pCompanyProfitAmount.text}',
+                ),
+                _buildSummaryTile(
+                  'Sales Commission (%)',
+                  _pSalesCommission.text.isEmpty
+                      ? '-'
+                      : '${_pSalesCommission.text}%',
+                ),
+                _buildSummaryTile(
+                  'Sales Comm. Amount',
+                  _pSalesCommissionAmount.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pSalesCommissionAmount.text}',
+                ),
+                _buildSummaryTile(
+                  'Sub Total',
+                  _pSubTotal.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pSubTotal.text}',
+                ),
+                _buildSummaryTile(
+                  'Tax Type',
+                  _pTaxType ?? '-',
+                ),
+                _buildSummaryTile(
+                  'Tax (%)',
+                  _pTaxPercentage.text.isEmpty
+                      ? '-'
+                      : '${_pTaxPercentage.text}%',
+                ),
+                _buildSummaryTile(
+                  'Tax Amount',
+                  _pTaxAmount.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pTaxAmount.text}',
+                ),
+                _buildSummaryTile(
+                  'Total Sale Price',
+                  _pTotalSalePrice.text.isEmpty
+                      ? '-'
+                      : '₹ ${_pTotalSalePrice.text}',
+                  isHighlight: true,
+                ),
+              ]),
+            ],
+          ),
+        )
+      : const SizedBox(
+          height: 180,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 50,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'No Pricing Details Found',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                SizedBox(height: 5),
+                Text(
+                  'Pricing details are not available for this lead.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
+),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
