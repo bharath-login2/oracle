@@ -76,6 +76,7 @@ List<CommonValue>? landingDoor;
 List<CommonValue>? cop;
 List<CommonValue>? lop;
 // Estimation
+String? quotationTitle;
 String? quotation;
 String? location;
 String? elevatorType;
@@ -105,6 +106,7 @@ String? testingCharge;
 String? consumables;
 String? additionalChargesApartFromFactory;
 String? additionalCharge;
+String? amcAmount;
 String? quantity;
 String? unitPrice;
 String? companyProfit;
@@ -354,6 +356,7 @@ if (json['lop'] != null) {
     state = json['state'] ?? "";
     district = json['district'] ?? "";
     whatsappNumberCountryCode = json['whatsapp_country_code'] ?? "";
+    quotationTitle = pricing['quotation_title'] ?? "";
     quotation = pricing['quotation_name'] ?? "";
 location = pricing['location'] ?? "";
 elevatorType = pricing['elevator_type'] ?? "";
@@ -383,6 +386,8 @@ consumables = pricing['consumables'] ?? "";
 additionalChargesApartFromFactory =
     pricing['additional_factory_charges'] ?? "";
 additionalCharge = pricing['additional_amount'] ?? "";
+amcAmount = pricing['amc_amount'] ?? "";
+quantity = pricing['quantity'] ?? "1";
 
 unitPrice = pricing['price'] ?? "";
 taxType = pricing['tax_type'] ?? "";

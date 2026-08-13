@@ -268,7 +268,6 @@ String? assignedTo;
   bool isExpand = false;
   bool isCreatingOrderOnly = false;
   String? creatingOrderFollowupId;
-bool _showPricingDetailsTab = false;
   bool refresh = false;
   String? permissionAccess = '';
   String? uploadPermission = '';
@@ -427,6 +426,7 @@ bool _showPricingDetailsTab = false;
   List targetGroups = [];
   List targetGroupNames = [];
 
+bool _showPricingDetailsTab = false;
   double subTotal = 0.00;
   double subTotalGrand = 0.00;
   double totalTaxAmount = 0.00;
@@ -441,153 +441,371 @@ bool _showPricingDetailsTab = false;
   String renProductName = "";
   var invoiceDate = DateTime.now();
 
-  @override
-  void initState() {
-    super.initState();
-    isExpand = widget.autoExpandFollowup;
-    _showPricingDetailsTab =
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   isExpand = widget.autoExpandFollowup;
+  //   _showPricingDetailsTab =
+  //     widget.leadDetails.data?.createPricingDetails == true;
+  //   _initializeData();
+
+  //   _tabController = TabController(length: _getTabCount(), vsync: this);
+  //   _tabController.addListener(() {
+  //     setState(() {
+  //       selectedIndex = _tabController.index;
+  //     });
+  //   });
+
+  //   _loadUserPreferences();
+
+  //   if (leadDetails != null) {
+  //     contactFName.text = leadDetails!.data!.clientName ?? '';
+  //     contactMobile.text = '+${leadDetails!.data!.contactNumber1 ?? ''}';
+
+  //     // Initialize followup form defaults
+  //     calledDate1.text =
+  //         DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
+  //     cost.text = leadDetails!.data!.cost ?? '';
+  //     address.text = leadDetails!.data!.address ?? '';
+  //     leadType = leadDetails!.data!.leadCategory ?? '';
+  //     leadTypeId = leadDetails!.data!.leadCategoryId ?? '';
+  //     leadSubType = leadDetails!.data!.leadSubCategory ?? '';
+  //     leadSubTypeId = leadDetails!.data!.leadSubCategoryId ?? '';
+  //     priority = leadDetails!.data!.priority ?? '';
+  //     priorityId = leadDetails!.data!.priorityId ?? '';
+  //   }
+  // }
+@override
+void initState() {
+  super.initState();
+
+  // ---------------------------------------------------------
+  // 1. Initial popup state
+  // ---------------------------------------------------------
+  isExpand = widget.autoExpandFollowup;
+
+  // IMPORTANT:
+  // Capture Pricing Details visibility ONLY when popup opens.
+  // Do not update this value inside _refreshData().
+  _showPricingDetailsTab =
       widget.leadDetails.data?.createPricingDetails == true;
-    _initializeData();
 
-    _tabController = TabController(length: _getTabCount(), vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        selectedIndex = _tabController.index;
-      });
-    });
+  // ---------------------------------------------------------
+  // 2. Initialize widget data BEFORE using leadDetails
+  // ---------------------------------------------------------
+  callMasterId = widget.callMasterId;
+  leadDetails = widget.leadDetails;
+  leadDetailsAdditional = widget.leadDetailsAdditional;
+  listFolder = widget.listFolder;
+  mileStone = widget.mileStone;
+  leadDetailsFollowup = widget.leadDetailsFollowup;
+  commonDetails = widget.commonDetails;
 
-    _loadUserPreferences();
+  // ---------------------------------------------------------
+  // 3. Initialize TabController
+  // ---------------------------------------------------------
+  _tabController = TabController(
+    length: _getTabCount(),
+    vsync: this,
+  );
 
-    if (leadDetails != null) {
-      contactFName.text = leadDetails!.data!.clientName ?? '';
-      contactMobile.text = '+${leadDetails!.data!.contactNumber1 ?? ''}';
-
-      // Initialize followup form defaults
-      calledDate1.text =
-          DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
-      cost.text = leadDetails!.data!.cost ?? '';
-      address.text = leadDetails!.data!.address ?? '';
-      leadType = leadDetails!.data!.leadCategory ?? '';
-      leadTypeId = leadDetails!.data!.leadCategoryId ?? '';
-      leadSubType = leadDetails!.data!.leadSubCategory ?? '';
-      leadSubTypeId = leadDetails!.data!.leadSubCategoryId ?? '';
-      priority = leadDetails!.data!.priority ?? '';
-      priorityId = leadDetails!.data!.priorityId ?? '';
-    }
-  }
-
-  int _getTabCount() {
-    int count = 5; // Followup, Activities, Details, File Manager, Quotations
-    if (widget.leadDetails.data?.callHistoryPermission == true) count++;
-    // if (widget.leadDetails.data?.createPricingDetails == true) count++;
-    if (_showPricingDetailsTab) {
-      count++;
-    }
-    if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) count++;
-    return count;
-  }
-
-  List<String> _getTabLabels() {
-    List<String> labels = [
-      'Followup',
-      'Activities',
-      'Details',
-      'File Manager',
-    ];
-
-    if (widget.leadDetails.data?.callHistoryPermission == true) {
-      labels.insert(1, 'Call Logs');
-    }
-
-    // if (widget.leadDetails.data?.createPricingDetails == true) {
-    //   labels.add('Pricing Details');
-    // }
-    if (_showPricingDetailsTab) {
-      labels.add('Pricing Details');
-    }
-    // Quotations tab is always visible
-    labels.add('Quotations');
-
-    if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
-      labels.add('Milestones');
-    }
-
-    return labels;
-  }
-
-  Future<void> _initializeData() async {
-    contactPermission = await Common.getSharedPref("getContactPermission");
-    transferPermission = await Common.getSharedPref("transferLeads");
-    cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
-    createRenewalPermission =
-        await Common.getSharedPref("createRenewalPermission");
-    customerAddInvoicePermission =
-        await Common.getSharedPref("customerAddInvoicePermission");
-    createCustomerInvoice = await Common.getSharedPref("createCustomerInvoice");
-    voiceListerningPermission =
-        await Common.getSharedPref("voiceListerningPermission");
-    whatsappOfficial = await Common.getSharedPref("officialWhatsapp");
-    name = await Common.getSharedPref("name");
-    userId = await Common.getSharedPref("userId");
-     viewLeadCategoryOnly =
-        await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
-    viewAllCategory = await Common.getSharedPref("viewAllCategory") ?? '';
-    phoneCallLogPermission =
-        await Common.getSharedPref("phoneCallLogPermission");
-    accessCallRecordingPermission =
-        await Common.getSharedPref("accessCallRecordingPermission");
-    createLeadCategory = await Common.getSharedPref("createLeadCategory");
-    addLeadSource = await Common.getSharedPref("addLeadSource");
-
-    setState(() {
-      callMasterId = widget.callMasterId;
-      leadDetails = widget.leadDetails;
-      leadDetailsAdditional = widget.leadDetailsAdditional;
-      listFolder = widget.listFolder;
-      mileStone = widget.mileStone;
-      leadDetailsFollowup = widget.leadDetailsFollowup;
-      commonDetails = widget.commonDetails;
-      if (commonDetails == null) {
-        _fetchCommonDetails();
-      } else {
-        _initializeAdditionalFields();
+  _tabController.addListener(() {
+    if (!_tabController.indexIsChanging) {
+      if (mounted) {
+        setState(() {
+          selectedIndex = _tabController.index;
+        });
       }
-
-      if (leadDetails != null) {
-        final data = leadDetails!.data!;
-        contactFName.text = data.clientName ?? '';
-        contactMobile.text = data.contactNumber1 ?? '';
-        address.text = data.address ?? '';
-        cost.text = data.cost ?? '';
-        leadTypeId = data.leadCategoryId ?? '';
-        leadType = data.leadCategory ?? 'Lead Category';
-        leadSubTypeId = data.leadSubCategoryId ?? '';
-        leadSubType = data.leadSubCategory ?? 'Lead Sub Category';
-        priorityId = data.priorityId ?? '2';
-        priority = data.priority ?? 'Normal';
-        whatsappLead.text = data.whatsaAppNumber ?? '';
-        emailLead.text = data.emailId ?? '';
-
-        // Initialize followup date
-        calledDate1.text =
-            DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
-      }
-    });
-
-    _fetchRenewalDetails();
-    _fetchCallResultReason();
-    _fetchLeadSubType();
-    _fetchActivitiesAndCallHistory();
-    _fetchProductSection();
-    listFolderList(widget.token, widget.callMasterId, '');
-    _fetchGoogleDriveAccounts();
-
-    if (Platform.isAndroid) {
-      getSharedData();
-      getPermission();
     }
+  });
+
+  // ---------------------------------------------------------
+  // 4. Initialize lead fields
+  // ---------------------------------------------------------
+  if (leadDetails != null && leadDetails!.data != null) {
+    final data = leadDetails!.data!;
+
+    contactFName.text = data.clientName ?? '';
+
+    contactMobile.text =
+        '+${data.contactNumber1 ?? ''}';
+
+    calledDate1.text =
+        DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
+
+    cost.text = data.cost ?? '';
+
+    address.text = data.address ?? '';
+
+    leadType = data.leadCategory ?? '';
+    leadTypeId = data.leadCategoryId ?? '';
+
+    leadSubType = data.leadSubCategory ?? '';
+    leadSubTypeId = data.leadSubCategoryId ?? '';
+
+    priority = data.priority ?? '';
+    priorityId = data.priorityId ?? '';
   }
 
+  // ---------------------------------------------------------
+  // 5. Start async initialization
+  // ---------------------------------------------------------
+  _initializeData();
+
+  // ---------------------------------------------------------
+  // 6. Load user preferences
+  // ---------------------------------------------------------
+  _loadUserPreferences();
+}
+int _getTabCount() {
+  int count = 5;
+
+  // ---------------------------------------------------------
+  // Followup
+  // Activities
+  // Details
+  // File Manager
+  // Quotations
+  // ---------------------------------------------------------
+
+  // Call Logs
+  if (widget.leadDetails.data?.callHistoryPermission == true) {
+    count++;
+  }
+
+  // Pricing Details
+  // IMPORTANT:
+  // Use the value captured when popup was opened.
+  if (_showPricingDetailsTab) {
+    count++;
+  }
+
+  // Milestones
+  if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
+    count++;
+  }
+
+  return count;
+}
+
+List<String> _getTabLabels() {
+  List<String> labels = [
+    'Followup',
+    'Activities',
+    'Details',
+    'File Manager',
+  ];
+
+  // Call Logs
+  if (widget.leadDetails.data?.callHistoryPermission == true) {
+    labels.insert(1, 'Call Logs');
+  }
+
+  // Pricing Details
+  if (_showPricingDetailsTab) {
+    labels.add('Pricing Details');
+  }
+
+  // Quotations
+  labels.add('Quotations');
+
+  // Milestones
+  if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
+    labels.add('Milestones');
+  }
+
+  return labels;
+}
+
+  // Future<void> _initializeData() async {
+  //   contactPermission = await Common.getSharedPref("getContactPermission");
+  //   transferPermission = await Common.getSharedPref("transferLeads");
+  //   cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
+  //   createRenewalPermission =
+  //       await Common.getSharedPref("createRenewalPermission");
+  //   customerAddInvoicePermission =
+  //       await Common.getSharedPref("customerAddInvoicePermission");
+  //   createCustomerInvoice = await Common.getSharedPref("createCustomerInvoice");
+  //   voiceListerningPermission =
+  //       await Common.getSharedPref("voiceListerningPermission");
+  //   whatsappOfficial = await Common.getSharedPref("officialWhatsapp");
+  //   name = await Common.getSharedPref("name");
+  //   userId = await Common.getSharedPref("userId");
+  //    viewLeadCategoryOnly =
+  //       await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
+  //   viewAllCategory = await Common.getSharedPref("viewAllCategory") ?? '';
+  //   phoneCallLogPermission =
+  //       await Common.getSharedPref("phoneCallLogPermission");
+  //   accessCallRecordingPermission =
+  //       await Common.getSharedPref("accessCallRecordingPermission");
+  //   createLeadCategory = await Common.getSharedPref("createLeadCategory");
+  //   addLeadSource = await Common.getSharedPref("addLeadSource");
+
+  //   setState(() {
+  //     callMasterId = widget.callMasterId;
+  //     leadDetails = widget.leadDetails;
+  //     leadDetailsAdditional = widget.leadDetailsAdditional;
+  //     listFolder = widget.listFolder;
+  //     mileStone = widget.mileStone;
+  //     leadDetailsFollowup = widget.leadDetailsFollowup;
+  //     commonDetails = widget.commonDetails;
+  //     if (commonDetails == null) {
+  //       _fetchCommonDetails();
+  //     } else {
+  //       _initializeAdditionalFields();
+  //     }
+
+  //     if (leadDetails != null) {
+  //       final data = leadDetails!.data!;
+  //       contactFName.text = data.clientName ?? '';
+  //       contactMobile.text = data.contactNumber1 ?? '';
+  //       address.text = data.address ?? '';
+  //       cost.text = data.cost ?? '';
+  //       leadTypeId = data.leadCategoryId ?? '';
+  //       leadType = data.leadCategory ?? 'Lead Category';
+  //       leadSubTypeId = data.leadSubCategoryId ?? '';
+  //       leadSubType = data.leadSubCategory ?? 'Lead Sub Category';
+  //       priorityId = data.priorityId ?? '2';
+  //       priority = data.priority ?? 'Normal';
+  //       whatsappLead.text = data.whatsaAppNumber ?? '';
+  //       emailLead.text = data.emailId ?? '';
+
+  //       // Initialize followup date
+  //       calledDate1.text =
+  //           DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
+  //     }
+  //   });
+
+  //   _fetchRenewalDetails();
+  //   _fetchCallResultReason();
+  //   _fetchLeadSubType();
+  //   _fetchActivitiesAndCallHistory();
+  //   _fetchProductSection();
+  //   listFolderList(widget.token, widget.callMasterId, '');
+  //   _fetchGoogleDriveAccounts();
+
+  //   if (Platform.isAndroid) {
+  //     getSharedData();
+  //     getPermission();
+  //   }
+  // }
+Future<void> _initializeData() async {
+  // ---------------------------------------------------------
+  // Load user preferences
+  // ---------------------------------------------------------
+  contactPermission =
+      await Common.getSharedPref("getContactPermission");
+
+  transferPermission =
+      await Common.getSharedPref("transferLeads");
+
+  cloudCallPermission =
+      await Common.getSharedPref("cloudCallPermission");
+
+  createRenewalPermission =
+      await Common.getSharedPref("createRenewalPermission");
+
+  customerAddInvoicePermission =
+      await Common.getSharedPref("customerAddInvoicePermission");
+
+  createCustomerInvoice =
+      await Common.getSharedPref("createCustomerInvoice");
+
+  voiceListerningPermission =
+      await Common.getSharedPref("voiceListerningPermission");
+
+  whatsappOfficial =
+      await Common.getSharedPref("officialWhatsapp");
+
+  name =
+      await Common.getSharedPref("name");
+
+  userId =
+      await Common.getSharedPref("userId");
+
+  viewLeadCategoryOnly =
+      await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
+
+  viewAllCategory =
+      await Common.getSharedPref("viewAllCategory") ?? '';
+
+  phoneCallLogPermission =
+      await Common.getSharedPref("phoneCallLogPermission");
+
+  accessCallRecordingPermission =
+      await Common.getSharedPref("accessCallRecordingPermission");
+
+  createLeadCategory =
+      await Common.getSharedPref("createLeadCategory");
+
+  addLeadSource =
+      await Common.getSharedPref("addLeadSource");
+
+  // ---------------------------------------------------------
+  // DO NOT reassign these here:
+  //
+  // callMasterId = widget.callMasterId;
+  // leadDetails = widget.leadDetails;
+  // leadDetailsAdditional = widget.leadDetailsAdditional;
+  // listFolder = widget.listFolder;
+  // mileStone = widget.mileStone;
+  // leadDetailsFollowup = widget.leadDetailsFollowup;
+  // commonDetails = widget.commonDetails;
+  //
+  // They are already initialized in initState().
+  // ---------------------------------------------------------
+
+  if (!mounted) return;
+
+  // ---------------------------------------------------------
+  // Common Details
+  // ---------------------------------------------------------
+  if (commonDetails == null) {
+    await _fetchCommonDetails();
+  } else {
+    _initializeAdditionalFields();
+  }
+
+  // ---------------------------------------------------------
+  // Other API calls
+  // ---------------------------------------------------------
+  await _fetchRenewalDetails();
+
+  await _fetchCallResultReason();
+
+  await _fetchLeadSubType();
+
+  await _fetchActivitiesAndCallHistory();
+
+  await _fetchProductSection();
+
+  // ---------------------------------------------------------
+  // Folder / Google Drive
+  // ---------------------------------------------------------
+  listFolderList(
+    widget.token,
+    widget.callMasterId,
+    '',
+  );
+
+  _fetchGoogleDriveAccounts();
+
+  // ---------------------------------------------------------
+  // Android permissions
+  // ---------------------------------------------------------
+  if (Platform.isAndroid) {
+    getSharedData();
+    getPermission();
+  }
+
+  // ---------------------------------------------------------
+  // Refresh UI after preferences/data are loaded
+  // ---------------------------------------------------------
+  if (mounted) {
+    setState(() {});
+  }
+}
+ 
   getPermission() async {
     Map<String, dynamic> body2 = {
       "token": await Common.getSharedPref("token"),
@@ -1554,7 +1772,7 @@ bool _showPricingDetailsTab = false;
               _buildActivitiesTab(),
               _buildDetailsTab(),
               _buildDocumentsTab(),
-              if (widget.leadDetails.data?.createPricingDetails == true)
+             if (_showPricingDetailsTab)
                 _buildPricingDetailsTab(),
               _buildQuotationsTab(),
               if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false)
@@ -1566,6 +1784,7 @@ bool _showPricingDetailsTab = false;
     );
   }
 // ── Pricing Details Tab Controllers ────────────────────────────────────────
+  final TextEditingController _pQuotationTitle = TextEditingController();
   final TextEditingController _pQuotation = TextEditingController();
   final TextEditingController _pClientName = TextEditingController();
   final TextEditingController _pPhone = TextEditingController();
@@ -1588,6 +1807,8 @@ bool _showPricingDetailsTab = false;
   final TextEditingController _pConsumables = TextEditingController();
   final TextEditingController _pAdditionalFactory = TextEditingController();
   final TextEditingController _pAdditional = TextEditingController();
+  final TextEditingController _pAmcAmount = TextEditingController();
+  final TextEditingController _pQuantity = TextEditingController();
   final TextEditingController _pUnitPrice = TextEditingController();
   final TextEditingController _pCompanyProfit = TextEditingController();
   final TextEditingController _pCompanyProfitAmount = TextEditingController();
@@ -1614,6 +1835,7 @@ bool _showPricingDetailsTab = false;
     _pricingControllersInitialized = true;
     final data = leadDetails?.data;
     if (data == null) return;
+    _pQuotationTitle.text = data.quotationTitle ?? '';
     _pQuotation.text = data.quotation ?? '';
     _pClientName.text = data.clientName ?? '';
     _pPhone.text = data.contactNumber1 ?? '';
@@ -1636,6 +1858,8 @@ bool _showPricingDetailsTab = false;
     _pConsumables.text = data.consumables ?? '';
     _pAdditionalFactory.text = data.additionalChargesApartFromFactory ?? '';
     _pAdditional.text = data.additionalCharge ?? '';
+    _pAmcAmount.text = data.amcAmount ?? '';
+    _pQuantity.text = '1'; // always readonly = 1
     _pUnitPrice.text = data.unitPrice ?? '';
     _pCompanyProfit.text = data.companyProfit ?? '';
     _pCompanyProfitAmount.text = data.companyProfitAmount ?? '';
@@ -1662,23 +1886,13 @@ bool _showPricingDetailsTab = false;
     return list.any((e) => e.valueId == id) ? id : null;
   }
 
-Future<void> _savePricingDetails() async {
-  if (_pQuotation.text.trim().isEmpty) {
-    Common.toastMessaage('Quotation Name is required', Colors.red);
-    return;
-  }
-
-  if (_pClientName.text.trim().isEmpty) {
-    Common.toastMessaage('Client Name is required', Colors.red);
-    return;
-  }
-
-  final token = await Common.getSharedPref('token');
-
-  final body = <String, dynamic>{
+  Future<Map<String, dynamic>> _buildPricingBody() async {
+    final token = await Common.getSharedPref('token');
+    return <String, dynamic>{
       'token': token,
-      'lead_id': callMasterId ?? '',
-      'quotation_name': _pQuotation.text,
+      'lead_id': callMasterId ?? (widget.callMasterId),
+      'quotation_title': _pQuotationTitle.text,
+      'quotation': _pQuotation.text,
       'client_name': _pClientName.text,
       'phone': _pPhone.text,
       'location': _pLocation.text,
@@ -1707,6 +1921,8 @@ Future<void> _savePricingDetails() async {
       'consumables': _pConsumables.text,
       'additional_factory_charges': _pAdditionalFactory.text,
       'additional_amount': _pAdditional.text,
+      'amc_amount': _pAmcAmount.text,
+      'quantity': _pQuantity.text,
       'price': _pUnitPrice.text,
       'tax_type': _pTaxType ?? '',
       'tax': _pTaxPercentage.text,
@@ -1718,28 +1934,43 @@ Future<void> _savePricingDetails() async {
       'sub_total': _pSubTotal.text,
       'grand_total': _pTotalSalePrice.text,
     };
-      setState(() => _isSavingPricing = true);
+  }
 
-    Common.showProgressDialog(context, "Saving Pricing...");
+Future<void> _savePricingDetails() async {
+  if (_pQuotation.text.trim().isEmpty) {
+    Common.toastMessaage('Quotation Name is required', Colors.red);
+    return;
+  }
 
-    try {
-      final result = await HttpService.postPricing(body);
+  if (_pClientName.text.trim().isEmpty) {
+    Common.toastMessaage('Client Name is required', Colors.red);
+    return;
+  }
 
-      if (mounted) {
-        Navigator.pop(context); // Close progress dialog
+  final body = await _buildPricingBody();
 
-        if (result != null && result['status'] == true) {
-    Common.toastMessaage(
-      result['message'] ?? 'Pricing saved successfully',
-      Colors.green,
-    );
+  setState(() => _isSavingPricing = true);
 
-    await _refreshData(callMasterId ?? widget.callMasterId);
-    widget.onDataChanged();
+  Common.showProgressDialog(context, "Saving Pricing...");
 
-    // Navigate to Followup tab
-    _tabController.animateTo(0);
-  }else {
+  try {
+    final result = await HttpService.postPricing(body);
+
+    if (mounted) {
+      Navigator.pop(context); // Close progress dialog
+
+      if (result != null && result['status'] == true) {
+        Common.toastMessaage(
+          result['message'] ?? 'Pricing saved successfully',
+          Colors.green,
+        );
+
+        await _refreshData(callMasterId ?? widget.callMasterId);
+        widget.onDataChanged();
+
+        // Navigate to Followup tab
+        _tabController.animateTo(0);
+      } else {
         Common.toastMessaage(
           result?['message'] ?? 'Failed to save pricing',
           Colors.red,
@@ -1868,6 +2099,8 @@ Future<void> _savePricingDetails() async {
                       _buildSummaryTile('Consumables', _pConsumables.text.isEmpty ? '-' : '₹ ${_pConsumables.text}'),
                       _buildSummaryTile('Add. Factory Charges', _pAdditionalFactory.text.isEmpty ? '-' : '₹ ${_pAdditionalFactory.text}'),
                       _buildSummaryTile('Additional Charge', _pAdditional.text.isEmpty ? '-' : '₹ ${_pAdditional.text}'),
+                      _buildSummaryTile('Quantity', _pQuantity.text.isEmpty ? '-' : '₹ ${_pQuantity.text}'),
+                      _buildSummaryTile('Amc Amount', _pAmcAmount.text.isEmpty ? '-' : '₹ ${_pAmcAmount.text}'),
                       _buildSummaryTile('Unit Price', _pUnitPrice.text.isEmpty ? '-' : '₹ ${_pUnitPrice.text}'),
                       _buildSummaryTile('Company Profit (%)', _pCompanyProfit.text.isEmpty ? '-' : '${_pCompanyProfit.text}%'),
                       _buildSummaryTile('Company Profit Amount', _pCompanyProfitAmount.text.isEmpty ? '-' : '₹ ${_pCompanyProfitAmount.text}'),
@@ -2131,12 +2364,15 @@ Future<void> _savePricingDetails() async {
   }
 
   Widget _buildEstimationCard(BuildContext context, dynamic data) {
+    _initPricingControllers();
     return _pricingCardSection(
       title: 'Estimation & Pricing',
       icon: Icons.assignment_outlined,
       children: [
+        _pricingField('Quotation Title', _pQuotationTitle, prefixIcon: Icons.title_outlined, hintText: 'Quotation Title'),
+        const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Quotation', _pQuotation, prefixIcon: Icons.description_outlined,hintText: 'Home Lift'),
+          _pricingField('Quotation', _pQuotation, prefixIcon: Icons.description_outlined, hintText: 'Home Lift'),
           _pricingField('Client Name', _pClientName, prefixIcon: Icons.person_outline),
         ]),
         const SizedBox(height: 14),
@@ -2233,6 +2469,8 @@ Future<void> _savePricingDetails() async {
           _pricingField('Consumables', _pConsumables, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
           _pricingField('Additional Charges (Factory)', _pAdditionalFactory, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
           _pricingField('Additional', _pAdditional, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('AMC Amount', _pAmcAmount, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('Quantity', _pQuantity, readOnly: true, prefixText: 'x'),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
@@ -2269,15 +2507,21 @@ void _calculatePricing() {
   double consumables = double.tryParse(_pConsumables.text) ?? 0;
   double additionalFactory = double.tryParse(_pAdditionalFactory.text) ?? 0;
   double additional = double.tryParse(_pAdditional.text) ?? 0;
+  double amcAmount = double.tryParse(_pAmcAmount.text) ?? 0;
 
-  // Unit Price
-  double unitPrice = factory +
+  // Quantity defaults to 1
+  double quantity = double.tryParse(_pQuantity.text) ?? 1;
+  if (quantity <= 0) quantity = 1;
+
+  // Unit Price (sum of all cost components)
+  double unitPrice = (factory +
       transportation +
       installation +
       testing +
       consumables +
       additionalFactory +
-      additional;
+      additional +
+      amcAmount) * quantity;
 
   _pUnitPrice.text = unitPrice.toStringAsFixed(2);
 
@@ -2286,7 +2530,7 @@ void _calculatePricing() {
       double.tryParse(_pCompanyProfit.text) ?? 0;
 
   double companyProfitAmount =
-      factory * companyProfit / 100;
+      unitPrice * companyProfit / 100;
 
   _pCompanyProfitAmount.text =
       companyProfitAmount.toStringAsFixed(2);
@@ -2320,8 +2564,7 @@ void _calculatePricing() {
   double totalSalePrice =
       subTotal + taxAmount;
 
-  _pTotalSalePrice.text =
-      totalSalePrice.toStringAsFixed(2);
+  _pTotalSalePrice.text = totalSalePrice.round().toString();
 }
   
   Widget _pricingCardSection({
@@ -3621,6 +3864,7 @@ Future<void> _showQuotationDialog() async {
         setState(() {
           callMasterId = newCallMasterId;
           leadDetails = response;
+          _pricingControllersInitialized = false;
 
           final data = leadDetails!.data!;
           contactFName.text = data.clientName ?? '';
@@ -3771,6 +4015,20 @@ Future<void> _showQuotationDialog() async {
       return;
     }
 
+    final isEstimationStage = (leadDetails?.data?.createEstimation == true) &&
+        (callResult == 'Estimation & Pricing' ||
+            callResult.toLowerCase().contains('estimation'));
+    if (isEstimationStage) {
+      if (_pQuotation.text.trim().isEmpty) {
+        Common.toastMessaage('Quotation Name is required', Colors.red);
+        return;
+      }
+      if (_pClientName.text.trim().isEmpty) {
+        Common.toastMessaage('Client Name is required', Colors.red);
+        return;
+      }
+    }
+
     if (createOrder == true && products.isEmpty) {
       Common.toastMessaage('Choose at least one product', Colors.red);
       return;
@@ -3888,21 +4146,17 @@ Future<void> _showQuotationDialog() async {
           whatsappLead: whatsappLead.text,
           emailLead: emailLead.text);
       if (context.mounted) {
-        Navigator.pop(context);
-        // if (result.status == true) {
-        //   Common.toastMessaage(result.message, Colors.green);
-        //   widget.onDataChanged();
-        //   // if (mounted) {
-        //   //   Navigator.pop(context); // Close the details popup
-        //   // }
-        //   setState(() {
-        //     remarks.clear();
-        //     isExpand = false;
-        //     isChecked = false;
-        //     checked = false;
-        //   });
-        // } 
         if (result.status == true) {
+          if (isEstimationStage) {
+            try {
+              final pricingBody = await _buildPricingBody();
+              await HttpService.postPricing(pricingBody);
+            } catch (e) {
+              log("Error posting pricing: $e");
+            }
+          }
+
+          Navigator.pop(context);
           Common.toastMessaage(result.message, Colors.green);
 
           // Refresh popup data
@@ -4236,44 +4490,63 @@ Future<void> _showQuotationDialog() async {
                     },
                   ),
                   const SizedBox(height: 12),
-                  _buildDropdown(
-                    label: 'Lead Stages',
-                    isMandatory: true,
-                    value: callResultId.isEmpty ? null : callResultId,
-                    items: commonDetails!.data.callResult.map((item) {
-                      return DropdownMenuItem(
-                        value: item.callResultId.toString(),
-                        child: Text(item.callResult),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        callResultId = value!;
-                        callResult = commonDetails!.data.callResult
-                            .firstWhere((element) =>
-                                element.callResultId.toString() == value)
-                            .callResult;
-                        _fetchCallResultReason();
-                        _fetchLeadExtraSettings(callResultId).then((_) {
-                          if (leadSettings != null &&
-                              !leadSettings!.isFollowupRequiredBool) {
-                            if (mounted) {
-                              setState(() {
-                                nextFollowupDate1.clear();
-                                checked = false;
-                              });
-                            }
-                          } else if (leadSettings == null &&
-                              callResultId != '2') {
-                            if (mounted) {
-                              setState(() {
-                                nextFollowupDate1.clear();
-                                checked = false;
-                              });
-                            }
+                  Builder(
+                    builder: (context) {
+                      final showEstimation = leadDetails?.data?.createEstimation == true;
+                      final filteredCallResults = commonDetails!.data.callResult.where((item) {
+                        if (!showEstimation) {
+                          final resName = item.callResult.trim().toLowerCase();
+                          if (resName == 'estimation & pricing' || resName.contains('estimation')) {
+                            return false;
                           }
-                        });
-                      });
+                        }
+                        return true;
+                      }).toList();
+
+                      final selectedValue = filteredCallResults.any((item) => item.callResultId.toString() == callResultId)
+                          ? callResultId
+                          : null;
+
+                      return _buildDropdown(
+                        label: 'Lead Stages',
+                        isMandatory: true,
+                        value: selectedValue,
+                        items: filteredCallResults.map((item) {
+                          return DropdownMenuItem(
+                            value: item.callResultId.toString(),
+                            child: Text(item.callResult),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            callResultId = value!;
+                            callResult = commonDetails!.data.callResult
+                                .firstWhere((element) =>
+                                    element.callResultId.toString() == value)
+                                .callResult;
+                            _fetchCallResultReason();
+                            _fetchLeadExtraSettings(callResultId).then((_) {
+                              if (leadSettings != null &&
+                                  !leadSettings!.isFollowupRequiredBool) {
+                                if (mounted) {
+                                  setState(() {
+                                    nextFollowupDate1.clear();
+                                    checked = false;
+                                  });
+                                }
+                              } else if (leadSettings == null &&
+                                  callResultId != '2') {
+                                if (mounted) {
+                                  setState(() {
+                                    nextFollowupDate1.clear();
+                                    checked = false;
+                                  });
+                                }
+                              }
+                            });
+                          });
+                        },
+                      );
                     },
                   ),
                   if (callResultReason != null &&
@@ -4527,6 +4800,14 @@ Future<void> _showQuotationDialog() async {
                         ],
                       ],
                     ),
+
+                  if (leadDetails?.data != null &&
+                      leadDetails?.data?.createEstimation == true &&
+                      (callResult == 'Estimation & Pricing' ||
+                          callResult.toLowerCase().contains('estimation'))) ...[
+                    _buildEstimationCard(context, leadDetails!.data),
+                    const SizedBox(height: 12),
+                  ],
 
                   const Text(
                     'Products',
