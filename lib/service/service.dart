@@ -8,6 +8,8 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/backgroundModel.dart';
+import 'package:login2/models/projectDashboardCountModel.dart';
+import 'package:login2/models/lead_management/newProjectListModel.dart';
 import 'package:login2/models/clients/addInvoiceGstModel.dart';
 import 'package:login2/models/clients/deleteMainClientModel.dart';
 import 'package:login2/models/clients/editInvoiceDetailsModelGST.dart';
@@ -139,7 +141,9 @@ import 'package:login2/models/lead_management/productDescriptionModel.dart';
 import 'package:login2/models/lead_management/productHistoryRental.dart';
 import 'package:login2/models/lead_management/productTypeModel.dart';
 import 'package:login2/models/lead_management/profile_response_model.dart';
+import 'package:login2/models/lead_management/projectDetailedModel.dart';
 import 'package:login2/models/lead_management/projectDetailsModel.dart';
+import 'package:login2/models/lead_management/projectFormModels.dart';
 import 'package:login2/models/lead_management/projectPendingModel.dart';
 import 'package:login2/models/lead_management/projectTraceModel.dart';
 import 'package:login2/models/lead_management/purchaseBillModel.dart';
@@ -2119,6 +2123,7 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}get_package_menus",
           queryParameters: params);
+          print('get_package_menus:$result');
       MenuModel model = MenuModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -9041,6 +9046,161 @@ class HttpService {
       return false;
     }
   }
+
+  static Future<ProjectDashboardCountModel?> getProjectDashboard({String? fromDate, String? toDate}) async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_dashboard",
+        data: FormData.fromMap({
+          'token': token,
+          if (fromDate != null && fromDate.isNotEmpty) 'from_date': fromDate,
+          if (toDate != null && toDate.isNotEmpty) 'to_date': toDate,
+        }),
+      );
+
+      final responseData = response.data;
+      log("🔍 get_project_dashboard response: $responseData");
+
+      if (responseData != null && responseData['status'] == true) {
+        return ProjectDashboardCountModel.fromJson(responseData);
+      }
+    } catch (e) {
+      log("🔥 Error in getProjectDashboard: $e");
+    }
+    return null;
+  }
+
+  static Future<NewProjectListModel?> getProjectLists({
+    String? status,
+    String? searchkey,
+  }) async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final Map<String, dynamic> map = {
+        'token': token,
+      };
+      if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
+        map['status'] = status.toLowerCase();
+      }
+      if (searchkey != null && searchkey.isNotEmpty) {
+        map['searchkey'] = searchkey;
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_list",
+        data: FormData.fromMap(map),
+      );
+
+      final responseData = response.data;
+      print('project list:$responseData');
+
+      if (responseData != null && responseData['status'] == true) {
+        return NewProjectListModel.fromJson(responseData);
+      }
+    } catch (e) {
+      log("🔥 Error in getProjectList: $e");
+    }
+    return null;
+  }
+
+  static Future<ProjectDetailedResponse?> getProjectDetailed({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_detailed",
+        data: FormData.fromMap({
+          'token': token,
+          'project_id': projectId,
+        }),
+      );
+      final responseData = response.data;
+      log("🔍 get_project_detailed response: $responseData");
+      if (responseData != null && responseData['status'] == true) {
+        return ProjectDetailedResponse.fromJson(responseData);
+      }
+    } catch (e) {
+      log("🔥 Error in getProjectDetailed: $e");
+    }
+    return null;
+  }
+
+  static Future<WarrantyPeriodResponse?> getWarrantyPeriodList() async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_warranty_period_list",
+        data: FormData.fromMap({'token': token}),
+      );
+      if (response.data != null && response.data['status'] == true) {
+        return WarrantyPeriodResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("🔥 Error in getWarrantyPeriodList: $e");
+    }
+    return null;
+  }
+
+  static Future<LiabilityPeriodResponse?> getLiabilityPeriodList() async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_liability_period_list",
+        data: FormData.fromMap({'token': token}),
+      );
+      if (response.data != null && response.data['status'] == true) {
+        return LiabilityPeriodResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("🔥 Error in getLiabilityPeriodList: $e");
+    }
+    return null;
+  }
+
+  static Future<ProjectStatusListResponse?> getProjectStatusList() async {
+    final token = await Common.getSharedPref('token');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_status_list",
+        data: FormData.fromMap({'token': token}),
+      );
+      if (response.data != null && response.data['status'] == true) {
+        return ProjectStatusListResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("🔥 Error in getProjectStatusList: $e");
+    }
+    return null;
+  }
+
+  static Future<bool> saveProjectFullData({
+    required Map<String, dynamic> formMap,
+    bool isUpdate = false,
+  }) async {
+    final token = await Common.getSharedPref('token');
+    try {
+      formMap['token'] = token;
+      final endpoint = isUpdate ? "update_project" : "addProjectCustomer";
+      final response = await _dio.post(
+        "${await Config.getUrl()}$endpoint",
+        data: FormData.fromMap(formMap),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      if (response.statusCode == 200 &&
+          (response.data['status'] == true || response.data['status'] == 'success')) {
+        return true;
+      } else {
+        log("❌ Save Project Failed: ${response.data}");
+        return false;
+      }
+    } catch (e) {
+      log("🔥 Error saving project: $e");
+      return false;
+    }
+  }
+
 
   static Future<ProjectCountModel?> dashboardCounts(
       {required String token}) async {
@@ -16593,6 +16753,7 @@ static Future sendQuotationRequest({
   required String assignedTo,
   required String requestTitle,
   required String requestMessage,
+  required String quotationType,
 }) async {
   var formData = FormData.fromMap({
     "token": token,
@@ -16600,6 +16761,7 @@ static Future sendQuotationRequest({
     "assigned_to": assignedTo,
     "request_title": requestTitle,
     "request_message": requestMessage,
+    "type": quotationType,
   });
 
   try {

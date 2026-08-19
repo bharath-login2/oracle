@@ -27,6 +27,7 @@ import 'package:login2/screens/leadManagement/dashboardLeadsNew.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated.dart';
 import 'package:login2/screens/leadManagement/dashboardLeadsNewUpdated2.dart';
 import 'package:login2/screens/leadManagement/detailed_reports_page.dart';
+import 'package:login2/screens/leadManagement/AddProjectPage.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
@@ -215,6 +216,7 @@ class _HomePageState extends State<HomePage> {
 
     userDashboard = await HttpService.mainDashboard(widget.token);
     Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
+    _reorderModules();
 
     if (userDashboard != null) {
       setState(() {
@@ -261,6 +263,7 @@ class _HomePageState extends State<HomePage> {
 
       userDashboard = await HttpService.mainDashboard(token);
       Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
+      _reorderModules();
 
       Common.saveSharedPref(
           "whatsapp", userDashboard!.data.isWhatsappConfigured.toString());
@@ -302,6 +305,25 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.red,
       ),
     );
+  }
+
+  void _reorderModules() {
+    if (userDashboard != null && userDashboard!.data.modules.isNotEmpty) {
+      int projectIndex = userDashboard!.data.modules.indexWhere((m) =>
+          m.menuName == 'project' ||
+          m.categoryName.trim() == 'Project Management');
+      if (projectIndex != -1) {
+        var projectModule = userDashboard!.data.modules.removeAt(projectIndex);
+        int leadIndex = userDashboard!.data.modules.indexWhere((m) =>
+            m.menuName == 'call_management' ||
+            m.categoryName.trim() == 'Lead Management');
+        if (leadIndex != -1) {
+          userDashboard!.data.modules.insert(leadIndex + 1, projectModule);
+        } else {
+          userDashboard!.data.modules.insert(0, projectModule);
+        }
+      }
+    }
   }
 
   void _loadWorkStatus() async {
@@ -958,28 +980,29 @@ class _HomePageState extends State<HomePage> {
                                               true) {
                                             _upgrade(context);
                                           } else {
-                                            if (userDashboard!
-                                                    .data.modules[i].menuName ==
-                                                'call_management') {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        DashboardLeadNewUpdatedTwo(
-                                                            widget.token)),
-                                              );
-                                            } 
-                                            else if (userDashboard!
-                                                    .data.modules[i].menuName ==
-                                                'call_management') {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        DashboardLeadNewUpdatedTwo(
-                                                            widget.token)),
-                                              );
-                                            } 
+                                             if (userDashboard!
+                                                     .data.modules[i].menuName ==
+                                                 'call_management') {
+                                               Navigator.push(
+                                                 context,
+                                                 MaterialPageRoute(
+                                                     builder: (context) =>
+                                                         DashboardLeadNewUpdatedTwo(
+                                                             widget.token)),
+                                               );
+                                             } 
+                                             else if (userDashboard!
+                                                     .data.modules[i].menuName ==
+                                                 'project' || userDashboard!
+                                                     .data.modules[i].categoryName.trim() ==
+                                                 'Project Management') {
+                                               Navigator.push(
+                                                 context,
+                                                 MaterialPageRoute(
+                                                     builder: (context) =>
+                                                         const AddProjectPage()),
+                                               );
+                                             } 
                                             else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Staff_management') {
@@ -2121,15 +2144,52 @@ class _HomePageState extends State<HomePage> {
                                         child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(5),
-                                            child: CachedNetworkImage(
-                                              fit: BoxFit.fill,
-                                              imageUrl: userDashboard!
-                                                  .data.modules[i].image
-                                                  .toString(),
-                                              errorWidget:
-                                                  (context, url, error) =>
-                                                      const Icon(Icons.error),
-                                            )),
+                                            child: (userDashboard!.data.modules[i].menuName == 'project' ||
+                                                    userDashboard!.data.modules[i].categoryName.trim() == 'Project Management')
+                                                ? Container(
+                                                    color: Colors.white,
+                                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Container(
+                                                          width: 38,
+                                                          height: 38,
+                                                          decoration: const BoxDecoration(
+                                                            color: Color(0xFF2A86C9),
+                                                            shape: BoxShape.circle,
+                                                          ),
+                                                          child: const Icon(
+                                                            Icons.assignment_rounded,
+                                                            color: Colors.white,
+                                                            size: 22,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(height: 6),
+                                                        const Text(
+                                                          "PROJECT\nMANAGEMENT",
+                                                          textAlign: TextAlign.center,
+                                                          style: TextStyle(
+                                                            fontSize: 9,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Color(0xFF333333),
+                                                            height: 1.1,
+                                                          ),
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  )
+                                                : CachedNetworkImage(
+                                                    fit: BoxFit.fill,
+                                                    imageUrl: userDashboard!
+                                                        .data.modules[i].image
+                                                        .toString(),
+                                                    errorWidget:
+                                                        (context, url, error) =>
+                                                            const Icon(Icons.error),
+                                                  )),
                                       ),
                                     );
                                   },

@@ -2488,7 +2488,7 @@ Future<void> _savePricingDetails() async {
       title: 'Estimation & Pricing',
       icon: Icons.assignment_outlined,
       children: [
-        _pricingField('Quotation Title', _pQuotationTitle, prefixIcon: Icons.title_outlined, hintText: 'Quotation Title'),
+        _pricingField('Subject', _pQuotationTitle, prefixIcon: Icons.title_outlined, hintText: 'Quotation Title'),
         const SizedBox(height: 14),
         _buildGridRow(context, [
           _pricingField('Quotation', _pQuotation, prefixIcon: Icons.description_outlined, hintText: 'Home Lift'),
@@ -3781,7 +3781,7 @@ Future<void> _showQuotationDialog() async {
   final messageController = TextEditingController(
     text: "Kindly prepare and send the quotation for this lead.",
   );
-
+  String? quotationType = "General";
   showDialog(
     context: parentContext,
     builder: (dialogContext) {
@@ -3818,7 +3818,34 @@ Future<void> _showQuotationDialog() async {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  const SizedBox(height: 15),
 
+                  DropdownButtonFormField<String>(
+                    value: quotationType,
+                    decoration: const InputDecoration(
+                      labelText: "Type *",
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: "Amc",
+                        child: Text("Amc"),
+                      ),
+                      DropdownMenuItem(
+                        value: "General",
+                        child: Text("General"),
+                      ),
+                      DropdownMenuItem(
+                        value: "Repairing",
+                        child: Text("Repairing"),
+                      ),
+                    ],
+                    onChanged: (String? value) {
+                      setStateDialog(() {
+                        quotationType = value;
+                      });
+                    },
+                  ),
                   const SizedBox(height: 15),
 
                   DropdownButtonFormField<String>(
@@ -3851,6 +3878,14 @@ Future<void> _showQuotationDialog() async {
                 icon: const Icon(Icons.send),
                 label: const Text("Send Request"),
                 onPressed: () async {
+                  if (quotationType == null || quotationType!.isEmpty) {
+                      ScaffoldMessenger.of(parentContext).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please select Type"),
+                        ),
+                      );
+                      return;
+                    }
                   if (assignedTo == null || assignedTo!.isEmpty) {
                     ScaffoldMessenger.of(parentContext).showSnackBar(
                       const SnackBar(
@@ -3867,6 +3902,7 @@ Future<void> _showQuotationDialog() async {
                     assignedTo: assignedTo!,
                     requestTitle: titleController.text.trim(),
                     requestMessage: messageController.text.trim(),
+                    quotationType: quotationType!,
                   );
 
                   print("Response: $response");

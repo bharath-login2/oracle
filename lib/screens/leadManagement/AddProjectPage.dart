@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/expense/getProjectListModel.dart';
-import 'package:login2/screens/leadManagement/SingleProjectDashboard.dart';
-import 'package:login2/screens/leadManagement/projectDashboard.dart';
+import 'package:login2/models/projectDashboardCountModel.dart';
+import 'package:login2/screens/leadManagement/projectFormPage.dart';
+import 'package:login2/screens/leadManagement/projectListPage.dart';
 import 'package:login2/service/service.dart';
+
 class AddProjectPage extends StatefulWidget {
   const AddProjectPage({super.key});
 
@@ -15,64 +17,117 @@ class AddProjectPage extends StatefulWidget {
 
 class _AddProjectPageState extends State<AddProjectPage> {
   List<ProjectExp> projects = [];
-  List<ProjectExp> filteredProjects = [];
+  String username = "";
+  String designation = "";
   ProjectPermissions? permissions;
+  ProjectCounts? projectDashboardCounts;
   List<CustomerExp> customers = [];
   List<CustomerExp> filteredCustomers = [];
-  final TextEditingController searchController = TextEditingController();
+
   final TextEditingController selectedCustomerController =
       TextEditingController();
   final TextEditingController projectNameController = TextEditingController();
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
+
   String? selectedCustomerId;
   DateTime? startDate;
   DateTime? endDate;
   bool isLoading = true;
   bool hasError = false;
+
   @override
   void initState() {
     super.initState();
-    loadInitialData();
-    searchController.addListener(() {
-      filterProjects(searchController.text);
-    });
+    loadDashboardData();
   }
 
- Future<void> loadInitialData() async {
-  setState(() {
-    isLoading = true;
-    hasError = false;
-  });
-  try {
-    final projectResponse = await HttpService.getProjectsLists();
-    final customerResponse = await HttpService.getCustomers();
-    if (customerResponse != null && customerResponse.status) {
-      customers = customerResponse.data;
-      filteredCustomers = List.from(customers); 
-    }
-    if (projectResponse != null && projectResponse.status) {
-      projects = projectResponse.data.list;
-      permissions = projectResponse.data.permissions;
-      filteredProjects = List.from(projects);
-    }
-    setState(() => isLoading = false);
-  } catch (e) {
-    log("loadInitialData error: $e");
+  Future<void> loadDashboardData() async {
     setState(() {
-      hasError = true;
-      isLoading = false;
+      isLoading = true;
+      hasError = false;
     });
-  }
-}
+    try {
+      final projectDashboardResponse = await HttpService.getProjectDashboard();
+      final customerResponse = await HttpService.getCustomers();
+      final projectResponse = await HttpService.getProjectsLists();
+      final projectListResp = await HttpService.getProjectLists();
 
-  void filterProjects(String query) {
-    final lowerQuery = query.toLowerCase();
-    setState(() {
-      filteredProjects = projects
-          .where((p) => p.projectName.toLowerCase().contains(lowerQuery))
-          .toList();
-    });
+      if (projectDashboardResponse != null && projectDashboardResponse.status) {
+        projectDashboardCounts = projectDashboardResponse.data?.projectCounts;
+      }
+
+      if (customerResponse != null && customerResponse.status) {
+        customers = customerResponse.data;
+        filteredCustomers = List.from(customers);
+      }
+
+      if (projectResponse != null && projectResponse.status) {
+        projects = projectResponse.data.list;
+        permissions = projectResponse.data.permissions;
+      }
+
+      if (projectListResp != null &&
+          projectListResp.status &&
+          projectListResp.data != null) {
+        username = projectListResp.data!.username;
+        designation = projectListResp.data!.designation;
+      }
+
+      setState(() => isLoading = false);
+    } catch (e) {
+      log("loadDashboardData error: $e");
+      setState(() {
+        hasError = true;
+        isLoading = false;
+      });
+    }
+  }
+
+  String getProjectStatus(ProjectExp p) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    DateTime? start;
+    DateTime? end;
+
+    if (p.fromDate != null && p.fromDate!.isNotEmpty) {
+      try {
+        if (p.fromDate!.contains('-')) {
+          var parts = p.fromDate!.split('-');
+          if (parts[0].length == 4) {
+            start = DateTime(
+                int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+          } else {
+            start = DateTime(
+                int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (p.toDate != null && p.toDate!.isNotEmpty) {
+      try {
+        if (p.toDate!.contains('-')) {
+          var parts = p.toDate!.split('-');
+          if (parts[0].length == 4) {
+            end = DateTime(
+                int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+          } else {
+            end = DateTime(
+                int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (start != null && start.isAfter(today)) {
+      return 'Upcoming';
+    }
+    if (end != null && end.isBefore(today)) {
+      return 'Completed';
+    }
+    return 'Running';
   }
 
   void filterCustomers(String query) {
@@ -95,6 +150,16 @@ class _AddProjectPageState extends State<AddProjectPage> {
     endDateController.clear();
     startDate = null;
     endDate = null;
+  }
+
+  void navigateToProjectList(String filterType) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProjectListPage(initialFilter: filterType),
+      ),
+    );
+    loadDashboardData();
   }
 
   Future<dynamic> dropDialogExisting(BuildContext context, String title) {
@@ -141,7 +206,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                         itemCount: filteredCustomers.length,
                         itemBuilder: (context, index) {
                           if (index >= filteredCustomers.length) {
-                            return const SizedBox(); 
+                            return const SizedBox();
                           }
                           final customer = filteredCustomers[index];
                           return ListTile(
@@ -163,296 +228,114 @@ class _AddProjectPageState extends State<AddProjectPage> {
     );
   }
 
-  void showAddOrEditDialog({ProjectExp? project}) {
-    if (project != null) {
-      selectedCustomerId = project.customerId;
-      selectedCustomerController.text = project.customerName;
-      projectNameController.text = project.projectName;
-      startDate = project.fromDate != null ? DateTime.tryParse(project.fromDate!) : null;
-      endDate = project.toDate != null ? DateTime.tryParse(project.toDate!) : null;
-      startDateController.text = project.fromDate ?? "";
-      endDateController.text = project.toDate ?? "";
-    } else {
-      clearForm();
+  void showAddProjectDialog() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ProjectFormPage()),
+    );
+    if (result == true) {
+      loadDashboardData();
     }
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(project != null ? "Edit Project" : "Add Project"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+  }
+
+  Widget _buildMetricCard({
+    required String title,
+    required int count,
+    required IconData icon,
+    required List<Color> gradientColors,
+    required String filterType,
+  }) {
+    return GestureDetector(
+      onTap: () => navigateToProjectList(filterType),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: gradientColors.last.withOpacity(0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                TextFormField(
-                  controller: selectedCustomerController,
-                  readOnly: true,
-                  onTap: () async {
-                    final selected =
-                        await dropDialogExisting(context, "Customers");
-                    if (selected != null) {
-                      setState(() {
-                        selectedCustomerId = selected['id'];
-                        selectedCustomerController.text = selected['name'];
-                      });
-                    }
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Customer',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person_outline),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    shape: BoxShape.circle,
                   ),
+                  child: Icon(icon, color: Colors.white, size: 24),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: projectNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Project Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: startDate ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        startDate = picked;
-                        startDateController.text =
-                            DateFormat('dd-MM-yyyy').format(picked);
-                      });
-                    }
-                  },
-                  child: AbsorbPointer(
-                    child: TextFormField(
-                      controller: startDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Start Date',
-                        suffixIcon: Icon(Icons.calendar_month),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: endDate ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        endDate = picked;
-                        endDateController.text =
-                            DateFormat('dd-MM-yyyy').format(picked);
-                      });
-                    }
-                  },
-                  child: AbsorbPointer(
-                    child: TextFormField(
-                      controller: endDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'End Date',
-                        suffixIcon: Icon(Icons.calendar_month),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
+                Text(
+                  count.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              // onPressed: () async {
-              //   if (startDate == null && startDateController.text.isNotEmpty) {
-              //     startDate = DateFormat('dd-MM-yyyy')
-              //         .parseStrict(startDateController.text);
-              //   }
-              //   if (endDate == null && endDateController.text.isNotEmpty) {
-              //     endDate = DateFormat('dd-MM-yyyy')
-              //         .parseStrict(endDateController.text);
-              //   }
-
-              //   if (selectedCustomerId != null &&
-              //       projectNameController.text.isNotEmpty &&
-              //       startDate != null &&
-              //       endDate != null) {
-              //     bool result;
-              //     if (project == null) {
-              //       result = await HttpService.addProjectsCustomers(
-              //         customerId: selectedCustomerId!,
-              //         projectName: projectNameController.text,
-              //         startDate: startDate!,
-              //         endDate: endDate!,
-              //       );
-              //     } else {
-              //       result = await HttpService.updateProject(
-              //         id: project.id,
-              //         customerId: selectedCustomerId!,
-              //         projectName: projectNameController.text,
-              //         startDate: startDate!,
-              //         endDate: endDate!,
-              //       );
-              //     }
-
-              //     if (result) {
-              //       Navigator.pop(ctx);
-              //       await loadInitialData();
-              //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              //         content: Text(project == null
-              //             ? "Project added successfully"
-              //             : "Project updated successfully"),
-              //         backgroundColor: Colors.green,
-              //       ));
-              //       clearForm();
-              //     } else {
-              //       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              //         content: Text(project == null
-              //             ? "Failed to add project"
-              //             : "Failed to update project"),
-              //         backgroundColor: Colors.red,
-              //       ));
-              //     }
-              //   }
-              // },
-              onPressed: () async {
-                if (startDate == null && startDateController.text.isNotEmpty) {
-                  try {
-                    startDate = DateFormat('dd-MM-yyyy')
-                        .parseStrict(startDateController.text);
-                  } catch (_) {}
-                }
-                if (endDate == null && endDateController.text.isNotEmpty) {
-                  try {
-                    endDate = DateFormat('dd-MM-yyyy')
-                        .parseStrict(endDateController.text);
-                  } catch (_) {}
-                }
-
-                if (selectedCustomerId != null &&
-                    projectNameController.text.isNotEmpty) {
-                  bool result;
-                  if (project == null) {
-                    result = await HttpService.addProjectsCustomers(
-                      customerId: selectedCustomerId!,
-                      projectName: projectNameController.text,
-                      startDate: startDate,
-                      endDate: endDate,
-                    );
-                  } else {
-                    result = await HttpService.updateProject(
-                      id: project.id,
-                      customerId: selectedCustomerId!,
-                      projectName: projectNameController.text,
-                      startDate: startDate,
-                      endDate: endDate,
-                    );
-                  }
-
-                  if (result) {
-                    Navigator.pop(ctx);
-                    await loadInitialData();
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(project == null
-                          ? "Project added successfully"
-                          : "Project updated successfully"),
-                      backgroundColor: Colors.green,
-                    ));
-                    clearForm();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(project == null
-                          ? "Failed to add project"
-                          : "Failed to update project"),
-                      backgroundColor: Colors.red,
-                    ));
-                  }
-                }
-              },
-
-              child: Text(project != null ? "Update" : "Add"),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white70,
+                  size: 14,
+                ),
+              ],
             ),
           ],
-        );
-      },
-    );
-  }
-
-  void deleteProject(String id) async {
-    final confirm = await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Delete Project"),
-        content: const Text("Are you sure you want to delete this project?"),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text("Cancel")),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text("Delete")),
-        ],
+        ),
       ),
     );
-
-    if (confirm == true) {
-      final result = await HttpService.deleteProject(id);
-      if (result) {
-        await loadInitialData();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Project deleted successfully"),
-          backgroundColor: Colors.green,
-        ));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Failed to delete project"),
-          backgroundColor: Colors.red,
-        ));
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final upcomingCount = projectDashboardCounts != null
+        ? projectDashboardCounts!.upcomingInt
+        : projects.where((p) => getProjectStatus(p) == 'Upcoming').length;
+    final runningCount = projectDashboardCounts != null
+        ? projectDashboardCounts!.runningInt
+        : projects.where((p) => getProjectStatus(p) == 'Running').length;
+    final completedCount = projectDashboardCounts != null
+        ? projectDashboardCounts!.completedInt
+        : projects.where((p) => getProjectStatus(p) == 'Completed').length;
+    final totalCount = projectDashboardCounts != null
+        ? projectDashboardCounts!.allInt
+        : projects.length;
+
+    const primaryThemeColor = Color(0xFF2A86C9);
+
     return Scaffold(
-      appBar: AppBar(
-        title:  Text("Projects"),
-        backgroundColor: const Color.fromARGB(255, 81, 139, 238),
-        foregroundColor: const Color.fromARGB(255, 255, 255, 255),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.dashboard),
-              onPressed: () async {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ProjectDashboard(),
-                ),
-              );
-            },
-            tooltip: "Project dashboard",
-          ),
-          if (permissions == null || permissions!.addProject)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => showAddOrEditDialog(),
-              tooltip: "Add Project",
-            ),
-        ],
-      ),
+      backgroundColor: Colors.grey.shade100,
       body: SafeArea(
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -460,200 +343,291 @@ class _AddProjectPageState extends State<AddProjectPage> {
                 ? const Center(
                     child: Text("Something went wrong!",
                         style: TextStyle(color: Colors.red)))
-                : Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: TextField(
-                          controller: searchController,
-                          decoration: InputDecoration(
-                            hintText: 'Search by project name...',
-                            prefixIcon: const Icon(Icons.search),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8)),
+                : RefreshIndicator(
+                    onRefresh: () => loadDashboardData(),
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Top Banner Header
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                            decoration: const BoxDecoration(
+                              color: primaryThemeColor,
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                InkWell(
+                                  onTap: () => Navigator.pop(context),
+                                  child: const Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Hi, ${username.isNotEmpty ? username : 'User'}",
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        designation.isNotEmpty
+                                            ? designation
+                                            : 'Company Admin',
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.person,
+                                    color: primaryThemeColor,
+                                    size: 26,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: filteredProjects.isEmpty
-                            ? const Center(
-                                child: Text("No project data found",
-                                    style: TextStyle(fontSize: 16)))
-                            : ListView.builder(
-                                itemCount: filteredProjects.length,
-                                itemBuilder: (context, index) {
-                                  final item = filteredProjects[index];
-                                  final List<Color> accentColors = [
-                                    const Color(0xFF6C63FF), // Indigo
-                                    const Color(0xFF00B4D8), // Cyan
-                                    const Color(0xFFFF6584), // Pink/Coral
-                                    const Color(0xFF38B000), // Green
-                                    const Color(0xFFFF9F1C), // Orange
-                                  ];
-                                  final Color accentColor = accentColors[index % accentColors.length];
 
-                                  return Container(
-                                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: accentColor.withOpacity(0.15),
-                                          blurRadius: 15,
-                                          offset: const Offset(0, 8),
+                          // Overlapping Total Projects Hero Card with '+' button
+                          Transform.translate(
+                            offset: const Offset(0, -26),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20, vertical: 18),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Project Dashboard",
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey.shade800,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "$totalCount Total Projects",
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: primaryThemeColor,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(20),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => SingleProjectDashboard(project: item, permissions: permissions),
-                                              ),
-                                            );
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              border: Border(
-                                                left: BorderSide(color: accentColor, width: 6),
-                                              ),
-                                            ),
-                                            padding: const EdgeInsets.all(16.0),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Container(
-                                                      padding: const EdgeInsets.all(12),
-                                                      decoration: BoxDecoration(
-                                                        color: accentColor.withOpacity(0.1),
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.rocket_launch_rounded,
-                                                        color: accentColor,
-                                                        size: 26,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 16),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          Text(
-                                                            item.projectName,
-                                                            style: const TextStyle(
-                                                              fontWeight: FontWeight.bold,
-                                                              fontSize: 18,
-                                                              color: Colors.black87,
-                                                            ),
-                                                            maxLines: 2,
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                          const SizedBox(height: 6),
-                                                          Row(
-                                                            children: [
-                                                              Container(
-                                                                padding: const EdgeInsets.all(4),
-                                                                decoration: BoxDecoration(
-                                                                  color: Colors.grey.shade100,
-                                                                  borderRadius: BorderRadius.circular(6),
-                                                                ),
-                                                                child: const Icon(Icons.person, size: 14, color: Colors.grey),
-                                                              ),
-                                                              const SizedBox(width: 8),
-                                                              Expanded(
-                                                                child: Text(
-                                                                  item.customerName,
-                                                                  style: const TextStyle(
-                                                                    fontWeight: FontWeight.w600,
-                                                                    fontSize: 14,
-                                                                    color: Colors.black54,
-                                                                  ),
-                                                                  maxLines: 1,
-                                                                  overflow: TextOverflow.ellipsis,
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    if (permissions == null || permissions!.editProject || permissions!.deleteProject)
-                                                      Row(
-                                                        mainAxisSize: MainAxisSize.min,
-                                                        children: [
-                                                          if (permissions == null || permissions!.editProject)
-                                                            IconButton(
-                                                              icon: Container(
-                                                                padding: const EdgeInsets.all(6),
-                                                                decoration: BoxDecoration(color: Colors.orange.shade50, shape: BoxShape.circle),
-                                                                child: const Icon(Icons.edit_outlined, color: Colors.orange, size: 18),
-                                                              ),
-                                                              padding: EdgeInsets.zero,
-                                                              constraints: const BoxConstraints(),
-                                                              onPressed: () => showAddOrEditDialog(project: item),
-                                                            ),
-                                                          const SizedBox(width: 8),
-                                                          if (permissions == null || permissions!.deleteProject)
-                                                            IconButton(
-                                                              icon: Container(
-                                                                padding: const EdgeInsets.all(6),
-                                                                decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
-                                                                child: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                                                              ),
-                                                              padding: EdgeInsets.zero,
-                                                              constraints: const BoxConstraints(),
-                                                              onPressed: () => deleteProject(item.id),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                  ],
-                                                ),
-                                                if (item.fromDate != null && item.toDate != null && item.fromDate!.isNotEmpty && item.toDate!.isNotEmpty) ...[
-                                                  const SizedBox(height: 16),
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                                    decoration: BoxDecoration(
-                                                      color: accentColor.withOpacity(0.05),
-                                                      borderRadius: BorderRadius.circular(12),
-                                                      border: Border.all(color: accentColor.withOpacity(0.1)),
-                                                    ),
-                                                    child: Row(
-                                                      children: [
-                                                        Icon(Icons.calendar_month_rounded, size: 16, color: accentColor),
-                                                        const SizedBox(width: 10),
-                                                        Text(
-                                                          "${item.fromDate}  ➔  ${item.toDate}",
-                                                          style: TextStyle(
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w600,
-                                                            color: accentColor.withOpacity(0.8),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ],
-                                            ),
+                                    if (permissions == null ||
+                                        permissions!.addProject)
+                                      GestureDetector(
+                                        onTap: () => showAddProjectDialog(),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: primaryThemeColor,
+                                            borderRadius:
+                                                BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(
+                                            Icons.add,
+                                            color: Colors.white,
+                                            size: 24,
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                  ],
+                                ),
                               ),
+                            ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Project Overview",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+
+                                // 2x2 Metric Cards Grid
+                                GridView.count(
+                                  crossAxisCount: 2,
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  crossAxisSpacing: 14,
+                                  mainAxisSpacing: 14,
+                                  childAspectRatio: 1.25,
+                                  children: [
+                                    _buildMetricCard(
+                                      title: "Upcoming",
+                                      count: upcomingCount,
+                                      icon: Icons.update_rounded,
+                                      gradientColors: const [
+                                        Color(0xFF4A90E2),
+                                        Color(0xFF5C6BC0)
+                                      ],
+                                      filterType: "Upcoming",
+                                    ),
+                                    _buildMetricCard(
+                                      title: "Running",
+                                      count: runningCount,
+                                      icon: Icons.play_circle_fill_rounded,
+                                      gradientColors: const [
+                                        Color(0xFF00B894),
+                                        Color(0xFF00CEC9)
+                                      ],
+                                      filterType: "Running",
+                                    ),
+                                    _buildMetricCard(
+                                      title: "Completed",
+                                      count: completedCount,
+                                      icon: Icons.check_circle_rounded,
+                                      gradientColors: const [
+                                        Color(0xFFF39C12),
+                                        Color(0xFFE67E22)
+                                      ],
+                                      filterType: "Completed",
+                                    ),
+                                    _buildMetricCard(
+                                      title: "Total Projects",
+                                      count: totalCount,
+                                      icon: Icons.assignment_rounded,
+                                      gradientColors: const [
+                                        Color(0xFF6C5CE7),
+                                        Color(0xFFA29BFE)
+                                      ],
+                                      filterType: "All",
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 24),
+
+                                // Full Project List Navigation Tile
+                                GestureDetector(
+                                  onTap: () => navigateToProjectList("All"),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                          color: primaryThemeColor.withOpacity(0.3)),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.04),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: primaryThemeColor.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(
+                                            Icons.list_alt_rounded,
+                                            color: primaryThemeColor,
+                                            size: 26,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 14),
+                                        const Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "View Project List",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                              SizedBox(height: 2),
+                                              Text(
+                                                "Search, filter and manage all projects",
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.arrow_forward_ios_rounded,
+                                          color: primaryThemeColor,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
       ),
     );

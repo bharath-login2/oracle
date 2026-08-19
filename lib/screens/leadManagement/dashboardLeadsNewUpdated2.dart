@@ -12515,7 +12515,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     child: Row(
                       children: [
                         _buildListSummaryItemOld(
-                          'New',
+                          'New Leads',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts?.data.leads.newLeads ?? 0)
                                   .toString()
@@ -12526,7 +12526,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           isCalled: true,
                         ),
                         _buildListSummaryItemOldAcive(
-                          'Followup',
+                          'Followup Needed',
                           dashboardMainCounts != null
                               ? (dashboardMainCounts
                                           ?.data.leads.followupLeads ??

@@ -127,7 +127,7 @@ class Data {
 class Module {
   String catId;
   String categoryName;
-  String menuName;
+  String    menuName;
   String image;
 
   Module({
