@@ -207,6 +207,7 @@ import 'package:login2/models/product_mannagement/products_by_id_model.dart';
 import 'package:login2/models/product_mannagement/sub_categories.dart';
 import 'package:login2/models/product_mannagement/update_product.dart';
 import 'package:login2/models/product_mannagement/update_subcategory.dart';
+import 'package:login2/models/projectdetails/project_info_model.dart';
 import 'package:login2/models/projectCountModel.dart';
 import 'package:login2/models/renewal/add_customer_model.dart';
 import 'package:login2/models/renewal/bulk_remind.dart';
@@ -265,6 +266,7 @@ import 'package:login2/models/staff_report/targetReportModel.dart';
 import 'package:login2/models/userManagement/companyTargetModel.dart';
 import 'package:login2/models/userManagement/editUserBasicDetailsModel.dart';
 import 'package:login2/models/renewal/renewal_template_model.dart';
+import 'package:login2/models/projectdetails/project_documents_models.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/deletedGstInvoiceList.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/deletedProformaInvoiceList.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/deletedReceiptListModel.dart';
@@ -430,7 +432,12 @@ import '../models/userManagement/postEditStaffSubmenuModel.dart';
 import '../models/userManagement/staffDetailsModel.dart';
 import '../models/Product_mannagement/checkBarcodeDuplicateModel.dart';
 import '../models/userPermissionModel.dart';
+import '../models/projectdetails/installation_activity_model.dart';
 import '../models/verifyPhoneModel.dart';
+import '../models/projectdetails/staff_list_model.dart';
+import '../models/projectdetails/unit_list_model.dart';
+import '../models/projectdetails/unit_info_model.dart';
+import 'package:file_picker/file_picker.dart';
 
 class HttpService {
   static final Dio _dio = Dio();
@@ -952,7 +959,7 @@ class HttpService {
   }
 
   static Future viewLeadsSts(token, fromdate, todate, type, id, status, sort,
-      page, pageSize, isFirst, branchId,search) async {
+      page, pageSize, isFirst, branchId, search) async {
     var params = {
       "token": token,
       "fromDate": fromdate,
@@ -2123,7 +2130,7 @@ class HttpService {
     try {
       var result = await _dio.get("${await Config.getUrl()}get_package_menus",
           queryParameters: params);
-          print('get_package_menus:$result');
+      print('get_package_menus:$result');
       MenuModel model = MenuModel.fromJson(result.data);
       return model;
     } catch (e) {
@@ -3929,26 +3936,26 @@ class HttpService {
   //   }
   // }
   static Future leadNotificationList(token) async {
-  print("API Token: $token");
+    print("API Token: $token");
 
-  var params = {
-    "token": token,
-  };
+    var params = {
+      "token": token,
+    };
 
-  try {
-    var result = await _dio.get(
-      "${await Config.getUrl()}get_all_lead_milestones",
-      queryParameters: params,
-    );
+    try {
+      var result = await _dio.get(
+        "${await Config.getUrl()}get_all_lead_milestones",
+        queryParameters: params,
+      );
 
-    print("URL: ${result.realUri}");
-    print("Response: ${result.data}");
+      print("URL: ${result.realUri}");
+      print("Response: ${result.data}");
 
-    return LeadNotificationListModel.fromJson(result.data);
-  } catch (e) {
-    log("error: $e");
+      return LeadNotificationListModel.fromJson(result.data);
+    } catch (e) {
+      log("error: $e");
+    }
   }
-}
 
   static Future deleteNotification(token, String notificaionId) async {
     var params = {
@@ -6533,7 +6540,6 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}getProductById",
           data: formData);
       if (result.statusCode == 200) {
-        
         print("product by id response: ${result.data}");
         ProdectsByIdModel response = ProdectsByIdModel.fromJson(result.data);
         return response;
@@ -9047,7 +9053,8 @@ class HttpService {
     }
   }
 
-  static Future<ProjectDashboardCountModel?> getProjectDashboard({String? fromDate, String? toDate}) async {
+  static Future<ProjectDashboardCountModel?> getProjectDashboard(
+      {String? fromDate, String? toDate}) async {
     final token = await Common.getSharedPref('token');
     try {
       final response = await _dio.post(
@@ -9080,7 +9087,9 @@ class HttpService {
       final Map<String, dynamic> map = {
         'token': token,
       };
-      if (status != null && status.isNotEmpty && status.toLowerCase() != 'all') {
+      if (status != null &&
+          status.isNotEmpty &&
+          status.toLowerCase() != 'all') {
         map['status'] = status.toLowerCase();
       }
       if (searchkey != null && searchkey.isNotEmpty) {
@@ -9189,7 +9198,8 @@ class HttpService {
         options: Options(contentType: 'multipart/form-data'),
       );
       if (response.statusCode == 200 &&
-          (response.data['status'] == true || response.data['status'] == 'success')) {
+          (response.data['status'] == true ||
+              response.data['status'] == 'success')) {
         return true;
       } else {
         log("❌ Save Project Failed: ${response.data}");
@@ -9200,7 +9210,6 @@ class HttpService {
       return false;
     }
   }
-
 
   static Future<ProjectCountModel?> dashboardCounts(
       {required String token}) async {
@@ -15278,7 +15287,7 @@ class HttpService {
       if (response.statusCode == 200 &&
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
-                print("getStockRegisterList response: ${response.data}");
+        print("getStockRegisterList response: ${response.data}");
         return GetStockRegisterListModel.fromJson(response.data);
       }
       log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
@@ -15403,7 +15412,7 @@ class HttpService {
       if (response.statusCode == 200 &&
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
-                print("getRequestStockList response: ${response.data}");
+        print("getRequestStockList response: ${response.data}");
         return GetStockRequestModel.fromJson(response.data);
       }
     } catch (e) {
@@ -15610,7 +15619,7 @@ class HttpService {
       if (response.statusCode == 200 &&
           (response.data['status'] == true ||
               response.data['status'] == 'success')) {
-                print("getStockRequestEditDetails response: ${response.data}");
+        print("getStockRequestEditDetails response: ${response.data}");
         return StockRequestEditDetails.fromJson(response.data);
       }
       log("getRecentExpense error: ${response.data?['message'] ?? 'Unknown error'}");
@@ -16207,22 +16216,22 @@ class HttpService {
     final data = {'id': requestId};
     data['token'] = token;
     try {
-  final response = await _dio.post(
-    "${await Config.getUrl()}edit_purchase_bill",
-    data: FormData.fromMap(data),
-  );
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_purchase_bill",
+        data: FormData.fromMap(data),
+      );
 
-  print("RAW RESPONSE => ${response.data}");
+      print("RAW RESPONSE => ${response.data}");
 
-  final model = GetPurchaseBillDetailsModel.fromJson(response.data);
+      final model = GetPurchaseBillDetailsModel.fromJson(response.data);
 
-  print("MODEL PARSED SUCCESSFULLY");
+      print("MODEL PARSED SUCCESSFULLY");
 
-  return model;
-} catch (e, s) {
-  print("PARSING ERROR => $e");
-  print("STACK => $s");
-}
+      return model;
+    } catch (e, s) {
+      print("PARSING ERROR => $e");
+      print("STACK => $s");
+    }
     return null;
   }
 
@@ -16719,69 +16728,70 @@ class HttpService {
 
     return null;
   }
-static Future<Map<String, dynamic>?> approveRejectStockRequest(
-  String requestId,
-  String status,
-) async {
-  final token = await Common.getSharedPref("token");
 
-  final data = {
-    'token': token,
-    'request_id': requestId,
-    'request_status': status == "Approved" ? 1 : 3,
-  };
+  static Future<Map<String, dynamic>?> approveRejectStockRequest(
+    String requestId,
+    String status,
+  ) async {
+    final token = await Common.getSharedPref("token");
 
-  try {
-    final response = await _dio.post(
-      "${await Config.getUrl()}approve_reject_stock_request",
-      data: FormData.fromMap(data),
-    );
+    final data = {
+      'token': token,
+      'request_id': requestId,
+      'request_status': status == "Approved" ? 1 : 3,
+    };
 
-    if (response.statusCode == 200 &&
-        response.data['status'] == true) {
-      return response.data['data'];
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}approve_reject_stock_request",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return response.data['data'];
+      }
+    } catch (e) {
+      log("approveRejectStockRequest error: $e");
     }
-  } catch (e) {
-    log("approveRejectStockRequest error: $e");
+
+    return null;
   }
 
-  return null;
-}
-static Future sendQuotationRequest({
-  required String token,
-  required String callMasterId,
-  required String assignedTo,
-  required String requestTitle,
-  required String requestMessage,
-  required String quotationType,
-}) async {
-  var formData = FormData.fromMap({
-    "token": token,
-    "call_master_id": callMasterId,
-    "assigned_to": assignedTo,
-    "request_title": requestTitle,
-    "request_message": requestMessage,
-    "type": quotationType,
-  });
+  static Future sendQuotationRequest({
+    required String token,
+    required String callMasterId,
+    required String assignedTo,
+    required String requestTitle,
+    required String requestMessage,
+    required String quotationType,
+  }) async {
+    var formData = FormData.fromMap({
+      "token": token,
+      "call_master_id": callMasterId,
+      "assigned_to": assignedTo,
+      "request_title": requestTitle,
+      "request_message": requestMessage,
+      "type": quotationType,
+    });
 
-  try {
-    var result = await _dio.post(
-      "${await Config.getUrl()}send_quotation_request",
-      data: formData,
-      options: Options(
-        receiveTimeout: const Duration(seconds: 30),
-      ),
-    );
-  print("sendQuotationRequest result: ${result.data}");
-    if (result.statusCode == 200) {
-      return result.data;
+    try {
+      var result = await _dio.post(
+        "${await Config.getUrl()}send_quotation_request",
+        data: formData,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+      print("sendQuotationRequest result: ${result.data}");
+      if (result.statusCode == 200) {
+        return result.data;
+      }
+    } catch (e) {
+      log("sendQuotationRequest error: $e");
     }
-  } catch (e) {
-    log("sendQuotationRequest error: $e");
-  }
 
-  return null;
-}
+    return null;
+  }
 
   static Future postPricing(Map<String, dynamic> body) async {
     try {
@@ -16799,4 +16809,317 @@ static Future sendQuotationRequest({
     }
     return null;
   }
+
+  //get project info
+  static Future<ProjectInfoResponse?> getProjectInfo(
+    String projectId,
+  ) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_info",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return ProjectInfoResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log("getProjectInfo error: $e");
+    }
+
+    return null;
+  }
+
+  //get project documents
+  static Future<ProjectDocumentsResponse?> getProjectDocuments(
+    String projectId,
+  ) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_documents",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return ProjectDocumentsResponse.fromJson(
+          response.data,
+        );
+      }
+    } catch (e) {
+      log("getProjectDocuments error: $e");
+    }
+
+    return null;
+  }
+
+  //load site lift no
+  static Future<SiteLiftResponse?> getSiteLifts({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_site_lifts",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return SiteLiftResponse.fromJson(response.data);
+      }
+
+      log(
+        'getSiteLifts failed: ${response.data}',
+      );
+    } catch (e) {
+      log('getSiteLifts error: $e');
+    }
+
+    return null;
+  }
+
+  //load unit test no
+  static Future<ProjectDocumentUnitResponse?> getProjectDocumentUnits({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_units",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return ProjectDocumentUnitResponse.fromJson(
+          response.data,
+        );
+      }
+
+      log(
+        'getProjectDocumentUnits failed: ${response.data}',
+      );
+    } catch (e) {
+      log('getProjectDocumentUnits error: $e');
+    }
+
+    return null;
+  }
+
+  //add project document
+  static Future<bool> addProjectDocument({
+    required String projectId,
+    required String projectNo,
+    required String unitNo,
+    required String siteLiftNo,
+    required String title,
+    required String remark,
+    required PlatformFile file,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'project_no': projectNo,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+        'title': title,
+        'remark': remark,
+        'upload_file': await MultipartFile.fromFile(
+          file.path!,
+          filename: file.name,
+        ),
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_project_documents",
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {}
+
+    return false;
+  }
+
+  //update project documents
+  static Future<bool> updateProjectDocument({
+    required String documentId,
+    required String projectId,
+    required String projectNo,
+    required String unitNo,
+    required String siteLiftNo,
+    required String title,
+    required String remark,
+    PlatformFile? file,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final Map<String, dynamic> fields = {
+        'token': token,
+        'document_id': documentId,
+        'project_id': projectId,
+        'project_no': projectNo,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+        'title': title,
+        'remark': remark,
+      };
+
+      if (file != null && file.path != null) {
+        fields['upload_file'] = await MultipartFile.fromFile(
+          file.path!,
+          filename: file.name,
+        );
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_project_document",
+        data: FormData.fromMap(fields),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log(
+        "updateProjectDocument failed: ${response.data}",
+      );
+    } catch (e) {
+      log("updateProjectDocument error: $e");
+    }
+
+    return false;
+  }
+
+  //delete
+  static Future<bool> deleteProjectDocument({
+    required String documentId,
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'document_id': documentId,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_project_document",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log(
+        'deleteProjectDocument failed: ${response.data}',
+      );
+    } catch (e) {
+      log('deleteProjectDocument error: $e');
+    }
+
+    return false;
+  }
+
+  //get unit info
+  static Future<UnitInfoResponse?> getUnitInfo({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_unit_details",
+        data: FormData.fromMap(data),
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return UnitInfoResponse.fromJson(
+          response.data,
+        );
+      }
+
+      log(
+        'getUnitInfo failed: ${response.data}',
+      );
+    } catch (e) {
+      log('getUnitInfo error: $e');
+    }
+
+    return null;
+  }
+
+  static Future<InstallationActivityResponse?> getInstallationActivities({
+  required String projectId,
+  required String methodOfInstallation,
+}) async {
+  final token = await Common.getSharedPref("token");
+
+  final data = {
+    'token': token,
+    'project_id': projectId,
+    'method_of_installation': methodOfInstallation,
+  };
+
+  try {
+    final response = await _dio.post(
+      "${await Config.getUrl()}test",
+      data: FormData.fromMap(data),
+    );
+
+    if (response.statusCode == 200 &&
+        response.data['status'] == true) {
+      return InstallationActivityResponse.fromJson(
+        response.data,
+      );
+    }
+
+    log(
+      'getInstallationActivities failed: ${response.data}',
+    );
+  } catch (e) {
+    log(
+      'getInstallationActivities error: $e',
+    );
+  }
+
+  return null;
+}
 }

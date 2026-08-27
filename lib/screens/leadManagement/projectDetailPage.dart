@@ -2,6 +2,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:login2/models/lead_management/newProjectListModel.dart';
 import 'package:login2/models/lead_management/projectDetailedModel.dart';
+import '../projectScreens/project_info.dart';
+import '../projectScreens/unit_info.dart';
+import '../projectScreens/project_documents.dart';
 import 'package:login2/service/service.dart';
 
 class ProjectDetailPage extends StatefulWidget {
@@ -101,10 +104,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
           Container(
             height: 5,
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  colors: [_primary, Color(0xFF64B5F6)]),
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(18)),
+              gradient: LinearGradient(colors: [_primary, Color(0xFF64B5F6)]),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
             ),
           ),
           Padding(
@@ -145,8 +146,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                       ),
                       _buildInfoRow(Icons.person_outline, d.clientName),
                       _buildInfoRow(Icons.phone_outlined, d.contact1),
-                      _buildInfoRow(
-                          Icons.location_on_outlined, d.location),
+                      _buildInfoRow(Icons.location_on_outlined, d.location),
                     ],
                   ),
                 ),
@@ -203,74 +203,115 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
           const SizedBox(height: 16),
 
           // 2-column overview grid
-          Table(
-            columnWidths: const {
-              0: FlexColumnWidth(),
-              1: FlexColumnWidth(),
-            },
+          // Table(
+          //   columnWidths: const {
+          //     0: FlexColumnWidth(),
+          //     1: FlexColumnWidth(),
+          //   },
+          //   children: [
+          //     TableRow(children: [
+          //       _buildOverviewTile(
+          //         icon: Icons.calendar_today_outlined,
+          //         label: 'Start Date',
+          //         value: d.startingDate.isNotEmpty ? d.startingDate : '—',
+          //       ),
+          //       _buildOverviewTile(
+          //         icon: Icons.event_outlined,
+          //         label: 'End Date',
+          //         value: d.completionDate.isNotEmpty ? d.completionDate : '—',
+          //       ),
+          //     ]),
+          //     TableRow(children: [
+          //       _buildOverviewTile(
+          //         icon: Icons.currency_rupee_rounded,
+          //         label: 'Total Cost',
+          //         value: '₹${d.totalEstimateAmount}',
+          //         valueColor: _primaryDark,
+          //       ),
+          //       _buildOverviewTile(
+          //         icon: Icons.person_off_outlined,
+          //         label: 'Client Issues',
+          //         value: d.clientIssueCount,
+          //         valueColor: d.clientIssueCount != '0' ? Colors.orange : null,
+          //       ),
+          //     ]),
+          //     TableRow(children: [
+          //       _buildOverviewTile(
+          //         icon: Icons.business_outlined,
+          //         label: 'Company Issues',
+          //         value: d.companyIssueCount,
+          //         valueColor: d.companyIssueCount != '0' ? Colors.orange : null,
+          //       ),
+          //       _buildOverviewTile(
+          //         icon: Icons.payment_outlined,
+          //         label: 'Payment Delay',
+          //         value: d.paymentPendingCount,
+          //         valueColor: d.paymentPendingCount != '0' ? Colors.red : null,
+          //       ),
+          //     ]),
+          //     TableRow(children: [
+          //       _buildOverviewTile(
+          //         icon: Icons.public_outlined,
+          //         label: 'General Issues',
+          //         value: d.generalIssueCount,
+          //         valueColor: d.generalIssueCount != '0' ? Colors.orange : null,
+          //       ),
+          //       _buildOverviewTile(
+          //         icon: Icons.work_history_outlined,
+          //         label: 'Total Worked',
+          //         value: d.totalWorked,
+          //       ),
+          //     ]),
+          //   ],
+          // ),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: 1.25,
             children: [
-              TableRow(children: [
-                _buildOverviewTile(
-                  icon: Icons.calendar_today_outlined,
-                  label: 'Start Date',
-                  value: d.startingDate.isNotEmpty ? d.startingDate : '—',
-                ),
-                _buildOverviewTile(
-                  icon: Icons.event_outlined,
-                  label: 'End Date',
-                  value:
-                      d.completionDate.isNotEmpty ? d.completionDate : '—',
-                ),
-              ]),
-              TableRow(children: [
-                _buildOverviewTile(
-                  icon: Icons.currency_rupee_rounded,
-                  label: 'Total Cost',
-                  value: '₹${d.totalEstimateAmount}',
-                  valueColor: _primaryDark,
-                ),
-                _buildOverviewTile(
-                  icon: Icons.person_off_outlined,
-                  label: 'Client Issues',
-                  value: d.clientIssueCount,
-                  valueColor: d.clientIssueCount != '0'
-                      ? Colors.orange
-                      : null,
-                ),
-              ]),
-              TableRow(children: [
-                _buildOverviewTile(
-                  icon: Icons.business_outlined,
-                  label: 'Company Issues',
-                  value: d.companyIssueCount,
-                  valueColor: d.companyIssueCount != '0'
-                      ? Colors.orange
-                      : null,
-                ),
-                _buildOverviewTile(
-                  icon: Icons.payment_outlined,
-                  label: 'Payment Delay',
-                  value: d.paymentPendingCount,
-                  valueColor: d.paymentPendingCount != '0'
-                      ? Colors.red
-                      : null,
-                ),
-              ]),
-              TableRow(children: [
-                _buildOverviewTile(
-                  icon: Icons.public_outlined,
-                  label: 'General Issues',
-                  value: d.generalIssueCount,
-                  valueColor: d.generalIssueCount != '0'
-                      ? Colors.orange
-                      : null,
-                ),
-                _buildOverviewTile(
-                  icon: Icons.work_history_outlined,
-                  label: 'Total Worked',
-                  value: d.totalWorked,
-                ),
-              ]),
+              _buildMetricCard(
+                title: "Total Project Value",
+                // count: totalProjectValue,
+                icon: Icons.account_balance_wallet_rounded,
+                gradientColors: const [
+                  Color(0xFF2A86C9),
+                  Color(0xFF6366F1),
+                ],
+                filterType: "Total Project Value",
+              ),
+              _buildMetricCard(
+                title: "Total Amount Collected",
+                // count: totalAmountCollected,
+                icon: Icons.payments_rounded,
+                gradientColors: const [
+                  Color(0xFF2A86C9),
+                  Color(0xFF6366F1),
+                ],
+                filterType: "Total Amount Collected",
+              ),
+              _buildMetricCard(
+                title: "Balance to Claim",
+                // count: balanceToClaim,
+                icon: Icons.account_balance_rounded,
+                gradientColors: const [
+                  Color(0xFF2A86C9),
+                  Color(0xFF6366F1),
+                ],
+                filterType: "Balance to Claim",
+              ),
+              _buildMetricCard(
+                title: "Invoiced Claimed & Waiting for Collection",
+                // count: invoicedClaimedWaiting,
+                icon: Icons.receipt_long_rounded,
+                gradientColors: const [
+                  Color(0xFF2A86C9),
+                  Color(0xFF6366F1),
+                ],
+                filterType: "Invoiced Claimed & Waiting for Collection",
+              ),
             ],
           ),
         ],
@@ -345,8 +386,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border:
-                Border.all(color: _primary.withOpacity(0.25), width: 1.2),
+            border: Border.all(color: _primary.withOpacity(0.25), width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: _primary.withOpacity(0.09),
@@ -404,8 +444,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         backgroundColor: _primary,
         duration: const Duration(seconds: 1),
         behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
     // TODO: Navigate to specific section page when available
@@ -429,8 +468,8 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         backgroundColor: _primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
@@ -464,8 +503,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: Colors.grey.shade700),
+                          style: TextStyle(color: Colors.grey.shade700),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
@@ -534,34 +572,59 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                             _buildActionButton(
                               label: 'Project Info',
                               icon: Icons.info_outline_rounded,
-                              onTap: () => _onButtonTapped('Project Info'),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProjectInfoPage(
+                                      project: widget.project,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                             _buildActionButton(
                               label: 'Project Document',
                               icon: Icons.description_outlined,
-                              onTap: () =>
-                                  _onButtonTapped('Project Document'),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ProjectDocumentsPage(
+                                      project: widget.project,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                            _buildActionButton(
-                              label: 'Delay Management',
-                              icon: Icons.timer_off_outlined,
-                              onTap: () =>
-                                  _onButtonTapped('Delay Management'),
-                            ),
-                            _buildActionButton(
-                              label: 'Gallery',
-                              icon: Icons.photo_library_outlined,
-                              onTap: () => _onButtonTapped('Gallery'),
-                            ),
-                            _buildActionButton(
-                              label: 'Site Drawings',
-                              icon: Icons.architecture_outlined,
-                              onTap: () => _onButtonTapped('Site Drawings'),
-                            ),
+                            // _buildActionButton(
+                            //   label: 'Delay Management',
+                            //   icon: Icons.timer_off_outlined,
+                            //   onTap: () => _onButtonTapped('Delay Management'),
+                            // ),
+                            // _buildActionButton(
+                            //   label: 'Gallery',
+                            //   icon: Icons.photo_library_outlined,
+                            //   onTap: () => _onButtonTapped('Gallery'),
+                            // ),
+                            // _buildActionButton(
+                            //   label: 'Site Drawings',
+                            //   icon: Icons.architecture_outlined,
+                            //   onTap: () => _onButtonTapped('Site Drawings'),
+                            // ),
                             _buildActionButton(
                               label: 'Unit Info',
                               icon: Icons.home_work_outlined,
-                              onTap: () => _onButtonTapped('Unit Info'),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UnitInfoPage(
+                                      projectId: widget.project.id,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -569,6 +632,88 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     ],
                   ),
                 ),
+    );
+  }
+
+  Widget _buildMetricCard({
+    required String title,
+    // required int count,
+    required IconData icon,
+    required List<Color> gradientColors,
+    required String filterType,
+  }) {
+    return GestureDetector(
+      // onTap: () => navigateToProjectList(filterType),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: gradientColors,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: gradientColors.last.withOpacity(0.35),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 24),
+                ),
+                // Text(
+                //   count.toString(),
+                //   style: const TextStyle(
+                //     color: Colors.white,
+                //     fontSize: 28,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: true,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white70,
+                  size: 14,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
