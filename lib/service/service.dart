@@ -275,6 +275,7 @@ import 'package:login2/screens/accounts/renewal_mannagement/restoreInvoicesModel
 import 'package:login2/screens/authentication/googleDriveAccountsModel.dart';
 import 'package:login2/screens/authentication/googleDriveFilesModel.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../models/projectdetails/project_delay_management.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/commonsettingsModel.dart';
 import '../../models/contactGroup/addContactGroupModel.dart';
@@ -17087,39 +17088,237 @@ class HttpService {
   }
 
   static Future<InstallationActivityResponse?> getInstallationActivities({
-  required String projectId,
-  required String methodOfInstallation,
-}) async {
-  final token = await Common.getSharedPref("token");
+    required String projectId,
+    required String methodOfInstallation,
+  }) async {
+    final token = await Common.getSharedPref("token");
 
-  final data = {
-    'token': token,
-    'project_id': projectId,
-    'method_of_installation': methodOfInstallation,
-  };
+    final data = {
+      'token': token,
+      'project_id': projectId,
+      'method_of_installation': methodOfInstallation,
+    };
 
-  try {
-    final response = await _dio.post(
-      "${await Config.getUrl()}test",
-      data: FormData.fromMap(data),
-    );
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}test",
+        data: FormData.fromMap(data),
+      );
 
-    if (response.statusCode == 200 &&
-        response.data['status'] == true) {
-      return InstallationActivityResponse.fromJson(
-        response.data,
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return InstallationActivityResponse.fromJson(
+          response.data,
+        );
+      }
+
+      log(
+        'getInstallationActivities failed: ${response.data}',
+      );
+    } catch (e) {
+      log(
+        'getInstallationActivities error: $e',
       );
     }
 
-    log(
-      'getInstallationActivities failed: ${response.data}',
-    );
-  } catch (e) {
-    log(
-      'getInstallationActivities error: $e',
-    );
+    return null;
   }
 
-  return null;
-}
+  //get deley management
+  static Future<ProjectDelayResponse?> getProjectDelays({
+    required String projectId,
+    // required String unitNo,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+      // 'unit_no': unitNo,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_delays",
+        data: FormData.fromMap(data),
+      );
+
+      print('delay management: $response');
+      print(
+          'RAW supporting_photos: ${response.data['data'][0]['supporting_photos']}');
+      print('RAW documents: ${response.data['data'][0]['documents']}');
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return ProjectDelayResponse.fromJson(
+          response.data,
+        );
+      }
+
+      log(
+        'getProjectDelays failed: ${response.data}',
+      );
+    } catch (e) {
+      log(
+        'getProjectDelays error: $e',
+      );
+    }
+
+    return null;
+  }
+
+//addprojectdelay
+  static Future<bool> addProjectDelay({
+    required String projectId,
+    required String projectNo,
+    required String siteLiftNo,
+    required String unitNo,
+    required String delayTypeId,
+    required String looseTypeId,
+    required String responsiblePartyId,
+    required List<PlatformFile> supportingPhotos,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'project_no': projectNo,
+        'site_lift_no': siteLiftNo,
+        'unit_no': unitNo,
+        'delay_type_id': delayTypeId,
+        'loose_type_id': looseTypeId,
+        'responsible_party_id': responsiblePartyId,
+      });
+      print(delayTypeId);
+      // Add multiple photos
+      for (final photo in supportingPhotos) {
+        if (photo.path != null && photo.path!.isNotEmpty) {
+          formData.files.add(
+            MapEntry(
+              'supporting_photos',
+              await MultipartFile.fromFile(
+                photo.path!,
+                filename: photo.name,
+              ),
+            ),
+          );
+        }
+      }
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_delay",
+        data: formData,
+      );
+
+      print('add delay response: $response');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log(
+        'addProjectDelay failed: ${response.data}',
+      );
+    } catch (e) {
+      log(
+        'addProjectDelay error: $e',
+      );
+    }
+
+    return false;
+  }
+
+  //deleteprojectdelays
+  static Future<bool> deleteProjectDelay(
+      {required String delayId, required String projectId}) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {'token': token, 'delay_id': delayId, 'project_id': projectId};
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_project_delay",
+        data: FormData.fromMap(data),
+      );
+
+      log('deleteProjectDelay response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log(
+        'deleteProjectDelay failed: ${response.data}',
+      );
+    } catch (e) {
+      log('deleteProjectDelay error: $e');
+    }
+
+    return false;
+  }
+
+  //editproject delays
+  static Future<bool> updateProjectDelay({
+    required String delayId,
+    required String projectId,
+    // required String projectNo,
+    required String siteLiftNo,
+    required String unitNo,
+    required String delayTypeId,
+    required String looseTypeId,
+    required String responsiblePartyId,
+    required List<PlatformFile> supportingPhotos,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = <String, dynamic>{
+      'token': token,
+      'delay_id': delayId,
+      'project_id': projectId,
+      // 'project_no': projectNo,
+      'site_lift_no': siteLiftNo,
+      'unit_no': unitNo,
+      'delay_type_id': delayTypeId,
+      'loose_type_id': looseTypeId,
+      'responsible_party_id': responsiblePartyId,
+    };
+
+    try {
+      final formData = FormData.fromMap(data);
+
+      for (final photo in supportingPhotos) {
+        if (photo.path != null) {
+          formData.files.add(
+            MapEntry(
+              'supporting_photos',
+              await MultipartFile.fromFile(
+                photo.path!,
+                filename: photo.name,
+              ),
+            ),
+          );
+        }
+      }
+      print('Number of photos: ${supportingPhotos.length}');
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_project_delay",
+        data: formData,
+      );
+
+      print('updateProjectDelay response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log(
+        'updateProjectDelay failed: ${response.data}',
+      );
+    } catch (e, stackTrace) {
+      log(
+        'updateProjectDelay error: $e',
+        stackTrace: stackTrace,
+      );
+    }
+
+    return false;
+  }
 }

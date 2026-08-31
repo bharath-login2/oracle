@@ -48,6 +48,7 @@ class NewProjectListData {
 class NewProjectItem {
   final String id;
   final String projectName;
+  final String projectNo;
   final String location;
   final String clientId;
   final String workStatus;
@@ -59,6 +60,7 @@ class NewProjectItem {
   NewProjectItem({
     required this.id,
     required this.projectName,
+    required this.projectNo,
     required this.location,
     required this.clientId,
     required this.workStatus,
@@ -72,13 +74,15 @@ class NewProjectItem {
     return NewProjectItem(
       id: json["id"]?.toString() ?? "",
       projectName: json["project_name"]?.toString() ?? "",
+      projectNo: json["project_no"]?.toString() ?? "",
       location: json["location"]?.toString() ?? "",
       clientId: json["client_id"]?.toString() ?? "",
       workStatus: json["work_status"]?.toString() ?? "",
       startingDate: json["starting_date"]?.toString() ?? "",
       completionDate: json["completion_date"]?.toString() ?? "",
       totalAmount: json["total_amount"]?.toString() ?? "0.00",
-      paymentStatus: json["payment_status"] == true || json["payment_status"]?.toString() == "true",
+      paymentStatus: json["payment_status"] == true ||
+          json["payment_status"]?.toString() == "true",
     );
   }
 }

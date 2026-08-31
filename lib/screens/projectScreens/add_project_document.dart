@@ -237,9 +237,9 @@ class _AddProjectDocumentPageState extends State<AddProjectDocumentPage> {
           _photosFile ??
           _videosFile!,
     );
-
+    
     if (!mounted) return;
-
+    
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

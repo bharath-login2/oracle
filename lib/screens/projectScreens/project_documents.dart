@@ -265,10 +265,7 @@ class _ProjectDocumentsPageState extends State<ProjectDocumentsPage> {
           const Spacer(),
           IconButton(
             onPressed: () {
-              print('================================');
-              print('PROJECT ID: ${widget.project.id}');
-              print('PROJECT NO: $_projectNo');
-              print('================================');
+             
               Navigator.push(
                 context,
                 MaterialPageRoute(

@@ -2,8 +2,10 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:login2/models/lead_management/newProjectListModel.dart';
 import 'package:login2/models/lead_management/projectDetailedModel.dart';
+import 'package:login2/models/projectdetails/project_documents_models.dart';
 import '../projectScreens/project_info.dart';
 import '../projectScreens/unit_info.dart';
+import '../projectScreens/delay_management.dart';
 import '../projectScreens/project_documents.dart';
 import 'package:login2/service/service.dart';
 
@@ -597,11 +599,23 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                 );
                               },
                             ),
-                            // _buildActionButton(
-                            //   label: 'Delay Management',
-                            //   icon: Icons.timer_off_outlined,
-                            //   onTap: () => _onButtonTapped('Delay Management'),
-                            // ),
+                            _buildActionButton(
+                              label: 'Delay Management',
+                              icon: Icons.timer_off_outlined,
+                              onTap: () {
+                                
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DelayManagementPage(
+                                      projectId: widget.project.id.toString(),
+                                      projectNo:
+                                          widget.project.projectNo.toString(),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                             // _buildActionButton(
                             //   label: 'Gallery',
                             //   icon: Icons.photo_library_outlined,
