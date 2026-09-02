@@ -1,10 +1,8 @@
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../../models/projectdetails/project_delay_management.dart';
 import '../../models/projectdetails/staff_list_model.dart';
 import '../../models/projectdetails/unit_list_model.dart';
@@ -1272,14 +1270,12 @@ class _AddDelayDialogState extends State<_AddDelayDialog> {
       );
     } finally {
       if (mounted) {
-        setState(() {
-      });
+        setState(() {});
       }
     }
   }
 
   // BUILD
-
   @override
   Widget build(BuildContext context) {
     return Dialog(

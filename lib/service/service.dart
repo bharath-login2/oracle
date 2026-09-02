@@ -438,6 +438,7 @@ import '../models/verifyPhoneModel.dart';
 import '../models/projectdetails/staff_list_model.dart';
 import '../models/projectdetails/unit_list_model.dart';
 import '../models/projectdetails/unit_info_model.dart';
+import '../models/projectdetails/site_drawing_model.dart';
 import 'package:file_picker/file_picker.dart';
 
 class HttpService {
@@ -16939,9 +16940,10 @@ class HttpService {
     required String siteLiftNo,
     required String title,
     required String remark,
-    required PlatformFile file,
+    required Map<String, PlatformFile> files,
   }) async {
     final token = await Common.getSharedPref("token");
+
     try {
       final formData = FormData.fromMap({
         'token': token,
@@ -16951,11 +16953,37 @@ class HttpService {
         'site_lift_no': siteLiftNo,
         'title': title,
         'remark': remark,
-        'upload_file': await MultipartFile.fromFile(
-          file.path!,
-          filename: file.name,
-        ),
       });
+      print('========== PROJECT DOCUMENT REQUEST ==========');
+
+      for (final field in formData.fields) {
+        print('FIELD: ${field.key} = ${field.value}');
+      }
+      // Add files using their respective PHP field names
+      for (final entry in files.entries) {
+        final fieldName = entry.key;
+        final file = entry.value;
+
+        if (file.path == null) continue;
+
+        formData.files.add(
+          MapEntry(
+            fieldName,
+            await MultipartFile.fromFile(
+              file.path!,
+              filename: file.name,
+            ),
+          ),
+        );
+      }
+      for (final file in formData.files) {
+        print(
+          'FILE: ${file.key} = '
+          '${file.value.filename}',
+        );
+      }
+
+      print('==============================================');
 
       final response = await _dio.post(
         "${await Config.getUrl()}add_project_documents",
@@ -16965,7 +16993,9 @@ class HttpService {
       if (response.statusCode == 200 && response.data['status'] == true) {
         return true;
       }
-    } catch (e) {}
+    } catch (e) {
+      log('addProjectDocument error: $e');
+    }
 
     return false;
   }
@@ -17317,6 +17347,196 @@ class HttpService {
         'updateProjectDelay error: $e',
         stackTrace: stackTrace,
       );
+    }
+
+    return false;
+  }
+
+  //Get site drawing list
+  static Future<SiteDrawingResponse?> getSiteDrawings({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_site_drawings",
+        data: FormData.fromMap(data),
+      );
+
+      log('getSiteDrawings response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return SiteDrawingResponse.fromJson(response.data);
+      }
+
+      log(
+        'getSiteDrawings failed: ${response.data}',
+      );
+    } catch (e) {
+      log('getSiteDrawings error: $e');
+    }
+
+    return null;
+  }
+
+  //add site drawing
+  static Future<bool> addSiteDrawing({
+    required String projectId,
+    required String clientId,
+    required String unitNo,
+    required String liftNo,
+    required String remarks,
+    required PlatformFile siteDrawing,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'client_id': clientId,
+        'unit_no': unitNo,
+        'lift_no': liftNo,
+        'remarks': remarks,
+      });
+
+      // Add site drawing file
+      if (siteDrawing.path != null && siteDrawing.path!.isNotEmpty) {
+        formData.files.add(
+          MapEntry(
+            'site_drawing',
+            await MultipartFile.fromFile(
+              siteDrawing.path!,
+              filename: siteDrawing.name,
+            ),
+          ),
+        );
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_site_drawings",
+        data: formData,
+        options: Options(
+          sendTimeout: const Duration(minutes: 2),
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+      );
+
+      print('add site drawing response: $response');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log(
+        'addSiteDrawing failed: ${response.data}',
+      );
+    } catch (e) {
+      log(
+        'addSiteDrawing error: $e',
+      );
+    }
+
+    return false;
+  }
+
+  //delete Site drawing
+  static Future<bool> deleteSiteDrawing({
+    required String drawingId,
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'site_id': drawingId,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_project_site_drawing",
+        data: FormData.fromMap(data),
+      );
+
+      log('deleteSiteDrawing response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log(
+        'deleteSiteDrawing failed: ${response.data}',
+      );
+    } catch (e) {
+      log('deleteSiteDrawing error: $e');
+    }
+
+    return false;
+  }
+
+  //Update Site drawing
+  static Future<bool> updateSiteDrawing({
+    required String drawingId,
+    required String projectId,
+    required String unitNo,
+    required String liftNo,
+    required String remarks,
+    required String clientId,
+    PlatformFile? siteDrawing,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'edit_site_id': drawingId,
+        'project_id': projectId,
+        'edit_remarks': remarks,
+        'edit_unit_no': unitNo,
+        'edit_lift_no': liftNo,
+        'stage_id': clientId,
+      });
+
+      // File is optional during edit
+      if (siteDrawing != null &&
+          siteDrawing.path != null &&
+          siteDrawing.path!.isNotEmpty) {
+        formData.files.add(
+          MapEntry(
+            'edit_site_drawing',
+            await MultipartFile.fromFile(
+              siteDrawing.path!,
+              filename: siteDrawing.name,
+            ),
+          ),
+        );
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_project_site_drawing",
+        data: formData,
+        options: Options(
+          sendTimeout: const Duration(minutes: 2),
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+      );
+
+      log('updateSiteDrawing response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+
+      log('updateSiteDrawing failed: ${response.data}');
+    } catch (e) {
+      log('updateSiteDrawing error: $e');
     }
 
     return false;

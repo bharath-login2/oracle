@@ -271,53 +271,53 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
               ),
 
               // Edit button
-              IconButton(
-                onPressed: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (_) => AddUnitInfoPage(
-                  //       projectId: widget.projectId,
-                  //       isEdit: true,
-                  //       siteLiftNo: unit.siteLiftNo,
-                  //       unitMachineNo: unit.unitMachineNo,
-                  //       // installationMethod: unit.installationMethod,
-                  //     ),
-                  //   ),
-                  // );
-                },
-                tooltip: 'Edit',
-                icon: Icon(
-                  Icons.edit_outlined,
-                  color: _primary,
-                  size: 21,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: _primary.withOpacity(0.08),
-                  padding: const EdgeInsets.all(8),
-                  minimumSize: const Size(38, 38),
-                ),
-              ),
+              // IconButton(
+              //   onPressed: () {
+              //     // Navigator.push(
+              //     //   context,
+              //     //   MaterialPageRoute(
+              //     //     builder: (_) => AddUnitInfoPage(
+              //     //       projectId: widget.projectId,
+              //     //       isEdit: true,
+              //     //       siteLiftNo: unit.siteLiftNo,
+              //     //       unitMachineNo: unit.unitMachineNo,
+              //     //       // installationMethod: unit.installationMethod,
+              //     //     ),
+              //     //   ),
+              //     // );
+              //   },
+              //   tooltip: 'Edit',
+              //   icon: Icon(
+              //     Icons.edit_outlined,
+              //     color: _primary,
+              //     size: 21,
+              //   ),
+              //   style: IconButton.styleFrom(
+              //     backgroundColor: _primary.withOpacity(0.08),
+              //     padding: const EdgeInsets.all(8),
+              //     minimumSize: const Size(38, 38),
+              //   ),
+              // ),
 
               const SizedBox(width: 4),
 
               // Delete button
-              IconButton(
-                onPressed: () {
-                  _deleteUnit(unit);
-                },
-                tooltip: 'Delete',
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.red,
-                  size: 21,
-                ),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.withOpacity(0.08),
-                  padding: const EdgeInsets.all(8),
-                  minimumSize: const Size(38, 38),
-                ),
-              ),
+              // IconButton(
+              //   onPressed: () {
+              //     _deleteUnit(unit);
+              //   },
+              //   tooltip: 'Delete',
+              //   icon: const Icon(
+              //     Icons.delete_outline_rounded,
+              //     color: Colors.red,
+              //     size: 21,
+              //   ),
+              //   style: IconButton.styleFrom(
+              //     backgroundColor: Colors.red.withOpacity(0.08),
+              //     padding: const EdgeInsets.all(8),
+              //     minimumSize: const Size(38, 38),
+              //   ),
+              // ),
             ],
           ),
           const SizedBox(height: 16),
@@ -759,15 +759,15 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
     );
   }
 
-  void _editUnit(UnitInfoData unit) {
-    // Open edit page/dialog
-    debugPrint('Edit unit: ${unit.id}');
-  }
+  // void _editUnit(UnitInfoData unit) {
+  //   // Open edit page/dialog
+  //   debugPrint('Edit unit: ${unit.id}');
+  // }
 
-  void _deleteUnit(UnitInfoData unit) {
-    // Delete API call
-    debugPrint('Delete unit: ${unit.id}');
-  }
+  // void _deleteUnit(UnitInfoData unit) {
+  //   // Delete API call
+  //   debugPrint('Delete unit: ${unit.id}');
+  // }
 
   // ─────────────────────────────────────────────
   // Build
@@ -797,46 +797,46 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
         ),
 
         // Add Unit button
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: TextButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddUnitInfoPage(
-                      projectId: widget.projectId,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.add_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              label: const Text(
-                'Add',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.15),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ),
-        ],
+        // actions: [
+        //   Padding(
+        //     padding: const EdgeInsets.only(right: 12),
+        //     child: TextButton.icon(
+        //       onPressed: () {
+        //         Navigator.push(
+        //           context,
+        //           MaterialPageRoute(
+        //             builder: (context) => AddUnitInfoPage(
+        //               projectId: widget.projectId,
+        //             ),
+        //           ),
+        //         );
+        //       },
+        //       icon: const Icon(
+        //         Icons.add_rounded,
+        //         color: Colors.white,
+        //         size: 20,
+        //       ),
+        //       label: const Text(
+        //         'Add',
+        //         style: TextStyle(
+        //           color: Colors.white,
+        //           fontWeight: FontWeight.w600,
+        //           fontSize: 14,
+        //         ),
+        //       ),
+        //       style: TextButton.styleFrom(
+        //         backgroundColor: Colors.white.withOpacity(0.15),
+        //         padding: const EdgeInsets.symmetric(
+        //           horizontal: 12,
+        //           vertical: 8,
+        //         ),
+        //         shape: RoundedRectangleBorder(
+        //           borderRadius: BorderRadius.circular(10),
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ],
 
         flexibleSpace: Container(
           decoration: const BoxDecoration(

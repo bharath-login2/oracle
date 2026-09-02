@@ -264,9 +264,8 @@ class _ProjectDocumentsPageState extends State<ProjectDocumentsPage> {
           ),
           const Spacer(),
           IconButton(
-            onPressed: () {
-             
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => AddProjectDocumentPage(
@@ -275,6 +274,10 @@ class _ProjectDocumentsPageState extends State<ProjectDocumentsPage> {
                   ),
                 ),
               );
+              //reload 
+              if (result == true) {
+                await _fetchProjectDocuments();
+              }
             },
             icon: const Icon(
               Icons.add_circle_outline,
@@ -396,7 +399,7 @@ class _ProjectDocumentsPageState extends State<ProjectDocumentsPage> {
                 Icons.image_outlined,
                 size: 19,
               ),
-              label: const Text('View Image'),
+              label: const Text('View File'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _primary,
                 side: BorderSide(

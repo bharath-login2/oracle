@@ -7,6 +7,8 @@ import '../projectScreens/project_info.dart';
 import '../projectScreens/unit_info.dart';
 import '../projectScreens/delay_management.dart';
 import '../projectScreens/project_documents.dart';
+import '../projectScreens/gallery.dart';
+import '../projectScreens/site_drawings.dart';
 import 'package:login2/service/service.dart';
 
 class ProjectDetailPage extends StatefulWidget {
@@ -439,18 +441,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     );
   }
 
-  void _onButtonTapped(String section) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening $section...'),
-        backgroundColor: _primary,
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-    // TODO: Navigate to specific section page when available
-  }
+  
 
   // ── Build ────────────────────────────────────────────────────────────────
   @override
@@ -603,7 +594,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                               label: 'Delay Management',
                               icon: Icons.timer_off_outlined,
                               onTap: () {
-                                
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -619,13 +609,35 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                             // _buildActionButton(
                             //   label: 'Gallery',
                             //   icon: Icons.photo_library_outlined,
-                            //   onTap: () => _onButtonTapped('Gallery'),
+                            //   onTap: () {
+                            //     Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) => GalleryPage(
+                            //           projectId: widget.project.id.toString(),
+                            //           projectNo:
+                            //               widget.project.projectNo.toString(),
+                            //         ),
+                            //       ),
+                            //     );
+                            //   },
                             // ),
-                            // _buildActionButton(
-                            //   label: 'Site Drawings',
-                            //   icon: Icons.architecture_outlined,
-                            //   onTap: () => _onButtonTapped('Site Drawings'),
-                            // ),
+                            _buildActionButton(
+                              label: 'Site Drawings',
+                              icon: Icons.architecture_outlined,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SiteDrawingPage(
+                                      projectId: widget.project.id,
+                                      projectNo: widget.project.projectNo,
+                                      clientId: widget.project.clientId
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                             _buildActionButton(
                               label: 'Unit Info',
                               icon: Icons.home_work_outlined,
@@ -695,7 +707,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 //   style: const TextStyle(
                 //     color: Colors.white,
                 //     fontSize: 28,
-                //     fontWeight: FontWeight.bold,
+                //     fontWeight: FontWeight.bold,   
                 //   ),
                 // ),
               ],

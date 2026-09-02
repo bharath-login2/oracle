@@ -33,6 +33,7 @@ class _AddProjectDocumentPageState extends State<AddProjectDocumentPage> {
   SiteLift? _selectedSiteLift;
   bool _isLoadingSiteLifts = false;
   bool _isLoadingUnits = false;
+  bool _isSubmitting = false;
 
   PlatformFile? _uploadFile;
   PlatformFile? _drawingsFile;
@@ -172,23 +173,15 @@ class _AddProjectDocumentPageState extends State<AddProjectDocumentPage> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
+
+    // Form validation
     if (!_formKey.currentState!.validate()) {
       log('FORM VALIDATION FAILED');
       return;
     }
 
-    if (widget.projectNo.trim().isEmpty) {
-      log('PROJECT NO EMPTY');
-      return;
-    }
-
-    log('BEFORE API CALL');
-    // Validate Unit, Site Lift, Project No and Title
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    // Extra safety check for Project No
+    // Project number validation
     if (widget.projectNo.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -198,18 +191,24 @@ class _AddProjectDocumentPageState extends State<AddProjectDocumentPage> {
       );
       return;
     }
-    final hasAnyFile = _uploadFile != null ||
-        _drawingsFile != null ||
-        _methodStatementFile != null ||
-        _riskAssessmentFile != null ||
-        _itpFile != null ||
-        _wirFile != null ||
-        _inspectionReportsFile != null ||
-        _testReportsFile != null ||
-        _photosFile != null ||
-        _videosFile != null;
 
-    if (!hasAnyFile) {
+    // Collect files
+    final Map<String, PlatformFile> selectedFiles = {
+      if (_uploadFile != null) 'upload_file': _uploadFile!,
+      if (_drawingsFile != null) 'drawings': _drawingsFile!,
+      if (_methodStatementFile != null)
+        'method_statement': _methodStatementFile!,
+      if (_riskAssessmentFile != null) 'risk_assessment': _riskAssessmentFile!,
+      if (_itpFile != null) 'itp': _itpFile!,
+      if (_wirFile != null) 'wir': _wirFile!,
+      if (_inspectionReportsFile != null)
+        'inspection_reports': _inspectionReportsFile!,
+      if (_testReportsFile != null) 'test_reports': _testReportsFile!,
+      if (_photosFile != null) 'photos': _photosFile!,
+      if (_videosFile != null) 'videos': _videosFile!,
+    };
+
+    if (selectedFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select at least one file'),
@@ -219,43 +218,65 @@ class _AddProjectDocumentPageState extends State<AddProjectDocumentPage> {
       return;
     }
 
-    final success = await HttpService.addProjectDocument(
-      projectId: widget.projectId,
-      projectNo: widget.projectNo.trim(),
-      unitNo: _selectedUnit!.id,
-      siteLiftNo: _selectedSiteLift!.id,
-      title: _titleController.text.trim(),
-      remark: _remarkController.text.trim(),
-      file: _uploadFile ??
-          _drawingsFile ??
-          _methodStatementFile ??
-          _riskAssessmentFile ??
-          _itpFile ??
-          _wirFile ??
-          _inspectionReportsFile ??
-          _testReportsFile ??
-          _photosFile ??
-          _videosFile!,
-    );
-    
-    if (!mounted) return;
-    
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Document added successfully'),
-          behavior: SnackBarBehavior.floating,
-        ),
+    // IMPORTANT: show loading BEFORE API
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    // Allow Flutter to rebuild the button immediately
+    await Future<void>.delayed(Duration.zero);
+
+    try {
+      log('API START');
+
+      final success = await HttpService.addProjectDocument(
+        projectId: widget.projectId,
+        projectNo: widget.projectNo.trim(),
+        unitNo: _selectedUnit!.id,
+        siteLiftNo: _selectedSiteLift!.id,
+        title: _titleController.text.trim(),
+        remark: _remarkController.text.trim(),
+        files: selectedFiles,
       );
 
-      Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to add document'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      log('API END');
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Document added successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to add document'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      log('SUBMIT ERROR: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -756,26 +777,35 @@ class _AddProjectDocumentPageState extends State<AddProjectDocumentPage> {
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton.icon(
-                  onPressed: _submit,
-                  icon: const Icon(
-                    Icons.upload_rounded,
-                  ),
-                  label: const Text(
-                    'Upload Document',
-                    style: TextStyle(
+                  onPressed: _isSubmitting ? null : _submit,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.upload_rounded),
+                  label: Text(
+                    _isSubmitting ? 'Uploading...' : 'Upload Document',
+                    style: const TextStyle(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: _primary.withOpacity(0.7),
+                    disabledForegroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
-              ),
+              )
             ],
           ),
         ),
