@@ -23,9 +23,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
 
   final _formKey = GlobalKey<FormState>();
 
-  // ------------------------------------------------------------
   // Controllers
-  // ------------------------------------------------------------
 
   final TextEditingController _siteLiftController = TextEditingController();
 
@@ -39,9 +37,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
 
   final TextEditingController _productModelController = TextEditingController();
 
-  // ------------------------------------------------------------
   // Dropdown values
-  // ------------------------------------------------------------
 
   String? _selectedLiftSpeed;
   String? _selectedStops;
@@ -53,17 +49,13 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
   String? _selectedStatus;
   String? _selectedInstallationMethod;
 
-  // ------------------------------------------------------------
   // Dates
-  // ------------------------------------------------------------
 
   DateTime? _startDate;
   DateTime? _plannedFinish;
   DateTime? _actualFinish;
 
-  // ------------------------------------------------------------
   // Dropdown lists
-  // ------------------------------------------------------------
 
   final List<String> _liftSpeeds = [
     '1 M/S',
@@ -116,9 +108,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     'Platform',
   ];
 
-  // ------------------------------------------------------------
   // Init
-  // ------------------------------------------------------------
 
   @override
   void initState() {
@@ -168,9 +158,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     _actualFinish = _parseDate(unit.actualFinish);
   }
 
-  // ------------------------------------------------------------
   // Convert API values to dropdown values
-  // ------------------------------------------------------------
 
   String? _convertLiftSpeed(String value) {
     if (value.isEmpty) return null;
@@ -299,9 +287,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     return null;
   }
 
-  // ------------------------------------------------------------
   // Date parsing
-  // ------------------------------------------------------------
 
   DateTime? _parseDate(String value) {
     if (value.isEmpty) return null;
@@ -313,9 +299,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     }
   }
 
-  // ------------------------------------------------------------
   // Dispose
-  // ------------------------------------------------------------
 
   @override
   void dispose() {
@@ -329,9 +313,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     super.dispose();
   }
 
-  // ------------------------------------------------------------
   // Date Picker
-  // ------------------------------------------------------------
 
   Future<void> _selectDate({
     required DateTime? currentDate,
@@ -367,9 +349,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
         '${date.year}';
   }
 
-  // ------------------------------------------------------------
   // Text Field
-  // ------------------------------------------------------------
 
   Widget _buildTextField({
     required String label,
@@ -410,9 +390,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // Dropdown
-  // ------------------------------------------------------------
 
   Widget _buildDropdown({
     required String label,
@@ -467,9 +445,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // Date Field
-  // ------------------------------------------------------------
 
   Widget _buildDateField({
     required String label,
@@ -531,9 +507,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // Label
-  // ------------------------------------------------------------
 
   Widget _buildLabel(
     String text, {
@@ -561,9 +535,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // Input Decoration
-  // ------------------------------------------------------------
 
   InputDecoration _inputDecoration({
     required String hintText,
@@ -603,9 +575,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // Section Header
-  // ------------------------------------------------------------
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -636,9 +606,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // Submit
-  // ------------------------------------------------------------
 
   void _submit() {
     if (!_formKey.currentState!.validate()) {
@@ -743,9 +711,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     // );
   }
 
-  // ------------------------------------------------------------
   // Build
-  // ------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -1037,9 +1003,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // Form Card
-  // ------------------------------------------------------------
 
   Widget _buildFormCard({
     required Widget child,

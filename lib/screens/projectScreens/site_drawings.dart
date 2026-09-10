@@ -28,9 +28,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
   static const Color _primary = Color(0xFF2A86C9);
   static const Color _primaryDark = Color(0xFF1A6CA8);
 
-  // ------------------------------------------------------------
   // ADD DRAWING VARIABLES
-  // ------------------------------------------------------------
 
   PlatformFile? _selectedFile;
 
@@ -39,9 +37,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
   final TextEditingController _remarksController = TextEditingController();
 
-  // ------------------------------------------------------------
   // DRAWINGS
-  // ------------------------------------------------------------
 
   List<SiteDrawing> _drawings = [];
 
@@ -51,9 +47,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // UNIT / SITE LIFT
-  // ------------------------------------------------------------
 
   List<ProjectDocumentUnit> _unitList = [];
   List<SiteLift> _siteLiftList = [];
@@ -62,16 +56,12 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
   bool _isLoadingSiteLifts = false;
   // bool _isSubmitting = false;
 
-  // ------------------------------------------------------------
   // PAGE LOADING
-  // ------------------------------------------------------------
 
   bool _isLoading = true;
   String? _errorMessage;
 
-  // ------------------------------------------------------------
   // INIT
-  // ------------------------------------------------------------
 
   @override
   void initState() {
@@ -82,9 +72,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     _loadSiteLifts();
   }
 
-  // ------------------------------------------------------------
   // FETCH DRAWINGS
-  // ------------------------------------------------------------
 
   Future<void> _fetchDrawings() async {
     try {
@@ -125,9 +113,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     }
   }
 
-  // ------------------------------------------------------------
   // UNIT API
-  // ------------------------------------------------------------
 
   Future<void> _loadUnits() async {
     if (!mounted) return;
@@ -159,9 +145,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     }
   }
 
-  // ------------------------------------------------------------
   // SITE LIFT API
-  // ------------------------------------------------------------
 
   Future<void> _loadSiteLifts() async {
     if (!mounted) return;
@@ -193,9 +177,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     }
   }
 
-  // ------------------------------------------------------------
   // OPEN DRAWING
-  // ------------------------------------------------------------
 
   Future<void> _openDrawing(String url) async {
     if (url.trim().isEmpty) {
@@ -244,9 +226,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     }
   }
 
-  // ------------------------------------------------------------
   // EMPTY STATE
-  // ------------------------------------------------------------
 
   Widget _buildEmptyState() {
     return Center(
@@ -292,9 +272,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // ERROR
-  // ------------------------------------------------------------
 
   Widget _buildError() {
     return Center(
@@ -336,9 +314,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // DRAWING CARD
-  // ------------------------------------------------------------
 
   Widget _buildDrawingCard(SiteDrawing drawing) {
     return Container(
@@ -359,9 +335,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ------------------------------------------------------------
             // HEADER
-            // ------------------------------------------------------------
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -407,9 +382,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
                   ),
                 ),
 
-                // ----------------------------------------------------------
                 // EDIT BUTTON
-                // ----------------------------------------------------------
+
                 InkWell(
                   onTap: () => _showEditDrawingDialog(drawing),
                   borderRadius: BorderRadius.circular(9),
@@ -430,9 +404,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
                 const SizedBox(width: 7),
 
-                // ----------------------------------------------------------
                 // DELETE BUTTON
-                // ----------------------------------------------------------
+
                 InkWell(
                   onTap: () {
                     _deleteDrawing(drawing);
@@ -461,9 +434,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
             const SizedBox(height: 12),
 
-            // ------------------------------------------------------------
             // UNIT + SITE LIFT
-            // ------------------------------------------------------------
+
             Row(
               children: [
                 Expanded(
@@ -486,9 +458,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
             const SizedBox(height: 12),
 
-            // ------------------------------------------------------------
             // STAFF + STATUS
-            // ------------------------------------------------------------
+
             Row(
               children: [
                 Expanded(
@@ -507,9 +478,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
               ],
             ),
 
-            // ------------------------------------------------------------
             // VIEW FILE
-            // ------------------------------------------------------------
+
             const SizedBox(height: 12),
 
             InkWell(
@@ -582,9 +552,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
               ),
             ),
 
-            // ------------------------------------------------------------
             // REMARKS
-            // ------------------------------------------------------------
+
             if (drawing.remarks.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
@@ -623,9 +592,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // INFO ITEM
-  // ------------------------------------------------------------
 
   Widget _buildInfoItem(
     IconData icon,
@@ -673,9 +640,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // STATUS
-  // ------------------------------------------------------------
 
   Widget _buildStatusItem(String status) {
     final value = status.trim().isEmpty ? 'Unknown' : status;
@@ -746,9 +711,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     return value[0].toUpperCase() + value.substring(1).toLowerCase();
   }
 
-  // ------------------------------------------------------------
   // LOADING
-  // ------------------------------------------------------------
 
   Widget _buildLoading() {
     return const Center(
@@ -758,9 +721,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
     );
   }
 
-  // ------------------------------------------------------------
   // ADD DRAWING DIALOG
-  // ------------------------------------------------------------
 
   Future<void> _showAddDrawingDialog() async {
     _selectedUnit = null;
@@ -793,9 +754,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ------------------------------------------------
                     // UNIT
-                    // ------------------------------------------------
 
                     const Text(
                       'Unit',
@@ -855,9 +814,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
                     const SizedBox(height: 16),
 
-                    // ------------------------------------------------
                     // SITE LIFT
-                    // ------------------------------------------------
 
                     const Text(
                       'Site Lift',
@@ -917,9 +874,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
                     const SizedBox(height: 16),
 
-                    // ------------------------------------------------
                     // FILE
-                    // ------------------------------------------------
 
                     const Text(
                       'Drawing File',
@@ -996,9 +951,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
                     const SizedBox(height: 16),
 
-                    // ------------------------------------------------
                     // REMARKS - LAST
-                    // ------------------------------------------------
 
                     const Text(
                       'Remarks',
@@ -1678,9 +1631,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
       );
     }
   }
-  // ------------------------------------------------------------
+
   // BUILD
-  // ------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {

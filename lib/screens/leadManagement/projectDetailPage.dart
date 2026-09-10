@@ -441,8 +441,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     );
   }
 
-  
-
   // ── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -606,22 +604,22 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                 );
                               },
                             ),
-                            // _buildActionButton(
-                            //   label: 'Gallery',
-                            //   icon: Icons.photo_library_outlined,
-                            //   onTap: () {
-                            //     Navigator.push(
-                            //       context,
-                            //       MaterialPageRoute(
-                            //         builder: (context) => GalleryPage(
-                            //           projectId: widget.project.id.toString(),
-                            //           projectNo:
-                            //               widget.project.projectNo.toString(),
-                            //         ),
-                            //       ),
-                            //     );
-                            //   },
-                            // ),
+                            _buildActionButton(
+                              label: 'Gallery',
+                              icon: Icons.photo_library_outlined,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => GalleryPage(
+                                        projectId: widget.project.id.toString(),
+                                        projectNo:
+                                            widget.project.projectNo.toString(),
+                                        clientId: widget.project.clientId),
+                                  ),
+                                );
+                              },
+                            ),
                             _buildActionButton(
                               label: 'Site Drawings',
                               icon: Icons.architecture_outlined,
@@ -630,10 +628,9 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => SiteDrawingPage(
-                                      projectId: widget.project.id,
-                                      projectNo: widget.project.projectNo,
-                                      clientId: widget.project.clientId
-                                    ),
+                                        projectId: widget.project.id,
+                                        projectNo: widget.project.projectNo,
+                                        clientId: widget.project.clientId),
                                   ),
                                 );
                               },
@@ -707,7 +704,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                 //   style: const TextStyle(
                 //     color: Colors.white,
                 //     fontSize: 28,
-                //     fontWeight: FontWeight.bold,   
+                //     fontWeight: FontWeight.bold,
                 //   ),
                 // ),
               ],

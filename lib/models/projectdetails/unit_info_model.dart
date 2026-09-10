@@ -69,6 +69,8 @@ class UnitInfoData {
   final String modelName;
   final String unitName;
   final String siteLiftName;
+  final String valueName;
+  final String openingName;
 
   UnitInfoData({
     required this.id,
@@ -113,6 +115,8 @@ class UnitInfoData {
     required this.modelName,
     required this.unitName,
     required this.siteLiftName,
+    this.valueName = '',
+    this.openingName = '',
   });
 
   factory UnitInfoData.fromJson(Map<String, dynamic> json) {
@@ -159,6 +163,8 @@ class UnitInfoData {
       modelName: json['model_name']?.toString() ?? '',
       unitName: json['unit_name']?.toString() ?? '',
       siteLiftName: json['site_lift_name']?.toString() ?? '',
+      valueName: json['value_name']?.toString() ?? '',
+      openingName: json['opening_name']?.toString() ?? '',
     );
   }
 }

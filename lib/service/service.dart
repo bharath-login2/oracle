@@ -439,6 +439,7 @@ import '../models/projectdetails/staff_list_model.dart';
 import '../models/projectdetails/unit_list_model.dart';
 import '../models/projectdetails/unit_info_model.dart';
 import '../models/projectdetails/site_drawing_model.dart';
+import '../models/projectdetails/gallery_model.dart';
 import 'package:file_picker/file_picker.dart';
 
 class HttpService {
@@ -17117,21 +17118,23 @@ class HttpService {
     return null;
   }
 
-  static Future<InstallationActivityResponse?> getInstallationActivities({
+  static Future<InstallationActivityResponse?> getUnitActivityDetails({
     required String projectId,
-    required String methodOfInstallation,
+    required String unitNo,
+    required String methodId,
   }) async {
     final token = await Common.getSharedPref("token");
 
     final data = {
       'token': token,
       'project_id': projectId,
-      'method_of_installation': methodOfInstallation,
+      'unit_no': unitNo,
+      'method_id' : methodId,
     };
 
     try {
       final response = await _dio.post(
-        "${await Config.getUrl()}test",
+        "${await Config.getUrl()}get_unit_activity_details",
         data: FormData.fromMap(data),
       );
 
@@ -17142,11 +17145,11 @@ class HttpService {
       }
 
       log(
-        'getInstallationActivities failed: ${response.data}',
+        'getUnitActivityDetails failed: ${response.data}',
       );
     } catch (e) {
       log(
-        'getInstallationActivities error: $e',
+        'getUnitActivityDetails error: $e',
       );
     }
 
@@ -17537,6 +17540,197 @@ class HttpService {
       log('updateSiteDrawing failed: ${response.data}');
     } catch (e) {
       log('updateSiteDrawing error: $e');
+    }
+
+    return false;
+  }
+
+  //Gallery list
+  static Future<GalleryResponse?> getGallery({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_gallery",
+        data: FormData.fromMap(data),
+      );
+
+      log('getGallery response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return GalleryResponse.fromJson(response.data);
+      }
+
+      log(
+        'getGallery failed: ${response.data}',
+      );
+    } catch (e) {
+      log('getGallery error: $e');
+    }
+
+    return null;
+  }
+
+  //add gallery
+  static Future<bool> addGallery({
+    required String projectId,
+    required String clientId,
+    required String unitNo,
+    required String liftNo,
+    PlatformFile? photo1,
+    PlatformFile? photo2,
+    PlatformFile? photo3,
+    String? video,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'client_id': clientId,
+        'unit_no': unitNo,
+        'lift_no': liftNo,
+        'video': video ?? '',
+      });
+
+      // Backend expects stage_image[]
+      final photos = [
+        photo1,
+        photo2,
+        photo3,
+      ];
+
+      for (final photo in photos) {
+        if (photo == null || photo.path == null) continue;
+
+        formData.files.add(
+          MapEntry(
+            'stage_image[]',
+            await MultipartFile.fromFile(
+              photo.path!,
+              filename: photo.name,
+            ),
+          ),
+        );
+      }
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_project_gallery",
+        data: formData,
+      );
+
+      print('Gallery response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('addGallery error: $e');
+    }
+
+    return false;
+  }
+
+  //delete gallery
+  static Future<bool> deleteGallery({
+    required String galleryId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'gallery_id': galleryId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_project_gallery",
+        data: formData,
+      );
+
+      print('Delete Gallery response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('deleteGallery error: $e');
+    }
+    return false;
+  }
+
+  //edit gallery
+  static Future<bool> editGallery({
+    required String projectId,
+    required String galleryId,
+    required String clientId,
+    required String unitNo,
+    required String liftNo,
+    PlatformFile? replacementImage,
+    String? replacementVideoLink,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'edit_gallery_id': galleryId,
+        'client_id': clientId,
+        'edit_unit_no': unitNo,
+        'edit_lift_no': liftNo,
+        'edit_video': replacementVideoLink ?? '',
+      });
+
+      // Replacement image - optional
+      if (replacementImage != null && replacementImage.path != null) {
+        formData.files.add(
+          MapEntry(
+            'edit_stage_image',
+            await MultipartFile.fromFile(
+              replacementImage.path!,
+              filename: replacementImage.name,
+            ),
+          ),
+        );
+      }
+
+      print('========== EDIT GALLERY REQUEST ==========');
+
+      for (final field in formData.fields) {
+        print('FIELD: ${field.key} = ${field.value}');
+      }
+
+      for (final file in formData.files) {
+        print(
+          'FILE: ${file.key} = ${file.value.filename}',
+        );
+      }
+
+      print('==========================================');
+      print('replacementImage: ${replacementImage?.name}');
+      print('replacementImage path: ${replacementImage?.path}');
+      print('videoLink: $replacementVideoLink');
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_project_gallery",
+        data: formData,
+      );
+
+      print('Edit Gallery response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('editGallery error: $e');
     }
 
     return false;

@@ -1,74 +1,62 @@
 class InstallationActivityResponse {
   final List<ActivityItem> data;
+  final String message;
+  final bool status;
 
   InstallationActivityResponse({
     required this.data,
+    required this.message,
+    required this.status,
   });
 
   factory InstallationActivityResponse.fromJson(
     Map<String, dynamic> json,
   ) {
-    final List<dynamic> activities = json['data'] ?? [];
-
     return InstallationActivityResponse(
-      data: activities
+      data: (json['data'] as List? ?? [])
           .map(
-            (item) => ActivityItem.fromJson(
-              item as Map<String, dynamic>,
+            (e) => ActivityItem.fromJson(
+              e as Map<String, dynamic>,
             ),
           )
           .toList(),
+      message: json['message']?.toString() ?? '',
+      status: json['status'] == true,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'data': data.map((item) => item.toJson()).toList(),
-    };
   }
 }
 
 class ActivityItem {
-  final int? id;
-  final String? activity;
-  final String? status;
-  final dynamic percentageOfCompletion;
-  final String? startDate;
-  final String? completedDate;
+  final String id;
+  final String activityKey;
+  final String status;
+  final String percentage;
+  final String startDate;
+  final String completedDate;
+  final String activityName;
 
   ActivityItem({
-    this.id,
-    this.activity,
-    this.status,
-    this.percentageOfCompletion,
-    this.startDate,
-    this.completedDate,
+    required this.id,
+    required this.activityKey,
+    required this.status,
+    required this.percentage,
+    required this.startDate,
+    required this.completedDate,
+    required this.activityName,
   });
 
-  factory ActivityItem.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory ActivityItem.fromJson(Map<String, dynamic> json) {
     return ActivityItem(
-      id: json['id'],
-      activity: json['activity']?.toString(),
-      status: json['status']?.toString(),
-      percentageOfCompletion:
-          json['percentage_of_completion'] ?? json['percentageOfCompletion'],
-      startDate:
-          json['start_date']?.toString() ?? json['startDate']?.toString(),
-      completedDate: json['completed_date']?.toString() ??
-          json['completedDate']?.toString(),
-    );
-  }
+      id: json['id']?.toString() ?? '',
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'activity': activity,
-      'status': status,
-      'percentage_of_completion': percentageOfCompletion,
-      'start_date': startDate,
-      'completed_date': completedDate,
-    };
+      // THIS IS DYNAMIC
+      activityKey: json['activity_key']?.toString() ?? '',
+
+      status: json['status']?.toString() ?? '',
+      percentage: json['percentage']?.toString() ?? '',
+      startDate: json['start_date']?.toString() ?? '',
+      completedDate: json['completed_date']?.toString() ?? '',
+      activityName: json['activity_name']?.toString() ?? '',
+    );
   }
 }
