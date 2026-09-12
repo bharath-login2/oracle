@@ -70,6 +70,113 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
   }
 
   // ─────────────────────────────────────────────
+  // Edit Unit
+  // ─────────────────────────────────────────────
+  Future<void> _editUnit(UnitInfoData unit) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddUnitInfoPage(
+          projectId: widget.projectId,
+          unit: unit,
+        ),
+      ),
+    );
+
+    if (result == true) {
+      _loadUnitInfo();
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  // Delete Unit
+  // ─────────────────────────────────────────────
+  Future<void> _deleteUnit(UnitInfoData unit) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'Delete Unit?',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this unit information?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final unitId = unit.unitId.isNotEmpty ? unit.unitId : unit.id;
+
+    try {
+      final response = await HttpService.deleteUnitInfo(
+        unitId: unitId,
+        projectId: widget.projectId,
+      );
+
+      if (!mounted) return;
+
+      if (response['status'] == true) {
+        final message = response['message']?.toString() ??
+            'Unit information deleted successfully';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: _primary,
+          ),
+        );
+
+        await _loadUnitInfo();
+      } else {
+        final message = response['message']?.toString() ??
+            'Failed to delete unit information';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete unit: $e'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────────
   // Header Card
   // ─────────────────────────────────────────────
   Widget _buildHeaderCard() {
@@ -258,7 +365,7 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
                     // EDIT BUTTON
                     InkWell(
                       onTap: () {
-                        // TODO: Edit unit
+                        _editUnit(unit);
                       },
                       borderRadius: BorderRadius.circular(9),
                       child: Container(
@@ -281,7 +388,7 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
                     // DELETE BUTTON
                     InkWell(
                       onTap: () {
-                        // TODO: Delete unit
+                        _deleteUnit(unit);
                       },
                       borderRadius: BorderRadius.circular(9),
                       child: Container(

@@ -18303,4 +18303,274 @@ class HttpService {
       };
     }
   }
+
+  static Future<Map<String, dynamic>> updateUnitInfo({
+    required String unitId,
+    required String projectId,
+    required String siteLiftNo,
+    required String unitMachineNo,
+    String capacity = '',
+    String speed = '',
+    String numberOfStops = '',
+    String numberOfOpening = '',
+    String travelHeight = '',
+    String doorSize = '',
+    String doorTypeId = '',
+    String doorModelId = '',
+    String machineRoomTypeId = '',
+    String typeId = '',
+    String productModelName = '',
+    String standardType = '',
+    String statusId = '',
+    String startDate = '',
+    String endDate = '',
+    String actualFinish = '',
+    String totalManpower = '',
+    String methodOfInstallation = '',
+    List<Map<String, String>> activity = const [],
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = <String, dynamic>{
+      'token': token,
+      'unit_id': unitId,
+      'id': unitId,
+      'project_id': projectId,
+      'site_lift_no': siteLiftNo,
+      'unit_machine_no': unitMachineNo,
+      'capacity': capacity,
+      'speed': speed,
+      'number_of_stops': numberOfStops,
+      'number_of_opening': numberOfOpening,
+      'travel_height': travelHeight,
+      'door_size': doorSize,
+      'door_type_id': doorTypeId,
+      'door_model_id': doorModelId,
+      'machine_room_type_id': machineRoomTypeId,
+      'type_id': typeId,
+      'product_model_name': productModelName,
+      'standard_type': standardType,
+      'status_id': statusId,
+      'start_date': startDate,
+      'end_date': endDate,
+      'actual_finish': actualFinish,
+      'total_manpower': totalManpower,
+      'method_of_installation': methodOfInstallation,
+
+      // Backend currently accesses both names.
+      'activity': activity,
+      'activities': activity,
+    };
+
+    // Debug request without exposing token
+    final debugData = Map<String, dynamic>.from(data);
+    debugData['token'] = '***';
+
+    print('===== UPDATE UNIT REQUEST =====');
+    print(debugData);
+
+    try {
+      final url = "${await Config.getUrl()}update_unit_info";
+
+      print('===== UPDATE UNIT URL =====');
+      print(url);
+
+      final response = await _dio.post(
+        url,
+        data: data,
+        options: Options(
+          responseType: ResponseType.plain,
+        ),
+      );
+
+      print('===== RAW UPDATE UNIT RESPONSE =====');
+      print(response.data);
+
+      print('===== UPDATE UNIT STATUS CODE =====');
+      print(response.statusCode);
+
+      final rawResponse = response.data?.toString() ?? '';
+
+      if (rawResponse.isEmpty) {
+        return {
+          'status': false,
+          'message': 'Empty response from server',
+        };
+      }
+
+      dynamic decoded;
+
+      try {
+        decoded = jsonDecode(rawResponse);
+      } catch (e, stackTrace) {
+        print('===== UPDATE UNIT JSON DECODE ERROR =====');
+        print('ERROR: $e');
+        print('RAW RESPONSE: $rawResponse');
+        print('STACK TRACE: $stackTrace');
+
+        return {
+          'status': false,
+          'message': 'Invalid response from server',
+          'raw_response': rawResponse,
+        };
+      }
+
+      if (decoded is Map<String, dynamic>) {
+        print('===== UPDATE UNIT DECODED RESPONSE =====');
+        print(decoded);
+
+        return decoded;
+      }
+
+      return {
+        'status': false,
+        'message': 'Invalid API response format',
+      };
+    } on DioException catch (e) {
+      print('===== UPDATE UNIT DIO ERROR =====');
+      print('ERROR TYPE: ${e.type}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR MESSAGE: ${e.message}');
+      print('RESPONSE DATA: ${e.response?.data}');
+
+      final errorRequestData = Map<String, dynamic>.from(data);
+      errorRequestData['token'] = '***';
+
+      print('REQUEST DATA: $errorRequestData');
+
+      String message = 'Failed to update unit information';
+
+      final responseData = e.response?.data;
+
+      if (responseData is Map) {
+        if (responseData['message'] != null) {
+          message = responseData['message'].toString();
+        }
+      }
+
+      return {
+        'status': false,
+        'message': message,
+        'status_code': e.response?.statusCode,
+        'response': e.response?.data,
+      };
+    } catch (e, stackTrace) {
+      print('===== UPDATE UNIT ERROR =====');
+      print('ERROR: $e');
+      print('ERROR TYPE: ${e.runtimeType}');
+      print('STACK TRACE: $stackTrace');
+
+      return {
+        'status': false,
+        'message': 'Failed to update unit information',
+        'error': e.toString(),
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteUnitInfo({
+    required String unitId,
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final formData = FormData.fromMap({
+      'token': token,
+      'project_id': projectId,
+      'unit_id': unitId,
+    });
+
+    print('===== DELETE UNIT REQUEST =====');
+    print({
+      'token': '***',
+      'project_id': projectId,
+      'unit_id': unitId,
+    });
+
+    try {
+      final url = "${await Config.getUrl()}delete_unit_info";
+
+      final response = await _dio.post(
+        url,
+        data: formData,
+        options: Options(
+          responseType: ResponseType.plain,
+        ),
+      );
+
+      print('===== RAW DELETE UNIT RESPONSE =====');
+      print(response.data);
+
+      print('===== DELETE UNIT STATUS CODE =====');
+      print(response.statusCode);
+
+      final rawResponse = response.data?.toString() ?? '';
+
+      if (rawResponse.isEmpty) {
+        return {
+          'status': false,
+          'message': 'Empty response from server',
+        };
+      }
+
+      dynamic decoded;
+
+      try {
+        decoded = jsonDecode(rawResponse);
+      } catch (e, stackTrace) {
+        print('===== DELETE UNIT JSON DECODE ERROR =====');
+        print('ERROR: $e');
+        print('RAW RESPONSE: $rawResponse');
+        print('STACK TRACE: $stackTrace');
+
+        return {
+          'status': false,
+          'message': 'Invalid response from server',
+          'raw_response': rawResponse,
+        };
+      }
+
+      if (decoded is Map<String, dynamic>) {
+        print('===== DELETE UNIT DECODED RESPONSE =====');
+        print(decoded);
+
+        return decoded;
+      }
+
+      return {
+        'status': false,
+        'message': 'Invalid API response format',
+      };
+    } on DioException catch (e) {
+      print('===== DELETE UNIT DIO ERROR =====');
+      print('ERROR TYPE: ${e.type}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR MESSAGE: ${e.message}');
+      print('RESPONSE DATA: ${e.response?.data}');
+
+      String message = 'Failed to delete unit information';
+
+      final responseData = e.response?.data;
+
+      if (responseData is Map && responseData['message'] != null) {
+        message = responseData['message'].toString();
+      }
+
+      return {
+        'status': false,
+        'message': message,
+        'status_code': e.response?.statusCode,
+      };
+    } catch (e, stackTrace) {
+      print('===== DELETE UNIT ERROR =====');
+      print('ERROR: $e');
+      print('STACK TRACE: $stackTrace');
+
+      return {
+        'status': false,
+        'message': 'Failed to delete unit information',
+        'error': e.toString(),
+      };
+    }
+  }
 }

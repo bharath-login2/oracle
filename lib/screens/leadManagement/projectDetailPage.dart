@@ -9,6 +9,7 @@ import '../projectScreens/delay_management.dart';
 import '../projectScreens/project_documents.dart';
 import '../projectScreens/gallery.dart';
 import '../projectScreens/site_drawings.dart';
+import '../projectScreens/payment_schedule_screen.dart';
 import 'package:login2/service/service.dart';
 
 class ProjectDetailPage extends StatefulWidget {
@@ -643,6 +644,20 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => UnitInfoPage(
+                                      projectId: widget.project.id,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            _buildActionButton(
+                              label: 'Payment Schedule',
+                              icon: Icons.attach_money,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PaymentScheduleScreen(
                                       projectId: widget.project.id,
                                     ),
                                   ),

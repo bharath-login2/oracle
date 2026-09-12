@@ -166,25 +166,43 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
       return;
     }
 
-    /*
-     * IMPORTANT:
-     *
-     * Do not access fields here which are not present in your current
-     * UnitInfoData model.
-     *
-     * Add your actual existing UnitInfoData field mappings here once those
-     * field names are confirmed.
-     *
-     * Example:
-     *
-     * _siteLiftNoController.text = unit.siteLiftNo;
-     *
-     * if (unit.siteLiftNo.isNotEmpty) {
-     *   ...
-     * }
-     */
-
     _siteLiftNoController.text = unit.siteLiftNo;
+    _unitMachineNoController.text = unit.unitMachineNo;
+    _capacityController.text = unit.capacity;
+    _travelHeightController.text = unit.travelHeight;
+    _doorSizeController.text = unit.doorSize;
+    _productModelNameController.text = unit.productModelName;
+    _totalManpowerController.text = unit.totalManpower;
+    _startDateController.text = unit.startDate;
+    _plannedFinishController.text = unit.endDate;
+    _actualFinishController.text = unit.actualFinish;
+
+    _selectedLiftSpeedId = unit.speed.isNotEmpty ? unit.speed : null;
+    _selectedStopsId =
+        unit.numberOfStops.isNotEmpty ? unit.numberOfStops : null;
+    _selectedOpeningsId =
+        unit.numberOfOpening.isNotEmpty ? unit.numberOfOpening : null;
+    _selectedDoorTypeId =
+        unit.doorTypeId.isNotEmpty ? unit.doorTypeId : null;
+    _selectedDoorModelId =
+        unit.doorModelId.isNotEmpty ? unit.doorModelId : null;
+    _selectedMachineRoomTypeId =
+        unit.machineRoomTypeId.isNotEmpty ? unit.machineRoomTypeId : null;
+    _selectedLiftTypeId = unit.typeId.isNotEmpty ? unit.typeId : null;
+    _selectedStatusId = unit.statusId.isNotEmpty ? unit.statusId : null;
+
+    if (unit.standardType.isNotEmpty) {
+      final normalized = unit.standardType.trim().toLowerCase();
+      if (normalized == 'standard') {
+        _selectedStandardType = 'Standard';
+      } else if (normalized == 'non standard' ||
+          normalized == 'non-standard' ||
+          normalized == 'nonstandard') {
+        _selectedStandardType = 'Non Standard';
+      }
+    }
+
+    _selectedMethodId = unit.methodId.isNotEmpty ? unit.methodId : null;
   }
 
   // ---------------------------------------------------------------------------
@@ -258,6 +276,13 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
           _installationMethods = response.data;
           _loadingMethods = false;
         });
+
+        // In edit mode, automatically load activities for the pre-selected method
+        if (widget.isEdit &&
+            _selectedMethodId != null &&
+            _selectedMethodId!.isNotEmpty) {
+          _loadActivitiesForMethod(_selectedMethodId!, isInitialEditLoad: true);
+        }
       } else {
         setState(() {
           _installationMethods = [];
@@ -293,7 +318,13 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
       return;
     }
 
-    // Immediately show loading
+    await _loadActivitiesForMethod(methodId, isInitialEditLoad: false);
+  }
+
+  Future<void> _loadActivitiesForMethod(
+    String methodId, {
+    bool isInitialEditLoad = false,
+  }) async {
     setState(() {
       _selectedMethodId = methodId;
       _installationActivities = [];
@@ -303,9 +334,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     _clearActivityControllers();
 
     try {
-      print(
-        'GET INSTALLATION ACTIVITIES METHOD ID: $methodId',
-      );
+      print('GET INSTALLATION ACTIVITIES METHOD ID: $methodId');
 
       final response = await HttpService.getInstallationActivities(
         methodId: methodId,
@@ -320,23 +349,28 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
         });
 
         _initializeActivityFields(response.data);
+
+        // In edit mode on initial load, populate saved activity values
+        if (isInitialEditLoad && widget.isEdit && widget.unit != null) {
+          await _populateSavedUnitActivities();
+        }
       } else {
         setState(() {
           _installationActivities = [];
           _loadingActivities = false;
         });
 
-        _showMessage(
-          response.message.isNotEmpty
-              ? response.message
-              : 'No activities found',
-          isError: true,
-        );
+        if (!isInitialEditLoad) {
+          _showMessage(
+            response.message.isNotEmpty
+                ? response.message
+                : 'No activities found',
+            isError: true,
+          );
+        }
       }
     } catch (e) {
-      print(
-        'LOAD INSTALLATION ACTIVITIES ERROR: $e',
-      );
+      print('LOAD INSTALLATION ACTIVITIES ERROR: $e');
 
       if (!mounted) return;
 
@@ -345,11 +379,100 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
         _loadingActivities = false;
       });
 
-      _showMessage(
-        'Failed to load installation activities',
-        isError: true,
-      );
+      if (!isInitialEditLoad) {
+        _showMessage(
+          'Failed to load installation activities',
+          isError: true,
+        );
+      }
     }
+  }
+
+  Future<void> _populateSavedUnitActivities() async {
+    final unit = widget.unit;
+    if (unit == null) return;
+
+    final unitId = unit.unitId.isNotEmpty ? unit.unitId : unit.id;
+    final methodId =
+        unit.methodId.isNotEmpty ? unit.methodId : (_selectedMethodId ?? '');
+
+    if (unitId.isNotEmpty && methodId.isNotEmpty) {
+      try {
+        final savedResponse = await HttpService.getUnitActivityDetails(
+          projectId: widget.projectId,
+          unitNo: unitId,
+          methodId: methodId,
+        );
+
+        if (!mounted) return;
+
+        if (savedResponse != null && savedResponse.data.isNotEmpty) {
+          setState(() {
+            for (final saved in savedResponse.data) {
+              final key = saved.activityKey;
+              if (_activityPercentageControllers.containsKey(key)) {
+                if (saved.percentage.isNotEmpty) {
+                  _activityPercentageControllers[key]?.text =
+                      saved.percentage;
+                }
+                if (saved.status.isNotEmpty) {
+                  _activityStatuses[key] =
+                      _normalizeActivityStatus(saved.status);
+                }
+                if (saved.startDate.isNotEmpty) {
+                  _activityStartDates[key] = saved.startDate;
+                }
+                if (saved.completedDate.isNotEmpty) {
+                  _activityCompletedDates[key] = saved.completedDate;
+                }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        print('ERROR POPULATING SAVED ACTIVITIES: $e');
+      }
+    }
+
+    // Fallback if UnitInfoData itself had fields
+    if (unit.activityKey.isNotEmpty &&
+        _activityPercentageControllers.containsKey(unit.activityKey)) {
+      setState(() {
+        if (unit.percentage.isNotEmpty &&
+            (_activityPercentageControllers[unit.activityKey]
+                    ?.text
+                    .isEmpty ??
+                true)) {
+          _activityPercentageControllers[unit.activityKey]?.text =
+              unit.percentage;
+        }
+        if (unit.status.isNotEmpty &&
+            _activityStatuses[unit.activityKey] == null) {
+          _activityStatuses[unit.activityKey] =
+              _normalizeActivityStatus(unit.status);
+        }
+        if (unit.startDate.isNotEmpty &&
+            _activityStartDates[unit.activityKey] == null) {
+          _activityStartDates[unit.activityKey] = unit.startDate;
+        }
+        if (unit.completedDate.isNotEmpty &&
+            _activityCompletedDates[unit.activityKey] == null) {
+          _activityCompletedDates[unit.activityKey] = unit.completedDate;
+        }
+      });
+    }
+  }
+
+  String? _normalizeActivityStatus(String? status) {
+    if (status == null || status.trim().isEmpty) return null;
+    final clean =
+        status.trim().toLowerCase().replaceAll(' ', '_').replaceAll('-', '_');
+    for (final opt in _activityStatusOptions) {
+      if (opt['value'] == clean) {
+        return opt['value'];
+      }
+    }
+    return null;
   }
 
   // ---------------------------------------------------------------------------
@@ -476,22 +599,15 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
       }
     }
 
-    return null;
-  }
-
-  String _statusLabel(String? value) {
-    if (value == null || value.isEmpty) {
-      return '--';
-    }
-
-    for (final item in _activityStatusOptions) {
-      if (item['value'] == value) {
-        return item['label'] ?? value;
+    for (final item in items) {
+      if (item.name.trim().toLowerCase() == id.trim().toLowerCase()) {
+        return item;
       }
     }
 
-    return value;
+    return null;
   }
+
 
   InputDecoration _inputDecoration(
     String label, {
@@ -575,6 +691,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
     try {
       final activityData = _buildActivityPayload();
       print('========== UNIT SAVE DEBUG ==========');
+      print('Is Edit: ${widget.isEdit}');
       print('Current Status ID: $_selectedStatusId');
       print('Standard Type: $_selectedStandardType');
       print('Lift Speed ID: $_selectedLiftSpeedId');
@@ -585,38 +702,82 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
       print('Machine Room Type ID: $_selectedMachineRoomTypeId');
       print('Lift Type ID: $_selectedLiftTypeId');
       print('=====================================');
-      final response = await HttpService.addUnitInfo(
-        projectId: widget.projectId,
-        siteLiftNo: _siteLiftNoController.text.trim(),
-        unitMachineNo: _unitMachineNoController.text.trim(),
 
-        // Optional fields
-        capacity: _capacityController.text.trim(),
-        speed: _selectedLiftSpeedId ?? '',
-        numberOfStops: _selectedStopsId ?? '',
-        numberOfOpening: _selectedOpeningsId ?? '',
-        travelHeight: _travelHeightController.text.trim(),
-        doorSize: _doorSizeController.text.trim(),
-        doorTypeId: _selectedDoorTypeId ?? '',
-        doorModelId: _selectedDoorModelId ?? '',
-        machineRoomTypeId: _selectedMachineRoomTypeId ?? '',
-        typeId: _selectedLiftTypeId ?? '',
-        productModelName: _productModelNameController.text.trim(),
+      final Map<String, dynamic> response;
 
-        // Optional - no !
-        standardType: _selectedStandardType?.toLowerCase() ?? '',
+      if (widget.isEdit && widget.unit != null) {
+        final unitId = widget.unit!.unitId.isNotEmpty
+            ? widget.unit!.unitId
+            : widget.unit!.id;
 
-        statusId: _selectedStatusId ?? '',
-        startDate: _startDateController.text.trim(),
-        endDate: _plannedFinishController.text.trim(),
-        actualFinish: _actualFinishController.text.trim(),
-        totalManpower: _totalManpowerController.text.trim(),
+        response = await HttpService.updateUnitInfo(
+          unitId: unitId,
+          projectId: widget.projectId,
+          siteLiftNo: _siteLiftNoController.text.trim(),
+          unitMachineNo: _unitMachineNoController.text.trim(),
 
-        // Optional - no !
-        methodOfInstallation: _selectedMethodId ?? '',
+          // Optional fields
+          capacity: _capacityController.text.trim(),
+          speed: _selectedLiftSpeedId ?? '',
+          numberOfStops: _selectedStopsId ?? '',
+          numberOfOpening: _selectedOpeningsId ?? '',
+          travelHeight: _travelHeightController.text.trim(),
+          doorSize: _doorSizeController.text.trim(),
+          doorTypeId: _selectedDoorTypeId ?? '',
+          doorModelId: _selectedDoorModelId ?? '',
+          machineRoomTypeId: _selectedMachineRoomTypeId ?? '',
+          typeId: _selectedLiftTypeId ?? '',
+          productModelName: _productModelNameController.text.trim(),
 
-        activity: activityData,
-      );
+          // Optional - no !
+          standardType: _selectedStandardType?.toLowerCase() ?? '',
+
+          statusId: _selectedStatusId ?? '',
+          startDate: _startDateController.text.trim(),
+          endDate: _plannedFinishController.text.trim(),
+          actualFinish: _actualFinishController.text.trim(),
+          totalManpower: _totalManpowerController.text.trim(),
+
+          // Optional - no !
+          methodOfInstallation: _selectedMethodId ?? '',
+
+          activity: activityData,
+        );
+      } else {
+        response = await HttpService.addUnitInfo(
+          projectId: widget.projectId,
+          siteLiftNo: _siteLiftNoController.text.trim(),
+          unitMachineNo: _unitMachineNoController.text.trim(),
+
+          // Optional fields
+          capacity: _capacityController.text.trim(),
+          speed: _selectedLiftSpeedId ?? '',
+          numberOfStops: _selectedStopsId ?? '',
+          numberOfOpening: _selectedOpeningsId ?? '',
+          travelHeight: _travelHeightController.text.trim(),
+          doorSize: _doorSizeController.text.trim(),
+          doorTypeId: _selectedDoorTypeId ?? '',
+          doorModelId: _selectedDoorModelId ?? '',
+          machineRoomTypeId: _selectedMachineRoomTypeId ?? '',
+          typeId: _selectedLiftTypeId ?? '',
+          productModelName: _productModelNameController.text.trim(),
+
+          // Optional - no !
+          standardType: _selectedStandardType?.toLowerCase() ?? '',
+
+          statusId: _selectedStatusId ?? '',
+          startDate: _startDateController.text.trim(),
+          endDate: _plannedFinishController.text.trim(),
+          actualFinish: _actualFinishController.text.trim(),
+          totalManpower: _totalManpowerController.text.trim(),
+
+          // Optional - no !
+          methodOfInstallation: _selectedMethodId ?? '',
+
+          activity: activityData,
+        );
+      }
+
       print('===== API RETURNED =====');
       print('response: $response');
 
@@ -629,7 +790,9 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
 
         _showMessage(
           response['message']?.toString() ??
-              'Unit information added successfully',
+              (widget.isEdit
+                  ? 'Unit information updated successfully'
+                  : 'Unit information added successfully'),
         );
 
         Navigator.pop(context, true);
@@ -641,11 +804,14 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
       });
 
       _showMessage(
-        response['message']?.toString() ?? 'Failed to add unit information',
+        response['message']?.toString() ??
+            (widget.isEdit
+                ? 'Failed to update unit information'
+                : 'Failed to add unit information'),
         isError: true,
       );
     } catch (e) {
-      print('ADD UNIT INFORMATION ERROR: $e');
+      print('SAVE UNIT INFORMATION ERROR: $e');
 
       if (!mounted) return;
 
@@ -654,7 +820,9 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
       });
 
       _showMessage(
-        'Failed to add unit information',
+        widget.isEdit
+            ? 'Failed to update unit information'
+            : 'Failed to add unit information',
         isError: true,
       );
     }
@@ -743,8 +911,10 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
   }
 
   Widget _standardDropdown() {
+    final hasMatch = _standardTypes.contains(_selectedStandardType);
+
     return DropdownButtonFormField<String>(
-      value: _selectedStandardType,
+      value: hasMatch ? _selectedStandardType : null,
       isExpanded: true,
       decoration: _inputDecoration(
         'Standard or Non Standard',
@@ -782,13 +952,37 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
   // ---------------------------------------------------------------------------
 
   Widget _installationMethodDropdown() {
+    final List<InstallationMethodItem> displayMethods =
+        List.from(_installationMethods);
+
+    if (widget.isEdit &&
+        widget.unit != null &&
+        _selectedMethodId != null &&
+        _selectedMethodId!.isNotEmpty) {
+      final exists =
+          displayMethods.any((m) => m.methodId == _selectedMethodId);
+      if (!exists) {
+        displayMethods.add(
+          InstallationMethodItem(
+            methodId: _selectedMethodId!,
+            methodName: widget.unit!.methodName.isNotEmpty
+                ? widget.unit!.methodName
+                : 'Method $_selectedMethodId',
+          ),
+        );
+      }
+    }
+
+    final hasMatch =
+        displayMethods.any((m) => m.methodId == _selectedMethodId);
+
     return DropdownButtonFormField<String>(
-      value: _selectedMethodId,
+      value: hasMatch ? _selectedMethodId : null,
       isExpanded: true,
       decoration: _inputDecoration(
         'Method of Installation',
       ),
-      items: _installationMethods.map((method) {
+      items: displayMethods.map((method) {
         return DropdownMenuItem<String>(
           value: method.methodId,
           child: Text(
@@ -797,7 +991,9 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
           ),
         );
       }).toList(),
-      onChanged: _loadingMethods ? null : _onInstallationMethodChanged,
+      onChanged: (widget.isEdit || _loadingMethods)
+          ? null
+          : _onInstallationMethodChanged,
     );
   }
 
@@ -875,7 +1071,10 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
 
           // Status
           DropdownButtonFormField<String>(
-            value: currentStatus,
+            value: _activityStatusOptions
+                    .any((item) => item['value'] == currentStatus)
+                ? currentStatus
+                : null,
             isExpanded: true,
             decoration: _inputDecoration(
               'Status',
@@ -1042,12 +1241,14 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
                           label: 'Site Lift No',
                           controller: _siteLiftNoController,
                           requiredField: true,
+                          readOnly: widget.isEdit,
                         ),
                         const SizedBox(height: 14),
                         _textField(
                           label: 'Unit / Machine No',
                           controller: _unitMachineNoController,
                           requiredField: true,
+                          readOnly: widget.isEdit,
                         ),
                         const SizedBox(height: 14),
                         _textField(
