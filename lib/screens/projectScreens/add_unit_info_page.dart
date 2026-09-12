@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../models/projectdetails/unit_info_model.dart';
+import '../../models/projectdetails/unit_dropdown_model.dart';
+import '../../models/projectdetails/installation_method_model.dart';
+import '../../models/projectdetails/method_of_installation.dart';
+import '../../service/service.dart';
 
 class AddUnitInfoPage extends StatefulWidget {
   final String projectId;
@@ -11,7 +16,7 @@ class AddUnitInfoPage extends StatefulWidget {
     this.unit,
   });
 
-  bool get isEditMode => unit != null;
+  bool get isEdit => unit != null;
 
   @override
   State<AddUnitInfoPage> createState() => _AddUnitInfoPageState();
@@ -20,2426 +25,1316 @@ class AddUnitInfoPage extends StatefulWidget {
 class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
   static const Color _primary = Color(0xFF2A86C9);
   static const Color _primaryDark = Color(0xFF1A6CA8);
+  static const Color _pageBackground = Color(0xFFF1F5FB);
 
   final _formKey = GlobalKey<FormState>();
 
+  // ---------------------------------------------------------------------------
   // Controllers
+  // ---------------------------------------------------------------------------
 
-  final TextEditingController _siteLiftController = TextEditingController();
+  final _siteLiftNoController = TextEditingController();
+  final _unitMachineNoController = TextEditingController();
+  final _capacityController = TextEditingController();
+  final _travelHeightController = TextEditingController();
+  final _doorSizeController = TextEditingController();
+  final _productModelNameController = TextEditingController();
+  final _totalManpowerController = TextEditingController();
+  final _startDateController = TextEditingController();
+  final _plannedFinishController = TextEditingController();
+  final _actualFinishController = TextEditingController();
 
-  final TextEditingController _unitMachineController = TextEditingController();
+  // ---------------------------------------------------------------------------
+  // Unit dropdowns
+  // ---------------------------------------------------------------------------
 
-  final TextEditingController _capacityController = TextEditingController();
+  List<UnitDropdownItem> _liftSpeeds = [];
+  List<UnitDropdownItem> _stops = [];
+  List<UnitDropdownItem> _openings = [];
+  List<UnitDropdownItem> _doorTypes = [];
+  List<UnitDropdownItem> _doorModels = [];
+  List<UnitDropdownItem> _machineRoomTypes = [];
+  List<UnitDropdownItem> _liftTypes = [];
+  List<UnitDropdownItem> _statuses = [];
 
-  final TextEditingController _travelHeightController = TextEditingController();
+  String? _selectedLiftSpeedId;
+  String? _selectedStopsId;
+  String? _selectedOpeningsId;
+  String? _selectedDoorTypeId;
+  String? _selectedDoorModelId;
+  String? _selectedMachineRoomTypeId;
+  String? _selectedLiftTypeId;
+  String? _selectedStatusId;
 
-  final TextEditingController _doorSizeController = TextEditingController();
-
-  final TextEditingController _productModelController = TextEditingController();
-
-  // Dropdown values
-
-  String? _selectedLiftSpeed;
-  String? _selectedStops;
-  String? _selectedOpenings;
-  String? _selectedDoorType;
-  String? _selectedDoorModel;
-  String? _selectedMachineRoomType;
+  // Only these two values are intentionally hardcoded.
   String? _selectedStandardType;
-  String? _selectedStatus;
-  String? _selectedInstallationMethod;
 
-  // Dates
-
-  DateTime? _startDate;
-  DateTime? _plannedFinish;
-  DateTime? _actualFinish;
-
-  // Dropdown lists
-
-  final List<String> _liftSpeeds = [
-    '1 M/S',
-    '1.5 M/S',
-  ];
-
-  final List<String> _stops = List.generate(
-    10,
-    (index) => 'No of Stops ${index + 1}',
-  );
-
-  final List<String> _openings = List.generate(
-    10,
-    (index) => 'No of Openings ${index + 1}',
-  );
-
-  final List<String> _doorTypes = [
-    'Center Opening',
-    'Side Opening',
-    'Manual Opening',
-  ];
-
-  final List<String> _doorModels = [
-    'Painted',
-    'Not Painted',
-    'Stainless Steel',
-  ];
-
-  final List<String> _machineRoomTypes = [
-    'MRL',
-    'URL',
-    'CRL',
-  ];
-
-  final List<String> _standardTypes = [
+  final List<String> _standardTypes = const [
     'Standard',
     'Non Standard',
   ];
 
-  final List<String> _statuses = [
-    'Pending',
-    'In progress',
+  // ---------------------------------------------------------------------------
+  // Installation method
+  // ---------------------------------------------------------------------------
+
+  List<InstallationMethodItem> _installationMethods = [];
+  String? _selectedMethodId;
+
+  bool _loadingMethods = false;
+
+  // ---------------------------------------------------------------------------
+  // Installation activities
+  // ---------------------------------------------------------------------------
+
+  List<MethodActivityItem> _installationActivities = [];
+  bool _loadingActivities = false;
+
+  final Map<String, TextEditingController> _activityPercentageControllers = {};
+
+  final Map<String, String?> _activityStatuses = {};
+  final Map<String, String?> _activityStartDates = {};
+  final Map<String, String?> _activityCompletedDates = {};
+
+  final List<Map<String, String>> _activityStatusOptions = const [
+    {
+      'value': 'completed',
+      'label': 'Completed',
+    },
+    {
+      'value': 'in_progress',
+      'label': 'In Progress',
+    },
+    {
+      'value': 'pending',
+      'label': 'Pending',
+    },
+    {
+      'value': 'on_hold',
+      'label': 'On Hold',
+    },
+    {
+      'value': 'not_applicable',
+      'label': 'Not Applicable',
+    },
   ];
 
-  final List<String> _installationMethods = [
-    'Scaffolding',
-    'Fit Method',
-    'False Car',
-    'Rope Climbing',
-    'Platform',
-  ];
+  bool _isLoadingDropdowns = false;
+  bool _isSaving = false;
 
-  // Init
+  // ---------------------------------------------------------------------------
+  // Lifecycle
+  // ---------------------------------------------------------------------------
 
   @override
   void initState() {
     super.initState();
 
-    if (widget.isEditMode) {
-      _loadExistingUnit();
-    }
+    _initializeUnitValues();
+    _loadDropdownValues();
+    _loadInstallationMethods();
   }
-
-  void _loadExistingUnit() {
-    final unit = widget.unit!;
-
-    // Fixed fields
-    _siteLiftController.text = unit.siteLiftNo;
-    _unitMachineController.text = unit.unitMachineNo;
-
-    // Editable text fields
-    _capacityController.text = unit.capacity;
-    _travelHeightController.text = unit.travelHeight;
-    _doorSizeController.text = unit.doorSize;
-    _productModelController.text = unit.productModelName;
-
-    // Dropdowns
-    _selectedLiftSpeed = _convertLiftSpeed(unit.speed);
-
-    _selectedStops = _convertStops(unit.numberOfStops);
-
-    _selectedOpenings = _convertOpenings(unit.numberOfOpening);
-
-    _selectedDoorType = _convertDoorType(unit.doorTypeId);
-
-    _selectedDoorModel = _convertDoorModel(unit.doorModelId);
-
-    _selectedMachineRoomType = _convertMachineRoomType(unit.machineRoomTypeId);
-
-    _selectedStandardType = _convertStandardType(unit.standardType);
-
-    _selectedStatus = _convertStatus(unit.status);
-
-    // Fixed in edit mode
-    _selectedInstallationMethod = unit.methodName;
-
-    // Dates
-    _startDate = _parseDate(unit.startDate);
-    _plannedFinish = _parseDate(unit.endDate);
-    _actualFinish = _parseDate(unit.actualFinish);
-  }
-
-  // Convert API values to dropdown values
-
-  String? _convertLiftSpeed(String value) {
-    if (value.isEmpty) return null;
-
-    if (value == '1') {
-      return '1 M/S';
-    }
-
-    if (value == '1.5') {
-      return '1.5 M/S';
-    }
-
-    if (_liftSpeeds.contains(value)) {
-      return value;
-    }
-
-    return null;
-  }
-
-  String? _convertStops(String value) {
-    if (value.isEmpty) return null;
-
-    final number = int.tryParse(value);
-
-    if (number != null && number >= 1 && number <= 10) {
-      return 'No of Stops $number';
-    }
-
-    if (_stops.contains(value)) {
-      return value;
-    }
-
-    return null;
-  }
-
-  String? _convertOpenings(String value) {
-    if (value.isEmpty) return null;
-
-    final number = int.tryParse(value);
-
-    if (number != null && number >= 1 && number <= 10) {
-      return 'No of Openings $number';
-    }
-
-    if (_openings.contains(value)) {
-      return value;
-    }
-
-    return null;
-  }
-
-  String? _convertDoorType(String value) {
-    switch (value) {
-      case '1':
-        return 'Center Opening';
-      case '2':
-        return 'Side Opening';
-      case '3':
-        return 'Manual Opening';
-    }
-
-    if (_doorTypes.contains(value)) {
-      return value;
-    }
-
-    return null;
-  }
-
-  String? _convertDoorModel(String value) {
-    switch (value) {
-      case '1':
-        return 'Painted';
-      case '2':
-        return 'Not Painted';
-      case '3':
-        return 'Stainless Steel';
-    }
-
-    if (_doorModels.contains(value)) {
-      return value;
-    }
-
-    return null;
-  }
-
-  String? _convertMachineRoomType(String value) {
-    switch (value) {
-      case '1':
-        return 'MRL';
-      case '2':
-        return 'URL';
-      case '3':
-        return 'CRL';
-    }
-
-    if (_machineRoomTypes.contains(value)) {
-      return value;
-    }
-
-    return null;
-  }
-
-  String? _convertStandardType(String value) {
-    if (value.toLowerCase() == 'standard') {
-      return 'Standard';
-    }
-
-    if (value.toLowerCase() == 'non_standard' ||
-        value.toLowerCase() == 'non standard') {
-      return 'Non Standard';
-    }
-
-    return null;
-  }
-
-  String? _convertStatus(String value) {
-    if (value.toLowerCase() == 'pending') {
-      return 'Pending';
-    }
-
-    if (value.toLowerCase() == 'in progress' ||
-        value.toLowerCase() == 'in_progress') {
-      return 'In progress';
-    }
-
-    return null;
-  }
-
-  // Date parsing
-
-  DateTime? _parseDate(String value) {
-    if (value.isEmpty) return null;
-
-    try {
-      return DateTime.parse(value);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  // Dispose
 
   @override
   void dispose() {
-    _siteLiftController.dispose();
-    _unitMachineController.dispose();
+    _siteLiftNoController.dispose();
+    _unitMachineNoController.dispose();
     _capacityController.dispose();
     _travelHeightController.dispose();
     _doorSizeController.dispose();
-    _productModelController.dispose();
+    _productModelNameController.dispose();
+    _totalManpowerController.dispose();
+    _startDateController.dispose();
+    _plannedFinishController.dispose();
+    _actualFinishController.dispose();
+
+    for (final controller in _activityPercentageControllers.values) {
+      controller.dispose();
+    }
 
     super.dispose();
   }
 
-  // Date Picker
+  // ---------------------------------------------------------------------------
+  // Initial values
+  // ---------------------------------------------------------------------------
 
-  Future<void> _selectDate({
-    required DateTime? currentDate,
-    required Function(DateTime) onSelected,
-  }) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: currentDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: _primary,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
+  void _initializeUnitValues() {
+    final unit = widget.unit;
 
-    if (picked != null) {
-      onSelected(picked);
+    if (unit == null) {
+      return;
+    }
+
+    /*
+     * IMPORTANT:
+     *
+     * Do not access fields here which are not present in your current
+     * UnitInfoData model.
+     *
+     * Add your actual existing UnitInfoData field mappings here once those
+     * field names are confirmed.
+     *
+     * Example:
+     *
+     * _siteLiftNoController.text = unit.siteLiftNo;
+     *
+     * if (unit.siteLiftNo.isNotEmpty) {
+     *   ...
+     * }
+     */
+
+    _siteLiftNoController.text = unit.siteLiftNo;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Load Unit Dropdowns
+  // ---------------------------------------------------------------------------
+
+  Future<void> _loadDropdownValues() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingDropdowns = true;
+    });
+
+    try {
+      final firstResponse = await HttpService.getUnitDropdownValues();
+
+      final secondResponse =
+          await HttpService.getUnitAdditionalDropdownValues();
+
+      if (!mounted) return;
+
+      setState(() {
+        // FIRST API
+        _liftSpeeds = firstResponse['lift_speed'] ?? [];
+        _stops = firstResponse['no_of_stops'] ?? [];
+        _openings = firstResponse['no_of_opening'] ?? [];
+        _doorTypes = firstResponse['door_type'] ?? [];
+        _liftTypes = firstResponse['lift_type'] ?? [];
+
+        // SECOND API
+        _doorModels = secondResponse['door_model'] ?? [];
+        _machineRoomTypes = secondResponse['machine_room_types'] ?? [];
+        _statuses = secondResponse['current_statuses'] ?? [];
+
+        _isLoadingDropdowns = false;
+      });
+    } catch (e) {
+      print('LOAD UNIT DROPDOWNS ERROR: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingDropdowns = false;
+      });
+
+      _showMessage(
+        'Failed to load unit dropdown values',
+        isError: true,
+      );
     }
   }
 
-  String _formatDate(DateTime? date) {
-    if (date == null) return '';
+  // ---------------------------------------------------------------------------
+  // Load Installation Methods
+  // ---------------------------------------------------------------------------
 
-    return '${date.day.toString().padLeft(2, '0')}-'
-        '${date.month.toString().padLeft(2, '0')}-'
-        '${date.year}';
+  Future<void> _loadInstallationMethods() async {
+    if (!mounted) return;
+
+    setState(() {
+      _loadingMethods = true;
+    });
+
+    try {
+      final response = await HttpService.getMethodOfInstallation();
+
+      if (!mounted) return;
+
+      if (response.status) {
+        setState(() {
+          _installationMethods = response.data;
+          _loadingMethods = false;
+        });
+      } else {
+        setState(() {
+          _installationMethods = [];
+          _loadingMethods = false;
+        });
+      }
+    } catch (e) {
+      print('LOAD INSTALLATION METHODS ERROR: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _loadingMethods = false;
+      });
+    }
   }
 
-  // Text Field
+  // ---------------------------------------------------------------------------
+  // Installation Method Changed
+  // ---------------------------------------------------------------------------
 
-  Widget _buildTextField({
-    required String label,
+  Future<void> _onInstallationMethodChanged(
+    String? methodId,
+  ) async {
+    if (methodId == null || methodId.isEmpty) {
+      setState(() {
+        _selectedMethodId = null;
+        _installationActivities = [];
+        _loadingActivities = false;
+      });
+
+      _clearActivityControllers();
+      return;
+    }
+
+    // Immediately show loading
+    setState(() {
+      _selectedMethodId = methodId;
+      _installationActivities = [];
+      _loadingActivities = true;
+    });
+
+    _clearActivityControllers();
+
+    try {
+      print(
+        'GET INSTALLATION ACTIVITIES METHOD ID: $methodId',
+      );
+
+      final response = await HttpService.getInstallationActivities(
+        methodId: methodId,
+      );
+
+      if (!mounted) return;
+
+      if (response.status) {
+        setState(() {
+          _installationActivities = response.data;
+          _loadingActivities = false;
+        });
+
+        _initializeActivityFields(response.data);
+      } else {
+        setState(() {
+          _installationActivities = [];
+          _loadingActivities = false;
+        });
+
+        _showMessage(
+          response.message.isNotEmpty
+              ? response.message
+              : 'No activities found',
+          isError: true,
+        );
+      }
+    } catch (e) {
+      print(
+        'LOAD INSTALLATION ACTIVITIES ERROR: $e',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _installationActivities = [];
+        _loadingActivities = false;
+      });
+
+      _showMessage(
+        'Failed to load installation activities',
+        isError: true,
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Activity fields
+  // ---------------------------------------------------------------------------
+
+  void _initializeActivityFields(
+    List<MethodActivityItem> activities,
+  ) {
+    for (final activity in activities) {
+      if (!_activityPercentageControllers.containsKey(
+        activity.activityKey,
+      )) {
+        _activityPercentageControllers[activity.activityKey] =
+            TextEditingController();
+      }
+
+      _activityStatuses[activity.activityKey] = null;
+      _activityStartDates[activity.activityKey] = null;
+      _activityCompletedDates[activity.activityKey] = null;
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _clearActivityControllers() {
+    for (final controller in _activityPercentageControllers.values) {
+      controller.dispose();
+    }
+
+    _activityPercentageControllers.clear();
+    _activityStatuses.clear();
+    _activityStartDates.clear();
+    _activityCompletedDates.clear();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Date picker
+  // ---------------------------------------------------------------------------
+
+  Future<void> _selectDate({
+    required String activityKey,
+    required bool isStartDate,
+  }) async {
+    final now = DateTime.now();
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked == null || !mounted) return;
+
+    final formatted = _formatDate(picked);
+
+    setState(() {
+      if (isStartDate) {
+        _activityStartDates[activityKey] = formatted;
+      } else {
+        _activityCompletedDates[activityKey] = formatted;
+      }
+    });
+  }
+
+  Future<void> _selectNormalDate({
     required TextEditingController controller,
-    bool requiredField = false,
-    bool readOnly = false,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildLabel(
-            label,
-            requiredField: requiredField,
-          ),
-          const SizedBox(height: 7),
-          TextFormField(
-            controller: controller,
-            readOnly: readOnly,
-            keyboardType: keyboardType,
-            decoration: _inputDecoration(
-              hintText: 'Enter $label',
-              readOnly: readOnly,
-            ),
-            validator: requiredField
-                ? (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return '$label is required';
-                    }
-                    return null;
-                  }
-                : null,
-          ),
-        ],
-      ),
+  }) async {
+    DateTime initialDate = DateTime.now();
+
+    if (controller.text.isNotEmpty) {
+      try {
+        final parts = controller.text.split('-');
+
+        if (parts.length == 3) {
+          initialDate = DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[1]),
+            int.parse(parts[0]),
+          );
+        }
+      } catch (_) {}
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
     );
+
+    if (picked == null || !mounted) return;
+
+    controller.text = _formatDate(picked);
+
+    setState(() {});
   }
 
-  // Dropdown
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
 
-  Widget _buildDropdown({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required Function(String?) onChanged,
-    bool requiredField = false,
-    bool readOnly = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildLabel(
-            label,
-            requiredField: requiredField,
-          ),
-          const SizedBox(height: 7),
-          DropdownButtonFormField<String>(
-            value: items.contains(value) ? value : null,
-            isExpanded: true,
-            decoration: _inputDecoration(
-              hintText: 'Select $label',
-              readOnly: readOnly,
-            ),
-            icon: const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Colors.grey,
-            ),
-            items: items.map((item) {
-              return DropdownMenuItem<String>(
-                value: item,
-                child: Text(
-                  item,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            }).toList(),
-            onChanged: readOnly ? null : onChanged,
-            validator: requiredField
-                ? (value) {
-                    if (value == null || value.isEmpty) {
-                      return '$label is required';
-                    }
-                    return null;
-                  }
-                : null,
-          ),
-        ],
-      ),
-    );
+    return '$day-$month-${date.year}';
   }
 
-  // Date Field
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
 
-  Widget _buildDateField({
-    required String label,
-    required DateTime? date,
-    required Function(DateTime) onSelected,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildLabel(label),
-          const SizedBox(height: 7),
-          InkWell(
-            onTap: () {
-              _selectDate(
-                currentDate: date,
-                onSelected: onSelected,
-              );
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      date == null ? 'Select $label' : _formatDate(date),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: date == null
-                            ? Colors.grey.shade600
-                            : Colors.black87,
-                      ),
-                    ),
-                  ),
-                  const Icon(
-                    Icons.calendar_month_rounded,
-                    color: _primary,
-                    size: 21,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  UnitDropdownItem? _findItemById(
+    List<UnitDropdownItem> items,
+    String? id,
+  ) {
+    if (id == null || id.isEmpty) {
+      return null;
+    }
+
+    for (final item in items) {
+      if (item.id == id) {
+        return item;
+      }
+    }
+
+    return null;
   }
 
-  // Label
+  String _statusLabel(String? value) {
+    if (value == null || value.isEmpty) {
+      return '--';
+    }
 
-  Widget _buildLabel(
-    String text, {
-    bool requiredField = false,
-  }) {
-    return RichText(
-      text: TextSpan(
-        text: text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-        children: requiredField
-            ? const [
-                TextSpan(
-                  text: ' *',
-                  style: TextStyle(
-                    color: Colors.red,
-                  ),
-                ),
-              ]
-            : null,
-      ),
-    );
+    for (final item in _activityStatusOptions) {
+      if (item['value'] == value) {
+        return item['label'] ?? value;
+      }
+    }
+
+    return value;
   }
 
-  // Input Decoration
-
-  InputDecoration _inputDecoration({
-    required String hintText,
-    bool readOnly = false,
+  InputDecoration _inputDecoration(
+    String label, {
+    String? hint,
+    Widget? suffixIcon,
   }) {
     return InputDecoration(
-      hintText: hintText,
-      hintStyle: TextStyle(
-        color: Colors.grey.shade500,
-        fontSize: 14,
-      ),
+      labelText: label,
+      hintText: hint,
+      suffixIcon: suffixIcon,
       filled: true,
-      fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
+      fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 13,
+        horizontal: 16,
+        vertical: 15,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
           color: Colors.grey.shade300,
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
           color: Colors.grey.shade300,
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(
           color: _primary,
-          width: 1.4,
+          width: 1.5,
         ),
       ),
     );
   }
 
-  // Section Header
+  void _showMessage(
+    String message, {
+    bool isError = false,
+  }) {
+    if (!mounted) return;
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 16,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 21,
-            decoration: BoxDecoration(
-              color: _primary,
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-          const SizedBox(width: 9),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-        ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : _primary,
       ),
     );
   }
 
-  // Submit
+  List<Map<String, String>> _buildActivityPayload() {
+    return _installationActivities.map((activity) {
+      return {
+        'activity_key': activity.activityKey,
+        'activity_name': activity.activityName,
+        'status': _activityStatuses[activity.activityKey] ?? '',
+        'percentage':
+            _activityPercentageControllers[activity.activityKey]?.text.trim() ??
+                '',
+        'start_date': _activityStartDates[activity.activityKey] ?? '',
+        'completed_date': _activityCompletedDates[activity.activityKey] ?? '',
+      };
+    }).toList();
+  }
 
-  void _submit() {
+  // ---------------------------------------------------------------------------
+  // Save
+  // ---------------------------------------------------------------------------
+
+  Future<void> _saveUnitInformation() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    debugPrint(
-      widget.isEditMode ? 'EDIT UNIT' : 'ADD UNIT',
-    );
+    setState(() {
+      _isSaving = true;
+    });
 
-    debugPrint('Project ID: ${widget.projectId}');
+    try {
+      final activityData = _buildActivityPayload();
+      print('========== UNIT SAVE DEBUG ==========');
+      print('Current Status ID: $_selectedStatusId');
+      print('Standard Type: $_selectedStandardType');
+      print('Lift Speed ID: $_selectedLiftSpeedId');
+      print('Stops ID: $_selectedStopsId');
+      print('Openings ID: $_selectedOpeningsId');
+      print('Door Type ID: $_selectedDoorTypeId');
+      print('Door Model ID: $_selectedDoorModelId');
+      print('Machine Room Type ID: $_selectedMachineRoomTypeId');
+      print('Lift Type ID: $_selectedLiftTypeId');
+      print('=====================================');
+      final response = await HttpService.addUnitInfo(
+        projectId: widget.projectId,
+        siteLiftNo: _siteLiftNoController.text.trim(),
+        unitMachineNo: _unitMachineNoController.text.trim(),
 
-    if (widget.isEditMode) {
-      debugPrint(
-        'Unit ID: ${widget.unit!.id}',
+        // Optional fields
+        capacity: _capacityController.text.trim(),
+        speed: _selectedLiftSpeedId ?? '',
+        numberOfStops: _selectedStopsId ?? '',
+        numberOfOpening: _selectedOpeningsId ?? '',
+        travelHeight: _travelHeightController.text.trim(),
+        doorSize: _doorSizeController.text.trim(),
+        doorTypeId: _selectedDoorTypeId ?? '',
+        doorModelId: _selectedDoorModelId ?? '',
+        machineRoomTypeId: _selectedMachineRoomTypeId ?? '',
+        typeId: _selectedLiftTypeId ?? '',
+        productModelName: _productModelNameController.text.trim(),
+
+        // Optional - no !
+        standardType: _selectedStandardType?.toLowerCase() ?? '',
+
+        statusId: _selectedStatusId ?? '',
+        startDate: _startDateController.text.trim(),
+        endDate: _plannedFinishController.text.trim(),
+        actualFinish: _actualFinishController.text.trim(),
+        totalManpower: _totalManpowerController.text.trim(),
+
+        // Optional - no !
+        methodOfInstallation: _selectedMethodId ?? '',
+
+        activity: activityData,
+      );
+      print('===== API RETURNED =====');
+      print('response: $response');
+
+      if (!mounted) return;
+
+      if (response['status'] == true) {
+        setState(() {
+          _isSaving = false;
+        });
+
+        _showMessage(
+          response['message']?.toString() ??
+              'Unit information added successfully',
+        );
+
+        Navigator.pop(context, true);
+        return;
+      }
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      _showMessage(
+        response['message']?.toString() ?? 'Failed to add unit information',
+        isError: true,
+      );
+    } catch (e) {
+      print('ADD UNIT INFORMATION ERROR: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isSaving = false;
+      });
+
+      _showMessage(
+        'Failed to add unit information',
+        isError: true,
       );
     }
-
-    debugPrint(
-      'Site Lift No: ${_siteLiftController.text}',
-    );
-
-    debugPrint(
-      'Unit/Machine No: ${_unitMachineController.text}',
-    );
-
-    debugPrint(
-      'Capacity: ${_capacityController.text}',
-    );
-
-    debugPrint(
-      'Lift Speed: $_selectedLiftSpeed',
-    );
-
-    debugPrint(
-      'Stops: $_selectedStops',
-    );
-
-    debugPrint(
-      'Openings: $_selectedOpenings',
-    );
-
-    debugPrint(
-      'Door Type: $_selectedDoorType',
-    );
-
-    debugPrint(
-      'Door Model: $_selectedDoorModel',
-    );
-
-    debugPrint(
-      'Machine Room: $_selectedMachineRoomType',
-    );
-
-    debugPrint(
-      'Product Model: ${_productModelController.text}',
-    );
-
-    debugPrint(
-      'Standard Type: $_selectedStandardType',
-    );
-
-    debugPrint(
-      'Status: $_selectedStatus',
-    );
-
-    debugPrint(
-      'Installation: $_selectedInstallationMethod',
-    );
-
-    debugPrint(
-      'Start Date: ${_formatDate(_startDate)}',
-    );
-
-    debugPrint(
-      'Planned Finish: ${_formatDate(_plannedFinish)}',
-    );
-
-    debugPrint(
-      'Actual Finish: ${_formatDate(_actualFinish)}',
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.isEditMode
-              ? 'Unit information updated successfully'
-              : 'Unit information validated successfully',
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    // ADD:
-    // HttpService.addUnitInfo(...)
-
-    // EDIT:
-    // HttpService.updateUnitInfo(
-    //   unitId: widget.unit!.id,
-    //   projectId: widget.projectId,
-    //   ...
-    // );
   }
 
-  // Build
+  // ---------------------------------------------------------------------------
+  // Text field
+  // ---------------------------------------------------------------------------
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F5FB),
-      appBar: AppBar(
-        title: Text(
-          widget.isEditMode ? 'Edit Unit Information' : 'Add Unit Information',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
-        ),
-        backgroundColor: _primary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                _primary,
-                _primaryDark,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+  Widget _textField({
+    required String label,
+    required TextEditingController controller,
+    bool requiredField = false,
+    TextInputType? keyboardType,
+    String? hint,
+    VoidCallback? onTap,
+    bool readOnly = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      readOnly: readOnly,
+      onTap: onTap,
+      decoration: _inputDecoration(
+        label,
+        hint: hint,
+        suffixIcon: onTap != null
+            ? const Icon(
+                Icons.calendar_today_outlined,
+                size: 20,
+              )
+            : null,
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            30,
+      validator: requiredField
+          ? (value) {
+              if (value == null || value.trim().isEmpty) {
+                return '$label is required';
+              }
+
+              return null;
+            }
+          : null,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dropdown
+  // ---------------------------------------------------------------------------
+
+  Widget _dropdownField({
+    required String label,
+    required List<UnitDropdownItem> items,
+    required String? selectedId,
+    required ValueChanged<String?> onChanged,
+    bool requiredField = false,
+  }) {
+    final validSelectedId = _findItemById(
+      items,
+      selectedId,
+    );
+
+    return DropdownButtonFormField<String>(
+      value: validSelectedId?.id,
+      isExpanded: true,
+      decoration: _inputDecoration(label),
+      items: items.map((item) {
+        return DropdownMenuItem<String>(
+          value: item.id,
+          child: Text(
+            item.name,
+            overflow: TextOverflow.ellipsis,
           ),
-          child: Column(
+        );
+      }).toList(),
+      onChanged: items.isEmpty ? null : onChanged,
+      validator: requiredField
+          ? (value) {
+              if (value == null || value.isEmpty) {
+                return '$label is required';
+              }
+
+              return null;
+            }
+          : null,
+    );
+  }
+
+  Widget _standardDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedStandardType,
+      isExpanded: true,
+      decoration: _inputDecoration(
+        'Standard or Non Standard',
+      ),
+      items: _standardTypes.map((value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedStandardType = value;
+        });
+      },
+    );
+  }
+
+  Widget _statusDropdown() {
+    return _dropdownField(
+      label: 'Current Status',
+      items: _statuses,
+      selectedId: _selectedStatusId,
+      onChanged: (value) {
+        setState(() {
+          _selectedStatusId = value;
+          print('status id $_selectedStatusId');
+        });
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Installation Method Dropdown
+  // ---------------------------------------------------------------------------
+
+  Widget _installationMethodDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedMethodId,
+      isExpanded: true,
+      decoration: _inputDecoration(
+        'Method of Installation',
+      ),
+      items: _installationMethods.map((method) {
+        return DropdownMenuItem<String>(
+          value: method.methodId,
+          child: Text(
+            method.methodName,
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+      }).toList(),
+      onChanged: _loadingMethods ? null : _onInstallationMethodChanged,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Activity Card
+  // ---------------------------------------------------------------------------
+
+  Widget _activityCard(
+    MethodActivityItem activity,
+    int index,
+  ) {
+    final percentageController =
+        _activityPercentageControllers[activity.activityKey];
+
+    final currentStatus = _activityStatuses[activity.activityKey];
+
+    final startDate = _activityStartDates[activity.activityKey];
+
+    final completedDate = _activityCompletedDates[activity.activityKey];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ==================================================
-              // UNIT INFORMATION
-              // ==================================================
-
-              _buildFormCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader(
-                      'Unit Information',
-                    ),
-
-                    // FIXED IN EDIT
-                    _buildTextField(
-                      label: 'Site Lift No',
-                      controller: _siteLiftController,
-                      requiredField: true,
-                      readOnly: widget.isEditMode,
-                    ),
-
-                    // FIXED IN EDIT
-                    _buildTextField(
-                      label: 'Unit/Machine No',
-                      controller: _unitMachineController,
-                      requiredField: true,
-                      readOnly: widget.isEditMode,
-                    ),
-
-                    _buildTextField(
-                      label: 'Capacity',
-                      controller: _capacityController,
-                      keyboardType: TextInputType.number,
-                    ),
-
-                    _buildDropdown(
-                      label: 'Lift Speed',
-                      value: _selectedLiftSpeed,
-                      items: _liftSpeeds,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedLiftSpeed = value;
-                        });
-                      },
-                    ),
-
-                    _buildDropdown(
-                      label: 'Number of Stops',
-                      value: _selectedStops,
-                      items: _stops,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedStops = value;
-                        });
-                      },
-                    ),
-
-                    _buildDropdown(
-                      label: 'Number of Opening',
-                      value: _selectedOpenings,
-                      items: _openings,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedOpenings = value;
-                        });
-                      },
-                    ),
-
-                    _buildTextField(
-                      label: 'Travel Height',
-                      controller: _travelHeightController,
-                      keyboardType: TextInputType.number,
-                    ),
-
-                    _buildTextField(
-                      label: 'Door Size',
-                      controller: _doorSizeController,
-                    ),
-
-                    _buildDropdown(
-                      label: 'Door Type',
-                      value: _selectedDoorType,
-                      items: _doorTypes,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedDoorType = value;
-                        });
-                      },
-                    ),
-
-                    _buildDropdown(
-                      label: 'Door Model',
-                      value: _selectedDoorModel,
-                      items: _doorModels,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedDoorModel = value;
-                        });
-                      },
-                    ),
-
-                    _buildDropdown(
-                      label: 'Machine Room Type',
-                      value: _selectedMachineRoomType,
-                      items: _machineRoomTypes,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedMachineRoomType = value;
-                        });
-                      },
-                    ),
-
-                    _buildTextField(
-                      label: 'Product Model Name',
-                      controller: _productModelController,
-                    ),
-
-                    _buildDropdown(
-                      label: 'Standard or Non Standard',
-                      value: _selectedStandardType,
-                      items: _standardTypes,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedStandardType = value;
-                        });
-                      },
-                    ),
-
-                    _buildDropdown(
-                      label: 'Current Status',
-                      value: _selectedStatus,
-                      items: _statuses,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedStatus = value;
-                        });
-                      },
-                    ),
-
-                    _buildDateField(
-                      label: 'Start Date',
-                      date: _startDate,
-                      onSelected: (date) {
-                        setState(() {
-                          _startDate = date;
-                        });
-                      },
-                    ),
-
-                    _buildDateField(
-                      label: 'Planned Finish',
-                      date: _plannedFinish,
-                      onSelected: (date) {
-                        setState(() {
-                          _plannedFinish = date;
-                        });
-                      },
-                    ),
-
-                    _buildDateField(
-                      label: 'Actual Finish',
-                      date: _actualFinish,
-                      onSelected: (date) {
-                        setState(() {
-                          _actualFinish = date;
-                        });
-                      },
-                    ),
-                  ],
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: const TextStyle(
+                    color: _primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // ==================================================
-              // METHOD OF INSTALLATION
-              // ==================================================
-
-              _buildFormCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader(
-                      'Method of Installation',
-                    ),
-
-                    // FIXED IN EDIT
-                    _buildDropdown(
-                      label: 'Method of Installation',
-                      value: _selectedInstallationMethod,
-                      items: _installationMethods,
-                      readOnly: widget.isEditMode,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedInstallationMethod = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              // ==================================================
-              // SAVE / UPDATE
-              // ==================================================
-
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _submit,
-                  icon: Icon(
-                    widget.isEditMode
-                        ? Icons.update_rounded
-                        : Icons.save_rounded,
-                    size: 20,
-                  ),
-                  label: Text(
-                    widget.isEditMode
-                        ? 'Update Unit Information'
-                        : 'Save Unit Information',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  activity.activityName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1F2937),
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
 
-  // Form Card
+          const SizedBox(height: 16),
 
-  Widget _buildFormCard({
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: _primary.withOpacity(0.07),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+          // Status
+          DropdownButtonFormField<String>(
+            value: currentStatus,
+            isExpanded: true,
+            decoration: _inputDecoration(
+              'Status',
+            ),
+            items: _activityStatusOptions.map((item) {
+              return DropdownMenuItem<String>(
+                value: item['value'],
+                child: Text(
+                  item['label'] ?? '',
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _activityStatuses[activity.activityKey] = value;
+              });
+            },
+          ),
+
+          const SizedBox(height: 12),
+
+          // Percentage
+          TextFormField(
+            controller: percentageController,
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+            ),
+            decoration: _inputDecoration(
+              'Percentage',
+              hint: '0 - 100',
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Start Date
+          TextFormField(
+            readOnly: true,
+            controller: TextEditingController(
+              text: startDate ?? '',
+            ),
+            onTap: () {
+              _selectDate(
+                activityKey: activity.activityKey,
+                isStartDate: true,
+              );
+            },
+            decoration: _inputDecoration(
+              'Start Date',
+              suffixIcon: const Icon(
+                Icons.calendar_today_outlined,
+                size: 20,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Completed Date
+          TextFormField(
+            readOnly: true,
+            controller: TextEditingController(
+              text: completedDate ?? '',
+            ),
+            onTap: () {
+              _selectDate(
+                activityKey: activity.activityKey,
+                isStartDate: false,
+              );
+            },
+            decoration: _inputDecoration(
+              'Completed Date',
+              suffixIcon: const Icon(
+                Icons.calendar_today_outlined,
+                size: 20,
+              ),
+            ),
           ),
         ],
       ),
-      child: child,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Section
+  // ---------------------------------------------------------------------------
+
+  Widget _sectionCard({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: _primaryDark,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _pageBackground,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: _primary,
+        foregroundColor: Colors.white,
+        title: Text(
+          widget.isEdit ? 'Edit Unit Information' : 'Add Unit Information',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      body: _isLoadingDropdowns
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: _primary,
+              ),
+            )
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // ---------------------------------------------------------
+                    // Basic Unit Information
+                    // ---------------------------------------------------------
+
+                    _sectionCard(
+                      title: 'Unit Information',
+                      children: [
+                        _textField(
+                          label: 'Site Lift No',
+                          controller: _siteLiftNoController,
+                          requiredField: true,
+                        ),
+                        const SizedBox(height: 14),
+                        _textField(
+                          label: 'Unit / Machine No',
+                          controller: _unitMachineNoController,
+                          requiredField: true,
+                        ),
+                        const SizedBox(height: 14),
+                        _textField(
+                          label: 'Capacity',
+                          controller: _capacityController,
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 14),
+                        _dropdownField(
+                          label: 'Lift Speed',
+                          items: _liftSpeeds,
+                          selectedId: _selectedLiftSpeedId,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedLiftSpeedId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _dropdownField(
+                          label: 'Number of Stops',
+                          items: _stops,
+                          selectedId: _selectedStopsId,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedStopsId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _dropdownField(
+                          label: 'Number of Openings',
+                          items: _openings,
+                          selectedId: _selectedOpeningsId,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedOpeningsId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _textField(
+                          label: 'Travel Height',
+                          controller: _travelHeightController,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ],
+                    ),
+
+                    // ---------------------------------------------------------
+                    // Door / Machine Information
+                    // ---------------------------------------------------------
+
+                    _sectionCard(
+                      title: 'Door & Machine Information',
+                      children: [
+                        _textField(
+                          label: 'Door Size',
+                          controller: _doorSizeController,
+                        ),
+                        const SizedBox(height: 14),
+                        _dropdownField(
+                          label: 'Door Type',
+                          items: _doorTypes,
+                          selectedId: _selectedDoorTypeId,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedDoorTypeId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _dropdownField(
+                          label: 'Door Model',
+                          items: _doorModels,
+                          selectedId: _selectedDoorModelId,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedDoorModelId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _dropdownField(
+                          label: 'Machine Room Type',
+                          items: _machineRoomTypes,
+                          selectedId: _selectedMachineRoomTypeId,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedMachineRoomTypeId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _dropdownField(
+                          label: 'Lift Type',
+                          items: _liftTypes,
+                          selectedId: _selectedLiftTypeId,
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedLiftTypeId = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _textField(
+                          label: 'Product Model Name',
+                          controller: _productModelNameController,
+                        ),
+                        const SizedBox(height: 14),
+                        _standardDropdown(),
+                        const SizedBox(height: 14),
+                        _statusDropdown(),
+                      ],
+                    ),
+
+                    // ---------------------------------------------------------
+                    // Dates
+                    // ---------------------------------------------------------
+
+                    _sectionCard(
+                      title: 'Dates',
+                      children: [
+                        _textField(
+                          label: 'Start Date',
+                          controller: _startDateController,
+                          readOnly: true,
+                          onTap: () {
+                            _selectNormalDate(
+                              controller: _startDateController,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _textField(
+                          label: 'Planned Finish',
+                          controller: _plannedFinishController,
+                          readOnly: true,
+                          onTap: () {
+                            _selectNormalDate(
+                              controller: _plannedFinishController,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _textField(
+                          label: 'Actual Finish',
+                          controller: _actualFinishController,
+                          readOnly: true,
+                          onTap: () {
+                            _selectNormalDate(
+                              controller: _actualFinishController,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
+                    // ---------------------------------------------------------
+                    // Method of Installation
+                    // ---------------------------------------------------------
+
+                    _sectionCard(
+                      title: 'Method of Installation',
+                      children: [
+                        _installationMethodDropdown(),
+                      ],
+                    ),
+
+                    // ---------------------------------------------------------
+                    // Activities
+                    // ---------------------------------------------------------
+
+                    if (_loadingActivities)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 28,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Column(
+                          children: [
+                            SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: _primary,
+                              ),
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Loading installation activities...',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    if (!_loadingActivities &&
+                        _installationActivities.isNotEmpty)
+                      _sectionCard(
+                        title: 'Installation Activities',
+                        children: [
+                          ...List.generate(
+                            _installationActivities.length,
+                            (index) {
+                              return _activityCard(
+                                _installationActivities[index],
+                                index,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+
+                    if (_selectedMethodId != null &&
+                        _installationActivities.isEmpty &&
+                        !_loadingMethods)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(
+                          bottom: 16,
+                        ),
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Text(
+                          'No activities available for the selected installation method.',
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+
+                    // ---------------------------------------------------------
+                    // Save
+                    // ---------------------------------------------------------
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _isSaving ? null : _saveUnitInformation,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primary,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: Colors.grey.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: _isSaving
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                widget.isEdit ? 'Update Unit' : 'Save Unit',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }
-
-// import 'dart:developer';
-
-// import 'package:flutter/material.dart';
-// import 'package:login2/service/service.dart';
-
-// class AddUnitInfoPage extends StatefulWidget {
-//   final String projectId;
-
-//   // ADD / EDIT
-//   final bool isEdit;
-
-//   // Existing values used only in EDIT
-//   final String? siteLiftNo;
-//   final String? unitMachineNo;
-//   final String? installationMethod;
-
-//   const AddUnitInfoPage({
-//     super.key,
-//     required this.projectId,
-//     this.isEdit = false,
-//     this.siteLiftNo,
-//     this.unitMachineNo,
-//     this.installationMethod,
-//   });
-
-//   @override
-//   State<AddUnitInfoPage> createState() => _AddUnitInfoPageState();
-// }
-
-// class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
-//   static const Color _primary = Color(0xFF2A86C9);
-//   static const Color _primaryDark = Color(0xFF1A6CA8);
-
-//   final _formKey = GlobalKey<FormState>();
-
-//   // ============================================================
-//   // Controllers
-//   // ============================================================
-
-//   final TextEditingController _siteLiftController =
-//       TextEditingController();
-
-//   final TextEditingController _unitMachineController =
-//       TextEditingController();
-
-//   final TextEditingController _capacityController =
-//       TextEditingController();
-
-//   final TextEditingController _travelHeightController =
-//       TextEditingController();
-
-//   final TextEditingController _doorSizeController =
-//       TextEditingController();
-
-//   final TextEditingController _productModelController =
-//       TextEditingController();
-
-//   // ============================================================
-//   // Dropdown values
-//   // ============================================================
-
-//   String? _selectedLiftSpeed;
-//   String? _selectedStops;
-//   String? _selectedOpenings;
-//   String? _selectedDoorType;
-//   String? _selectedDoorModel;
-//   String? _selectedMachineRoomType;
-//   String? _selectedStandardType;
-//   String? _selectedStatus;
-//   String? _selectedInstallationMethod;
-
-//   // ============================================================
-//   // Dates
-//   // ============================================================
-
-//   DateTime? _startDate;
-//   DateTime? _plannedFinish;
-//   DateTime? _actualFinish;
-
-//   // ============================================================
-//   // Activity
-//   // ============================================================
-
-//   List<ActivityItem> _activities = [];
-
-//   bool _isLoadingActivities = false;
-
-//   // ============================================================
-//   // Dropdown data
-//   // ============================================================
-
-//   final List<String> _liftSpeeds = [
-//     '1 M/S',
-//     '1.5 M/S',
-//   ];
-
-//   final List<String> _stops = List.generate(
-//     10,
-//     (index) => 'No of Stops ${index + 1}',
-//   );
-
-//   final List<String> _openings = List.generate(
-//     10,
-//     (index) => 'No of Openings ${index + 1}',
-//   );
-
-//   final List<String> _doorTypes = [
-//     'Center Opening',
-//     'Side Opening',
-//     'Manual Opening',
-//   ];
-
-//   final List<String> _doorModels = [
-//     'Painted',
-//     'Not Painted',
-//     'Stainless Steel',
-//   ];
-
-//   final List<String> _machineRoomTypes = [
-//     'MRL',
-//     'URL',
-//     'CRL',
-//   ];
-
-//   final List<String> _standardTypes = [
-//     'Standard',
-//     'Non Standard',
-//   ];
-
-//   final List<String> _statuses = [
-//     'Pending',
-//     'In progress',
-//   ];
-
-//   final List<String> _installationMethods = [
-//     'Scaffolding',
-//     'Fit Method',
-//     'False Car',
-//     'Rope Climbing',
-//     'Platform',
-//   ];
-
-//   final List<String> _activityStatuses = [
-//     'Completed',
-//     'In Progress',
-//     'Pending',
-//     'On Hold',
-//     'Not Applicable',
-//   ];
-
-//   // ============================================================
-//   // INIT
-//   // ============================================================
-
-//   @override
-//   void initState() {
-//     super.initState();
-
-//     if (widget.isEdit) {
-//       _siteLiftController.text = widget.siteLiftNo ?? '';
-//       _unitMachineController.text = widget.unitMachineNo ?? '';
-
-//       _selectedInstallationMethod = widget.installationMethod;
-
-//       if (_selectedInstallationMethod != null &&
-//           _selectedInstallationMethod!.isNotEmpty) {
-//         WidgetsBinding.instance.addPostFrameCallback((_) {
-//           _loadActivities(_selectedInstallationMethod!);
-//         });
-//       }
-//     }
-//   }
-
-//   // ============================================================
-//   // DISPOSE
-//   // ============================================================
-
-//   @override
-//   void dispose() {
-//     _siteLiftController.dispose();
-//     _unitMachineController.dispose();
-//     _capacityController.dispose();
-//     _travelHeightController.dispose();
-//     _doorSizeController.dispose();
-//     _productModelController.dispose();
-
-//     super.dispose();
-//   }
-
-//   // ============================================================
-//   // LOAD ACTIVITIES
-//   // ============================================================
-
-//   Future<void> _loadActivities(String installationMethod) async {
-//     if (installationMethod.trim().isEmpty) {
-//       return;
-//     }
-
-//     setState(() {
-//       _isLoadingActivities = true;
-//       _activities = [];
-//     });
-
-//     try {
-//       /*
-//        * IMPORTANT:
-//        *
-//        * Replace this call with your actual service method.
-//        *
-//        * Only these values should be sent:
-//        *
-//        * projectId
-//        * token
-//        * installationMethod
-//        *
-//        */
-
-//       final response =
-//           await HttpService.getInstallationActivities(
-//         projectId: widget.projectId,
-//         installationMethod: installationMethod,
-//       );
-
-//       if (!mounted) return;
-
-//       setState(() {
-//         _activities = response.data;
-//       });
-
-//       log(
-//         'Activities loaded: ${_activities.length}',
-//       );
-//     } catch (e, stackTrace) {
-//       log(
-//         'Failed to load activities',
-//         error: e,
-//         stackTrace: stackTrace,
-//       );
-
-//       if (!mounted) return;
-
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(
-//           content: Text(
-//             'Failed to load activities: $e',
-//           ),
-//           behavior: SnackBarBehavior.floating,
-//         ),
-//       );
-//     } finally {
-//       if (!mounted) return;
-
-//       setState(() {
-//         _isLoadingActivities = false;
-//       });
-//     }
-//   }
-
-//   // ============================================================
-//   // DATE PICKER
-//   // ============================================================
-
-//   Future<void> _selectDate({
-//     required DateTime? currentDate,
-//     required Function(DateTime) onSelected,
-//   }) async {
-//     final picked = await showDatePicker(
-//       context: context,
-//       initialDate: currentDate ?? DateTime.now(),
-//       firstDate: DateTime(2000),
-//       lastDate: DateTime(2100),
-//       builder: (context, child) {
-//         return Theme(
-//           data: Theme.of(context).copyWith(
-//             colorScheme: const ColorScheme.light(
-//               primary: _primary,
-//             ),
-//           ),
-//           child: child!,
-//         );
-//       },
-//     );
-
-//     if (picked != null) {
-//       onSelected(picked);
-//     }
-//   }
-
-//   String _formatDate(DateTime? date) {
-//     if (date == null) return '';
-
-//     return '${date.day.toString().padLeft(2, '0')}-'
-//         '${date.month.toString().padLeft(2, '0')}-'
-//         '${date.year}';
-//   }
-
-//   // ============================================================
-//   // TEXT FIELD
-//   // ============================================================
-
-//   Widget _buildTextField({
-//     required String label,
-//     required TextEditingController controller,
-//     bool requiredField = false,
-//     TextInputType keyboardType = TextInputType.text,
-//     bool readOnly = false,
-//   }) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 18),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           _buildLabel(
-//             label,
-//             requiredField: requiredField,
-//           ),
-//           const SizedBox(height: 7),
-//           TextFormField(
-//             controller: controller,
-//             keyboardType: keyboardType,
-//             readOnly: readOnly,
-//             decoration: _inputDecoration(
-//               hintText: 'Enter $label',
-//             ).copyWith(
-//               fillColor: readOnly
-//                   ? Colors.grey.shade200
-//                   : Colors.grey.shade50,
-//               suffixIcon: readOnly
-//                   ? const Icon(
-//                       Icons.lock_outline_rounded,
-//                       size: 19,
-//                       color: Colors.grey,
-//                     )
-//                   : null,
-//             ),
-//             validator: requiredField
-//                 ? (value) {
-//                     if (value == null ||
-//                         value.trim().isEmpty) {
-//                       return '$label is required';
-//                     }
-
-//                     return null;
-//                   }
-//                 : null,
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // DROPDOWN
-//   // ============================================================
-
-//   Widget _buildDropdown({
-//     required String label,
-//     required String? value,
-//     required List<String> items,
-//     required Function(String?)? onChanged,
-//     bool requiredField = false,
-//   }) {
-//     final bool disabled = onChanged == null;
-
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 18),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           _buildLabel(
-//             label,
-//             requiredField: requiredField,
-//           ),
-//           const SizedBox(height: 7),
-//           DropdownButtonFormField<String>(
-//             value: value,
-//             isExpanded: true,
-//             decoration: _inputDecoration(
-//               hintText: 'Select $label',
-//             ).copyWith(
-//               fillColor: disabled
-//                   ? Colors.grey.shade200
-//                   : Colors.grey.shade50,
-//               suffixIcon: disabled
-//                   ? const Icon(
-//                       Icons.lock_outline_rounded,
-//                       size: 19,
-//                       color: Colors.grey,
-//                     )
-//                   : null,
-//             ),
-//             icon: Icon(
-//               Icons.keyboard_arrow_down_rounded,
-//               color: disabled
-//                   ? Colors.grey.shade400
-//                   : Colors.grey,
-//             ),
-//             items: items.map((item) {
-//               return DropdownMenuItem<String>(
-//                 value: item,
-//                 child: Text(
-//                   item,
-//                   overflow: TextOverflow.ellipsis,
-//                 ),
-//               );
-//             }).toList(),
-//             onChanged: onChanged,
-//             validator: requiredField
-//                 ? (value) {
-//                     if (value == null ||
-//                         value.isEmpty) {
-//                       return '$label is required';
-//                     }
-
-//                     return null;
-//                   }
-//                 : null,
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // DATE FIELD
-//   // ============================================================
-
-//   Widget _buildDateField({
-//     required String label,
-//     required DateTime? date,
-//     required Function(DateTime) onSelected,
-//   }) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 18),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           _buildLabel(label),
-//           const SizedBox(height: 7),
-//           InkWell(
-//             onTap: () {
-//               _selectDate(
-//                 currentDate: date,
-//                 onSelected: onSelected,
-//               );
-//             },
-//             borderRadius: BorderRadius.circular(10),
-//             child: Container(
-//               width: double.infinity,
-//               padding: const EdgeInsets.symmetric(
-//                 horizontal: 14,
-//                 vertical: 14,
-//               ),
-//               decoration: BoxDecoration(
-//                 color: Colors.grey.shade50,
-//                 borderRadius: BorderRadius.circular(10),
-//                 border: Border.all(
-//                   color: Colors.grey.shade300,
-//                 ),
-//               ),
-//               child: Row(
-//                 children: [
-//                   Expanded(
-//                     child: Text(
-//                       date == null
-//                           ? 'Select $label'
-//                           : _formatDate(date),
-//                       style: TextStyle(
-//                         fontSize: 14,
-//                         color: date == null
-//                             ? Colors.grey.shade600
-//                             : Colors.black87,
-//                       ),
-//                     ),
-//                   ),
-//                   const Icon(
-//                     Icons.calendar_month_rounded,
-//                     color: _primary,
-//                     size: 21,
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // LABEL
-//   // ============================================================
-
-//   Widget _buildLabel(
-//     String text, {
-//     bool requiredField = false,
-//   }) {
-//     return RichText(
-//       text: TextSpan(
-//         text: text,
-//         style: const TextStyle(
-//           fontSize: 14,
-//           fontWeight: FontWeight.w600,
-//           color: Colors.black87,
-//         ),
-//         children: requiredField
-//             ? const [
-//                 TextSpan(
-//                   text: ' *',
-//                   style: TextStyle(
-//                     color: Colors.red,
-//                   ),
-//                 ),
-//               ]
-//             : null,
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // INPUT DECORATION
-//   // ============================================================
-
-//   InputDecoration _inputDecoration({
-//     required String hintText,
-//   }) {
-//     return InputDecoration(
-//       hintText: hintText,
-//       hintStyle: TextStyle(
-//         color: Colors.grey.shade500,
-//         fontSize: 14,
-//       ),
-//       filled: true,
-//       fillColor: Colors.grey.shade50,
-//       contentPadding: const EdgeInsets.symmetric(
-//         horizontal: 14,
-//         vertical: 13,
-//       ),
-//       border: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: BorderSide(
-//           color: Colors.grey.shade300,
-//         ),
-//       ),
-//       enabledBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: BorderSide(
-//           color: Colors.grey.shade300,
-//         ),
-//       ),
-//       focusedBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: const BorderSide(
-//           color: _primary,
-//           width: 1.4,
-//         ),
-//       ),
-//       errorBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: const BorderSide(
-//           color: Colors.red,
-//         ),
-//       ),
-//       focusedErrorBorder: OutlineInputBorder(
-//         borderRadius: BorderRadius.circular(10),
-//         borderSide: const BorderSide(
-//           color: Colors.red,
-//           width: 1.4,
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // SECTION HEADER
-//   // ============================================================
-
-//   Widget _buildSectionHeader(String title) {
-//     return Padding(
-//       padding: const EdgeInsets.only(
-//         bottom: 16,
-//       ),
-//       child: Row(
-//         children: [
-//           Container(
-//             width: 4,
-//             height: 21,
-//             decoration: BoxDecoration(
-//               color: _primary,
-//               borderRadius: BorderRadius.circular(3),
-//             ),
-//           ),
-//           const SizedBox(width: 9),
-//           Expanded(
-//             child: Text(
-//               title,
-//               style: const TextStyle(
-//                 fontSize: 17,
-//                 fontWeight: FontWeight.bold,
-//                 color: Colors.black87,
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // ACTIVITY SECTION
-//   // ============================================================
-
-//   Widget _buildActivitySection() {
-//     if (_isLoadingActivities) {
-//       return _buildFormCard(
-//         child: const Padding(
-//           padding: EdgeInsets.all(25),
-//           child: Center(
-//             child: CircularProgressIndicator(
-//               color: _primary,
-//             ),
-//           ),
-//         ),
-//       );
-//     }
-
-//     if (_selectedInstallationMethod == null) {
-//       return const SizedBox.shrink();
-//     }
-
-//     if (_activities.isEmpty) {
-//       return _buildFormCard(
-//         child: const Padding(
-//           padding: EdgeInsets.all(8),
-//           child: Text(
-//             'No activities found for this installation method.',
-//             style: TextStyle(
-//               fontSize: 14,
-//               color: Colors.grey,
-//             ),
-//           ),
-//         ),
-//       );
-//     }
-
-//     return _buildFormCard(
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           _buildSectionHeader(
-//             'Activity Management '
-//             '($_selectedInstallationMethod)',
-//           ),
-
-//           ..._activities.map(
-//             (activity) => _buildActivityItem(
-//               activity,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // ACTIVITY ITEM
-//   // ============================================================
-
-//   Widget _buildActivityItem(
-//     ActivityItem activity,
-//   ) {
-//     return Container(
-//       margin: const EdgeInsets.only(
-//         bottom: 14,
-//       ),
-//       padding: const EdgeInsets.all(12),
-//       decoration: BoxDecoration(
-//         color: Colors.grey.shade50,
-//         borderRadius: BorderRadius.circular(12),
-//         border: Border.all(
-//           color: Colors.grey.shade200,
-//         ),
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Text(
-//             activity.name,
-//             style: const TextStyle(
-//               fontSize: 14,
-//               fontWeight: FontWeight.w600,
-//               color: Colors.black87,
-//             ),
-//           ),
-
-//           const SizedBox(height: 12),
-
-//           _buildActivityDropdown(
-//             activity: activity,
-//           ),
-
-//           const SizedBox(height: 12),
-
-//           TextFormField(
-//             initialValue:
-//                 activity.percentage?.toString() ?? '',
-//             keyboardType: TextInputType.number,
-//             decoration: _inputDecoration(
-//               hintText: '% of Completion',
-//             ),
-//             onChanged: (value) {
-//               activity.percentage = value;
-//             },
-//           ),
-
-//           const SizedBox(height: 12),
-
-//           _buildActivityDateField(
-//             label: 'Start Date',
-//             date: activity.startDate,
-//             onSelected: (date) {
-//               setState(() {
-//                 activity.startDate = date;
-//               });
-//             },
-//           ),
-
-//           const SizedBox(height: 12),
-
-//           _buildActivityDateField(
-//             label: 'Completed Date',
-//             date: activity.completedDate,
-//             onSelected: (date) {
-//               setState(() {
-//                 activity.completedDate = date;
-//               });
-//             },
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // ACTIVITY STATUS DROPDOWN
-//   // ============================================================
-
-//   Widget _buildActivityDropdown({
-//     required ActivityItem activity,
-//   }) {
-//     return DropdownButtonFormField<String>(
-//       value: _activityStatuses.contains(
-//         activity.status,
-//       )
-//           ? activity.status
-//           : null,
-//       isExpanded: true,
-//       decoration: _inputDecoration(
-//         hintText: 'Select Status',
-//       ),
-//       icon: const Icon(
-//         Icons.keyboard_arrow_down_rounded,
-//         color: Colors.grey,
-//       ),
-//       items: _activityStatuses.map((status) {
-//         return DropdownMenuItem<String>(
-//           value: status,
-//           child: Text(status),
-//         );
-//       }).toList(),
-//       onChanged: (value) {
-//         setState(() {
-//           activity.status = value;
-//         });
-//       },
-//     );
-//   }
-
-//   // ============================================================
-//   // ACTIVITY DATE
-//   // ============================================================
-
-//   Widget _buildActivityDateField({
-//     required String label,
-//     required DateTime? date,
-//     required Function(DateTime) onSelected,
-//   }) {
-//     return InkWell(
-//       onTap: () {
-//         _selectDate(
-//           currentDate: date,
-//           onSelected: onSelected,
-//         );
-//       },
-//       borderRadius: BorderRadius.circular(10),
-//       child: Container(
-//         width: double.infinity,
-//         padding: const EdgeInsets.symmetric(
-//           horizontal: 14,
-//           vertical: 14,
-//         ),
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.circular(10),
-//           border: Border.all(
-//             color: Colors.grey.shade300,
-//           ),
-//         ),
-//         child: Row(
-//           children: [
-//             Expanded(
-//               child: Text(
-//                 date == null
-//                     ? label
-//                     : _formatDate(date),
-//                 style: TextStyle(
-//                   fontSize: 14,
-//                   color: date == null
-//                       ? Colors.grey.shade600
-//                       : Colors.black87,
-//                 ),
-//               ),
-//             ),
-//             const Icon(
-//               Icons.calendar_month_rounded,
-//               color: _primary,
-//               size: 21,
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // SUBMIT
-//   // ============================================================
-
-//   void _submit() {
-//     if (!_formKey.currentState!.validate()) {
-//       return;
-//     }
-
-//     if (_selectedInstallationMethod == null ||
-//         _selectedInstallationMethod!.isEmpty) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(
-//           content: Text(
-//             'Please select Method of Installation',
-//           ),
-//           behavior: SnackBarBehavior.floating,
-//         ),
-//       );
-
-//       return;
-//     }
-
-//     log('==============================');
-//     log(
-//       widget.isEdit
-//           ? 'EDIT UNIT'
-//           : 'ADD UNIT',
-//     );
-//     log('Project ID: ${widget.projectId}');
-//     log(
-//       'Site Lift No: '
-//       '${_siteLiftController.text}',
-//     );
-//     log(
-//       'Unit/Machine No: '
-//       '${_unitMachineController.text}',
-//     );
-//     log(
-//       'Installation Method: '
-//       '$_selectedInstallationMethod',
-//     );
-
-//     for (final activity in _activities) {
-//       log(
-//         'Activity: ${activity.name}',
-//       );
-
-//       log(
-//         'Status: ${activity.status}',
-//       );
-
-//       log(
-//         'Percentage: ${activity.percentage}',
-//       );
-
-//       log(
-//         'Start Date: ${activity.startDate}',
-//       );
-
-//       log(
-//         'Completed Date: '
-//         '${activity.completedDate}',
-//       );
-//     }
-
-//     log('==============================');
-
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(
-//         content: Text(
-//           widget.isEdit
-//               ? 'Unit information ready for update'
-//               : 'Unit information validated successfully',
-//         ),
-//         behavior: SnackBarBehavior.floating,
-//       ),
-//     );
-
-//     /*
-//      * Later:
-//      *
-//      * if (widget.isEdit) {
-//      *   HttpService.updateUnitInfo(...)
-//      * } else {
-//      *   HttpService.addUnitInfo(...)
-//      * }
-//      */
-//   }
-
-//   // ============================================================
-//   // BUILD
-//   // ============================================================
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: const Color(0xFFF1F5FB),
-
-//       // ========================================================
-//       // APP BAR
-//       // ========================================================
-
-//       appBar: AppBar(
-//         title: Text(
-//           widget.isEdit
-//               ? 'Edit Unit Information'
-//               : 'Add Unit Information',
-//           style: const TextStyle(
-//             color: Colors.white,
-//             fontWeight: FontWeight.bold,
-//             fontSize: 17,
-//           ),
-//         ),
-//         backgroundColor: _primary,
-//         elevation: 0,
-//         leading: IconButton(
-//           icon: const Icon(
-//             Icons.arrow_back_ios_new_rounded,
-//             color: Colors.white,
-//           ),
-//           onPressed: () {
-//             Navigator.pop(context);
-//           },
-//         ),
-//         flexibleSpace: Container(
-//           decoration: const BoxDecoration(
-//             gradient: LinearGradient(
-//               colors: [
-//                 _primary,
-//                 _primaryDark,
-//               ],
-//               begin: Alignment.topLeft,
-//               end: Alignment.bottomRight,
-//             ),
-//           ),
-//         ),
-//       ),
-
-//       // ========================================================
-//       // BODY
-//       // ========================================================
-
-//       body: Form(
-//         key: _formKey,
-//         child: SingleChildScrollView(
-//           padding: const EdgeInsets.fromLTRB(
-//             16,
-//             16,
-//             16,
-//             30,
-//           ),
-//           child: Column(
-//             children: [
-//               // ==================================================
-//               // UNIT INFORMATION
-//               // ==================================================
-
-//               _buildFormCard(
-//                 child: Column(
-//                   crossAxisAlignment:
-//                       CrossAxisAlignment.start,
-//                   children: [
-//                     _buildSectionHeader(
-//                       'Unit Information',
-//                     ),
-
-//                     // Site Lift No
-//                     _buildTextField(
-//                       label: 'Site Lift No',
-//                       controller:
-//                           _siteLiftController,
-//                       requiredField: true,
-//                       readOnly: widget.isEdit,
-//                     ),
-
-//                     // Unit / Machine No
-//                     _buildTextField(
-//                       label: 'Unit/Machine No',
-//                       controller:
-//                           _unitMachineController,
-//                       requiredField: true,
-//                       readOnly: widget.isEdit,
-//                     ),
-
-//                     // Capacity
-//                     _buildTextField(
-//                       label: 'Capacity',
-//                       controller:
-//                           _capacityController,
-//                       keyboardType:
-//                           TextInputType.number,
-//                     ),
-
-//                     // Lift Speed
-//                     _buildDropdown(
-//                       label: 'Lift Speed',
-//                       value:
-//                           _selectedLiftSpeed,
-//                       items: _liftSpeeds,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedLiftSpeed =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Stops
-//                     _buildDropdown(
-//                       label: 'Number of Stops',
-//                       value: _selectedStops,
-//                       items: _stops,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedStops =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Openings
-//                     _buildDropdown(
-//                       label: 'Number of Opening',
-//                       value:
-//                           _selectedOpenings,
-//                       items: _openings,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedOpenings =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Travel Height
-//                     _buildTextField(
-//                       label: 'Travel Height',
-//                       controller:
-//                           _travelHeightController,
-//                       keyboardType:
-//                           TextInputType.number,
-//                     ),
-
-//                     // Door Size
-//                     _buildTextField(
-//                       label: 'Door Size',
-//                       controller:
-//                           _doorSizeController,
-//                     ),
-
-//                     // Door Type
-//                     _buildDropdown(
-//                       label: 'Door Type',
-//                       value:
-//                           _selectedDoorType,
-//                       items: _doorTypes,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedDoorType =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Door Model
-//                     _buildDropdown(
-//                       label: 'Door Model',
-//                       value:
-//                           _selectedDoorModel,
-//                       items: _doorModels,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedDoorModel =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Machine Room
-//                     _buildDropdown(
-//                       label:
-//                           'Machine Room Type',
-//                       value:
-//                           _selectedMachineRoomType,
-//                       items:
-//                           _machineRoomTypes,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedMachineRoomType =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Product Model
-//                     _buildTextField(
-//                       label:
-//                           'Product Model Name',
-//                       controller:
-//                           _productModelController,
-//                     ),
-
-//                     // Standard
-//                     _buildDropdown(
-//                       label:
-//                           'Standard or Non Standard',
-//                       value:
-//                           _selectedStandardType,
-//                       items:
-//                           _standardTypes,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedStandardType =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Current Status
-//                     _buildDropdown(
-//                       label: 'Current Status',
-//                       value:
-//                           _selectedStatus,
-//                       items: _statuses,
-//                       onChanged: (value) {
-//                         setState(() {
-//                           _selectedStatus =
-//                               value;
-//                         });
-//                       },
-//                     ),
-
-//                     // Start Date
-//                     _buildDateField(
-//                       label: 'Start Date',
-//                       date: _startDate,
-//                       onSelected: (date) {
-//                         setState(() {
-//                           _startDate = date;
-//                         });
-//                       },
-//                     ),
-
-//                     // Planned Finish
-//                     _buildDateField(
-//                       label: 'Planned Finish',
-//                       date: _plannedFinish,
-//                       onSelected: (date) {
-//                         setState(() {
-//                           _plannedFinish =
-//                               date;
-//                         });
-//                       },
-//                     ),
-
-//                     // Actual Finish
-//                     _buildDateField(
-//                       label: 'Actual Finish',
-//                       date: _actualFinish,
-//                       onSelected: (date) {
-//                         setState(() {
-//                           _actualFinish =
-//                               date;
-//                         });
-//                       },
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               const SizedBox(height: 16),
-
-//               // ==================================================
-//               // METHOD OF INSTALLATION
-//               // ==================================================
-
-//               _buildFormCard(
-//                 child: Column(
-//                   crossAxisAlignment:
-//                       CrossAxisAlignment.start,
-//                   children: [
-//                     _buildSectionHeader(
-//                       'Method of Installation',
-//                     ),
-
-//                     _buildDropdown(
-//                       label:
-//                           'Method of Installation',
-//                       value:
-//                           _selectedInstallationMethod,
-//                       items:
-//                           _installationMethods,
-
-//                       // EDIT = disabled
-//                       // ADD = enabled
-//                       onChanged: widget.isEdit
-//                           ? null
-//                           : (value) {
-//                               setState(() {
-//                                 _selectedInstallationMethod =
-//                                     value;
-
-//                                 _activities = [];
-//                               });
-
-//                               if (value != null) {
-//                                 _loadActivities(
-//                                   value,
-//                                 );
-//                               }
-//                             },
-
-//                       requiredField: true,
-//                     ),
-//                   ],
-//                 ),
-//               ),
-
-//               const SizedBox(height: 16),
-
-//               // ==================================================
-//               // ACTIVITY MANAGEMENT
-//               // ==================================================
-
-//               _buildActivitySection(),
-
-//               const SizedBox(height: 22),
-
-//               // ==================================================
-//               // SAVE BUTTON
-//               // ==================================================
-
-//               SizedBox(
-//                 width: double.infinity,
-//                 height: 52,
-//                 child: ElevatedButton.icon(
-//                   onPressed: _submit,
-//                   icon: Icon(
-//                     widget.isEdit
-//                         ? Icons.update_rounded
-//                         : Icons.save_rounded,
-//                     size: 20,
-//                   ),
-//                   label: Text(
-//                     widget.isEdit
-//                         ? 'Update Unit Information'
-//                         : 'Save Unit Information',
-//                     style: const TextStyle(
-//                       fontSize: 15,
-//                       fontWeight:
-//                           FontWeight.w600,
-//                     ),
-//                   ),
-//                   style:
-//                       ElevatedButton.styleFrom(
-//                     backgroundColor:
-//                         _primary,
-//                     foregroundColor:
-//                         Colors.white,
-//                     elevation: 0,
-//                     shape:
-//                         RoundedRectangleBorder(
-//                       borderRadius:
-//                           BorderRadius.circular(
-//                         12,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   // ============================================================
-//   // FORM CARD
-//   // ============================================================
-
-//   Widget _buildFormCard({
-//     required Widget child,
-//   }) {
-//     return Container(
-//       width: double.infinity,
-//       padding: const EdgeInsets.all(18),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius:
-//             BorderRadius.circular(16),
-//         boxShadow: [
-//           BoxShadow(
-//             color:
-//                 _primary.withOpacity(0.07),
-//             blurRadius: 12,
-//             offset:
-//                 const Offset(0, 4),
-//           ),
-//         ],
-//       ),
-//       child: child,
-//     );
-//   }
-// }
-
-// // ================================================================
-// // ACTIVITY MODEL
-// // ================================================================
-
-// class ActivityItem {
-//   final int id;
-
-//   final String name;
-
-//   String? status;
-
-//   String? percentage;
-
-//   DateTime? startDate;
-
-//   DateTime? completedDate;
-
-//   ActivityItem({
-//     required this.id,
-//     required this.name,
-//     this.status,
-//     this.percentage,
-//     this.startDate,
-//     this.completedDate,
-//   });
-
-//   factory ActivityItem.fromJson(
-//     Map<String, dynamic> json,
-//   ) {
-//     return ActivityItem(
-//       id: _parseInt(json['id']),
-//       name:
-//           json['name']?.toString() ??
-//           json['activity_name']?.toString() ??
-//           '',
-//       status:
-//           json['status']?.toString(),
-//       percentage:
-//           json['percentage']?.toString() ??
-//           json['completion_percentage']
-//               ?.toString(),
-//       startDate:
-//           _parseDate(
-//         json['start_date'],
-//       ),
-//       completedDate:
-//           _parseDate(
-//         json['completed_date'],
-//       ),
-//     );
-//   }
-
-//   static int _parseInt(dynamic value) {
-//     if (value is int) {
-//       return value;
-//     }
-
-//     return int.tryParse(
-//           value?.toString() ?? '',
-//         ) ??
-//         0;
-//   }
-
-//   static DateTime? _parseDate(
-//     dynamic value,
-//   ) {
-//     if (value == null) {
-//       return null;
-//     }
-
-//     return DateTime.tryParse(
-//       value.toString(),
-//     );
-//   }
-// }

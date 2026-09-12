@@ -564,39 +564,47 @@ class _DelayManagementPageState extends State<DelayManagementPage> {
                   ),
                 ),
 
-                // Edit
-                SizedBox(
-                  width: 30,
-                  height: 36,
-                  child: IconButton(
-                    onPressed: () {
-                      _editDelay(delay);
-                    },
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      color: Colors.grey,
-                      size: 20,
+                // EDIT BUTTON
+                InkWell(
+                  onTap: () {
+                    _editDelay(delay);
+                  },
+                  borderRadius: BorderRadius.circular(9),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: _primary.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(9),
                     ),
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Edit',
+                    child: const Icon(
+                      Icons.edit_outlined,
+                      color: _primary,
+                      size: 18,
+                    ),
                   ),
                 ),
 
-                // Delete
-                SizedBox(
-                  width: 30,
-                  height: 36,
-                  child: IconButton(
-                    onPressed: () {
-                      _deleteDelay(delay);
-                    },
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.red,
-                      size: 20,
+                const SizedBox(width: 7),
+
+                // DELETE BUTTON
+                InkWell(
+                  onTap: () {
+                    _deleteDelay(delay);
+                  },
+                  borderRadius: BorderRadius.circular(9),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(9),
                     ),
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Delete',
+                    child: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.red,
+                      size: 19,
+                    ),
                   ),
                 ),
               ],

@@ -119,6 +119,17 @@ class UnitInfoData {
     this.openingName = '',
   });
 
+  String get currentStatus {
+    switch (statusId) {
+      case '1':
+        return 'Pending';
+      case '2':
+        return 'In Progress';
+      default:
+        return '--';
+    }
+  }
+
   factory UnitInfoData.fromJson(Map<String, dynamic> json) {
     return UnitInfoData(
       id: json['id']?.toString() ?? '',
