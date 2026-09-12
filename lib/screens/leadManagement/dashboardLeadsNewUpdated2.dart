@@ -1202,6 +1202,21 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
     );
   }
 
+  Future<void> getLeadProgressbarEstimateQuotation(
+    String token,
+    dynamic fromDate,
+    dynamic toDate,
+    String callResultId,
+  ) async {
+    object1 = await HttpService.estimateQuotationLeadProgressbar(
+      token,
+      fromDate.toString(),
+      toDate.toString(),
+      callResultId,
+    );
+  }
+
+
   Future<void> getLeadProgressBarStaffData({
     required String leadStatus,
     required String selectedType,
@@ -3808,12 +3823,31 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           ? '2'
                           : _listTabFilter == 'Closed'
                               ? '4'
-                              : '';
+                              : _listTabFilter == 'Estimation'
+                                  ? '16'
+                                  : (_listTabFilter == 'Quatation' ||
+                                          _listTabFilter == 'Quotation')
+                                      ? '17'
+                                      : '';
 
       dynamic fDate = fromDate;
       dynamic tDate = toDate;
 
-      if (category == "New") {
+      if (category == "Estimation") {
+        await getLeadProgressbarEstimateQuotation(
+          widget.token!,
+          fDate,
+          tDate,
+          "16",
+        );
+      } else if (category == "Quatation" || category == "Quotation") {
+        await getLeadProgressbarEstimateQuotation(
+          widget.token!,
+          fDate,
+          tDate,
+          "17",
+        );
+      } else if (category == "New") {
         await getLeadProgressbarNew(
           widget.token!,
           fDate,
@@ -4443,7 +4477,12 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                                                   : _listTabFilter ==
                                                           'Transferred'
                                                       ? 'Transferred Leads'
-                                                      : 'Total Leads',
+                                                      : _listTabFilter == 'Estimation'
+                                                          ? 'Estimation Leads'
+                                                          : (_listTabFilter == 'Quatation' ||
+                                                                  _listTabFilter == 'Quotation')
+                                                              ? 'Quatation Leads'
+                                                              : 'Total Leads',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -5133,13 +5172,19 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
       "token": widget.token,
       "callResultId": isFollowupFiltering
           ? ""
-          : (_listTabCurrentIsCalled == true
-              ? ((_listTabSelectedStatusIds != null && _listTabSelectedStatusIds!.isNotEmpty)
-                  ? _listTabSelectedStatusIds!.join(',')
-                  : (_listTabFilter == "New" ? "1" : ""))
-              : (_listTabCurrentStatus == "0"
-                  ? ""
-                  : (_listTabCurrentStatus ?? ""))),
+          : (_listTabSelectedStatusIds != null &&
+                  _listTabSelectedStatusIds!.isNotEmpty)
+              ? _listTabSelectedStatusIds!.join(',')
+              : (_listTabFilter == "Estimation"
+                  ? "16"
+                  : (_listTabFilter == "Quatation" ||
+                          _listTabFilter == "Quotation"
+                      ? "17"
+                      : (_listTabCurrentIsCalled == true
+                          ? (_listTabFilter == "New" ? "1" : "")
+                          : (_listTabCurrentStatus == "0"
+                              ? ""
+                              : (_listTabCurrentStatus ?? ""))))),
       "leadCategoryId": _listTabSelectedCategoryIds,
       "leadSubcategoryId": [],
       "callResponseId": isFollowupFiltering
@@ -5237,11 +5282,19 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
 
     Map<String, dynamic> body = {
       "token": widget.token,
-      "callResultId": (_listTabCurrentIsCalled == true)
-          ? ((_listTabSelectedStatusIds != null && _listTabSelectedStatusIds!.isNotEmpty)
-              ? _listTabSelectedStatusIds!.join(',')
-              : (_listTabFilter == "New" ? "1" : ""))
-          : (_listTabCurrentStatus == "0" ? "" : (_listTabCurrentStatus ?? "")),
+      "callResultId": (_listTabSelectedStatusIds != null &&
+              _listTabSelectedStatusIds!.isNotEmpty)
+          ? _listTabSelectedStatusIds!.join(',')
+          : (_listTabFilter == "Estimation"
+              ? "16"
+              : (_listTabFilter == "Quatation" ||
+                      _listTabFilter == "Quotation"
+                  ? "17"
+                  : (_listTabCurrentIsCalled == true
+                      ? (_listTabFilter == "New" ? "1" : "")
+                      : (_listTabCurrentStatus == "0"
+                          ? ""
+                          : (_listTabCurrentStatus ?? ""))))),
       "leadCategoryId": _listTabSelectedCategoryIds,
       "leadSubcategoryId": [],
       "callResponseId": (_listTabCurrentIsCalled == true)
@@ -5264,7 +5317,10 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
         (_listTabCurrentLeadType == "-1" ||
             _listTabCurrentLeadType == "1" ||
             _listTabCurrentLeadType == "2" ||
-            _listTabCurrentStatus == "4");
+            _listTabCurrentStatus == "4" ||
+            _listTabFilter == "Estimation" ||
+            _listTabFilter == "Quatation" ||
+            _listTabFilter == "Quotation");
     body["filterStatus"] = shouldSendDates ? 1 : 0;
     body["fromDate"] =
         shouldSendDates ? DateFormat('yyyy-MM-dd').format(fromDate) : "";
@@ -12596,6 +12652,34 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                           isCalled: false,
                           graphId: '4',
                         ),
+                        _buildListSummaryItemOld(
+                          'Estimation',
+                          dashboardMainCounts != null
+                              ? (dashboardMainCounts
+                                          ?.data.leads.estimationCount ??
+                                      0)
+                                  .toString()
+                              : '0',
+                          Icons.description_outlined,
+                          _colors[9] ?? const Color(0xFF8E24AA),
+                          '16',
+                          isCalled: true,
+                          graphId: '16',
+                        ),
+                        _buildListSummaryItemOld(
+                          'Quatation',
+                          dashboardMainCounts != null
+                              ? (dashboardMainCounts
+                                          ?.data.leads.quotationCount ??
+                                      0)
+                                  .toString()
+                              : '0',
+                          Icons.request_quote_outlined,
+                          _colors[10] ?? const Color(0xFFE65100),
+                          '17',
+                          isCalled: true,
+                          graphId: '17',
+                        ),
                       ],
                     ),
                   ),
@@ -12694,7 +12778,7 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             isCalled: true,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 8),    
                         Expanded(
                           child: _buildListSummaryItem(
                             'Closed',
@@ -12708,6 +12792,48 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                             '4',
                             isCalled: false,
                             graphId: '4',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildListSummaryItem(
+                            'Estimation',
+                            dashboardMainCounts != null
+                                ? (dashboardMainCounts
+                                            ?.data.leads.estimationCount ??
+                                        0)
+                                    .toString()
+                                : '0',
+                            Icons.description_outlined,
+                            _colors[9] ?? const Color(0xFF8E24AA),
+                            '16',
+                            leadType: '',
+                            callStatus: '',
+                            isCalled: true,
+                            graphId: '16',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildListSummaryItem(
+                            'Quatation',
+                            dashboardMainCounts != null
+                                ? (dashboardMainCounts
+                                            ?.data.leads.quotationCount ??
+                                        0)
+                                    .toString()
+                                : '0',
+                            Icons.request_quote_outlined,
+                            _colors[10] ?? const Color(0xFFE65100),
+                            '17',
+                            leadType: '',
+                            callStatus: '',
+                            isCalled: true,
+                            graphId: '17',
                           ),
                         ),
                       ],
@@ -12839,47 +12965,61 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
-                label == "New"
-                    ? await getLeadProgressbarNew(
+                label == "Estimation"
+                    ? await getLeadProgressbarEstimateQuotation(
                         widget.token!,
                         fromDate,
                         toDate,
-                        effectiveGraphStatus,
+                        "16",
                       )
-                    : label == "Followup"
-                        ? await getLeadProgressbarFollowup(
+                    : (label == "Quatation" || label == "Quotation")
+                        ? await getLeadProgressbarEstimateQuotation(
                             widget.token!,
                             fromDate,
                             toDate,
-                            effectiveGraphStatus,
+                            "17",
                           )
-                        : label == "Missed"
-                            ? await getLeadProgressbarMissed(
+                        : label == "New"
+                            ? await getLeadProgressbarNew(
                                 widget.token!,
                                 fromDate,
                                 toDate,
                                 effectiveGraphStatus,
                               )
-                            : label == "Called"
-                                ? await getLeadProgressbarCalled(
+                            : label == "Followup"
+                                ? await getLeadProgressbarFollowup(
                                     widget.token!,
                                     fromDate,
                                     toDate,
                                     effectiveGraphStatus,
                                   )
-                                : label == "Transferred"
-                                    ? await getLeadProgressbarTransferred(
+                                : label == "Missed"
+                                    ? await getLeadProgressbarMissed(
                                         widget.token!,
                                         fromDate,
                                         toDate,
                                         effectiveGraphStatus,
                                       )
-                                    : await getLeadProgressbar(
-                                        widget.token!,
-                                        fromDate,
-                                        toDate,
-                                        effectiveGraphStatus,
-                                      );
+                                    : label == "Called"
+                                        ? await getLeadProgressbarCalled(
+                                            widget.token!,
+                                            fromDate,
+                                            toDate,
+                                            effectiveGraphStatus,
+                                          )
+                                        : label == "Transferred"
+                                            ? await getLeadProgressbarTransferred(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              )
+                                            : await getLeadProgressbar(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              );
 
                 if (object1!.status == true) {
                   if (context.mounted) {
@@ -13046,47 +13186,61 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
-                label == "New"
-                    ? await getLeadProgressbarNew(
+                label == "Estimation"
+                    ? await getLeadProgressbarEstimateQuotation(
                         widget.token!,
                         fromDate,
                         toDate,
-                        effectiveGraphStatus,
+                        "16",
                       )
-                    : label == "Followup"
-                        ? await getLeadProgressbarFollowup(
+                    : (label == "Quatation" || label == "Quotation")
+                        ? await getLeadProgressbarEstimateQuotation(
                             widget.token!,
                             fromDate,
                             toDate,
-                            effectiveGraphStatus,
+                            "17",
                           )
-                        : label == "Missed"
-                            ? await getLeadProgressbarMissed(
+                        : label == "New"
+                            ? await getLeadProgressbarNew(
                                 widget.token!,
                                 fromDate,
                                 toDate,
                                 effectiveGraphStatus,
                               )
-                            : label == "Called"
-                                ? await getLeadProgressbarCalled(
+                            : label == "Followup"
+                                ? await getLeadProgressbarFollowup(
                                     widget.token!,
                                     fromDate,
                                     toDate,
                                     effectiveGraphStatus,
                                   )
-                                : label == "Transferred"
-                                    ? await getLeadProgressbarTransferred(
+                                : label == "Missed"
+                                    ? await getLeadProgressbarMissed(
                                         widget.token!,
                                         fromDate,
                                         toDate,
                                         effectiveGraphStatus,
                                       )
-                                    : await getLeadProgressbar(
-                                        widget.token!,
-                                        fromDate,
-                                        toDate,
-                                        effectiveGraphStatus,
-                                      );
+                                    : label == "Called"
+                                        ? await getLeadProgressbarCalled(
+                                            widget.token!,
+                                            fromDate,
+                                            toDate,
+                                            effectiveGraphStatus,
+                                          )
+                                        : label == "Transferred"
+                                            ? await getLeadProgressbarTransferred(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              )
+                                            : await getLeadProgressbar(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              );
 
                 if (object1!.status == true) {
                   if (context.mounted) {
@@ -13260,47 +13414,61 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
-                label == "New"
-                    ? await getLeadProgressbarNew(
+                label == "Estimation"
+                    ? await getLeadProgressbarEstimateQuotation(
                         widget.token!,
                         fromDate,
                         toDate,
-                        effectiveGraphStatus,
+                        "16",
                       )
-                    : label == "Followup"
-                        ? await getLeadProgressbarFollowup(
+                    : (label == "Quatation" || label == "Quotation")
+                        ? await getLeadProgressbarEstimateQuotation(
                             widget.token!,
                             fromDate,
                             toDate,
-                            effectiveGraphStatus,
+                            "17",
                           )
-                        : label == "Missed"
-                            ? await getLeadProgressbarMissed(
+                        : label == "New"
+                            ? await getLeadProgressbarNew(
                                 widget.token!,
                                 fromDate,
                                 toDate,
                                 effectiveGraphStatus,
                               )
-                            : label == "Called"
-                                ? await getLeadProgressbarCalled(
+                            : label == "Followup"
+                                ? await getLeadProgressbarFollowup(
                                     widget.token!,
                                     fromDate,
                                     toDate,
                                     effectiveGraphStatus,
                                   )
-                                : label == "Transferred"
-                                    ? await getLeadProgressbarTransferred(
+                                : label == "Missed"
+                                    ? await getLeadProgressbarMissed(
                                         widget.token!,
                                         fromDate,
                                         toDate,
                                         effectiveGraphStatus,
                                       )
-                                    : await getLeadProgressbar(
-                                        widget.token!,
-                                        fromDate,
-                                        toDate,
-                                        effectiveGraphStatus,
-                                      );
+                                    : label == "Called"
+                                        ? await getLeadProgressbarCalled(
+                                            widget.token!,
+                                            fromDate,
+                                            toDate,
+                                            effectiveGraphStatus,
+                                          )
+                                        : label == "Transferred"
+                                            ? await getLeadProgressbarTransferred(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              )
+                                            : await getLeadProgressbar(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              );
 
                 if (object1!.status == true) {
                   if (context.mounted) {
@@ -13474,47 +13642,61 @@ class _DashboardLeadNewUpdatedTwoState extends State<DashboardLeadNewUpdatedTwo>
                     ((status == '0' && callStatus != null)
                         ? callStatus
                         : status);
-                label == "New"
-                    ? await getLeadProgressbarNew(
+                label == "Estimation"
+                    ? await getLeadProgressbarEstimateQuotation(
                         widget.token!,
                         fromDate,
                         toDate,
-                        effectiveGraphStatus,
+                        "16",
                       )
-                    : label == "Followup"
-                        ? await getLeadProgressbarFollowup(
+                    : (label == "Quatation" || label == "Quotation")
+                        ? await getLeadProgressbarEstimateQuotation(
                             widget.token!,
                             fromDate,
                             toDate,
-                            effectiveGraphStatus,
+                            "17",
                           )
-                        : label == "Missed"
-                            ? await getLeadProgressbarMissed(
+                        : label == "New"
+                            ? await getLeadProgressbarNew(
                                 widget.token!,
                                 fromDate,
                                 toDate,
                                 effectiveGraphStatus,
                               )
-                            : label == "Called"
-                                ? await getLeadProgressbarCalled(
+                            : label == "Followup"
+                                ? await getLeadProgressbarFollowup(
                                     widget.token!,
                                     fromDate,
                                     toDate,
                                     effectiveGraphStatus,
                                   )
-                                : label == "Transferred"
-                                    ? await getLeadProgressbarTransferred(
+                                : label == "Missed"
+                                    ? await getLeadProgressbarMissed(
                                         widget.token!,
                                         fromDate,
                                         toDate,
                                         effectiveGraphStatus,
                                       )
-                                    : await getLeadProgressbar(
-                                        widget.token!,
-                                        fromDate,
-                                        toDate,
-                                        effectiveGraphStatus,
-                                      );
+                                    : label == "Called"
+                                        ? await getLeadProgressbarCalled(
+                                            widget.token!,
+                                            fromDate,
+                                            toDate,
+                                            effectiveGraphStatus,
+                                          )
+                                        : label == "Transferred"
+                                            ? await getLeadProgressbarTransferred(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              )
+                                            : await getLeadProgressbar(
+                                                widget.token!,
+                                                fromDate,
+                                                toDate,
+                                                effectiveGraphStatus,
+                                              );
 
                 if (object1!.status == true) {
                   if (context.mounted) {

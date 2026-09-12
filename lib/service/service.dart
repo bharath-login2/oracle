@@ -876,6 +876,7 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}leadReport",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           data: jsonEncode(body));
+          print('leadReport:$result');
       if (result.statusCode == 200) {
         ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
         return model;
@@ -1845,7 +1846,7 @@ class HttpService {
 
     try {
       var result = await _dio.post(
-          "${await Config.getUrl()}lead_progressbar_data",
+          "${await Config.getUrl()}closed_lead_progressbar",
           data: formData);
       LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
       return model;
@@ -1992,6 +1993,35 @@ class HttpService {
       log("error: $e");
     }
   }
+
+  static Future estimateQuotationLeadProgressbar(token, fromDate, toDate, callResultId,
+      {List<String>? staffIds}) async {
+    Map<String, dynamic> map = {
+      "token": token,
+      "fromDate": fromDate ?? "",
+      "toDate": toDate ?? "",
+      "callResultId": callResultId,
+    };
+    if (staffIds != null && staffIds.isNotEmpty) {
+      if (staffIds.length == 1) {
+        map["staffId"] = staffIds.first;
+      } else {
+        map["staffId"] = staffIds.join(',');
+      }
+    }
+    var formData = FormData.fromMap(map);
+
+    try {
+      var result = await _dio.post(
+          "${await Config.getUrl()}estimate_quotation_lead_progressbar",
+          data: formData);
+      LeadProgressbarModel model = LeadProgressbarModel.fromJson(result.data);
+      return model;
+    } catch (e) {
+      log("error: $e");
+    }
+  }
+
 
   static Future leadProgressbarStaff(
       token, fromDate, toDate, callStatus, staffId) async {
