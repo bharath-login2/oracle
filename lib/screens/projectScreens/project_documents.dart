@@ -274,7 +274,7 @@ class _ProjectDocumentsPageState extends State<ProjectDocumentsPage> {
                   ),
                 ),
               );
-              //reload 
+              //reload
               if (result == true) {
                 await _fetchProjectDocuments();
               }
@@ -366,24 +366,47 @@ class _ProjectDocumentsPageState extends State<ProjectDocumentsPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              IconButton(
-                onPressed: () {
+              // EDIT BUTTON
+              InkWell(
+                onTap: () {
                   _editDocument(document);
                 },
-                icon: const Icon(
-                  Icons.edit_outlined,
-                  color: _primary,
-                  size: 21,
+                borderRadius: BorderRadius.circular(9),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: _primary.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    color: _primary,
+                    size: 18,
+                  ),
                 ),
               ),
-              IconButton(
-                onPressed: () {
+
+              const SizedBox(width: 7),
+
+              // DELETE BUTTON
+              InkWell(
+                onTap: () {
                   _deleteDocument(document);
                 },
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Colors.red,
-                  size: 21,
+                borderRadius: BorderRadius.circular(9),
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.red,
+                    size: 19,
+                  ),
                 ),
               ),
             ],

@@ -46,8 +46,7 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
   ) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.unit.projectId != widget.unit.projectId ||
-        oldWidget.unit.siteLiftNo != widget.unit.siteLiftNo) {
+    if (oldWidget.unit.unitId != widget.unit.unitId) {
       _loadInstallationActivities();
     }
   }
@@ -66,27 +65,23 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
 
     try {
       /*
-       * Installation activities are fetched separately.
-       *
-       * The API receives:
-       *
-       * projectId -> selected unit project
-       * unitNo    -> selected unit site lift number
-       *
-       * The API decides which activities belong to that unit.
-       *
-       * Therefore:
-       *
-       * Unit 9  -> 21 activities
-       * Unit 10 -> 17 activities
-       * Other units -> whatever API returns
-       *
-       * Nothing is hardcoded here.
-       */
+     * Installation activities are fetched separately.
+     *
+     * The API receives:
+     *
+     * projectId -> selected unit project ID
+     * unitId    -> selected unit database ID
+     * methodId  -> selected unit installation method ID
+     *
+     * The activities are returned by the API for the
+     * selected unit.
+     *
+     * No activity names or activity keys are hardcoded.
+     */
 
       final response = await HttpService.getUnitActivityDetails(
           projectId: widget.unit.projectId,
-          unitNo: widget.unit.siteLiftNo,
+          unitNo: widget.unit.unitId,
           methodId: widget.unit.methodId);
 
       if (!mounted) return;
@@ -112,10 +107,6 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
         _isLoadingActivities = false;
         _activityErrorMessage = 'Failed to load installation activities';
       });
-
-      debugPrint(
-        'GET UNIT ACTIVITY DETAILS ERROR: $e',
-      );
     }
   }
 
@@ -206,7 +197,7 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
     );
 
     final siteLiftNo = _display(
-      unit.siteLiftNo,
+      unit.siteLiftName,
     );
 
     final machineNo = _display(
@@ -398,8 +389,17 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
   // STATUS
   // ============================================================
 
-  Widget _buildStatus(String? status) {
-    final raw = (status ?? '').trim().toLowerCase();
+  Widget _buildStatus(
+    String? status, {
+    String? percentage,
+  }) {
+    final percentageValue = double.tryParse(
+          percentage ?? '',
+        ) ??
+        0;
+
+    final raw =
+        percentageValue == 0 ? 'pending' : (status ?? '').trim().toLowerCase();
 
     Color background;
     Color foreground;
@@ -942,9 +942,9 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
                 children: [
                   _buildTwoColumnRow(
                     'Site Lift No',
-                    unit.siteLiftNo,
+                    unit.siteLiftName,
                     'Unit / Machine No',
-                    unit.unitMachineNo,
+                    unit.unitName,
                   ),
                   _buildTwoColumnRow(
                     'Capacity',
@@ -984,7 +984,7 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
                   ),
                   _buildTwoColumnRow(
                     'Current Status',
-                    unit.status,
+                    unit.currentStatus,
                     'Start Date',
                     _formatDate(
                       unit.startDate,

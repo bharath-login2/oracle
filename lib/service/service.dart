@@ -438,7 +438,10 @@ import '../models/verifyPhoneModel.dart';
 import '../models/projectdetails/staff_list_model.dart';
 import '../models/projectdetails/unit_list_model.dart';
 import '../models/projectdetails/unit_info_model.dart';
+import '../models/projectdetails/method_of_installation.dart';
 import '../models/projectdetails/site_drawing_model.dart';
+import '../models/projectdetails/unit_dropdown_model.dart';
+import '../models/projectdetails/installation_method_model.dart';
 import '../models/projectdetails/gallery_model.dart';
 import 'package:file_picker/file_picker.dart';
 
@@ -17159,31 +17162,39 @@ class HttpService {
       'token': token,
       'project_id': projectId,
       'unit_no': unitNo,
-      'method_id' : methodId,
+      'method_id': methodId,
     };
 
     try {
+      print('========== GET UNIT ACTIVITY ==========');
+      print('PROJECT ID: $projectId');
+      print('UNIT ID: $unitNo');
+      print('METHOD ID: $methodId');
+      print('TOKEN EXISTS: ${token != null && token.isNotEmpty}');
+      print('REQUEST DATA: $data');
+
       final response = await _dio.post(
         "${await Config.getUrl()}get_unit_activity_details",
         data: FormData.fromMap(data),
       );
 
-      if (response.statusCode == 200 && response.data['status'] == true) {
+      print('HTTP STATUS: ${response.statusCode}');
+      print('RESPONSE: ${response.data}');
+      print('=======================================');
+
+      if (response.statusCode == 200 &&
+          response.data is Map<String, dynamic> &&
+          response.data['status'] == true) {
         return InstallationActivityResponse.fromJson(
-          response.data,
+          response.data as Map<String, dynamic>,
         );
       }
 
-      log(
-        'getUnitActivityDetails failed: ${response.data}',
-      );
+      return null;
     } catch (e) {
-      log(
-        'getUnitActivityDetails error: $e',
-      );
+      log('GET UNIT ACTIVITY ERROR: $e');
+      return null;
     }
-
-    return null;
   }
 
   //get deley management
@@ -17764,5 +17775,532 @@ class HttpService {
     }
 
     return false;
+  }
+
+  //dropdown unit info
+  static Future<Map<String, List<UnitDropdownItem>>>
+      getUnitDropdownValues() async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}getQuotationDropdownValues",
+        data: FormData.fromMap(data),
+      );
+
+      log('getUnitDropdownValues response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        final responseData =
+            response.data['data'] as Map<String, dynamic>? ?? {};
+
+        return {
+          'lift_speed': (responseData['lift_speed'] as List? ?? [])
+              .map(
+                (e) => UnitDropdownItem.fromJson(
+                  e as Map<String, dynamic>,
+                  idKey: 'value_id',
+                  nameKey: 'value_name',
+                ),
+              )
+              .toList(),
+          'no_of_stops': (responseData['no_of_stops'] as List? ?? [])
+              .map(
+                (e) => UnitDropdownItem.fromJson(
+                  e as Map<String, dynamic>,
+                  idKey: 'value_id',
+                  nameKey: 'value_name',
+                ),
+              )
+              .toList(),
+          'no_of_opening': (responseData['no_of_opening'] as List? ?? [])
+              .map(
+                (e) => UnitDropdownItem.fromJson(
+                  e as Map<String, dynamic>,
+                  idKey: 'value_id',
+                  nameKey: 'value_name',
+                ),
+              )
+              .toList(),
+          'door_type': (responseData['door_type'] as List? ?? [])
+              .map(
+                (e) => UnitDropdownItem.fromJson(
+                  e as Map<String, dynamic>,
+                  idKey: 'value_id',
+                  nameKey: 'value_name',
+                ),
+              )
+              .toList(),
+          'lift_type': (responseData['lift_type'] as List? ?? [])
+              .map(
+                (e) => UnitDropdownItem.fromJson(
+                  e as Map<String, dynamic>,
+                  idKey: 'value_id',
+                  nameKey: 'value_name',
+                ),
+              )
+              .toList(),
+        };
+      }
+
+      log('getUnitDropdownValues failed: ${response.data}');
+    } catch (e) {
+      log('getUnitDropdownValues error: $e');
+    }
+
+    return {};
+  }
+
+  //dropdown of umit imfo
+  static Future<Map<String, List<UnitDropdownItem>>>
+      getUnitAdditionalDropdownValues() async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}getProjectDropdownValues",
+        data: FormData.fromMap(data),
+      );
+
+      log(
+        'getUnitAdditionalDropdownValues response: ${response.data}',
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        final responseData =
+            response.data['data'] as Map<String, dynamic>? ?? {};
+
+        return {
+          'door_model': (responseData['door_model'] as List? ?? [])
+              .map(
+                (e) => UnitDropdownItem.fromJson(
+                  e as Map<String, dynamic>,
+                  idKey: 'door_model_id',
+                  nameKey: 'model_name',
+                ),
+              )
+              .toList(),
+          'machine_room_types':
+              (responseData['machine_room_types'] as List? ?? [])
+                  .map(
+                    (e) => UnitDropdownItem.fromJson(
+                      e as Map<String, dynamic>,
+                      idKey: 'machine_room_type_id',
+                      nameKey: 'type_name',
+                    ),
+                  )
+                  .toList(),
+          'current_statuses': (responseData['current_statuses'] as List? ?? [])
+              .map(
+                (e) => UnitDropdownItem.fromJson(
+                  e as Map<String, dynamic>,
+                  idKey: 'id',
+                  nameKey: 'status_type',
+                ),
+              )
+              .toList(),
+        };
+      }
+
+      log(
+        'getUnitAdditionalDropdownValues failed: ${response.data}',
+      );
+    } catch (e) {
+      log(
+        'getUnitAdditionalDropdownValues error: $e',
+      );
+    }
+
+    return {};
+  }
+
+  //dropdown for method insatllation
+  static Future<InstallationMethodResponse> getMethodOfInstallation() async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_method_of_installation_list",
+        data: FormData.fromMap(data),
+      );
+
+      log(
+        'getMethodOfInstallation response: ${response.data}',
+      );
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return InstallationMethodResponse.fromJson(
+          response.data,
+        );
+      }
+
+      log(
+        'getMethodOfInstallation failed: ${response.data}',
+      );
+    } catch (e) {
+      log(
+        'getMethodOfInstallation error: $e',
+      );
+    }
+
+    return const InstallationMethodResponse(
+      data: [],
+      message: 'Failed to load installation method',
+      status: false,
+    );
+  }
+
+  //method of installation activity according to method id
+  static Future<MethodActivityResponse> getInstallationActivities({
+    required String methodId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'method_id': methodId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_insta_activity_names",
+        data: FormData.fromMap(data),
+      );
+
+      log(
+        'getInstallationActivities response: '
+        '${response.data}',
+      );
+
+      if (response.statusCode == 200 &&
+          response.data is Map<String, dynamic> &&
+          response.data['status'] == true) {
+        return MethodActivityResponse.fromJson(
+          response.data,
+        );
+      }
+
+      log(
+        'getInstallationActivities failed: '
+        '${response.data}',
+      );
+    } catch (e) {
+      log(
+        'getInstallationActivities error: $e',
+      );
+    }
+
+    return const MethodActivityResponse(
+      data: [],
+      message: 'Failed to load installation activities',
+      status: false,
+    );
+  }
+
+  //Add unit info
+  // static Future<Map<String, dynamic>> addUnitInfo({
+  //   required String projectId,
+  //   required String siteLiftNo,
+  //   required String unitMachineNo,
+  //   required String capacity,
+  //   required String speed,
+  //   required String numberOfStops,
+  //   required String numberOfOpening,
+  //   required String travelHeight,
+  //   required String doorSize,
+  //   required String doorTypeId,
+  //   required String doorModelId,
+  //   required String machineRoomTypeId,
+  //   required String typeId,
+  //   required String productModelName,
+  //   required String standardType,
+  //   required String statusId,
+  //   required String startDate,
+  //   required String endDate,
+  //   required String actualFinish,
+  //   required String totalManpower,
+  //   required String methodOfInstallation,
+  //   required List<Map<String, String>> activity,
+  // }) async {
+  //   final token = await Common.getSharedPref("token");
+  //   print('>>> addUnitInfo() STARTED');
+  //   print('>>> TOKEN EXISTS: ${token != null && token.toString().isNotEmpty}');
+
+  //   final data = {
+  //     'token': token,
+  //     'project_id': projectId,
+  //     'site_lift_no': siteLiftNo,
+  //     'unit_machine_no': unitMachineNo,
+  //     'capacity': capacity,
+  //     'speed': speed,
+  //     'number_of_stops': numberOfStops,
+  //     'number_of_opening': numberOfOpening,
+  //     'travel_height': travelHeight,
+  //     'door_size': doorSize,
+  //     'door_type_id': doorTypeId,
+  //     'door_model_id': doorModelId,
+  //     'machine_room_type_id': machineRoomTypeId,
+  //     'type_id': typeId,
+  //     'product_model_name': productModelName,
+  //     'standard_type': standardType,
+  //     'status_id': statusId,
+  //     'start_date': startDate,
+  //     'end_date': endDate,
+  //     'actual_finish': actualFinish,
+  //     'total_manpower': totalManpower,
+  //     'method_of_installation': methodOfInstallation,
+  //     'activity': activity,
+  //   };
+
+  //   try {
+  //     log('ADD UNIT INFO REQUEST: $data');
+
+  //     final response = await _dio.post(
+  //       "${await Config.getUrl()}add_unit_info",
+  //       data: data,
+  //       options: Options(
+  //         responseType: ResponseType.plain,
+  //       ),
+  //     );
+
+  //     print('==============================');
+  //     print('ADD UNIT INFO RESPONSE');
+  //     print('==============================');
+  //     print('HTTP STATUS CODE: ${response.statusCode}');
+  //     print('RESPONSE TYPE: ${response.data.runtimeType}');
+  //     print('RESPONSE DATA: ${response.data}');
+  //     print('RESPONSE HEADERS: ${response.headers}');
+  //     print('==============================');
+
+  //     // Since we requested a plain response, manually decode JSON.
+  //     try {
+  //       final decoded = jsonDecode(response.data.toString());
+
+  //       if (decoded is Map<String, dynamic>) {
+  //         return decoded;
+  //       }
+
+  //       return {
+  //         'status': false,
+  //         'message': 'Invalid API response format',
+  //         'data': decoded,
+  //       };
+  //     } catch (jsonError) {
+  //       print('==============================');
+  //       print('JSON DECODE ERROR');
+  //       print('==============================');
+  //       print('JSON ERROR: $jsonError');
+  //       print('RAW RESPONSE: ${response.data}');
+  //       print('==============================');
+
+  //       return {
+  //         'status': false,
+  //         'message': 'Server returned an invalid response',
+  //         'raw_response': response.data.toString(),
+  //       };
+  //     }
+  //   } on DioException catch (e) {
+  //     print('==============================');
+  //     print('ADD UNIT INFO DIO ERROR');
+  //     print('==============================');
+  //     print('DIO TYPE: ${e.type}');
+  //     print('DIO MESSAGE: ${e.message}');
+  //     print('STATUS CODE: ${e.response?.statusCode}');
+  //     print('RESPONSE DATA: ${e.response?.data}');
+  //     print('RESPONSE HEADERS: ${e.response?.headers}');
+  //     print('REQUEST URL: ${e.requestOptions.uri}');
+  //     print('==============================');
+
+  //     return {
+  //       'status': false,
+  //       'message': e.response?.data?.toString() ??
+  //           e.message ??
+  //           'Failed to add unit information',
+  //     };
+  //   } catch (e, stackTrace) {
+  //     print('==============================');
+  //     print('ADD UNIT INFO UNKNOWN ERROR');
+  //     print('==============================');
+  //     print('ERROR: $e');
+  //     print('STACK TRACE: $stackTrace');
+  //     print('==============================');
+
+  //     return {
+  //       'status': false,
+  //       'message': 'Failed to add unit information',
+  //     };
+  //   }
+  // }
+  static Future<Map<String, dynamic>> addUnitInfo({
+    required String projectId,
+    required String siteLiftNo,
+    required String unitMachineNo,
+    String capacity = '',
+    String speed = '',
+    String numberOfStops = '',
+    String numberOfOpening = '',
+    String travelHeight = '',
+    String doorSize = '',
+    String doorTypeId = '',
+    String doorModelId = '',
+    String machineRoomTypeId = '',
+    String typeId = '',
+    String productModelName = '',
+    String standardType = '',
+    String statusId = '',
+    String startDate = '',
+    String endDate = '',
+    String actualFinish = '',
+    String totalManpower = '',
+    String methodOfInstallation = '',
+    List<Map<String, String>> activity = const [],
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = <String, dynamic>{
+      'token': token,
+      'project_id': projectId,
+      'site_lift_no': siteLiftNo,
+      'unit_machine_no': unitMachineNo,
+      'capacity': capacity,
+      'speed': speed,
+      'number_of_stops': numberOfStops,
+      'number_of_opening': numberOfOpening,
+      'travel_height': travelHeight,
+      'door_size': doorSize,
+      'door_type_id': doorTypeId,
+      'door_model_id': doorModelId,
+      'machine_room_type_id': machineRoomTypeId,
+      'type_id': typeId,
+      'product_model_name': productModelName,
+      'standard_type': standardType,
+      'status_id': statusId,
+      'start_date': startDate,
+      'end_date': endDate,
+      'actual_finish': actualFinish,
+      'total_manpower': totalManpower,
+      'method_of_installation': methodOfInstallation,
+
+      // Backend currently accesses both names.
+      'activity': activity,
+      'activities': activity,
+    };
+
+    // Debug request without exposing token
+    final debugData = Map<String, dynamic>.from(data);
+    debugData['token'] = '***';
+
+    print('===== ADD UNIT REQUEST =====');
+    print(debugData);
+
+    try {
+      final url = "${await Config.getUrl()}add_unit_info";
+
+      print('===== ADD UNIT URL =====');
+      print(url);
+
+      final response = await _dio.post(
+        url,
+        data: data,
+        options: Options(
+          responseType: ResponseType.plain,
+        ),
+      );
+
+      print('===== RAW ADD UNIT RESPONSE =====');
+      print(response.data);
+
+      print('===== ADD UNIT STATUS CODE =====');
+      print(response.statusCode);
+
+      final rawResponse = response.data?.toString() ?? '';
+
+      if (rawResponse.isEmpty) {
+        return {
+          'status': false,
+          'message': 'Empty response from server',
+        };
+      }
+
+      dynamic decoded;
+
+      try {
+        decoded = jsonDecode(rawResponse);
+      } catch (e, stackTrace) {
+        print('===== ADD UNIT JSON DECODE ERROR =====');
+        print('ERROR: $e');
+        print('RAW RESPONSE: $rawResponse');
+        print('STACK TRACE: $stackTrace');
+
+        return {
+          'status': false,
+          'message': 'Invalid response from server',
+          'raw_response': rawResponse,
+        };
+      }
+
+      if (decoded is Map<String, dynamic>) {
+        print('===== ADD UNIT DECODED RESPONSE =====');
+        print(decoded);
+
+        return decoded;
+      }
+
+      return {
+        'status': false,
+        'message': 'Invalid API response format',
+      };
+    } on DioException catch (e) {
+      print('===== ADD UNIT DIO ERROR =====');
+      print('ERROR TYPE: ${e.type}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR MESSAGE: ${e.message}');
+      print('RESPONSE DATA: ${e.response?.data}');
+
+      final errorRequestData = Map<String, dynamic>.from(data);
+      errorRequestData['token'] = '***';
+
+      print('REQUEST DATA: $errorRequestData');
+
+      String message = 'Failed to add unit information';
+
+      final responseData = e.response?.data;
+
+      if (responseData is Map) {
+        if (responseData['message'] != null) {
+          message = responseData['message'].toString();
+        }
+      }
+
+      return {
+        'status': false,
+        'message': message,
+        'status_code': e.response?.statusCode,
+        'response': e.response?.data,
+      };
+    } catch (e, stackTrace) {
+      print('===== ADD UNIT ERROR =====');
+      print('ERROR: $e');
+      print('ERROR TYPE: ${e.runtimeType}');
+      print('STACK TRACE: $stackTrace');
+
+      return {
+        'status': false,
+        'message': 'Failed to add unit information',
+        'error': e.toString(),
+      };
+    }
   }
 }

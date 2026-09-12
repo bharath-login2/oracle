@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/projectdetails/unit_info_model.dart';
 import '../../service/service.dart';
 import 'unit_info_details_page.dart';
+import 'add_unit_info_page.dart';
 
 class UnitInfoPage extends StatefulWidget {
   final String projectId;
@@ -231,7 +232,7 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            title,
+                            siteLiftLabel,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -242,7 +243,7 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            siteLiftLabel,
+                            title,
                             style: const TextStyle(
                               fontSize: 13,
                               color: Colors.grey,
@@ -254,33 +255,51 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
                         ],
                       ),
                     ),
-                    if (unit.standardType.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                    // EDIT BUTTON
+                    InkWell(
+                      onTap: () {
+                        // TODO: Edit unit
+                      },
+                      borderRadius: BorderRadius.circular(9),
+                      child: Container(
+                        width: 34,
+                        height: 34,
                         decoration: BoxDecoration(
-                          color: _primary.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(6),
+                          color: _primary.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(9),
                         ),
-                        child: Text(
-                          unit.standardType.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.bold,
-                            color: _primary,
-                            letterSpacing: 0.3,
-                          ),
+                        child: const Icon(
+                          Icons.edit_outlined,
+                          color: _primary,
+                          size: 18,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                    ],
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 15,
-                      color: Colors.grey.shade400,
                     ),
+
+                    const SizedBox(width: 7),
+
+                    // DELETE BUTTON
+                    InkWell(
+                      onTap: () {
+                        // TODO: Delete unit
+                      },
+                      borderRadius: BorderRadius.circular(9),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Colors.red,
+                          size: 19,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 7),
                   ],
                 ),
 
@@ -458,6 +477,30 @@ class _UnitInfoPageState extends State<UnitInfoPage> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Add Unit',
+            icon: const Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddUnitInfoPage(
+                    projectId: widget.projectId,
+                  ),
+                ),
+              );
+
+              if (result == true) {
+                _loadUnitInfo();
+              }
+            },
+          ),
+        ],
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
