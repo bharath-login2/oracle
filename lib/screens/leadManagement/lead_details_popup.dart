@@ -214,8 +214,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String? createLeadCategory = '';
   String? addLeadSource = '';
 
-List<expense.Staff> staffList = [];
-String? assignedTo;
+  List<expense.Staff> staffList = [];
+  String? assignedTo;
   TextEditingController calledDate1 = TextEditingController();
   TextEditingController nextFollowupDate1 = TextEditingController();
   TextEditingController cost = TextEditingController();
@@ -426,7 +426,7 @@ String? assignedTo;
   List targetGroups = [];
   List targetGroupNames = [];
 
-bool _showPricingDetailsTab = false;
+  bool _showPricingDetailsTab = false;
   double subTotal = 0.00;
   double subTotalGrand = 0.00;
   double totalTaxAmount = 0.00;
@@ -475,147 +475,147 @@ bool _showPricingDetailsTab = false;
   //     priorityId = leadDetails!.data!.priorityId ?? '';
   //   }
   // }
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  // ---------------------------------------------------------
-  // 1. Initial popup state
-  // ---------------------------------------------------------
-  isExpand = widget.autoExpandFollowup;
+    // ---------------------------------------------------------
+    // 1. Initial popup state
+    // ---------------------------------------------------------
+    isExpand = widget.autoExpandFollowup;
 
-  // IMPORTANT:
-  // Capture Pricing Details visibility ONLY when popup opens.
-  // Do not update this value inside _refreshData().
-  _showPricingDetailsTab =
-      widget.leadDetails.data?.createPricingDetails == true;
+    // IMPORTANT:
+    // Capture Pricing Details visibility ONLY when popup opens.
+    // Do not update this value inside _refreshData().
+    _showPricingDetailsTab =
+        widget.leadDetails.data?.createPricingDetails == true;
 
-  // ---------------------------------------------------------
-  // 2. Initialize widget data BEFORE using leadDetails
-  // ---------------------------------------------------------
-  callMasterId = widget.callMasterId;
-  leadDetails = widget.leadDetails;
-  leadDetailsAdditional = widget.leadDetailsAdditional;
-  listFolder = widget.listFolder;
-  mileStone = widget.mileStone;
-  leadDetailsFollowup = widget.leadDetailsFollowup;
-  commonDetails = widget.commonDetails;
+    // ---------------------------------------------------------
+    // 2. Initialize widget data BEFORE using leadDetails
+    // ---------------------------------------------------------
+    callMasterId = widget.callMasterId;
+    leadDetails = widget.leadDetails;
+    leadDetailsAdditional = widget.leadDetailsAdditional;
+    listFolder = widget.listFolder;
+    mileStone = widget.mileStone;
+    leadDetailsFollowup = widget.leadDetailsFollowup;
+    commonDetails = widget.commonDetails;
 
-  // ---------------------------------------------------------
-  // 3. Initialize TabController
-  // ---------------------------------------------------------
-  _tabController = TabController(
-    length: _getTabCount(),
-    vsync: this,
-  );
+    // ---------------------------------------------------------
+    // 3. Initialize TabController
+    // ---------------------------------------------------------
+    _tabController = TabController(
+      length: _getTabCount(),
+      vsync: this,
+    );
 
-  _tabController.addListener(() {
-    if (!_tabController.indexIsChanging) {
-      if (mounted) {
-        setState(() {
-          selectedIndex = _tabController.index;
-        });
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        if (mounted) {
+          setState(() {
+            selectedIndex = _tabController.index;
+          });
+        }
       }
+    });
+
+    // ---------------------------------------------------------
+    // 4. Initialize lead fields
+    // ---------------------------------------------------------
+    if (leadDetails != null && leadDetails!.data != null) {
+      final data = leadDetails!.data!;
+
+      contactFName.text = data.clientName ?? '';
+
+      contactMobile.text = '+${data.contactNumber1 ?? ''}';
+
+      calledDate1.text =
+          DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
+
+      cost.text = data.cost ?? '';
+
+      address.text = data.address ?? '';
+
+      leadType = data.leadCategory ?? '';
+      leadTypeId = data.leadCategoryId ?? '';
+
+      leadSubType = data.leadSubCategory ?? '';
+      leadSubTypeId = data.leadSubCategoryId ?? '';
+
+      priority = data.priority ?? '';
+      priorityId = data.priorityId ?? '';
     }
-  });
 
-  // ---------------------------------------------------------
-  // 4. Initialize lead fields
-  // ---------------------------------------------------------
-  if (leadDetails != null && leadDetails!.data != null) {
-    final data = leadDetails!.data!;
+    // ---------------------------------------------------------
+    // 5. Start async initialization
+    // ---------------------------------------------------------
+    _initializeData();
 
-    contactFName.text = data.clientName ?? '';
-
-    contactMobile.text =
-        '+${data.contactNumber1 ?? ''}';
-
-    calledDate1.text =
-        DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now());
-
-    cost.text = data.cost ?? '';
-
-    address.text = data.address ?? '';
-
-    leadType = data.leadCategory ?? '';
-    leadTypeId = data.leadCategoryId ?? '';
-
-    leadSubType = data.leadSubCategory ?? '';
-    leadSubTypeId = data.leadSubCategoryId ?? '';
-
-    priority = data.priority ?? '';
-    priorityId = data.priorityId ?? '';
+    // ---------------------------------------------------------
+    // 6. Load user preferences
+    // ---------------------------------------------------------
+    _loadUserPreferences();
   }
 
-  // ---------------------------------------------------------
-  // 5. Start async initialization
-  // ---------------------------------------------------------
-  _initializeData();
+  int _getTabCount() {
+    int count = 5;
 
-  // ---------------------------------------------------------
-  // 6. Load user preferences
-  // ---------------------------------------------------------
-  _loadUserPreferences();
-}
-int _getTabCount() {
-  int count = 5;
+    // ---------------------------------------------------------
+    // Followup
+    // Activities
+    // Details
+    // File Manager
+    // Quotations
+    // ---------------------------------------------------------
 
-  // ---------------------------------------------------------
-  // Followup
-  // Activities
-  // Details
-  // File Manager
-  // Quotations
-  // ---------------------------------------------------------
+    // Call Logs
+    if (widget.leadDetails.data?.callHistoryPermission == true) {
+      count++;
+    }
 
-  // Call Logs
-  if (widget.leadDetails.data?.callHistoryPermission == true) {
-    count++;
+    // Pricing Details
+    // IMPORTANT:
+    // Use the value captured when popup was opened.
+    if (_showPricingDetailsTab) {
+      count++;
+    }
+
+    // Milestones
+    if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
+      count++;
+    }
+
+    return count;
   }
 
-  // Pricing Details
-  // IMPORTANT:
-  // Use the value captured when popup was opened.
-  if (_showPricingDetailsTab) {
-    count++;
+  List<String> _getTabLabels() {
+    List<String> labels = [
+      'Followup',
+      'Activities',
+      'Details',
+      'File Manager',
+    ];
+
+    // Call Logs
+    if (widget.leadDetails.data?.callHistoryPermission == true) {
+      labels.insert(1, 'Call Logs');
+    }
+
+    // Pricing Details
+    if (_showPricingDetailsTab) {
+      labels.add('Pricing Details');
+    }
+
+    // Quotations
+    labels.add('Quotations');
+
+    // Milestones
+    if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
+      labels.add('Milestones');
+    }
+
+    return labels;
   }
-
-  // Milestones
-  if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
-    count++;
-  }
-
-  return count;
-}
-
-List<String> _getTabLabels() {
-  List<String> labels = [
-    'Followup',
-    'Activities',
-    'Details',
-    'File Manager',
-  ];
-
-  // Call Logs
-  if (widget.leadDetails.data?.callHistoryPermission == true) {
-    labels.insert(1, 'Call Logs');
-  }
-
-  // Pricing Details
-  if (_showPricingDetailsTab) {
-    labels.add('Pricing Details');
-  }
-
-  // Quotations
-  labels.add('Quotations');
-
-  // Milestones
-  if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false) {
-    labels.add('Milestones');
-  }
-
-  return labels;
-}
 
   // Future<void> _initializeData() async {
   //   contactPermission = await Common.getSharedPref("getContactPermission");
@@ -689,123 +689,113 @@ List<String> _getTabLabels() {
   //     getPermission();
   //   }
   // }
-Future<void> _initializeData() async {
-  // ---------------------------------------------------------
-  // Load user preferences
-  // ---------------------------------------------------------
-  contactPermission =
-      await Common.getSharedPref("getContactPermission");
+  Future<void> _initializeData() async {
+    // ---------------------------------------------------------
+    // Load user preferences
+    // ---------------------------------------------------------
+    contactPermission = await Common.getSharedPref("getContactPermission");
 
-  transferPermission =
-      await Common.getSharedPref("transferLeads");
+    transferPermission = await Common.getSharedPref("transferLeads");
 
-  cloudCallPermission =
-      await Common.getSharedPref("cloudCallPermission");
+    cloudCallPermission = await Common.getSharedPref("cloudCallPermission");
 
-  createRenewalPermission =
-      await Common.getSharedPref("createRenewalPermission");
+    createRenewalPermission =
+        await Common.getSharedPref("createRenewalPermission");
 
-  customerAddInvoicePermission =
-      await Common.getSharedPref("customerAddInvoicePermission");
+    customerAddInvoicePermission =
+        await Common.getSharedPref("customerAddInvoicePermission");
 
-  createCustomerInvoice =
-      await Common.getSharedPref("createCustomerInvoice");
+    createCustomerInvoice = await Common.getSharedPref("createCustomerInvoice");
 
-  voiceListerningPermission =
-      await Common.getSharedPref("voiceListerningPermission");
+    voiceListerningPermission =
+        await Common.getSharedPref("voiceListerningPermission");
 
-  whatsappOfficial =
-      await Common.getSharedPref("officialWhatsapp");
+    whatsappOfficial = await Common.getSharedPref("officialWhatsapp");
 
-  name =
-      await Common.getSharedPref("name");
+    name = await Common.getSharedPref("name");
 
-  userId =
-      await Common.getSharedPref("userId");
+    userId = await Common.getSharedPref("userId");
 
-  viewLeadCategoryOnly =
-      await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
+    viewLeadCategoryOnly =
+        await Common.getSharedPref("viewLeadCategoryOnly") ?? '';
 
-  viewAllCategory =
-      await Common.getSharedPref("viewAllCategory") ?? '';
+    viewAllCategory = await Common.getSharedPref("viewAllCategory") ?? '';
 
-  phoneCallLogPermission =
-      await Common.getSharedPref("phoneCallLogPermission");
+    phoneCallLogPermission =
+        await Common.getSharedPref("phoneCallLogPermission");
 
-  accessCallRecordingPermission =
-      await Common.getSharedPref("accessCallRecordingPermission");
+    accessCallRecordingPermission =
+        await Common.getSharedPref("accessCallRecordingPermission");
 
-  createLeadCategory =
-      await Common.getSharedPref("createLeadCategory");
+    createLeadCategory = await Common.getSharedPref("createLeadCategory");
 
-  addLeadSource =
-      await Common.getSharedPref("addLeadSource");
+    addLeadSource = await Common.getSharedPref("addLeadSource");
 
-  // ---------------------------------------------------------
-  // DO NOT reassign these here:
-  //
-  // callMasterId = widget.callMasterId;
-  // leadDetails = widget.leadDetails;
-  // leadDetailsAdditional = widget.leadDetailsAdditional;
-  // listFolder = widget.listFolder;
-  // mileStone = widget.mileStone;
-  // leadDetailsFollowup = widget.leadDetailsFollowup;
-  // commonDetails = widget.commonDetails;
-  //
-  // They are already initialized in initState().
-  // ---------------------------------------------------------
+    // ---------------------------------------------------------
+    // DO NOT reassign these here:
+    //
+    // callMasterId = widget.callMasterId;
+    // leadDetails = widget.leadDetails;
+    // leadDetailsAdditional = widget.leadDetailsAdditional;
+    // listFolder = widget.listFolder;
+    // mileStone = widget.mileStone;
+    // leadDetailsFollowup = widget.leadDetailsFollowup;
+    // commonDetails = widget.commonDetails;
+    //
+    // They are already initialized in initState().
+    // ---------------------------------------------------------
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  // ---------------------------------------------------------
-  // Common Details
-  // ---------------------------------------------------------
-  if (commonDetails == null) {
-    await _fetchCommonDetails();
-  } else {
-    _initializeAdditionalFields();
+    // ---------------------------------------------------------
+    // Common Details
+    // ---------------------------------------------------------
+    if (commonDetails == null) {
+      await _fetchCommonDetails();
+    } else {
+      _initializeAdditionalFields();
+    }
+
+    // ---------------------------------------------------------
+    // Other API calls
+    // ---------------------------------------------------------
+    await _fetchRenewalDetails();
+
+    await _fetchCallResultReason();
+
+    await _fetchLeadSubType();
+
+    await _fetchActivitiesAndCallHistory();
+
+    await _fetchProductSection();
+
+    // ---------------------------------------------------------
+    // Folder / Google Drive
+    // ---------------------------------------------------------
+    listFolderList(
+      widget.token,
+      widget.callMasterId,
+      '',
+    );
+
+    _fetchGoogleDriveAccounts();
+
+    // ---------------------------------------------------------
+    // Android permissions
+    // ---------------------------------------------------------
+    if (Platform.isAndroid) {
+      getSharedData();
+      getPermission();
+    }
+
+    // ---------------------------------------------------------
+    // Refresh UI after preferences/data are loaded
+    // ---------------------------------------------------------
+    if (mounted) {
+      setState(() {});
+    }
   }
 
-  // ---------------------------------------------------------
-  // Other API calls
-  // ---------------------------------------------------------
-  await _fetchRenewalDetails();
-
-  await _fetchCallResultReason();
-
-  await _fetchLeadSubType();
-
-  await _fetchActivitiesAndCallHistory();
-
-  await _fetchProductSection();
-
-  // ---------------------------------------------------------
-  // Folder / Google Drive
-  // ---------------------------------------------------------
-  listFolderList(
-    widget.token,
-    widget.callMasterId,
-    '',
-  );
-
-  _fetchGoogleDriveAccounts();
-
-  // ---------------------------------------------------------
-  // Android permissions
-  // ---------------------------------------------------------
-  if (Platform.isAndroid) {
-    getSharedData();
-    getPermission();
-  }
-
-  // ---------------------------------------------------------
-  // Refresh UI after preferences/data are loaded
-  // ---------------------------------------------------------
-  if (mounted) {
-    setState(() {});
-  }
-}
- 
   getPermission() async {
     Map<String, dynamic> body2 = {
       "token": await Common.getSharedPref("token"),
@@ -831,7 +821,8 @@ Future<void> _initializeData() async {
 
       contactPermission = await Common.getSharedPref("getContactPermission");
       transferPermission = await Common.getSharedPref("transferLeads");
-      cloudCallPermission = await Common.getSharedPref("cloudCallPermission") ?? "";
+      cloudCallPermission =
+          await Common.getSharedPref("cloudCallPermission") ?? "";
       whatsappOfficial = await Common.getSharedPref("officialWhatsapp") ?? "";
 
       if (uploadPermission != "true" && Platform.isIOS) {
@@ -1772,8 +1763,7 @@ Future<void> _initializeData() async {
               _buildActivitiesTab(),
               _buildDetailsTab(),
               _buildDocumentsTab(),
-             if (_showPricingDetailsTab)
-                _buildPricingDetailsTab(),
+              if (_showPricingDetailsTab) _buildPricingDetailsTab(),
               _buildQuotationsTab(),
               if (widget.mileStone?.data?.milestones?.isNotEmpty ?? false)
                 _buildMilestonesTab(),
@@ -1783,6 +1773,7 @@ Future<void> _initializeData() async {
       ),
     );
   }
+
 // ── Pricing Details Tab Controllers ────────────────────────────────────────
   final TextEditingController _pQuotationTitle = TextEditingController();
   final TextEditingController _pQuotation = TextEditingController();
@@ -1829,25 +1820,26 @@ Future<void> _initializeData() async {
   String? _pTaxType;
   bool _pricingControllersInitialized = false;
   bool _isSavingPricing = false;
-bool _hasPricingDetails() {
-  return _pFactoryPrice.text.trim().isNotEmpty ||
-      _pTransportation.text.trim().isNotEmpty ||
-      _pInstallation.text.trim().isNotEmpty ||
-      _pTesting.text.trim().isNotEmpty ||
-      _pConsumables.text.trim().isNotEmpty ||
-      _pAdditionalFactory.text.trim().isNotEmpty ||
-      _pAdditional.text.trim().isNotEmpty ||
-      _pAmcAmount.text.trim().isNotEmpty ||
-      _pUnitPrice.text.trim().isNotEmpty ||
-      _pCompanyProfit.text.trim().isNotEmpty ||
-      _pCompanyProfitAmount.text.trim().isNotEmpty ||
-      _pSalesCommission.text.trim().isNotEmpty ||
-      _pSalesCommissionAmount.text.trim().isNotEmpty ||
-      _pSubTotal.text.trim().isNotEmpty ||
-      _pTaxPercentage.text.trim().isNotEmpty ||
-      _pTaxAmount.text.trim().isNotEmpty ||
-      _pTotalSalePrice.text.trim().isNotEmpty;
-}
+  bool _hasPricingDetails() {
+    return _pFactoryPrice.text.trim().isNotEmpty ||
+        _pTransportation.text.trim().isNotEmpty ||
+        _pInstallation.text.trim().isNotEmpty ||
+        _pTesting.text.trim().isNotEmpty ||
+        _pConsumables.text.trim().isNotEmpty ||
+        _pAdditionalFactory.text.trim().isNotEmpty ||
+        _pAdditional.text.trim().isNotEmpty ||
+        _pAmcAmount.text.trim().isNotEmpty ||
+        _pUnitPrice.text.trim().isNotEmpty ||
+        _pCompanyProfit.text.trim().isNotEmpty ||
+        _pCompanyProfitAmount.text.trim().isNotEmpty ||
+        _pSalesCommission.text.trim().isNotEmpty ||
+        _pSalesCommissionAmount.text.trim().isNotEmpty ||
+        _pSubTotal.text.trim().isNotEmpty ||
+        _pTaxPercentage.text.trim().isNotEmpty ||
+        _pTaxAmount.text.trim().isNotEmpty ||
+        _pTotalSalePrice.text.trim().isNotEmpty;
+  }
+
   void _initPricingControllers() {
     if (_pricingControllersInitialized) return;
     _pricingControllersInitialized = true;
@@ -1891,7 +1883,8 @@ bool _hasPricingDetails() {
     _pLiftTypeId = _validSpecId(data.liftValues, data.liftType);
     _pOpeningId = _validSpecId(data.opening, data.openingName);
     _pDoorOpeningId = _validSpecId(data.cabinOpening, data.doorOpening);
-    _pCabinSideWallId = _validSpecId(data.cabinSideWall, data.cabinSideWallName);
+    _pCabinSideWallId =
+        _validSpecId(data.cabinSideWall, data.cabinSideWallName);
     _pLandingDoorId = _validSpecId(data.landingDoor, data.landingDoorName);
     _pCopId = _validSpecId(data.cop, data.copName);
     _pLopId = _validSpecId(data.lop, data.lopName);
@@ -1954,58 +1947,58 @@ bool _hasPricingDetails() {
     };
   }
 
-Future<void> _savePricingDetails() async {
-  if (_pQuotation.text.trim().isEmpty) {
-    Common.toastMessaage('Quotation Name is required', Colors.red);
-    return;
-  }
+  Future<void> _savePricingDetails() async {
+    // if (_pQuotation.text.trim().isEmpty) {
+    //   Common.toastMessaage('Quotation Name is required', Colors.red);
+    //   return;
+    // }
 
-  if (_pClientName.text.trim().isEmpty) {
-    Common.toastMessaage('Client Name is required', Colors.red);
-    return;
-  }
+    if (_pClientName.text.trim().isEmpty) {
+      Common.toastMessaage('Client Name is required', Colors.red);
+      return;
+    }
 
-  final body = await _buildPricingBody();
+    final body = await _buildPricingBody();
 
-  setState(() => _isSavingPricing = true);
+    setState(() => _isSavingPricing = true);
 
-  Common.showProgressDialog(context, "Saving Pricing...");
+    Common.showProgressDialog(context, "Saving Pricing...");
 
-  try {
-    final result = await HttpService.postPricing(body);
+    try {
+      final result = await HttpService.postPricing(body);
 
-    if (mounted) {
-      Navigator.pop(context); // Close progress dialog
+      if (mounted) {
+        Navigator.pop(context); // Close progress dialog
 
-      if (result != null && result['status'] == true) {
-        Common.toastMessaage(
-          result['message'] ?? 'Pricing saved successfully',
-          Colors.green,
-        );
+        if (result != null && result['status'] == true) {
+          Common.toastMessaage(
+            result['message'] ?? 'Pricing saved successfully',
+            Colors.green,
+          );
 
-        await _refreshData(callMasterId ?? widget.callMasterId);
-        widget.onDataChanged();
+          await _refreshData(callMasterId ?? widget.callMasterId);
+          widget.onDataChanged();
 
-        // Navigate to Followup tab
-        _tabController.animateTo(0);
-      } else {
-        Common.toastMessaage(
-          result?['message'] ?? 'Failed to save pricing',
-          Colors.red,
-        );
+          // Navigate to Followup tab
+          _tabController.animateTo(0);
+        } else {
+          Common.toastMessaage(
+            result?['message'] ?? 'Failed to save pricing',
+            Colors.red,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close progress dialog
+        Common.toastMessaage("Error: $e", Colors.red);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingPricing = false);
       }
     }
-  } catch (e) {
-    if (mounted) {
-      Navigator.pop(context); // Close progress dialog
-      Common.toastMessaage("Error: $e", Colors.red);
-    }
-  } finally {
-    if (mounted) {
-      setState(() => _isSavingPricing = false);
-    }
   }
-}
 
   String _getSpecName(List<dynamic>? list, String? id) {
     if (list == null || id == null || id.isEmpty) return '-';
@@ -2046,7 +2039,8 @@ Future<void> _savePricingDetails() async {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.receipt_long_rounded, color: Colors.white, size: 22),
+                    Icon(Icons.receipt_long_rounded,
+                        color: Colors.white, size: 22),
                     SizedBox(width: 10),
                     Text(
                       'Pricing Details',
@@ -2068,174 +2062,171 @@ Future<void> _savePricingDetails() async {
             ),
           ),
           content: SizedBox(
-  width: MediaQuery.of(context).size.width * 0.85,
-  child: _hasPricingDetails()
-      ? SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSummarySectionHeader(
-                'Pricing Details',
-                Icons.payments_outlined,
-              ),
-              const SizedBox(height: 10),
+            width: MediaQuery.of(context).size.width * 0.85,
+            child: _hasPricingDetails()
+                ? SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSummarySectionHeader(
+                          'Pricing Details',
+                          Icons.payments_outlined,
+                        ),
+                        const SizedBox(height: 10),
+                        _buildSummaryGrid([
+                          _buildSummaryTile(
+                            'Factory Price',
+                            _pFactoryPrice.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pFactoryPrice.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Transportation',
+                            _pTransportation.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pTransportation.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Installation Charge',
+                            _pInstallation.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pInstallation.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Testing & Comm.',
+                            _pTesting.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pTesting.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Consumables',
+                            _pConsumables.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pConsumables.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Add. Factory Charges',
+                            _pAdditionalFactory.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pAdditionalFactory.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Additional Charge',
+                            _pAdditional.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pAdditional.text}',
+                          ),
 
-              _buildSummaryGrid([
-                _buildSummaryTile(
-                  'Factory Price',
-                  _pFactoryPrice.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pFactoryPrice.text}',
-                ),
-                _buildSummaryTile(
-                  'Transportation',
-                  _pTransportation.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pTransportation.text}',
-                ),
-                _buildSummaryTile(
-                  'Installation Charge',
-                  _pInstallation.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pInstallation.text}',
-                ),
-                _buildSummaryTile(
-                  'Testing & Comm.',
-                  _pTesting.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pTesting.text}',
-                ),
-                _buildSummaryTile(
-                  'Consumables',
-                  _pConsumables.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pConsumables.text}',
-                ),
-                _buildSummaryTile(
-                  'Add. Factory Charges',
-                  _pAdditionalFactory.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pAdditionalFactory.text}',
-                ),
-                _buildSummaryTile(
-                  'Additional Charge',
-                  _pAdditional.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pAdditional.text}',
-                ),
+                          // Quantity should NOT have ₹
+                          _buildSummaryTile(
+                            'Quantity',
+                            _pQuantity.text.isEmpty ? '-' : _pQuantity.text,
+                          ),
 
-                // Quantity should NOT have ₹
-                _buildSummaryTile(
-                  'Quantity',
-                  _pQuantity.text.isEmpty
-                      ? '-'
-                      : _pQuantity.text,
-                ),
-
-                _buildSummaryTile(
-                  'Amc Amount',
-                  _pAmcAmount.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pAmcAmount.text}',
-                ),
-                _buildSummaryTile(
-                  'Unit Price',
-                  _pUnitPrice.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pUnitPrice.text}',
-                ),
-                _buildSummaryTile(
-                  'Company Profit (%)',
-                  _pCompanyProfit.text.isEmpty
-                      ? '-'
-                      : '${_pCompanyProfit.text}%',
-                ),
-                _buildSummaryTile(
-                  'Company Profit Amount',
-                  _pCompanyProfitAmount.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pCompanyProfitAmount.text}',
-                ),
-                _buildSummaryTile(
-                  'Sales Commission (%)',
-                  _pSalesCommission.text.isEmpty
-                      ? '-'
-                      : '${_pSalesCommission.text}%',
-                ),
-                _buildSummaryTile(
-                  'Sales Comm. Amount',
-                  _pSalesCommissionAmount.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pSalesCommissionAmount.text}',
-                ),
-                _buildSummaryTile(
-                  'Sub Total',
-                  _pSubTotal.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pSubTotal.text}',
-                ),
-                _buildSummaryTile(
-                  'Tax Type',
-                  _pTaxType ?? '-',
-                ),
-                _buildSummaryTile(
-                  'Tax (%)',
-                  _pTaxPercentage.text.isEmpty
-                      ? '-'
-                      : '${_pTaxPercentage.text}%',
-                ),
-                _buildSummaryTile(
-                  'Tax Amount',
-                  _pTaxAmount.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pTaxAmount.text}',
-                ),
-                _buildSummaryTile(
-                  'Total Sale Price',
-                  _pTotalSalePrice.text.isEmpty
-                      ? '-'
-                      : '₹ ${_pTotalSalePrice.text}',
-                  isHighlight: true,
-                ),
-              ]),
-            ],
-          ),
-        )
-      : const SizedBox(
-          height: 180,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.receipt_long_outlined,
-                  size: 50,
-                  color: Colors.grey,
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'No Pricing Details Found',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey,
+                          _buildSummaryTile(
+                            'Amc Amount',
+                            _pAmcAmount.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pAmcAmount.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Unit Price',
+                            _pUnitPrice.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pUnitPrice.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Company Profit (%)',
+                            _pCompanyProfit.text.isEmpty
+                                ? '-'
+                                : '${_pCompanyProfit.text}%',
+                          ),
+                          _buildSummaryTile(
+                            'Company Profit Amount',
+                            _pCompanyProfitAmount.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pCompanyProfitAmount.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Sales Commission (%)',
+                            _pSalesCommission.text.isEmpty
+                                ? '-'
+                                : '${_pSalesCommission.text}%',
+                          ),
+                          _buildSummaryTile(
+                            'Sales Comm. Amount',
+                            _pSalesCommissionAmount.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pSalesCommissionAmount.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Sub Total',
+                            _pSubTotal.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pSubTotal.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Tax Type',
+                            _pTaxType ?? '-',
+                          ),
+                          _buildSummaryTile(
+                            'Tax (%)',
+                            _pTaxPercentage.text.isEmpty
+                                ? '-'
+                                : '${_pTaxPercentage.text}%',
+                          ),
+                          _buildSummaryTile(
+                            'Tax Amount',
+                            _pTaxAmount.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pTaxAmount.text}',
+                          ),
+                          _buildSummaryTile(
+                            'Total Sale Price',
+                            _pTotalSalePrice.text.isEmpty
+                                ? '-'
+                                : '₹ ${_pTotalSalePrice.text}',
+                            isHighlight: true,
+                          ),
+                        ]),
+                      ],
+                    ),
+                  )
+                : const SizedBox(
+                    height: 180,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 12),
+                          Text(
+                            'No Pricing Details Found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            'Pricing details are not available for this lead.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  'Pricing details are not available for this lead.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
           ),
-        ),
-),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
@@ -2245,9 +2236,11 @@ Future<void> _savePricingDetails() async {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Close',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -2303,7 +2296,8 @@ Future<void> _savePricingDetails() async {
     return Column(children: rows);
   }
 
-  Widget _buildSummaryTile(String label, String value, {bool isHighlight = false}) {
+  Widget _buildSummaryTile(String label, String value,
+      {bool isHighlight = false}) {
     final displayValue = value.trim().isEmpty ? '-' : value;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -2311,7 +2305,8 @@ Future<void> _savePricingDetails() async {
         color: isHighlight ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isHighlight ? const Color(0xFF2a86c9) : const Color(0xFFE2E8F0),
+          color:
+              isHighlight ? const Color(0xFF2a86c9) : const Color(0xFFE2E8F0),
           width: isHighlight ? 1.5 : 1.0,
         ),
         boxShadow: isHighlight
@@ -2332,7 +2327,9 @@ Future<void> _savePricingDetails() async {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: isHighlight ? const Color(0xFF1E6091) : const Color(0xFF64748B),
+              color: isHighlight
+                  ? const Color(0xFF1E6091)
+                  : const Color(0xFF64748B),
               letterSpacing: 0.2,
             ),
             maxLines: 1,
@@ -2344,7 +2341,9 @@ Future<void> _savePricingDetails() async {
             style: TextStyle(
               fontSize: 13,
               fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
-              color: isHighlight ? const Color(0xFF1E6091) : const Color(0xFF1E293B),
+              color: isHighlight
+                  ? const Color(0xFF1E6091)
+                  : const Color(0xFF1E293B),
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -2461,7 +2460,8 @@ Future<void> _savePricingDetails() async {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.visibility_outlined, color: Color(0xFF2a86c9), size: 20),
+                  Icon(Icons.visibility_outlined,
+                      color: Color(0xFF2a86c9), size: 20),
                   SizedBox(width: 8),
                   Text(
                     'View Pricing',
@@ -2488,17 +2488,24 @@ Future<void> _savePricingDetails() async {
       title: 'Estimation & Pricing',
       icon: Icons.assignment_outlined,
       children: [
-        _pricingField('Subject', _pQuotationTitle, prefixIcon: Icons.title_outlined, hintText: 'Quotation Title'),
+        _pricingField('Subject', _pQuotationTitle,
+            prefixIcon: Icons.title_outlined, hintText: 'Quotation Title'),
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Quotation', _pQuotation, prefixIcon: Icons.description_outlined, hintText: 'Home Lift'),
-          _pricingField('Client Name', _pClientName, prefixIcon: Icons.person_outline),
+          // _pricingField('Quotation', _pQuotation,
+          //     prefixIcon: Icons.description_outlined, hintText: 'Home Lift'),
+          _pricingField('Client Name', _pClientName,
+              prefixIcon: Icons.person_outline),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Phone', _pPhone, keyboardType: TextInputType.phone, prefixIcon: Icons.phone_outlined),
-          _pricingField('Location', _pLocation, prefixIcon: Icons.location_on_outlined),
-          _pricingField('Elevator Type', _pElevatorType, prefixIcon: Icons.elevator_outlined),
+          _pricingField('Phone', _pPhone,
+              keyboardType: TextInputType.phone,
+              prefixIcon: Icons.phone_outlined),
+          _pricingField('Location', _pLocation,
+              prefixIcon: Icons.location_on_outlined),
+          _pricingField('Elevator Type', _pElevatorType,
+              prefixIcon: Icons.elevator_outlined),
           _pricingField('Type of Opening', _pTypeOfOpening),
         ]),
         const SizedBox(height: 14),
@@ -2509,16 +2516,23 @@ Future<void> _savePricingDetails() async {
             items: data.liftValues ?? [],
             onChanged: (v) => setState(() => _pLiftTypeId = v),
           ),
-          _pricingField('Capacity', _pCapacity, keyboardType: TextInputType.number),
+          _pricingField('Capacity', _pCapacity,
+              keyboardType: TextInputType.number),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Passenger Capacity', _pPassengerCapacity, keyboardType: TextInputType.number,hintText: '6'),
-          _pricingField('Shaft Width', _pShaftWidth, keyboardType: TextInputType.number,hintText: '1500'),
-          _pricingField('Shaft Depth', _pShaftDepth, keyboardType: TextInputType.number,hintText: '1700'),
-          _pricingField('Pit Depth', _pPitDepth, keyboardType: TextInputType.number,hintText: '1500'),
-          _pricingField('Travel Height', _pTravelHeight, keyboardType: TextInputType.number),
-          _pricingField('Overhead Height', _pOverheadHeight, keyboardType: TextInputType.number),
+          _pricingField('Passenger Capacity', _pPassengerCapacity,
+              keyboardType: TextInputType.number, hintText: '6'),
+          _pricingField('Shaft Width', _pShaftWidth,
+              keyboardType: TextInputType.number, hintText: '1500'),
+          _pricingField('Shaft Depth', _pShaftDepth,
+              keyboardType: TextInputType.number, hintText: '1700'),
+          _pricingField('Pit Depth', _pPitDepth,
+              keyboardType: TextInputType.number, hintText: '1500'),
+          _pricingField('Travel Height', _pTravelHeight,
+              keyboardType: TextInputType.number),
+          _pricingField('Overhead Height', _pOverheadHeight,
+              keyboardType: TextInputType.number),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
@@ -2561,11 +2575,13 @@ Future<void> _savePricingDetails() async {
             items: data.lop ?? [],
             onChanged: (v) => setState(() => _pLopId = v),
           ),
-          
-        // _buildGridRow(context, [
-          _pricingField('Warranty (Year)', _pWarranty, keyboardType: TextInputType.number,hintText: '5'),
-          _pricingField('AMC (Year)', _pAmc, keyboardType: TextInputType.number,hintText: '1'),
-        // ]),
+
+          // _buildGridRow(context, [
+          _pricingField('Warranty (Year)', _pWarranty,
+              keyboardType: TextInputType.number, hintText: '5'),
+          _pricingField('AMC (Year)', _pAmc,
+              keyboardType: TextInputType.number, hintText: '1'),
+          // ]),
         ]),
       ],
     );
@@ -2578,114 +2594,146 @@ Future<void> _savePricingDetails() async {
       children: [
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Factory Price', _pFactoryPrice, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
-          _pricingField('Transportation & Off Loading', _pTransportation, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
-          _pricingField('Installation Charge', _pInstallation, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
-          _pricingField('Testing & Commissioning', _pTesting, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
+          _pricingField('Factory Price', _pFactoryPrice,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('Transportation & Off Loading', _pTransportation,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('Installation Charge', _pInstallation,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('Testing & Commissioning', _pTesting,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Consumables', _pConsumables, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
-          _pricingField('Additional Charges (Factory)', _pAdditionalFactory, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
-          _pricingField('Additional', _pAdditional, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
-          _pricingField('AMC Amount', _pAmcAmount, keyboardType: TextInputType.number, prefixText: '₹', onChanged: (_) => _calculatePricing()),
-          _pricingField('Quantity', _pQuantity, readOnly: true, prefixText: 'x'),
+          _pricingField('Consumables', _pConsumables,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('Additional Charges (Factory)', _pAdditionalFactory,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('Additional', _pAdditional,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('AMC Amount', _pAmcAmount,
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('Quantity', _pQuantity,
+              readOnly: true, prefixText: 'x'),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Unit Price', _pUnitPrice,  readOnly: true, prefixText: '₹'),
-          _pricingField('Company Profit (%)', _pCompanyProfit, keyboardType: TextInputType.number, prefixText: '%', onChanged: (_) => _calculatePricing()),
-          _pricingField('Company Profit Amount', _pCompanyProfitAmount, readOnly: true, prefixText: '₹'),
-          _pricingField('Sales Commission (%)', _pSalesCommission, keyboardType: TextInputType.number, prefixText: '%', onChanged: (_) => _calculatePricing()),
+          _pricingField('Unit Price', _pUnitPrice,
+              readOnly: true, prefixText: '₹'),
+          _pricingField('Company Profit (%)', _pCompanyProfit,
+              keyboardType: TextInputType.number,
+              prefixText: '%',
+              onChanged: (_) => _calculatePricing()),
+          _pricingField('Company Profit Amount', _pCompanyProfitAmount,
+              readOnly: true, prefixText: '₹'),
+          _pricingField('Sales Commission (%)', _pSalesCommission,
+              keyboardType: TextInputType.number,
+              prefixText: '%',
+              onChanged: (_) => _calculatePricing()),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Sales Commission Amount', _pSalesCommissionAmount, readOnly: true, prefixText: '₹'),
-          _pricingField('Sub Total', _pSubTotal, readOnly: true, prefixText: '₹'),
+          _pricingField('Sales Commission Amount', _pSalesCommissionAmount,
+              readOnly: true, prefixText: '₹'),
+          _pricingField('Sub Total', _pSubTotal,
+              readOnly: true, prefixText: '₹'),
           _pricingDropdown(
             label: 'Tax Type',
             value: _pTaxType,
             items: (data.taxTypes ?? []).map((e) => e).toList(),
             onChanged: (v) => setState(() => _pTaxType = v),
           ),
-          _pricingField('Tax (%)', _pTaxPercentage, keyboardType: TextInputType.number, prefixText: '%', onChanged: (_) => _calculatePricing()),
+          _pricingField('Tax (%)', _pTaxPercentage,
+              keyboardType: TextInputType.number,
+              prefixText: '%',
+              onChanged: (_) => _calculatePricing()),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
-          _pricingField('Tax Amount', _pTaxAmount, readOnly: true, prefixText: '₹'),
-          _pricingField('Total Sale Price', _pTotalSalePrice, keyboardType: TextInputType.number, prefixText: '₹'),
+          _pricingField('Tax Amount', _pTaxAmount,
+              readOnly: true, prefixText: '₹'),
+          _pricingField('Total Sale Price', _pTotalSalePrice,
+              keyboardType: TextInputType.number, prefixText: '₹'),
         ]),
       ],
     );
   }
-void _calculatePricing() {
-  double factory = double.tryParse(_pFactoryPrice.text) ?? 0;
-  double transportation = double.tryParse(_pTransportation.text) ?? 0;
-  double installation = double.tryParse(_pInstallation.text) ?? 0;
-  double testing = double.tryParse(_pTesting.text) ?? 0;
-  double consumables = double.tryParse(_pConsumables.text) ?? 0;
-  double additionalFactory = double.tryParse(_pAdditionalFactory.text) ?? 0;
-  double additional = double.tryParse(_pAdditional.text) ?? 0;
-  double amcAmount = double.tryParse(_pAmcAmount.text) ?? 0;
 
-  // Quantity defaults to 1
-  double quantity = double.tryParse(_pQuantity.text) ?? 1;
-  if (quantity <= 0) quantity = 1;
+  void _calculatePricing() {
+    double factory = double.tryParse(_pFactoryPrice.text) ?? 0;
+    double transportation = double.tryParse(_pTransportation.text) ?? 0;
+    double installation = double.tryParse(_pInstallation.text) ?? 0;
+    double testing = double.tryParse(_pTesting.text) ?? 0;
+    double consumables = double.tryParse(_pConsumables.text) ?? 0;
+    double additionalFactory = double.tryParse(_pAdditionalFactory.text) ?? 0;
+    double additional = double.tryParse(_pAdditional.text) ?? 0;
+    double amcAmount = double.tryParse(_pAmcAmount.text) ?? 0;
 
-  // Unit Price (sum of all cost components)
-  double unitPrice = (factory +
-      transportation +
-      installation +
-      testing +
-      consumables +
-      additionalFactory +
-      additional +
-      amcAmount) * quantity;
+    // Quantity defaults to 1
+    double quantity = double.tryParse(_pQuantity.text) ?? 1;
+    if (quantity <= 0) quantity = 1;
 
-  _pUnitPrice.text = unitPrice.toStringAsFixed(2);
+    // Unit Price (sum of all cost components)
+    double unitPrice = (factory +
+            transportation +
+            installation +
+            testing +
+            consumables +
+            additionalFactory +
+            additional +
+            amcAmount) *
+        quantity;
 
-  // Company Profit
-  double companyProfit =
-      double.tryParse(_pCompanyProfit.text) ?? 0;
+    _pUnitPrice.text = unitPrice.toStringAsFixed(2);
 
-  double companyProfitAmount =
-      unitPrice * companyProfit / 100;
+    // Company Profit
+    double companyProfit = double.tryParse(_pCompanyProfit.text) ?? 0;
 
-  _pCompanyProfitAmount.text =
-      companyProfitAmount.toStringAsFixed(2);
+    double companyProfitAmount = unitPrice * companyProfit / 100;
 
-  // Sales Commission
-  double salesCommission =
-      double.tryParse(_pSalesCommission.text) ?? 0;
+    _pCompanyProfitAmount.text = companyProfitAmount.toStringAsFixed(2);
 
-  double salesCommissionAmount =
-      companyProfitAmount * salesCommission / 100;
+    // Sales Commission
+    double salesCommission = double.tryParse(_pSalesCommission.text) ?? 0;
 
-  _pSalesCommissionAmount.text =
-      salesCommissionAmount.toStringAsFixed(2);
+    double salesCommissionAmount = companyProfitAmount * salesCommission / 100;
 
-  // Sub Total
-  double subTotal =
-      unitPrice + companyProfitAmount + salesCommissionAmount;
+    _pSalesCommissionAmount.text = salesCommissionAmount.toStringAsFixed(2);
 
-  _pSubTotal.text = subTotal.toStringAsFixed(2);
+    // Sub Total
+    double subTotal = unitPrice + companyProfitAmount + salesCommissionAmount;
 
-  // Tax
-  double tax =
-      double.tryParse(_pTaxPercentage.text) ?? 0;
+    _pSubTotal.text = subTotal.toStringAsFixed(2);
 
-  double taxAmount =
-      subTotal * tax / 100;
+    // Tax
+    double tax = double.tryParse(_pTaxPercentage.text) ?? 0;
 
-  _pTaxAmount.text = taxAmount.toStringAsFixed(2);
+    double taxAmount = subTotal * tax / 100;
 
-  // Total Sale Price
-  double totalSalePrice =
-      subTotal + taxAmount;
+    _pTaxAmount.text = taxAmount.toStringAsFixed(2);
 
-  _pTotalSalePrice.text = totalSalePrice.round().toString();
-}
-  
+    // Total Sale Price
+    double totalSalePrice = subTotal + taxAmount;
+
+    _pTotalSalePrice.text = totalSalePrice.round().toString();
+  }
+
   Widget _pricingCardSection({
     required String title,
     required IconData icon,
@@ -2713,8 +2761,11 @@ void _calculatePricing() {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
               color: const Color(0xFF2a86c9).withOpacity(0.06),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              border: Border(bottom: BorderSide(color: const Color(0xFF2a86c9).withOpacity(0.12))),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border(
+                  bottom: BorderSide(
+                      color: const Color(0xFF2a86c9).withOpacity(0.12))),
             ),
             child: Row(
               children: [
@@ -2757,11 +2808,14 @@ void _calculatePricing() {
     final crossAxisCount = width < 600 ? 2 : (fields.length > 3 ? 4 : 3);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final itemWidth = (constraints.maxWidth - ((crossAxisCount - 1) * 12)) / crossAxisCount;
+        final itemWidth = (constraints.maxWidth - ((crossAxisCount - 1) * 12)) /
+            crossAxisCount;
         return Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: fields.map((field) => SizedBox(width: itemWidth, child: field)).toList(),
+          children: fields
+              .map((field) => SizedBox(width: itemWidth, child: field))
+              .toList(),
         );
       },
     );
@@ -2773,7 +2827,7 @@ void _calculatePricing() {
     TextInputType keyboardType = TextInputType.text,
     String? prefixText,
     IconData? prefixIcon,
-     bool readOnly = false,
+    bool readOnly = false,
     ValueChanged<String>? onChanged,
     String? hintText,
   }) {
@@ -2792,27 +2846,36 @@ void _calculatePricing() {
         TextFormField(
           controller: ctrl,
           keyboardType: keyboardType,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF2C3E50)),
+          style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF2C3E50)),
           decoration: InputDecoration(
-             hintText: hintText,
+            hintText: hintText,
             hintStyle: TextStyle(
               color: Colors.grey.shade500,
               fontSize: 13,
             ),
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, size: 16, color: const Color(0xFF2a86c9))
                 : (prefixText != null
                     ? Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 4, top: 11, bottom: 11),
+                        padding: const EdgeInsets.only(
+                            left: 10, right: 4, top: 11, bottom: 11),
                         child: Text(
                           prefixText,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2a86c9)),
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2a86c9)),
                         ),
                       )
                     : null),
-            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+            prefixIconConstraints:
+                const BoxConstraints(minWidth: 0, minHeight: 0),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -2823,7 +2886,8 @@ void _calculatePricing() {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
+              borderSide:
+                  const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
@@ -2857,11 +2921,16 @@ void _calculatePricing() {
         DropdownButtonFormField<String>(
           value: validValue,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF2a86c9), size: 20),
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Color(0xFF2C3E50)),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF2a86c9), size: 20),
+          style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF2C3E50)),
           decoration: InputDecoration(
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -2872,7 +2941,8 @@ void _calculatePricing() {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
+              borderSide:
+                  const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
             ),
             filled: true,
             fillColor: Colors.grey.shade50,
@@ -2895,7 +2965,7 @@ void _calculatePricing() {
       ],
     );
   }
-  
+
   Widget _buildHeader() {
     return Container(
       padding:
@@ -3351,7 +3421,7 @@ void _calculatePricing() {
                           ];
                         },
                         onSelected: (value) {
-                            if (viewLeadCategoryOnly == "true") return;
+                          if (viewLeadCategoryOnly == "true") return;
                           _refreshData(value.toString());
                         }),
                   ]
@@ -3698,7 +3768,8 @@ void _calculatePricing() {
                             email: leadDetails!.data!.emailId,
                             cost: leadDetails!.data!.cost,
                             leadCategoryId: leadDetails!.data!.leadCategoryId,
-                            leadSubCategoryId: leadDetails!.data!.leadSubCategoryId,
+                            leadSubCategoryId:
+                                leadDetails!.data!.leadSubCategoryId,
                             priorityId: leadDetails!.data!.priorityId,
                             leadSourceId: leadDetails!.data!.leadSourceId,
                             remarks: leadDetails!.data!.remarks,
@@ -3721,9 +3792,9 @@ void _calculatePricing() {
                         ),
                       ).then((_) => widget.onDataChanged());
                       break;
-                        case 'quotation':
-                    _showQuotationDialog();
-                    break;
+                    case 'quotation':
+                      _showQuotationDialog();
+                      break;
                     case 'delete':
                       _deleteDialog(context, "", "lead");
                       break;
@@ -3737,15 +3808,15 @@ void _calculatePricing() {
                       'Transfer', Colors.orange),
                   _buildPopupItem('add', Icons.person_add_rounded, 'Add Leads',
                       Colors.green),
-                    if (leadDetails?.data?.sendQuoteRequest == true)
-                      _buildPopupItem(
-                        'quotation',
-                        Icons.request_quote_rounded,
-                        'Request Quotation',
-                        Colors.indigo,
-                      ),
-                    _buildPopupItem('delete', Icons.delete_outline_rounded,
-                        'Delete', Colors.red),
+                  if (leadDetails?.data?.sendQuoteRequest == true)
+                    _buildPopupItem(
+                      'quotation',
+                      Icons.request_quote_rounded,
+                      'Request Quotation',
+                      Colors.indigo,
+                    ),
+                  _buildPopupItem('delete', Icons.delete_outline_rounded,
+                      'Delete', Colors.red),
                 ],
                 child: _buildActionColumn(
                   icon: Icons.more_vert,
@@ -3753,132 +3824,129 @@ void _calculatePricing() {
                   color: Colors.blueGrey,
                 ),
               ),
-            
             ],
           ),
         ],
       ),
     );
   }
-Future<void> _loadStaffs() async {
-  final response = await HttpService.getStaffs();
 
-  if (response != null && response.status) {
-    setState(() {
-      staffList = response.data;
-    });
+  Future<void> _loadStaffs() async {
+    final response = await HttpService.getStaffs();
+
+    if (response != null && response.status) {
+      setState(() {
+        staffList = response.data;
+      });
+    }
   }
-}
-Future<void> _showQuotationDialog() async {
-  await _loadStaffs();
 
-  final parentContext = context;
+  Future<void> _showQuotationDialog() async {
+    await _loadStaffs();
 
-  final titleController = TextEditingController(
-    text: "Quotation Request",
-  );
+    final parentContext = context;
 
-  final messageController = TextEditingController(
-    text: "Kindly prepare and send the quotation for this lead.",
-  );
-  String? quotationType = "General";
-  showDialog(
-    context: parentContext,
-    builder: (dialogContext) {
-      return StatefulBuilder(
-        builder: (context, setStateDialog) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            title: const Text(
-              "Send Quotation Request",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: SizedBox(
-              width: 420,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: "Request Title *",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+    final titleController = TextEditingController(
+      text: "Quotation Request",
+    );
 
-                  const SizedBox(height: 15),
-
-                  TextFormField(
-                    controller: messageController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: "Request Message *",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  DropdownButtonFormField<String>(
-                    value: quotationType,
-                    decoration: const InputDecoration(
-                      labelText: "Type *",
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: "Amc",
-                        child: Text("Amc"),
-                      ),
-                      DropdownMenuItem(
-                        value: "General",
-                        child: Text("General"),
-                      ),
-                      DropdownMenuItem(
-                        value: "Repairing",
-                        child: Text("Repairing"),
-                      ),
-                    ],
-                    onChanged: (String? value) {
-                      setStateDialog(() {
-                        quotationType = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 15),
-
-                  DropdownButtonFormField<String>(
-                    value: assignedTo,
-                    decoration: const InputDecoration(
-                      labelText: "Assigned To *",
-                      border: OutlineInputBorder(),
-                    ),
-                    items: staffList.map((expense.Staff staff) {
-                      return DropdownMenuItem<String>(
-                        value: staff.userIdStaff,
-                        child: Text(staff.name),
-                      );
-                    }).toList(),
-                    onChanged: (String? value) {
-                      setStateDialog(() {
-                        assignedTo = value;
-                      });
-                    },
-                  ),
-                ],
+    final messageController = TextEditingController(
+      text: "Kindly prepare and send the quotation for this lead.",
+    );
+    String? quotationType = "General";
+    showDialog(
+      context: parentContext,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text("Cancel"),
+              title: const Text(
+                "Send Quotation Request",
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.send),
-                label: const Text("Send Request"),
-                onPressed: () async {
-                  if (quotationType == null || quotationType!.isEmpty) {
+              content: SizedBox(
+                width: 420,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: titleController,
+                      decoration: const InputDecoration(
+                        labelText: "Request Title *",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: messageController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: "Request Message *",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    DropdownButtonFormField<String>(
+                      value: quotationType,
+                      decoration: const InputDecoration(
+                        labelText: "Type *",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: "Amc",
+                          child: Text("Amc"),
+                        ),
+                        DropdownMenuItem(
+                          value: "General",
+                          child: Text("General"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Repairing",
+                          child: Text("Repairing"),
+                        ),
+                      ],
+                      onChanged: (String? value) {
+                        setStateDialog(() {
+                          quotationType = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    DropdownButtonFormField<String>(
+                      value: assignedTo,
+                      decoration: const InputDecoration(
+                        labelText: "Assigned To *",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: staffList.map((expense.Staff staff) {
+                        return DropdownMenuItem<String>(
+                          value: staff.userIdStaff,
+                          child: Text(staff.name),
+                        );
+                      }).toList(),
+                      onChanged: (String? value) {
+                        setStateDialog(() {
+                          assignedTo = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.send),
+                  label: const Text("Send Request"),
+                  onPressed: () async {
+                    if (quotationType == null || quotationType!.isEmpty) {
                       ScaffoldMessenger.of(parentContext).showSnackBar(
                         const SnackBar(
                           content: Text("Please select Type"),
@@ -3886,62 +3954,61 @@ Future<void> _showQuotationDialog() async {
                       );
                       return;
                     }
-                  if (assignedTo == null || assignedTo!.isEmpty) {
-                    ScaffoldMessenger.of(parentContext).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please select Assigned To"),
-                      ),
-                    );
-                    return;
-                  }
+                    if (assignedTo == null || assignedTo!.isEmpty) {
+                      ScaffoldMessenger.of(parentContext).showSnackBar(
+                        const SnackBar(
+                          content: Text("Please select Assigned To"),
+                        ),
+                      );
+                      return;
+                    }
 
-                  final response =
-                      await HttpService.sendQuotationRequest(
-                    token: widget.token,
-                    callMasterId: callMasterId!,
-                    assignedTo: assignedTo!,
-                    requestTitle: titleController.text.trim(),
-                    requestMessage: messageController.text.trim(),
-                    quotationType: quotationType!,
-                  );
-
-                  print("Response: $response");
-
-                  if (response != null && response["status"] == true) {
-                    // Close quotation dialog
-                    Navigator.of(dialogContext).pop();
-
-                    await Future.delayed(const Duration(milliseconds: 150));
-
-                    Common.toastMessaage(
-                      response["message"]?.toString() ??
-                          "Quotation request sent successfully.",
-                      Colors.green,
+                    final response = await HttpService.sendQuotationRequest(
+                      token: widget.token,
+                      callMasterId: callMasterId!,
+                      assignedTo: assignedTo!,
+                      requestTitle: titleController.text.trim(),
+                      requestMessage: messageController.text.trim(),
+                      quotationType: quotationType!,
                     );
 
-                    // Refresh popup data
-                    await _refreshData(callMasterId ?? widget.callMasterId);
+                    print("Response: $response");
 
-                    if (!mounted) return;
+                    if (response != null && response["status"] == true) {
+                      // Close quotation dialog
+                      Navigator.of(dialogContext).pop();
 
-                    widget.onDataChanged();
-                    }else {
-                    Common.toastMessaage(
-                      response?["message"]?.toString() ??
-                          "Failed to send quotation request.",
-                      Colors.red,
-                    );
-                  }
-                },
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-  
+                      await Future.delayed(const Duration(milliseconds: 150));
+
+                      Common.toastMessaage(
+                        response["message"]?.toString() ??
+                            "Quotation request sent successfully.",
+                        Colors.green,
+                      );
+
+                      // Refresh popup data
+                      await _refreshData(callMasterId ?? widget.callMasterId);
+
+                      if (!mounted) return;
+
+                      widget.onDataChanged();
+                    } else {
+                      Common.toastMessaage(
+                        response?["message"]?.toString() ??
+                            "Failed to send quotation request.",
+                        Colors.red,
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildInfoItem(IconData icon, String text) {
     return Expanded(
       child: Row(
@@ -4174,10 +4241,10 @@ Future<void> _showQuotationDialog() async {
         (callResult == 'Estimation & Pricing' ||
             callResult.toLowerCase().contains('estimation'));
     if (isEstimationStage) {
-      if (_pQuotation.text.trim().isEmpty) {
-        Common.toastMessaage('Quotation Name is required', Colors.red);
-        return;
-      }
+      // if (_pQuotation.text.trim().isEmpty) {
+      //   Common.toastMessaage('Quotation Name is required', Colors.red);
+      //   return;
+      // }
       if (_pClientName.text.trim().isEmpty) {
         Common.toastMessaage('Client Name is required', Colors.red);
         return;
@@ -4269,7 +4336,7 @@ Future<void> _showQuotationDialog() async {
           remarks.text,
           callMasterId ?? (callMasterId ?? widget.callMasterId),
           calledDate1.text,
-          '', 
+          '',
           priorityId,
           checked,
           timeBefore.text,
@@ -4331,8 +4398,7 @@ Future<void> _showQuotationDialog() async {
             isChecked = false;
             checked = false;
           });
-        }
-        else {
+        } else {
           Common.toastMessaage(result.message, Colors.red);
         }
       }
@@ -4647,18 +4713,22 @@ Future<void> _showQuotationDialog() async {
                   const SizedBox(height: 12),
                   Builder(
                     builder: (context) {
-                      final showEstimation = leadDetails?.data?.createEstimation == true;
-                      final filteredCallResults = commonDetails!.data.callResult.where((item) {
+                      final showEstimation =
+                          leadDetails?.data?.createEstimation == true;
+                      final filteredCallResults =
+                          commonDetails!.data.callResult.where((item) {
                         if (!showEstimation) {
                           final resName = item.callResult.trim().toLowerCase();
-                          if (resName == 'estimation & pricing' || resName.contains('estimation')) {
+                          if (resName == 'estimation & pricing' ||
+                              resName.contains('estimation')) {
                             return false;
                           }
                         }
                         return true;
                       }).toList();
 
-                      final selectedValue = filteredCallResults.any((item) => item.callResultId.toString() == callResultId)
+                      final selectedValue = filteredCallResults.any((item) =>
+                              item.callResultId.toString() == callResultId)
                           ? callResultId
                           : null;
 
@@ -11700,12 +11770,14 @@ Future<void> _showQuotationDialog() async {
                     leadDetails!.data!.contactNumber1,
                   );
                   if (context.mounted) {
-                  //  Navigator.pop(context);
+                    //  Navigator.pop(context);
                     if (result != null && result.data == true) {
                       Common.toastMessaage(result.message, Colors.green);
                       Navigator.pop(context);
                     } else {
-                      Common.toastMessaage(result?.message ?? "Failed to initiate call", Colors.red);
+                      Common.toastMessaage(
+                          result?.message ?? "Failed to initiate call",
+                          Colors.red);
                     }
                   }
                 },
@@ -11858,59 +11930,56 @@ Future<void> _showQuotationDialog() async {
 
                       // Dropdown Replacement / Themed Selection
                       Container(
-  decoration: BoxDecoration(
-    color: Colors.grey.shade50,
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: Colors.grey.shade200),
-  ),
-  child: DropdownSearch<String>(
-    selectedItem: selectedStaff,
-    items: (filter, infiniteScrollProps) {
-      return commonDetails?.data.transferStaffs
-              .map((staff) => staff.tranStaffId)
-              .toList() ??
-          [];
-    },
-
-    itemAsString: (id) {
-      try {
-        final staff = commonDetails!.data.transferStaffs.firstWhere(
-          (e) => e.tranStaffId == id,
-        );
-        return staff.tranStaffName ?? '';
-      } catch (e) {
-        return '';
-      }
-    },
-
-    decoratorProps: const DropDownDecoratorProps(
-      decoration: InputDecoration(
-        hintText: "Choose staff member",
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
-        ),
-      ),
-    ),
-
-    popupProps: const PopupProps.menu(
-      showSearchBox: true,
-      searchFieldProps: TextFieldProps(
-        decoration: InputDecoration(
-          hintText: "Search staff...",
-          prefixIcon: Icon(Icons.search),
-        ),
-      ),
-    ),
-
-    onChanged: (value) {
-      setDialogState(() {
-        selectedStaff = value;
-      });
-    },
-  ),
-),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: DropdownSearch<String>(
+                          selectedItem: selectedStaff,
+                          items: (filter, infiniteScrollProps) {
+                            return commonDetails?.data.transferStaffs
+                                    .map((staff) => staff.tranStaffId)
+                                    .toList() ??
+                                [];
+                          },
+                          itemAsString: (id) {
+                            try {
+                              final staff =
+                                  commonDetails!.data.transferStaffs.firstWhere(
+                                (e) => e.tranStaffId == id,
+                              );
+                              return staff.tranStaffName ?? '';
+                            } catch (e) {
+                              return '';
+                            }
+                          },
+                          decoratorProps: const DropDownDecoratorProps(
+                            decoration: InputDecoration(
+                              hintText: "Choose staff member",
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          popupProps: const PopupProps.menu(
+                            showSearchBox: true,
+                            searchFieldProps: TextFieldProps(
+                              decoration: InputDecoration(
+                                hintText: "Search staff...",
+                                prefixIcon: Icon(Icons.search),
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setDialogState(() {
+                              selectedStaff = value;
+                            });
+                          },
+                        ),
+                      ),
                       const SizedBox(height: 20),
 
                       // Remark Label
@@ -14127,28 +14196,37 @@ Future<void> _showQuotationDialog() async {
 
   Color _quoteStatusColor(String? sts) {
     switch (sts) {
-      case '1': return const Color(0xFF2196F3); // Draft
-      case '2': return const Color(0xFFFF9800); // Sent
-      case '3': return const Color(0xFF9C27B0); // Viewed
-      case '4': return const Color(0xFFFF5722); // Rejected
-      case '5': return const Color(0xFF4CAF50); // Accepted
-      case '6': return const Color(0xFF00BCD4); // Revised
-      case '7': return const Color(0xFF4CAF50); // Approved
-      default:  return const Color(0xFF9E9E9E);
+      case '1':
+        return const Color(0xFF2196F3); // Draft
+      case '2':
+        return const Color(0xFFFF9800); // Sent
+      case '3':
+        return const Color(0xFF9C27B0); // Viewed
+      case '4':
+        return const Color(0xFFFF5722); // Rejected
+      case '5':
+        return const Color(0xFF4CAF50); // Accepted
+      case '6':
+        return const Color(0xFF00BCD4); // Revised
+      case '7':
+        return const Color(0xFF4CAF50); // Approved
+      default:
+        return const Color(0xFF9E9E9E);
     }
   }
 
   Widget _buildQuotationsTab() {
-    final quotations = leadDetails?.data?.quotationDetails
-        ?? widget.leadDetails.data?.quotationDetails
-        ?? [];
+    final quotations = leadDetails?.data?.quotationDetails ??
+        widget.leadDetails.data?.quotationDetails ??
+        [];
 
     if (quotations.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 72, color: Colors.grey.shade300),
+            Icon(Icons.receipt_long_outlined,
+                size: 72, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             Text(
               'No Quotations Found',
@@ -14193,7 +14271,8 @@ Future<void> _showQuotationDialog() async {
             children: [
               // ── Header ────────────────────────────────────────────────
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -14275,9 +14354,8 @@ Future<void> _showQuotationDialog() async {
                   children: [
                     _buildQuotationDetailRow(
                       label1: 'Quotation Amount',
-                      value1: q.total?.isNotEmpty == true
-                          ? '₹ ${q.total}'
-                          : '-',
+                      value1:
+                          q.total?.isNotEmpty == true ? '₹ ${q.total}' : '-',
                       label2: 'Created By',
                       value2: q.quotationCreatedBy?.isNotEmpty == true
                           ? q.quotationCreatedBy!
@@ -14288,9 +14366,8 @@ Future<void> _showQuotationDialog() async {
                     const SizedBox(height: 10),
                     _buildQuotationDetailRow(
                       label1: 'Created Date',
-                      value1: q.createdAt?.isNotEmpty == true
-                          ? q.createdAt!
-                          : '-',
+                      value1:
+                          q.createdAt?.isNotEmpty == true ? q.createdAt! : '-',
                       label2: 'Status',
                       value2: q.quoteStatusLabel?.isNotEmpty == true
                           ? q.quoteStatusLabel!

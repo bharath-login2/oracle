@@ -86,9 +86,9 @@ class Data {
   String? faceDetection;
   String? companyLocation;
   String? assignWork;
-   String? editassignWork;
-     String? deleteassignWork;
-   String? markAttendance;
+  String? editassignWork;
+  String? deleteassignWork;
+  String? markAttendance;
   String? addWorkModule;
   String? viewAttendanceSection;
   String? viewPendingWorks;
@@ -121,6 +121,8 @@ class Data {
   String? viewAllCategory;
   String? addAttendanceRemarks;
   String? createQuotationRequest;
+  bool? createEstimation;
+  bool? createPricing;
   Data({
     this.ProjectDashboard,
     this.LeadDashboard,
@@ -185,8 +187,8 @@ class Data {
     this.faceDetection,
     this.companyLocation,
     this.assignWork,
-      this.editassignWork,
-      this.deleteassignWork,
+    this.editassignWork,
+    this.deleteassignWork,
     this.markAttendance,
     this.addWorkModule,
     this.viewAttendanceSection,
@@ -219,6 +221,8 @@ class Data {
     this.viewLeadCategoryOnly,
     this.viewAllCategory,
     this.addAttendanceRemarks,
+    this.createEstimation,
+    this.createPricing,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -285,8 +289,8 @@ class Data {
     faceDetection = json['face_detection'];
     companyLocation = json['company_location'];
     assignWork = json['assign_work'];
-      editassignWork = json['edit_assign_work'];
-      deleteassignWork = json['delete_assign_work'];
+    editassignWork = json['edit_assign_work'];
+    deleteassignWork = json['delete_assign_work'];
     markAttendance = json['mark_attendance'];
     addWorkModule = json['add_work_module'];
     viewAttendanceSection = json['view_attendance'];
@@ -322,6 +326,8 @@ class Data {
     createQuotationRequest = json['create_quotation_request'] != null
         ? json['create_quotation_request'].toString()
         : (json['createQuotationRequest']?.toString() ?? '');
+    createEstimation = json['createEstimation'];
+    createPricing = json['createPricing'];
   }
 
   Map<String, dynamic> toJson() {
@@ -384,8 +390,8 @@ class Data {
     data['face_detection'] = faceDetection;
     data['company_location'] = companyLocation;
     data['assign_work'] = assignWork;
-      data['edit_assign_work'] = editassignWork;
-      data['delete_assign_work'] = deleteassignWork;
+    data['edit_assign_work'] = editassignWork;
+    data['delete_assign_work'] = deleteassignWork;
     data['mark_attendance'] = markAttendance;
     data['add_work_module'] = addWorkModule;
     data['view_attendance'] = viewAttendanceSection;
@@ -419,6 +425,9 @@ class Data {
     data['viewAllCategory'] = viewAllCategory;
     data['add_attendance_remark'] = addAttendanceRemarks;
     data['create_quotation_request'] = createQuotationRequest;
+    data['createEstimation'] = createEstimation;
+    data['createPricing'] = createPricing;
+
     return data;
   }
 }

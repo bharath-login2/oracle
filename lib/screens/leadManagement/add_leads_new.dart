@@ -16,11 +16,14 @@ import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/getLeadSourceModel.dart';
-
+import '../../models/userPermissionModel.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import '../../models/lead_management/productDescriptionModel.dart';
 import '../../service/service.dart';
 import '../../models/lead_management/leadExtraSettings.dart';
+import '../../models/lead_management/leadDetailsModel.dart';
+import '../../models/lead_management/staff_list_model.dart';
+import 'package:login2/widgets/estimation_pricing_card.dart';
 import 'dart:developer';
 
 class AddLeadsNew extends StatefulWidget {
@@ -106,6 +109,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   CommonConfigureModel? configure;
   LeadSubTypeModel? leadSubTypeList;
   final ScrollController _scrollController = ScrollController();
+  LeadDeatailsModel? estimationDetails;
 
   // Form Fields
   String leadType = 'Lead Category', leadTypeId = '';
@@ -114,6 +118,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   String callResult = 'New', callResultId = '1';
   String leadSource = 'Direct Entry', leadSourceId = "1";
   String priority = 'Normal', priorityId = '2';
+  UserPermissionModel? userPermissions;
 
   final TextEditingController leadTypeCtrl =
       TextEditingController(text: 'Lead Category');
@@ -143,6 +148,53 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   final TextEditingController callResponseCtrl = TextEditingController();
   final TextEditingController whatsappNoCtrl = TextEditingController();
   final TextEditingController emailCtrl = TextEditingController();
+
+  // Estimation & Pricing Controllers & Variables
+  final TextEditingController _pQuotationTitle = TextEditingController();
+  final TextEditingController _pQuotation = TextEditingController();
+  final TextEditingController _pClientName = TextEditingController();
+  final TextEditingController _pPhone = TextEditingController();
+  final TextEditingController _pLocation = TextEditingController();
+  final TextEditingController _pElevatorType = TextEditingController();
+  final TextEditingController _pTypeOfOpening = TextEditingController();
+  final TextEditingController _pCapacity = TextEditingController();
+  final TextEditingController _pPassengerCapacity = TextEditingController();
+  final TextEditingController _pShaftWidth = TextEditingController();
+  final TextEditingController _pShaftDepth = TextEditingController();
+  final TextEditingController _pPitDepth = TextEditingController();
+  final TextEditingController _pTravelHeight = TextEditingController();
+  final TextEditingController _pOverheadHeight = TextEditingController();
+  final TextEditingController _pWarranty = TextEditingController();
+  final TextEditingController _pAmc = TextEditingController();
+
+  final TextEditingController _pFactoryPrice = TextEditingController();
+  final TextEditingController _pTransportation = TextEditingController();
+  final TextEditingController _pInstallation = TextEditingController();
+  final TextEditingController _pTesting = TextEditingController();
+  final TextEditingController _pConsumables = TextEditingController();
+  final TextEditingController _pAdditionalFactory = TextEditingController();
+  final TextEditingController _pAdditional = TextEditingController();
+  final TextEditingController _pAmcAmount = TextEditingController();
+  final TextEditingController _pQuantity = TextEditingController(text: '1');
+  final TextEditingController _pUnitPrice = TextEditingController();
+  final TextEditingController _pCompanyProfit = TextEditingController();
+  final TextEditingController _pCompanyProfitAmount = TextEditingController();
+  final TextEditingController _pSalesCommission = TextEditingController();
+  final TextEditingController _pSalesCommissionAmount = TextEditingController();
+  final TextEditingController _pSubTotal = TextEditingController();
+  final TextEditingController _pTaxPercentage = TextEditingController();
+  final TextEditingController _pTaxAmount = TextEditingController();
+  final TextEditingController _pTotalSalePrice = TextEditingController();
+
+  // Dropdown selections for estimation specs
+  String? _pLiftTypeId;
+  String? _pOpeningId;
+  String? _pDoorOpeningId;
+  String? _pCabinSideWallId;
+  String? _pLandingDoorId;
+  String? _pCopId;
+  String? _pLopId;
+  String? _pTaxType;
 
   // Additional Fields
   final List<TextEditingController> _additionalCtrls = [];
@@ -317,7 +369,312 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     emailCtrl.dispose();
     for (var ctrl in _additionalCtrls) ctrl.dispose();
     _scrollController.dispose();
+
+    _pQuotationTitle.dispose();
+    _pQuotation.dispose();
+    _pClientName.dispose();
+    _pPhone.dispose();
+    _pLocation.dispose();
+    _pElevatorType.dispose();
+    _pTypeOfOpening.dispose();
+    _pCapacity.dispose();
+    _pPassengerCapacity.dispose();
+    _pShaftWidth.dispose();
+    _pShaftDepth.dispose();
+    _pPitDepth.dispose();
+    _pTravelHeight.dispose();
+    _pOverheadHeight.dispose();
+    _pWarranty.dispose();
+    _pAmc.dispose();
+    _pFactoryPrice.dispose();
+    _pTransportation.dispose();
+    _pInstallation.dispose();
+    _pTesting.dispose();
+    _pConsumables.dispose();
+    _pAdditionalFactory.dispose();
+    _pAdditional.dispose();
+    _pAmcAmount.dispose();
+    _pQuantity.dispose();
+    _pUnitPrice.dispose();
+    _pCompanyProfit.dispose();
+    _pCompanyProfitAmount.dispose();
+    _pSalesCommission.dispose();
+    _pSalesCommissionAmount.dispose();
+    _pSubTotal.dispose();
+    _pTaxPercentage.dispose();
+    _pTaxAmount.dispose();
+    _pTotalSalePrice.dispose();
+
     super.dispose();
+  }
+
+  void _syncEstimationDefaults() {
+    if (_pClientName.text.isEmpty && clientNameCtrl.text.isNotEmpty) {
+      _pClientName.text = clientNameCtrl.text;
+    }
+    if (_pPhone.text.isEmpty && contactNoCtrl.text.isNotEmpty) {
+      _pPhone.text = contactNoCtrl.text;
+    }
+    if (_pLocation.text.isEmpty) {
+      if (districtCtrl.text.isNotEmpty) {
+        _pLocation.text = districtCtrl.text;
+      } else if (addressCtrl.text.isNotEmpty) {
+        _pLocation.text = addressCtrl.text;
+      }
+    }
+  }
+
+  void _initEstimationFromData(dynamic data) {
+    if (data == null) return;
+    if (_pQuotationTitle.text.isEmpty &&
+        data.quotationTitle != null &&
+        data.quotationTitle!.isNotEmpty) {
+      _pQuotationTitle.text = data.quotationTitle ?? '';
+    }
+    if (_pQuotation.text.isEmpty &&
+        data.quotation != null &&
+        data.quotation!.isNotEmpty) {
+      _pQuotation.text = data.quotation ?? '';
+    }
+    if (_pClientName.text.isEmpty) {
+      if (data.clientName != null && data.clientName!.isNotEmpty) {
+        _pClientName.text = data.clientName ?? '';
+      } else if (clientNameCtrl.text.isNotEmpty) {
+        _pClientName.text = clientNameCtrl.text;
+      }
+    }
+    if (_pPhone.text.isEmpty) {
+      if (data.contactNumber1 != null && data.contactNumber1!.isNotEmpty) {
+        _pPhone.text = data.contactNumber1 ?? '';
+      } else if (contactNoCtrl.text.isNotEmpty) {
+        _pPhone.text = contactNoCtrl.text;
+      }
+    }
+    if (_pLocation.text.isEmpty) {
+      if (data.location != null && data.location!.isNotEmpty) {
+        _pLocation.text = data.location ?? '';
+      } else if (districtCtrl.text.isNotEmpty) {
+        _pLocation.text = districtCtrl.text;
+      } else if (addressCtrl.text.isNotEmpty) {
+        _pLocation.text = addressCtrl.text;
+      }
+    }
+    if (_pElevatorType.text.isEmpty &&
+        data.elevatorType != null &&
+        data.elevatorType!.isNotEmpty) {
+      _pElevatorType.text = data.elevatorType ?? '';
+    }
+    if (_pTypeOfOpening.text.isEmpty &&
+        data.typeOfOpening != null &&
+        data.typeOfOpening!.isNotEmpty) {
+      _pTypeOfOpening.text = data.typeOfOpening ?? '';
+    }
+    if (_pCapacity.text.isEmpty &&
+        data.capacity != null &&
+        data.capacity!.isNotEmpty) {
+      _pCapacity.text = data.capacity ?? '';
+    }
+    if (_pPassengerCapacity.text.isEmpty &&
+        data.passengerCapacity != null &&
+        data.passengerCapacity!.isNotEmpty) {
+      _pPassengerCapacity.text = data.passengerCapacity ?? '';
+    }
+    if (_pShaftWidth.text.isEmpty &&
+        data.shaftWidth != null &&
+        data.shaftWidth!.isNotEmpty) {
+      _pShaftWidth.text = data.shaftWidth ?? '';
+    }
+    if (_pShaftDepth.text.isEmpty &&
+        data.shaftDepth != null &&
+        data.shaftDepth!.isNotEmpty) {
+      _pShaftDepth.text = data.shaftDepth ?? '';
+    }
+    if (_pPitDepth.text.isEmpty &&
+        data.pitDepth != null &&
+        data.pitDepth!.isNotEmpty) {
+      _pPitDepth.text = data.pitDepth ?? '';
+    }
+    if (_pTravelHeight.text.isEmpty &&
+        data.travelHeight != null &&
+        data.travelHeight!.isNotEmpty) {
+      _pTravelHeight.text = data.travelHeight ?? '';
+    }
+    if (_pOverheadHeight.text.isEmpty &&
+        data.overheadHeight != null &&
+        data.overheadHeight!.isNotEmpty) {
+      _pOverheadHeight.text = data.overheadHeight ?? '';
+    }
+    if (_pWarranty.text.isEmpty &&
+        data.warranty != null &&
+        data.warranty!.isNotEmpty) {
+      _pWarranty.text = data.warranty ?? '';
+    }
+    if (_pAmc.text.isEmpty && data.amc != null && data.amc!.isNotEmpty) {
+      _pAmc.text = data.amc ?? '';
+    }
+    if (_pFactoryPrice.text.isEmpty &&
+        data.factoryPrice != null &&
+        data.factoryPrice!.isNotEmpty) {
+      _pFactoryPrice.text = data.factoryPrice ?? '';
+    }
+    if (_pTransportation.text.isEmpty &&
+        data.transportationCharge != null &&
+        data.transportationCharge!.isNotEmpty) {
+      _pTransportation.text = data.transportationCharge ?? '';
+    }
+    if (_pInstallation.text.isEmpty &&
+        data.installationCharge != null &&
+        data.installationCharge!.isNotEmpty) {
+      _pInstallation.text = data.installationCharge ?? '';
+    }
+    if (_pTesting.text.isEmpty &&
+        data.testingCharge != null &&
+        data.testingCharge!.isNotEmpty) {
+      _pTesting.text = data.testingCharge ?? '';
+    }
+    if (_pConsumables.text.isEmpty &&
+        data.consumables != null &&
+        data.consumables!.isNotEmpty) {
+      _pConsumables.text = data.consumables ?? '';
+    }
+    if (_pAdditionalFactory.text.isEmpty &&
+        data.additionalChargesApartFromFactory != null &&
+        data.additionalChargesApartFromFactory!.isNotEmpty) {
+      _pAdditionalFactory.text = data.additionalChargesApartFromFactory ?? '';
+    }
+    if (_pAdditional.text.isEmpty &&
+        data.additionalCharge != null &&
+        data.additionalCharge!.isNotEmpty) {
+      _pAdditional.text = data.additionalCharge ?? '';
+    }
+    if (_pAmcAmount.text.isEmpty &&
+        data.amcAmount != null &&
+        data.amcAmount!.isNotEmpty) {
+      _pAmcAmount.text = data.amcAmount ?? '';
+    }
+    if (_pUnitPrice.text.isEmpty &&
+        data.unitPrice != null &&
+        data.unitPrice!.isNotEmpty) {
+      _pUnitPrice.text = data.unitPrice ?? '';
+    }
+    if (_pCompanyProfit.text.isEmpty &&
+        data.companyProfit != null &&
+        data.companyProfit!.isNotEmpty) {
+      _pCompanyProfit.text = data.companyProfit ?? '';
+    }
+    if (_pCompanyProfitAmount.text.isEmpty &&
+        data.companyProfitAmount != null &&
+        data.companyProfitAmount!.isNotEmpty) {
+      _pCompanyProfitAmount.text = data.companyProfitAmount ?? '';
+    }
+    if (_pSalesCommission.text.isEmpty &&
+        data.salesCommission != null &&
+        data.salesCommission!.isNotEmpty) {
+      _pSalesCommission.text = data.salesCommission ?? '';
+    }
+    if (_pSalesCommissionAmount.text.isEmpty &&
+        data.salesCommissionAmount != null &&
+        data.salesCommissionAmount!.isNotEmpty) {
+      _pSalesCommissionAmount.text = data.salesCommissionAmount ?? '';
+    }
+    if (_pSubTotal.text.isEmpty &&
+        data.subTotal != null &&
+        data.subTotal!.isNotEmpty) {
+      _pSubTotal.text = data.subTotal ?? '';
+    }
+    if (_pTaxPercentage.text.isEmpty &&
+        data.taxPercentage != null &&
+        data.taxPercentage!.isNotEmpty) {
+      _pTaxPercentage.text = data.taxPercentage ?? '';
+    }
+    if (_pTaxAmount.text.isEmpty &&
+        data.taxAmount != null &&
+        data.taxAmount!.isNotEmpty) {
+      _pTaxAmount.text = data.taxAmount ?? '';
+    }
+    if (_pTotalSalePrice.text.isEmpty &&
+        data.totalSalePrice != null &&
+        data.totalSalePrice!.isNotEmpty) {
+      _pTotalSalePrice.text = data.totalSalePrice ?? '';
+    }
+
+    _pLiftTypeId ??= _validSpecId(data.liftValues, data.liftType);
+    _pOpeningId ??= _validSpecId(data.opening, data.openingName);
+    _pDoorOpeningId ??= _validSpecId(data.cabinOpening, data.doorOpening);
+    _pCabinSideWallId ??=
+        _validSpecId(data.cabinSideWall, data.cabinSideWallName);
+    _pLandingDoorId ??= _validSpecId(data.landingDoor, data.landingDoorName);
+    _pCopId ??= _validSpecId(data.cop, data.copName);
+    _pLopId ??= _validSpecId(data.lop, data.lopName);
+    _pTaxType ??= (data.taxType != null && data.taxType!.isNotEmpty)
+        ? data.taxType
+        : null;
+  }
+
+  String? _validSpecId(List<dynamic>? list, String? id) {
+    if (list == null || id == null || id.isEmpty) return null;
+    return list.any((e) {
+      if (e is CommonValue) return e.valueId == id;
+      try {
+        if (e.valueId != null) return e.valueId == id;
+      } catch (_) {}
+      return e.toString() == id;
+    })
+        ? id
+        : null;
+  }
+
+  Map<String, dynamic> _buildPricingBody() {
+    return <String, dynamic>{
+      'quotation_title': _pQuotationTitle.text,
+      'quotation': _pQuotation.text,
+      'client_name': _pClientName.text.isNotEmpty
+          ? _pClientName.text
+          : clientNameCtrl.text,
+      'phone': _pPhone.text.isNotEmpty ? _pPhone.text : contactNoCtrl.text,
+      'location': _pLocation.text.isNotEmpty
+          ? _pLocation.text
+          : (districtCtrl.text.isNotEmpty
+              ? districtCtrl.text
+              : addressCtrl.text),
+      'elevator_type': _pElevatorType.text,
+      'type_of_opening': _pTypeOfOpening.text,
+      'lift_capacity': _pCapacity.text,
+      'no_of_passenger': _pPassengerCapacity.text,
+      'shaft_width': _pShaftWidth.text,
+      'shaft_depth': _pShaftDepth.text,
+      'pit_depth': _pPitDepth.text,
+      'travel_height': _pTravelHeight.text,
+      'over_head_height': _pOverheadHeight.text,
+      'lift_type': _pLiftTypeId ?? '',
+      'opening_type': _pOpeningId ?? '',
+      'door_opening': _pDoorOpeningId ?? '',
+      'cabin_side_wall': _pCabinSideWallId ?? '',
+      'landing_door': _pLandingDoorId ?? '',
+      'cop': _pCopId ?? '',
+      'lop': _pLopId ?? '',
+      'wr': _pWarranty.text,
+      'amc': _pAmc.text,
+      'factory_price': _pFactoryPrice.text,
+      'transportation': _pTransportation.text,
+      'installation_charge': _pInstallation.text,
+      'testing_commissioning': _pTesting.text,
+      'consumables': _pConsumables.text,
+      'additional_factory_charges': _pAdditionalFactory.text,
+      'additional_amount': _pAdditional.text,
+      'amc_amount': _pAmcAmount.text,
+      'quantity': _pQuantity.text.isNotEmpty ? _pQuantity.text : '1',
+      'price': _pUnitPrice.text,
+      'tax_type': _pTaxType ?? '',
+      'tax': _pTaxPercentage.text,
+      'tax_amount': _pTaxAmount.text,
+      'comp_profit': _pCompanyProfit.text,
+      'comp_profit_amount': _pCompanyProfitAmount.text,
+      'sales_commission': _pSalesCommission.text,
+      'sales_commission_amount': _pSalesCommissionAmount.text,
+      'sub_total': _pSubTotal.text,
+      'grand_total': _pTotalSalePrice.text,
+    };
   }
 
   Future<void> _initializeData() async {
@@ -344,12 +701,28 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     roleId = await Common.getSharedPref("roleId") ?? '';
     multiBranch = await Common.getSharedPref("multiBranch") ?? '';
 
-    commonDetails = await HttpService.addLeadCommonData(widget.token);
+    final token = (widget.token != null && widget.token!.isNotEmpty)
+        ? widget.token!
+        : (await Common.getSharedPref("token") ?? "");
+
+    try {
+      userPermissions = await HttpService.userPermissionCheck(token);
+
+      log(
+        'USER PERMISSION: '
+        'createEstimation=${userPermissions?.data?.createEstimation}, '
+        'createPricing=${userPermissions?.data?.createPricing}',
+      );
+    } catch (e) {
+      log('Error fetching user permissions: $e');
+    }
+
+    commonDetails = await HttpService.addLeadCommonData(token);
     if (commonDetails != null) {
       if (widget.countryCode == null) {
         code = commonDetails!.data.countryCode.toString();
       }
-      configure = await HttpService.configure(widget.token);
+      configure = await HttpService.configure(token);
     }
     stateDetails = await HttpService.getState();
     productSectionModel = await HttpService.leadProductSection();
@@ -385,6 +758,18 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     if (StateId != null && StateId!.isNotEmpty) {
       final result = await HttpService.getDistrict(StateId!);
       districtList = result?.data ?? [];
+    }
+
+    try {
+      estimationDetails = await HttpService.leadDetails(
+        token,
+        widget.leadMasterId ?? '',
+      );
+      if (estimationDetails?.data != null) {
+        _initEstimationFromData(estimationDetails!.data);
+      }
+    } catch (e) {
+      log("Error fetching estimation details: $e");
     }
 
     setState(() => isLoading = false);
@@ -566,6 +951,73 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 if (callResultId != '1') _buildCallResponseField(),
               ],
             ),
+            if (callResult == 'Estimation & Pricing' ||
+                callResult.toLowerCase().contains('estimation')) ...[
+              const SizedBox(height: 12),
+              EstimationPricingCard(
+                data: estimationDetails?.data,
+                permissions: userPermissions,
+                showPricing: true,
+                initialClientName: clientNameCtrl.text,
+                initialPhone: contactNoCtrl.text,
+                initialLocation: districtCtrl.text.isNotEmpty
+                    ? districtCtrl.text
+                    : addressCtrl.text,
+                quotationTitleCtrl: _pQuotationTitle,
+                quotationCtrl: _pQuotation,
+                clientNameCtrl: _pClientName,
+                phoneCtrl: _pPhone,
+                locationCtrl: _pLocation,
+                elevatorTypeCtrl: _pElevatorType,
+                typeOfOpeningCtrl: _pTypeOfOpening,
+                capacityCtrl: _pCapacity,
+                passengerCapacityCtrl: _pPassengerCapacity,
+                shaftWidthCtrl: _pShaftWidth,
+                shaftDepthCtrl: _pShaftDepth,
+                pitDepthCtrl: _pPitDepth,
+                travelHeightCtrl: _pTravelHeight,
+                overheadHeightCtrl: _pOverheadHeight,
+                warrantyCtrl: _pWarranty,
+                amcCtrl: _pAmc,
+                liftTypeId: _pLiftTypeId,
+                openingId: _pOpeningId,
+                doorOpeningId: _pDoorOpeningId,
+                cabinSideWallId: _pCabinSideWallId,
+                landingDoorId: _pLandingDoorId,
+                copId: _pCopId,
+                lopId: _pLopId,
+                onLiftTypeChanged: (v) => setState(() => _pLiftTypeId = v),
+                onOpeningChanged: (v) => setState(() => _pOpeningId = v),
+                onDoorOpeningChanged: (v) =>
+                    setState(() => _pDoorOpeningId = v),
+                onCabinSideWallChanged: (v) =>
+                    setState(() => _pCabinSideWallId = v),
+                onLandingDoorChanged: (v) =>
+                    setState(() => _pLandingDoorId = v),
+                onCopChanged: (v) => setState(() => _pCopId = v),
+                onLopChanged: (v) => setState(() => _pLopId = v),
+                factoryPriceCtrl: _pFactoryPrice,
+                transportationCtrl: _pTransportation,
+                installationCtrl: _pInstallation,
+                testingCtrl: _pTesting,
+                consumablesCtrl: _pConsumables,
+                additionalFactoryCtrl: _pAdditionalFactory,
+                additionalCtrl: _pAdditional,
+                amcAmountCtrl: _pAmcAmount,
+                quantityCtrl: _pQuantity,
+                unitPriceCtrl: _pUnitPrice,
+                companyProfitCtrl: _pCompanyProfit,
+                companyProfitAmountCtrl: _pCompanyProfitAmount,
+                salesCommissionCtrl: _pSalesCommission,
+                salesCommissionAmountCtrl: _pSalesCommissionAmount,
+                subTotalCtrl: _pSubTotal,
+                taxPercentageCtrl: _pTaxPercentage,
+                taxAmountCtrl: _pTaxAmount,
+                totalSalePriceCtrl: _pTotalSalePrice,
+                taxType: _pTaxType,
+                onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
+              ),
+            ],
             const SizedBox(height: 12),
             _buildSectionCard(
               title: 'Product Info',
@@ -791,12 +1243,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                             leadSubTypeId = '';
                             leadSubTypeList = null;
                           });
-                        },  
+                        },
                       )
                     : null,
               ),
             ),
-          ),  
+          ),
         ),
         if (createLeadCategory == 'true')
           Positioned(
@@ -1456,59 +1908,99 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   // Dialog Methods
   void _showStaffDialog() {
     FocusManager.instance.primaryFocus?.unfocus();
+
     showDialog(
       context: context,
       builder: (_) {
         final searchCtrl = TextEditingController();
-        var filtered = List.from(commonDetails!.data.staff);
-        return StatefulBuilder(builder: (ctx, setDialogState) {
-          return AlertDialog(
-            title: const Text('Assign Staff'),
-            content: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
-              height: 400,
-              child: Column(
-                children: [
-                  TextField(
-                    controller: searchCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+
+        List<StaffListData> staffList = [];
+        List<StaffListData> filtered = [];
+
+        bool isLoading = true;
+
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            // Load API only once
+            if (isLoading && staffList.isEmpty) {
+              isLoading = false;
+
+              HttpService.getStaffList().then((response) {
+                if (response != null && response.status) {
+                  setDialogState(() {
+                    staffList = response.data;
+                    filtered = List.from(staffList);
+                  });
+                }
+              });
+            }
+
+            return AlertDialog(
+              title: const Text('Assign Staff'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: 400,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    onChanged: (v) => setDialogState(() {
-                      filtered = commonDetails!.data.staff
-                          .where((s) => s.staffName
-                              .toLowerCase()
-                              .contains(v.toLowerCase()))
-                          .toList();
-                    }),
-                  ),
-                  const SizedBox(height: 10),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (_, i) {
-                        final staff = filtered[i];
-                        return ListTile(
-                          title: Text(staff.staffName),
-                          onTap: () {
-                            assignStaff = staff.staffName;
-                            assignStaffId = staff.userId;
-                            Navigator.pop(context);
-                            setState(() {});
-                          },
-                        );
+                      onChanged: (v) {
+                        setDialogState(() {
+                          filtered = staffList
+                              .where(
+                                (s) => s.staffName
+                                    .toLowerCase()
+                                    .contains(v.toLowerCase()),
+                              )
+                              .toList();
+                        });
                       },
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(),
+                            )
+                          : filtered.isEmpty
+                              ? const Center(
+                                  child: Text('No staff found'),
+                                )
+                              : ListView.builder(
+                                  itemCount: filtered.length,
+                                  itemBuilder: (_, i) {
+                                    final staff = filtered[i];
+
+                                    return ListTile(
+                                      title: Text(staff.staffName),
+                                      subtitle: staff.branchName != null
+                                          ? Text(staff.branchName!)
+                                          : null,
+                                      onTap: () {
+                                        assignStaff = staff.staffName;
+                                        assignStaffId = staff.userId;
+
+                                        Navigator.pop(context);
+
+                                        setState(() {});
+                                      },
+                                    );
+                                  },
+                                ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
@@ -1735,6 +2227,14 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                       callResultId = cr.callResultId.toString();
                       if (callResultId != '2') nextFollowupCtrl.clear();
                       _fetchLeadExtraSettings(callResultId);
+                      if (callResult == 'Estimation & Pricing' ||
+                          callResult.toLowerCase().contains('estimation')) {
+                        _syncEstimationDefaults();
+                        if (estimationDetails == null ||
+                            estimationDetails?.data?.liftValues == null) {
+                          _fetchEstimationDetails();
+                        }
+                      }
                     });
                     Navigator.pop(context);
                   },
@@ -1745,6 +2245,28 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
         );
       },
     );
+  }
+
+  Future<void> _fetchEstimationDetails() async {
+    try {
+      final token = (widget.token != null && widget.token!.isNotEmpty)
+          ? widget.token!
+          : (await Common.getSharedPref("token") ?? "");
+      final res = await HttpService.leadDetails(
+        token,
+        widget.leadMasterId ?? '',
+      );
+      if (mounted && res != null) {
+        setState(() {
+          estimationDetails = res;
+          if (res.data != null) {
+            _initEstimationFromData(res.data);
+          }
+        });
+      }
+    } catch (e) {
+      log("Error fetching estimation details: $e");
+    }
   }
 
   void _showCallResponseDialog() {
@@ -2105,6 +2627,15 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       return;
     }
 
+    final isEstimationStage = callResult == 'Estimation & Pricing' ||
+        callResult.toLowerCase().contains('estimation');
+    if (isEstimationStage) {
+      // if (_pQuotation.text.trim().isEmpty) {
+      //   Common.toastMessaage('Quotation Name is required', Colors.red);
+      //   return;
+      // }
+    }
+
     Common.showProgressDialog(context, 'Loading...');
     final check = await HttpService.checkLeadPhoneNumber(
         widget.token, contactNoCtrl.text, code);
@@ -2145,6 +2676,10 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     String productIds =
         _selectedProducts.map((p) => p.id).where((id) => id != null).join(',');
 
+    final isEstimationStage = callResult == 'Estimation & Pricing' ||
+        callResult.toLowerCase().contains('estimation');
+    final pricingBody = isEstimationStage ? _buildPricingBody() : null;
+
     final result = await HttpService.addLeadsNew(
       widget.token,
       branch,
@@ -2173,6 +2708,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       whatsappNumber: whatsappNoCtrl.text,
       whatsappnumber_country_code: whatsappCode,
       email: emailCtrl.text,
+      pricingData: pricingBody,
     );
 
     Navigator.pop(context);

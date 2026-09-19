@@ -443,6 +443,7 @@ import '../models/projectdetails/site_drawing_model.dart';
 import '../models/projectdetails/unit_dropdown_model.dart';
 import '../models/projectdetails/installation_method_model.dart';
 import '../models/projectdetails/gallery_model.dart';
+import '../models/lead_management/staff_list_model.dart';
 import 'package:file_picker/file_picker.dart';
 
 class HttpService {
@@ -879,7 +880,7 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}leadReport",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           data: jsonEncode(body));
-          print('leadReport:$result');
+      print('leadReport:$result');
       if (result.statusCode == 200) {
         ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
         return model;
@@ -1080,8 +1081,9 @@ class HttpService {
       String? products,
       String? whatsappNumber,
       String? whatsappnumber_country_code,
-      String? email}) async {
-    var formData = FormData.fromMap({
+      String? email,
+      Map<String, dynamic>? pricingData}) async {
+    var map = <String, dynamic>{
       'token': token,
       'branchId': branchId,
       'next_followup_date': nextFollowupDate,
@@ -1109,7 +1111,11 @@ class HttpService {
       'state_id': stateId ?? '',
       'district_id': districtId ?? '',
       'products': products ?? '',
-    });
+    };
+    if (pricingData != null) {
+      map.addAll(pricingData);
+    }
+    var formData = FormData.fromMap(map);
 
     try {
       var result = await _dio.post("${await Config.getUrl()}add_leads_updated",
@@ -1997,7 +2003,8 @@ class HttpService {
     }
   }
 
-  static Future estimateQuotationLeadProgressbar(token, fromDate, toDate, callResultId,
+  static Future estimateQuotationLeadProgressbar(
+      token, fromDate, toDate, callResultId,
       {List<String>? staffIds}) async {
     Map<String, dynamic> map = {
       "token": token,
@@ -2024,7 +2031,6 @@ class HttpService {
       log("error: $e");
     }
   }
-
 
   static Future leadProgressbarStaff(
       token, fromDate, toDate, callStatus, staffId) async {
@@ -18572,5 +18578,70 @@ class HttpService {
         'error': e.toString(),
       };
     }
+  }
+
+  static Future<Map<String, dynamic>>
+      getEstimationPricingDropdownValues() async {
+    try {
+      final token = await Common.getSharedPref("token");
+
+      final data = {
+        'token': token,
+      };
+
+      debugPrint('=== ESTIMATION PRICING DROPDOWN API ===');
+      debugPrint('Request: $data');
+
+      final url = "${await Config.getUrl()}get_estimate_pricing_master";
+
+      debugPrint('URL: $url');
+
+      final response = await _dio.post(
+        url,
+        data: FormData.fromMap(data),
+      );
+
+      debugPrint('Response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      }
+
+      return {
+        'status': false,
+        'message': 'API request failed',
+      };
+    } catch (e) {
+      debugPrint(
+        'Estimation Pricing Dropdown API Error: $e',
+      );
+      rethrow;
+    }
+  }
+
+  //staff list for add new leads
+  static Future<StaffListResponse?> getStaffList() async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_users_all",
+        data: FormData.fromMap(data),
+      );
+
+      log('getStaffList response: ${response.data}');
+
+      if (response.data != null) {
+        return StaffListResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log('getStaffList error: $e');
+    }
+
+    return null;
   }
 }

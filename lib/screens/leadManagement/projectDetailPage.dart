@@ -650,20 +650,20 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                                 );
                               },
                             ),
-                            _buildActionButton(
-                              label: 'Payment Schedule',
-                              icon: Icons.attach_money,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PaymentScheduleScreen(
-                                      projectId: widget.project.id,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                            // _buildActionButton(
+                            //   label: 'Payment Schedule',
+                            //   icon: Icons.attach_money,
+                            //   onTap: () {
+                            //     Navigator.push(
+                            //       context,
+                            //       MaterialPageRoute(
+                            //         builder: (context) => PaymentScheduleScreen(
+                            //           projectId: widget.project.id,
+                            //         ),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
                           ],
                         ),
                       ),
