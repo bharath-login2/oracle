@@ -2918,50 +2918,57 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           ),
         ),
         const SizedBox(height: 5),
-        DropdownButtonFormField<String>(
-          value: validValue,
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down_rounded,
-              color: Color(0xFF2a86c9), size: 20),
-          style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF2C3E50)),
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade200),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide:
-                  const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
-            ),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-          ),
-          hint: Text(
-            'Select',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-          ),
-          items: items.map<DropdownMenuItem<String>>((e) {
-            return DropdownMenuItem<String>(
-              value: e.valueId as String?,
-              child: Text(
-                (e.valueName ?? '') as String,
-                overflow: TextOverflow.ellipsis,
+        SizedBox(
+          width: double.infinity,
+          child: DropdownButtonFormField<String>(
+            value: validValue,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                color: Color(0xFF2a86c9), size: 20),
+            style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF2C3E50)),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.grey.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide:
+                    const BorderSide(color: Color(0xFF2a86c9), width: 1.8),
+              ),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+            ),
+            hint: Text(
+              'Select',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            ),
+            items: items.map<DropdownMenuItem<String>>((e) {
+              return DropdownMenuItem<String>(
+                value: e.valueId as String?,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    (e.valueName ?? '').toString(),
+                    softWrap: true,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+          ),
+        )
       ],
     );
   }

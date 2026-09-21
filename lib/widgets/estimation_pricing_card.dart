@@ -1671,15 +1671,17 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
       final id = getItemId(item);
       final name = getItemName(item);
 
-      // Only add valid items.
       if (id != null && id.isNotEmpty) {
         dropdownItems.add(
           DropdownMenuItem<String>(
             value: id,
-            child: Text(
-              name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                name,
+                softWrap: true,
+              ),
             ),
           ),
         );
