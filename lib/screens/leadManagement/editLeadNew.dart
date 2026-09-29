@@ -225,7 +225,11 @@ class _EditLeadNewState extends State<EditLeadNew> {
       addressCtrl.text = data.address ?? "";
       pinCodeCtrl.text = data.pinCode ?? "";
       remarkCtrl.text = data.remarks ?? "";
-      branch = data.branchId?.toString();
+      final branchId = data.branchId?.toString();
+
+      branch = (branchId == null || branchId.isEmpty || branchId == '0')
+          ? null
+          : branchId;
       leadType = data.leadCategory ?? 'Lead Category';
       leadTypeCtrl.text = leadType;
       leadTypeId = data.leadCategoryId?.toString() ?? '';
@@ -242,7 +246,8 @@ class _EditLeadNewState extends State<EditLeadNew> {
       leadSourceId = data.leadSourceId?.toString() ?? '';
       if (commonDetails?.data.leadSource != null) {
         for (var src in commonDetails!.data.leadSource) {
-          if (src.leadSourceId.toString() == leadSourceId && src.isRestricted == "Y") {
+          if (src.leadSourceId.toString() == leadSourceId &&
+              src.isRestricted == "Y") {
             leadSource = "${src.leadSource} (Restricted)";
             break;
           }
@@ -306,24 +311,74 @@ class _EditLeadNewState extends State<EditLeadNew> {
     });
   }
 
+  // Future<void> _loadDistricts(String sId, {bool initial = false}) async {
+  //   setState(() => isDistrictLoading = true);
+  //   final result = await HttpService.getDistrict(sId);
+  //   setState(() {
+  //     districtList = result?.data ?? [];
+  //     isDistrictLoading = false;
+  //     if (initial && leadDetails?.data?.districtId != null) {
+  //       final d = districtList.firstWhere(
+  //         (d) => d.id == leadDetails!.data!.districtId,
+  //         orElse: () => districtList.isNotEmpty ? districtList.first : null!,
+  //       );
+  //       DistrictId = d?.id;
+  //       districtCtrl.text = d?.name ?? "";
+  //     } else if (!initial) {
+  //       DistrictId = null;
+  //       districtCtrl.clear();
+  //     }
+  //   });
+  // }
   Future<void> _loadDistricts(String sId, {bool initial = false}) async {
+    if (!mounted) return;
+
     setState(() => isDistrictLoading = true);
-    final result = await HttpService.getDistrict(sId);
-    setState(() {
-      districtList = result?.data ?? [];
-      isDistrictLoading = false;
-      if (initial && leadDetails?.data?.districtId != null) {
-        final d = districtList.firstWhere(
-          (d) => d.id == leadDetails!.data!.districtId,
-          orElse: () => districtList.isNotEmpty ? districtList.first : null!,
-        );
-        DistrictId = d?.id;
-        districtCtrl.text = d?.name ?? "";
-      } else if (!initial) {
+
+    try {
+      final result = await HttpService.getDistrict(sId);
+
+      if (!mounted) return;
+
+      final districts = result?.data ?? [];
+
+      setState(() {
+        districtList = districts;
+        isDistrictLoading = false;
+
+        if (initial && leadDetails?.data?.districtId != null) {
+          final districtId = leadDetails!.data!.districtId;
+
+          final matchingDistrict = districtList.where(
+            (d) => d.id == districtId,
+          );
+
+          if (matchingDistrict.isNotEmpty) {
+            final district = matchingDistrict.first;
+            DistrictId = district.id;
+            districtCtrl.text = district.name ?? '';
+          } else {
+            // District from lead is not available in the current list
+            DistrictId = null;
+            districtCtrl.clear();
+          }
+        } else if (!initial) {
+          DistrictId = null;
+          districtCtrl.clear();
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        districtList = [];
         DistrictId = null;
         districtCtrl.clear();
-      }
-    });
+        isDistrictLoading = false;
+      });
+
+      log("Error loading districts: $e");
+    }
   }
 
   @override
@@ -986,18 +1041,26 @@ class _EditLeadNewState extends State<EditLeadNew> {
         const Center(child: CircularProgressIndicator())
       else if (districtList.isNotEmpty)
         DropdownButtonFormField<DistrictList>(
-            value: districtList.any((d) => d.id == DistrictId)
-                ? districtList.firstWhere((d) => d.id == DistrictId)
-                : null,
-            decoration: _inputDecoration('District', Icons.location_city),
-            hint: const Text("Select District"),
-            items: districtList
-                .map((d) => DropdownMenuItem(value: d, child: Text(d.name)))
-                .toList(),
-            onChanged: (v) => setState(() {
-                  DistrictId = v?.id;
-                  districtCtrl.text = v?.name ?? '';
-                })),
+          value: districtList.where((d) => d.id == DistrictId).isNotEmpty
+              ? districtList.firstWhere((d) => d.id == DistrictId)
+              : null,
+          decoration: _inputDecoration('District', Icons.location_city),
+          hint: const Text("Select District"),
+          items: districtList
+              .map(
+                (d) => DropdownMenuItem<DistrictList>(
+                  value: d,
+                  child: Text(d.name),
+                ),
+              )
+              .toList(),
+          onChanged: (v) {
+            setState(() {
+              DistrictId = v?.id;
+              districtCtrl.text = v?.name ?? '';
+            });
+          },
+        ),
     ]);
   }
 
@@ -1364,7 +1427,8 @@ class _EditLeadNewState extends State<EditLeadNew> {
                                   itemCount: list.length,
                                   itemBuilder: (c, i) {
                                     final src = list[i];
-                                    final bool isRestricted = src.isRestricted == "Y";
+                                    final bool isRestricted =
+                                        src.isRestricted == "Y";
                                     return ListTile(
                                       title: Text(
                                         isRestricted
@@ -1382,7 +1446,8 @@ class _EditLeadNewState extends State<EditLeadNew> {
                                           : () {
                                               setState(() {
                                                 leadSource = src.leadSource;
-                                                leadSourceCtrl.text = leadSource;
+                                                leadSourceCtrl.text =
+                                                    leadSource;
                                                 leadSourceId =
                                                     src.leadSourceId.toString();
                                               });

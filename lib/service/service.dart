@@ -16800,8 +16800,8 @@ class HttpService {
   }
 
   static Future sendQuotationRequest({
-    required String token,
-    required String callMasterId,
+    required token,
+    required callMasterId,
     required String assignedTo,
     required String requestTitle,
     required String requestMessage,

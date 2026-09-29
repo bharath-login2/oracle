@@ -23,6 +23,7 @@ import '../../service/service.dart';
 import '../../models/lead_management/leadExtraSettings.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
 import '../../models/lead_management/staff_list_model.dart';
+import 'package:login2/models/expense/staffListModel.dart' as expense;
 import 'package:login2/widgets/estimation_pricing_card.dart';
 import 'dart:developer';
 
@@ -185,7 +186,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   final TextEditingController _pTaxPercentage = TextEditingController();
   final TextEditingController _pTaxAmount = TextEditingController();
   final TextEditingController _pTotalSalePrice = TextEditingController();
+  final TextEditingController _quotationTitleCtrl =
+      TextEditingController(text: "Quotation Request");
 
+  final TextEditingController _quotationMessageCtrl = TextEditingController(
+    text: "Kindly prepare and send the quotation for this lead.",
+  );
   // Dropdown selections for estimation specs
   String? _pLiftTypeId;
   String? _pOpeningId;
@@ -196,6 +202,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   String? _pLopId;
   String? _pTaxType;
 
+  String? _quotationType = "General";
+  String? _quotationAssignedTo;
+  bool _sendQuotation = false;
+
+  List<expense.Staff> quotationStaffList = [];
+  bool isQuotationStaffLoading = false;
   // Additional Fields
   final List<TextEditingController> _additionalCtrls = [];
   final List<Map<String, dynamic>> _additionalValues = [];
@@ -219,6 +231,41 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   String? _expandedProductId;
   final Map<String, String> _productDescriptions = {};
   final Map<String, bool> _descriptionLoading = {};
+
+  Future<void> _loadQuotationStaffs() async {
+    setState(() {
+      isQuotationStaffLoading = true;
+    });
+
+    try {
+      final response = await HttpService.getStaffs();
+
+      if (response != null && response.status) {
+        if (mounted) {
+          setState(() {
+            quotationStaffList = response.data;
+            isQuotationStaffLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            quotationStaffList = [];
+            isQuotationStaffLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      log("Error loading quotation staff: $e");
+
+      if (mounted) {
+        setState(() {
+          quotationStaffList = [];
+          isQuotationStaffLoading = false;
+        });
+      }
+    }
+  }
 
   Future<void> _fetchProductDescription(String productId) async {
     if (_productDescriptions.containsKey(productId)) return;
@@ -342,7 +389,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     if (widget.districtId != null) {
       DistrictId = widget.districtId;
     }
-
+    _loadQuotationStaffs();
     _initializeData();
   }
 
@@ -404,6 +451,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     _pTaxPercentage.dispose();
     _pTaxAmount.dispose();
     _pTotalSalePrice.dispose();
+    _quotationTitleCtrl.dispose();
+    _quotationMessageCtrl.dispose();
 
     super.dispose();
   }
@@ -807,6 +856,110 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     );
   }
 
+  Widget _buildQuotationRequestForm() {
+    return _buildSectionCard(
+      title: 'Quotation Request',
+      icon: Icons.request_quote_outlined,
+      children: [
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _quotationTitleCtrl,
+          decoration: _inputDecoration(
+            'Request Title *',
+            Icons.title,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter request title';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _quotationMessageCtrl,
+          maxLines: 3,
+          decoration: _inputDecoration(
+            'Request Message *',
+            Icons.message_outlined,
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter request message';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          value: _quotationType,
+          decoration: _inputDecoration(
+            'Type *',
+            Icons.category_outlined,
+          ),
+          items: const [
+            DropdownMenuItem(
+              value: "Amc",
+              child: Text("Amc"),
+            ),
+            DropdownMenuItem(
+              value: "General",
+              child: Text("General"),
+            ),
+            DropdownMenuItem(
+              value: "Repairing",
+              child: Text("Repairing"),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _quotationType = value;
+            });
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please select Type';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        isQuotationStaffLoading
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(10),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            : DropdownButtonFormField<String>(
+                value: _quotationAssignedTo,
+                decoration: _inputDecoration(
+                  'Assigned To *',
+                  Icons.person_outline,
+                ),
+                items: quotationStaffList.map((staff) {
+                  return DropdownMenuItem<String>(
+                    value: staff.userIdStaff,
+                    child: Text(staff.name),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _quotationAssignedTo = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please select Assigned To';
+                  }
+                  return null;
+                },
+              ),
+        const SizedBox(height: 15),
+      ],
+    );
+  }
+
   Widget _buildNoNetworkView() {
     return Center(
       child: Column(
@@ -1017,6 +1170,30 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 taxType: _pTaxType,
                 onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
               ),
+              const SizedBox(height: 12),
+              if (leadType == 'SUPPLY AND INSTALLATION' ||
+                  leadType == 'AMC' ||
+                  leadType == 'Repair') ...[
+                const SizedBox(height: 12),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Create Quotation Request',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  value: _sendQuotation,
+                  onChanged: (value) {
+                    setState(() {
+                      _sendQuotation = value ?? false;
+                    });
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                if (_sendQuotation) _buildQuotationRequestForm(),
+              ],
             ],
             const SizedBox(height: 12),
             _buildSectionCard(
@@ -1247,6 +1424,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                       )
                     : null,
               ),
+              validator: (value) {
+                if (leadTypeId.isEmpty) {
+                  return 'Please select Lead Category';
+                }
+                return null;
+              },
             ),
           ),
         ),
@@ -2710,10 +2893,23 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       email: emailCtrl.text,
       pricingData: pricingBody,
     );
+    print("ADD LEAD RESPONSE: ${result.status}");
+    print("ADD LEAD MESSAGE: ${result.message}");
 
     Navigator.pop(context);
     if (result.status == true) {
       Common.toastMessaage(result.message, Colors.green);
+
+      // if (isEstimationStage && _sendQuotation) {
+      //   final quotationSent = await _sendQuotationRequest();
+
+      //   if (!quotationSent) {
+      //     return;
+      //   }
+      // }
+
+      if (!mounted) return;
+
       Navigator.pop(context);
     } else {
       Common.toastMessaage(result.message, Colors.red);
