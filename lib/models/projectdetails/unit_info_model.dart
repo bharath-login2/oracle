@@ -58,6 +58,7 @@ class UnitInfoData {
   final String instaId;
   final String activityProjectId;
   final String unitId;
+  final String doorOpeningSize;
   final String methodId;
   final String activityKey;
   final String activityName;
@@ -104,6 +105,7 @@ class UnitInfoData {
     required this.instaId,
     required this.activityProjectId,
     required this.unitId,
+    required this.doorOpeningSize,
     required this.methodId,
     required this.activityKey,
     required this.activityName,
@@ -163,6 +165,7 @@ class UnitInfoData {
       instaId: json['insta_id']?.toString() ?? '',
       activityProjectId: json['activity_project_id']?.toString() ?? '',
       unitId: json['unit_id']?.toString() ?? '',
+      doorOpeningSize: json['door_opening_size']?.toString() ?? '',
       methodId: json['method_id']?.toString() ?? '',
       activityKey: json['activity_key']?.toString() ?? '',
       activityName: json['activity_name']?.toString() ?? '',

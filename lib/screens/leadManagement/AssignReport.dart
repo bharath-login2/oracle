@@ -3682,12 +3682,53 @@ class _AssignReportState extends State<AssignReport> {
                                 Expanded(
                                   child: _buildCompactDetailCard(
                                     icon: Icons.widgets,
-                                    title: "Module",
+                                    title: "Stage",
                                     value: item.moduleName,
                                     color: Colors.indigo,
                                   ),
                                 ),
                               ],
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildCompactDetailCard(
+                                    icon: Icons.door_front_door_outlined,
+                                    title: "Unit No",
+                                    value: item.unitNo.isNotEmpty ? item.unitNo : "-",
+                                    color: Colors.deepOrange,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildCompactDetailCard(
+                                    icon: Icons.elevator,
+                                    title: "Site Lift No",
+                                    value: item.siteLiftName.isNotEmpty ? item.siteLiftName : "-",
+                                    color: Colors.cyan,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: _buildCompactDetailCard(
+                              icon: Icons.people_outline,
+                              title: "Supporting Staffs",
+                              value: {
+                                ...item.supportingStaff.map((s) => s.staffName),
+                                ...item.workSessions.expand((s) => s.supportingStaff).map((s) => s.staffName),
+                              }.where((name) => name.trim().isNotEmpty).isNotEmpty
+                                  ? {
+                                      ...item.supportingStaff.map((s) => s.staffName),
+                                      ...item.workSessions.expand((s) => s.supportingStaff).map((s) => s.staffName),
+                                    }.where((name) => name.trim().isNotEmpty).join(", ")
+                                  : "-",
+                              color: Colors.purple,
                             ),
                           ),
                           if (item.workSessions.isNotEmpty) ...[

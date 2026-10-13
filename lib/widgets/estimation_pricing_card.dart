@@ -6,7 +6,8 @@ import '../service/service.dart';
 
 class EstimationPricingCard extends StatefulWidget {
   final dynamic data;
-  final bool showPricing;
+  final bool? showPricing;
+  final bool? showEstimation;
   final String? initialClientName;
   final String? initialPhone;
   final String? initialLocation;
@@ -27,6 +28,7 @@ class EstimationPricingCard extends StatefulWidget {
   final TextEditingController? pitDepthCtrl;
   final TextEditingController? travelHeightCtrl;
   final TextEditingController? overheadHeightCtrl;
+  final TextEditingController? doorOpeningSizeCtrl;
   final TextEditingController? warrantyCtrl;
   final TextEditingController? amcCtrl;
 
@@ -74,7 +76,8 @@ class EstimationPricingCard extends StatefulWidget {
   const EstimationPricingCard({
     super.key,
     this.data,
-    this.showPricing = false,
+    this.showPricing,
+    this.showEstimation,
     this.initialClientName,
     this.initialPhone,
     this.initialLocation,
@@ -92,6 +95,7 @@ class EstimationPricingCard extends StatefulWidget {
     this.pitDepthCtrl,
     this.travelHeightCtrl,
     this.overheadHeightCtrl,
+    this.doorOpeningSizeCtrl,
     this.warrantyCtrl,
     this.amcCtrl,
     this.liftTypeId,
@@ -154,6 +158,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
   late final TextEditingController _internalPitDepth;
   late final TextEditingController _internalTravelHeight;
   late final TextEditingController _internalOverheadHeight;
+  late final TextEditingController _internalDoorOpeningSize;
   late final TextEditingController _internalWarranty;
   late final TextEditingController _internalAmc;
 
@@ -183,6 +188,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
   TextEditingController get _cQuotationTitle =>
       widget.quotationTitleCtrl ?? _internalQuotationTitle;
 
+  // ignore: unused_element
   TextEditingController get _cQuotation =>
       widget.quotationCtrl ?? _internalQuotation;
 
@@ -220,6 +226,9 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
 
   TextEditingController get _cOverheadHeight =>
       widget.overheadHeightCtrl ?? _internalOverheadHeight;
+
+  TextEditingController get _cDoorOpeningSize =>
+      widget.doorOpeningSizeCtrl ?? _internalDoorOpeningSize;
 
   TextEditingController get _cWarranty =>
       widget.warrantyCtrl ?? _internalWarranty;
@@ -358,6 +367,8 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
     _internalTravelHeight = TextEditingController();
 
     _internalOverheadHeight = TextEditingController();
+
+    _internalDoorOpeningSize = TextEditingController();
 
     _internalWarranty = TextEditingController();
 
@@ -641,6 +652,12 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
       _cOverheadHeight.text = data.overheadHeight ?? '';
     }
 
+    if (widget.doorOpeningSizeCtrl == null &&
+        data.doorOpeningSize != null &&
+        data.doorOpeningSize!.isNotEmpty) {
+      _cDoorOpeningSize.text = data.doorOpeningSize ?? '';
+    }
+
     if (widget.warrantyCtrl == null &&
         data.warranty != null &&
         data.warranty!.isNotEmpty) {
@@ -921,9 +938,11 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
-    final showEstimation = widget.permissions?.data?.createEstimation == true;
+    final showEstimation = widget.showEstimation ??
+        (widget.permissions?.data?.createEstimation == true);
 
-    final showPricing = widget.permissions?.data?.createPricing == true;
+    final showPricing = widget.showPricing ??
+        (widget.permissions?.data?.createPricing == true);
     print(
       'PERMISSION DEBUG: '
       'permissions=${widget.permissions}, '
@@ -1118,7 +1137,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               },
             ),
             _pricingDropdown(
-              label: 'Door Opening',
+              label: 'Door Type',
               value: _doorOpeningId,
               items: cabinOpeningList,
               onChanged: (v) {
@@ -1130,6 +1149,12 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
                   });
                 }
               },
+            ),
+            _pricingField(
+              'Door Opening Size',
+              _cDoorOpeningSize,
+              keyboardType: TextInputType.number,
+              hintText: '1',
             ),
           ],
         ),
@@ -1675,12 +1700,14 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
         dropdownItems.add(
           DropdownMenuItem<String>(
             value: id,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                name,
-                softWrap: true,
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF2C3E50),
               ),
             ),
           ),
@@ -1723,11 +1750,34 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
             color: Color(0xFF2C3E50),
           ),
 
+          selectedItemBuilder: (BuildContext context) {
+            return dropdownItems.map<Widget>((DropdownMenuItem<String> item) {
+              final child = item.child;
+              String textStr = '';
+              if (child is Text) {
+                textStr = child.data ?? '';
+              }
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  textStr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF2C3E50),
+                  ),
+                ),
+              );
+            }).toList();
+          },
+
           decoration: InputDecoration(
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 11,
+              vertical: 10,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),

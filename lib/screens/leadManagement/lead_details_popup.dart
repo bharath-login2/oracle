@@ -213,6 +213,11 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String typeDuration = "";
   String? createLeadCategory = '';
   String? addLeadSource = '';
+  String? _amcTypeSelected;
+  final TextEditingController _amcTypeCtrl = TextEditingController();
+  final TextEditingController _liftBrandCtrl = TextEditingController();
+  final TextEditingController _ageOfLiftCtrl = TextEditingController();
+  final TextEditingController _amcPriceCtrl = TextEditingController();
 
   List<expense.Staff> staffList = [];
   String? assignedTo;
@@ -544,6 +549,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
       priority = data.priority ?? '';
       priorityId = data.priorityId ?? '';
+      _initPricingControllers();
     }
 
     // ---------------------------------------------------------
@@ -1809,6 +1815,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   final TextEditingController _pTaxPercentage = TextEditingController();
   final TextEditingController _pTaxAmount = TextEditingController();
   final TextEditingController _pTotalSalePrice = TextEditingController();
+  final TextEditingController _pDoorOpeningSize = TextEditingController();
   // Dropdown selections for pricing specs
   String? _pLiftTypeId;
   String? _pOpeningId;
@@ -1818,6 +1825,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   String? _pCopId;
   String? _pLopId;
   String? _pTaxType;
+  bool _sendQuotationPricing = false;
+  final TextEditingController _quotationTitlePricingCtrl =
+      TextEditingController(text: "Quotation Request");
+  final TextEditingController _quotationMessagePricingCtrl = TextEditingController(
+    text: "Kindly prepare and send the quotation for this lead.",
+  );
+  String? _quotationTypePricing = "General";
+  String? _quotationAssignedToPricing;
   bool _pricingControllersInitialized = false;
   bool _isSavingPricing = false;
   bool _hasPricingDetails() {
@@ -1829,6 +1844,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         _pAdditionalFactory.text.trim().isNotEmpty ||
         _pAdditional.text.trim().isNotEmpty ||
         _pAmcAmount.text.trim().isNotEmpty ||
+        _amcPriceCtrl.text.trim().isNotEmpty ||
+        _liftBrandCtrl.text.trim().isNotEmpty ||
         _pUnitPrice.text.trim().isNotEmpty ||
         _pCompanyProfit.text.trim().isNotEmpty ||
         _pCompanyProfitAmount.text.trim().isNotEmpty ||
@@ -1859,6 +1876,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     _pPitDepth.text = data.pitDepth ?? '';
     _pTravelHeight.text = data.travelHeight ?? '';
     _pOverheadHeight.text = data.overheadHeight ?? '';
+    _pDoorOpeningSize.text = data.doorOpeningSize ?? '';
     _pWarranty.text = data.warranty ?? '';
     _pAmc.text = data.amc ?? '';
     _pFactoryPrice.text = data.factoryPrice ?? '';
@@ -1889,6 +1907,148 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     _pCopId = _validSpecId(data.cop, data.copName);
     _pLopId = _validSpecId(data.lop, data.lopName);
     _pTaxType = data.taxType?.isEmpty == true ? null : data.taxType;
+
+    // Parse AMC Details
+    Map<String, dynamic> addFieldsMap = {};
+    if (data.additionalFields != null) {
+      if (data.additionalFields is Map<String, dynamic>) {
+        addFieldsMap = data.additionalFields;
+      } else if (data.additionalFields is String &&
+          data.additionalFields.toString().isNotEmpty) {
+        try {
+          addFieldsMap = jsonDecode(data.additionalFields.toString());
+        } catch (_) {}
+      }
+    }
+
+    Map<String, dynamic> amcMap = {};
+    if (data.amcDetails is Map<String, dynamic>) {
+      amcMap = data.amcDetails!;
+    } else if (data.rawJson != null &&
+        data.rawJson!['amc_details'] is Map<String, dynamic>) {
+      amcMap = data.rawJson!['amc_details'];
+    }
+
+    Map<String, dynamic> pricingMap = data.rawJson != null &&
+            data.rawJson!['leadPricing'] is Map<String, dynamic>
+        ? data.rawJson!['leadPricing']
+        : {};
+    Map<String, dynamic> quotationMap = data.rawJson != null &&
+            data.rawJson!['lift_quotation'] is Map<String, dynamic>
+        ? data.rawJson!['lift_quotation']
+        : {};
+
+    // 1. AMC Type
+    final amcVal = amcMap['amc_type']?.toString() ??
+        addFieldsMap['amc_type']?.toString() ??
+        pricingMap['amc']?.toString() ??
+        quotationMap['amc']?.toString() ??
+        data.amc;
+    if (amcVal != null && amcVal.isNotEmpty) {
+      if (amcVal.toLowerCase().contains('non')) {
+        _amcTypeSelected = 'Non Comprehensive AMC';
+      } else if (amcVal.toLowerCase().contains('comprehensive')) {
+        _amcTypeSelected = 'Comprehensive AMC';
+      } else {
+        _amcTypeSelected = amcVal;
+      }
+      _amcTypeCtrl.text = _amcTypeSelected ?? amcVal;
+      _pAmc.text = _amcTypeSelected ?? amcVal;
+    }
+
+    // 2. Lift Brand
+    final brandVal = amcMap['lift_brand']?.toString() ??
+        addFieldsMap['lift_brand']?.toString() ??
+        pricingMap['elevator_type']?.toString() ??
+        quotationMap['elevator_type']?.toString() ??
+        data.elevatorType;
+    if (brandVal != null && brandVal.isNotEmpty) {
+      _liftBrandCtrl.text = brandVal;
+      _pElevatorType.text = brandVal;
+    }
+
+    // 3. Age of Lift
+    final ageVal = amcMap['age_of_lift']?.toString() ??
+        addFieldsMap['age_of_lift']?.toString() ??
+        pricingMap['wr']?.toString() ??
+        quotationMap['wr']?.toString() ??
+        data.warranty;
+    if (ageVal != null && ageVal.isNotEmpty) {
+      _ageOfLiftCtrl.text = ageVal;
+      _pWarranty.text = ageVal;
+    }
+
+    // 4. Subject / Quotation Title
+    final subjVal = amcMap['amc_subject']?.toString() ??
+        addFieldsMap['amc_subject']?.toString() ??
+        pricingMap['quotation_title']?.toString() ??
+        quotationMap['quotation_title']?.toString() ??
+        data.quotationTitle;
+    if (subjVal != null && subjVal.isNotEmpty) {
+      _pQuotationTitle.text = subjVal;
+      if (_quotationTitlePricingCtrl.text.isEmpty ||
+          _quotationTitlePricingCtrl.text == "Quotation Request") {
+        _quotationTitlePricingCtrl.text = subjVal;
+      }
+    }
+
+    // 5. Passenger Capacity
+    final passCapVal = amcMap['amc_passenger_capacity']?.toString() ??
+        addFieldsMap['amc_passenger_capacity']?.toString() ??
+        ((pricingMap['no_of_passenger'] != null &&
+                pricingMap['no_of_passenger'].toString() != '0')
+            ? pricingMap['no_of_passenger'].toString()
+            : null) ??
+        ((quotationMap['no_of_passenger'] != null &&
+                quotationMap['no_of_passenger'].toString() != '0')
+            ? quotationMap['no_of_passenger'].toString()
+            : null) ??
+        data.passengerCapacity;
+    if (passCapVal != null && passCapVal.isNotEmpty) {
+      _pPassengerCapacity.text = passCapVal;
+    }
+
+    // 6. Price / AMC Amount
+    final priceVal = amcMap['amc_price']?.toString() ??
+        addFieldsMap['amc_price']?.toString() ??
+        pricingMap['amc_amount']?.toString() ??
+        pricingMap['price']?.toString() ??
+        pricingMap['grand_total']?.toString() ??
+        quotationMap['amc_amount']?.toString() ??
+        quotationMap['price']?.toString() ??
+        data.amcAmount;
+    if (priceVal != null && priceVal.isNotEmpty) {
+      _amcPriceCtrl.text = priceVal;
+      _pAmcAmount.text = priceVal;
+      if (_pUnitPrice.text.isEmpty) _pUnitPrice.text = priceVal;
+      if (_pTotalSalePrice.text.isEmpty) _pTotalSalePrice.text = priceVal;
+    }
+
+    if (staffList.isEmpty) {
+      _loadStaffs();
+    }
+
+    if (data.sendQuoteRequest == true ||
+        (data.requestTitle != null && data.requestTitle!.isNotEmpty) ||
+        (data.quotationTitle != null && data.quotationTitle!.isNotEmpty)) {
+      _sendQuotationPricing = data.sendQuoteRequest ??
+          (data.requestTitle != null && data.requestTitle!.isNotEmpty);
+      if (data.requestTitle != null && data.requestTitle!.isNotEmpty) {
+        _quotationTitlePricingCtrl.text = data.requestTitle!;
+      } else if (data.quotationTitle != null && data.quotationTitle!.isNotEmpty) {
+        _quotationTitlePricingCtrl.text = data.quotationTitle!;
+      }
+      if (data.requestMessage != null && data.requestMessage!.isNotEmpty) {
+        _quotationMessagePricingCtrl.text = data.requestMessage!;
+      }
+      if (data.quotationType != null && data.quotationType!.isNotEmpty) {
+        _quotationTypePricing = data.quotationType!;
+      }
+      if (data.quotationAssignedTo != null &&
+          data.quotationAssignedTo!.isNotEmpty) {
+        _quotationAssignedToPricing = data.quotationAssignedTo!;
+      }
+    }
   }
 
   /// Returns [id] if it matches a valueId in [list], otherwise null.
@@ -1899,15 +2059,42 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
   Future<Map<String, dynamic>> _buildPricingBody() async {
     final token = await Common.getSharedPref('token');
+
+    final elevatorTypeVal = _liftBrandCtrl.text.trim().isNotEmpty
+        ? _liftBrandCtrl.text.trim()
+        : _pElevatorType.text;
+    final amcTypeVal = _amcTypeCtrl.text.trim().isNotEmpty
+        ? _amcTypeCtrl.text.trim()
+        : (_amcTypeSelected ?? _pAmc.text);
+    final amcAmountVal = _amcPriceCtrl.text.trim().isNotEmpty
+        ? _amcPriceCtrl.text.trim()
+        : _pAmcAmount.text;
+    final unitPriceVal = _amcPriceCtrl.text.trim().isNotEmpty
+        ? _amcPriceCtrl.text.trim()
+        : _pUnitPrice.text;
+    final grandTotalVal = _amcPriceCtrl.text.trim().isNotEmpty
+        ? _amcPriceCtrl.text.trim()
+        : _pTotalSalePrice.text;
+    final warrantyVal = _ageOfLiftCtrl.text.trim().isNotEmpty
+        ? _ageOfLiftCtrl.text.trim()
+        : _pWarranty.text;
+
     return <String, dynamic>{
       'token': token,
       'lead_id': callMasterId ?? (widget.callMasterId),
       'quotation_title': _pQuotationTitle.text,
       'quotation': _pQuotation.text,
-      'client_name': _pClientName.text,
-      'phone': _pPhone.text,
-      'location': _pLocation.text,
-      'elevator_type': _pElevatorType.text,
+      'client_name': _pClientName.text.isNotEmpty
+          ? _pClientName.text
+          : (leadDetails?.data?.clientName ?? ''),
+      'phone': _pPhone.text.isNotEmpty
+          ? _pPhone.text
+          : (leadDetails?.data?.contactNumber1 ?? ''),
+      'location': _pLocation.text.isNotEmpty
+          ? _pLocation.text
+          : (leadDetails?.data?.address ?? ''),
+      'elevator_type': elevatorTypeVal,
+      'lift_brand': elevatorTypeVal,
       'type_of_opening': _pTypeOfOpening.text,
       'lift_capacity': _pCapacity.text,
       'no_of_passenger': _pPassengerCapacity.text,
@@ -1919,12 +2106,13 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       'lift_type': _pLiftTypeId ?? '',
       'opening_type': _pOpeningId ?? '',
       'door_opening': _pDoorOpeningId ?? '',
+      'door_opening_size': _pDoorOpeningSize.text,
       'cabin_side_wall': _pCabinSideWallId ?? '',
       'landing_door': _pLandingDoorId ?? '',
       'cop': _pCopId ?? '',
       'lop': _pLopId ?? '',
-      'wr': _pWarranty.text,
-      'amc': _pAmc.text,
+      'wr': warrantyVal,
+      'amc': amcTypeVal,
       'factory_price': _pFactoryPrice.text,
       'transportation': _pTransportation.text,
       'installation_charge': _pInstallation.text,
@@ -1932,9 +2120,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       'consumables': _pConsumables.text,
       'additional_factory_charges': _pAdditionalFactory.text,
       'additional_amount': _pAdditional.text,
-      'amc_amount': _pAmcAmount.text,
-      'quantity': _pQuantity.text,
-      'price': _pUnitPrice.text,
+      'amc_amount': amcAmountVal,
+      'quantity': _pQuantity.text.isNotEmpty ? _pQuantity.text : '1',
+      'price': unitPriceVal,
       'tax_type': _pTaxType ?? '',
       'tax': _pTaxPercentage.text,
       'tax_amount': _pTaxAmount.text,
@@ -1943,19 +2131,51 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       'sales_commission': _pSalesCommission.text,
       'sales_commission_amount': _pSalesCommissionAmount.text,
       'sub_total': _pSubTotal.text,
-      'grand_total': _pTotalSalePrice.text,
+      'grand_total': grandTotalVal,
+      // AMC specific parameters
+      'amc_type': amcTypeVal,
+      'lift_brand': elevatorTypeVal,
+      'age_of_lift': warrantyVal,
+      'amc_subject': _pQuotationTitle.text,
+      'amc_passenger_capacity': _pPassengerCapacity.text,
+      'amc_price': amcAmountVal,
+      if (_sendQuotationPricing) ...{
+        'send_quotation': '1',
+        'create_quotation_request': '1',
+        'request_title': _quotationTitlePricingCtrl.text.trim(),
+        'request_message': _quotationMessagePricingCtrl.text.trim(),
+        'quotation_type': _quotationTypePricing ?? 'General',
+        'type': _quotationTypePricing ?? 'General',
+        'assigned_to': _quotationAssignedToPricing ?? '',
+        'quotation_assigned_to': _quotationAssignedToPricing ?? '',
+      },
     };
   }
 
   Future<void> _savePricingDetails() async {
-    // if (_pQuotation.text.trim().isEmpty) {
-    //   Common.toastMessaage('Quotation Name is required', Colors.red);
-    //   return;
-    // }
-
     if (_pClientName.text.trim().isEmpty) {
       Common.toastMessaage('Client Name is required', Colors.red);
       return;
+    }
+
+    if (_sendQuotationPricing) {
+      if (_quotationTitlePricingCtrl.text.trim().isEmpty) {
+        Common.toastMessaage('Request Title is required', Colors.red);
+        return;
+      }
+      if (_quotationMessagePricingCtrl.text.trim().isEmpty) {
+        Common.toastMessaage('Request Message is required', Colors.red);
+        return;
+      }
+      if (_quotationTypePricing == null || _quotationTypePricing!.isEmpty) {
+        Common.toastMessaage('Select Quotation Type', Colors.red);
+        return;
+      }
+      if (_quotationAssignedToPricing == null ||
+          _quotationAssignedToPricing!.isEmpty) {
+        Common.toastMessaage('Select Assigned To Staff', Colors.red);
+        return;
+      }
     }
 
     final body = await _buildPricingBody();
@@ -1966,6 +2186,23 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
     try {
       final result = await HttpService.postPricing(body);
+
+      if (_sendQuotationPricing &&
+          _quotationAssignedToPricing != null &&
+          _quotationAssignedToPricing!.isNotEmpty) {
+        try {
+          await HttpService.sendQuotationRequest(
+            token: widget.token,
+            callMasterId: callMasterId ?? widget.callMasterId,
+            assignedTo: _quotationAssignedToPricing!,
+            requestTitle: _quotationTitlePricingCtrl.text.trim(),
+            requestMessage: _quotationMessagePricingCtrl.text.trim(),
+            quotationType: _quotationTypePricing ?? 'General',
+          );
+        } catch (e) {
+          log("Error sending quotation request: $e");
+        }
+      }
 
       if (mounted) {
         Navigator.pop(context); // Close progress dialog
@@ -2013,6 +2250,20 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   void _showViewPricingDetailsDialog() {
     final data = leadDetails?.data;
     if (data == null) return;
+    _initPricingControllers();
+
+    final isAmcCategory = leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC' ||
+        (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'AMC') ||
+        (leadDetails?.data?.leadCategoryId == '11');
+
+    Map<String, dynamic> amcMap = {};
+    if (data.amcDetails is Map<String, dynamic>) {
+      amcMap = data.amcDetails!;
+    } else if (data.rawJson != null &&
+        data.rawJson!['amc_details'] is Map<String, dynamic>) {
+      amcMap = data.rawJson!['amc_details'];
+    }
 
     showDialog(
       context: context,
@@ -2037,14 +2288,18 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.receipt_long_rounded,
-                        color: Colors.white, size: 22),
-                    SizedBox(width: 10),
+                    Icon(
+                        isAmcCategory
+                            ? Icons.shield_outlined
+                            : Icons.receipt_long_rounded,
+                        color: Colors.white,
+                        size: 22),
+                    const SizedBox(width: 10),
                     Text(
-                      'Pricing Details',
-                      style: TextStyle(
+                      isAmcCategory ? 'AMC Details' : 'Pricing Details',
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -2070,11 +2325,70 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSummarySectionHeader(
-                          'Pricing Details',
-                          Icons.payments_outlined,
+                          isAmcCategory ? 'AMC Details' : 'Pricing Details',
+                          isAmcCategory
+                              ? Icons.shield_outlined
+                              : Icons.payments_outlined,
                         ),
                         const SizedBox(height: 10),
-                        _buildSummaryGrid([
+                        if (isAmcCategory)
+                          _buildSummaryGrid([
+                            _buildSummaryTile(
+                              'AMC Type',
+                              (_amcTypeSelected?.isNotEmpty == true
+                                      ? _amcTypeSelected
+                                      : _amcTypeCtrl.text.isNotEmpty
+                                          ? _amcTypeCtrl.text
+                                          : amcMap['amc_type']?.toString() ??
+                                              data.amc) ??
+                                  '-',
+                            ),
+                            _buildSummaryTile(
+                              'Lift Brand',
+                              _liftBrandCtrl.text.isNotEmpty
+                                  ? _liftBrandCtrl.text
+                                  : amcMap['lift_brand']?.toString() ??
+                                      (data.elevatorType ?? '-'),
+                            ),
+                            _buildSummaryTile(
+                              'Age of Lift',
+                              _ageOfLiftCtrl.text.isNotEmpty
+                                  ? _ageOfLiftCtrl.text
+                                  : amcMap['age_of_lift']?.toString() ??
+                                      (data.warranty ?? '-'),
+                            ),
+                            _buildSummaryTile(
+                              'Subject',
+                              _pQuotationTitle.text.isNotEmpty
+                                  ? _pQuotationTitle.text
+                                  : amcMap['amc_subject']?.toString() ??
+                                      (data.quotationTitle ?? '-'),
+                            ),
+                            _buildSummaryTile(
+                              'Passenger Capacity/KG',
+                              _pPassengerCapacity.text.isNotEmpty
+                                  ? _pPassengerCapacity.text
+                                  : amcMap['amc_passenger_capacity']
+                                          ?.toString() ??
+                                      (data.passengerCapacity ?? '-'),
+                            ),
+                            _buildSummaryTile(
+                              'Price',
+                              _amcPriceCtrl.text.isNotEmpty
+                                  ? '₹ ${_amcPriceCtrl.text}'
+                                  : amcMap['amc_price'] != null &&
+                                          amcMap['amc_price']
+                                              .toString()
+                                              .isNotEmpty
+                                      ? '₹ ${amcMap['amc_price']}'
+                                      : data.amcAmount?.isNotEmpty == true
+                                          ? '₹ ${data.amcAmount}'
+                                          : '-',
+                              isHighlight: true,
+                            ),
+                          ])
+                        else
+                          _buildSummaryGrid([
                           _buildSummaryTile(
                             'Factory Price',
                             _pFactoryPrice.text.isEmpty
@@ -2364,8 +2678,22 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     }
     _initPricingControllers();
     final data = leadDetails!.data!;
-    final showEstimation = data.createEstimation == true;
-    final showPricing = data.createPricing == true;
+
+    final isAmcCategory = leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC' ||
+        (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'AMC') ||
+        (leadDetails?.data?.leadCategoryId == '11');
+
+    final isRepairCategory = leadTypeId == '12' ||
+        leadType.trim().toUpperCase() == 'REPAIR' ||
+        (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'REPAIR') ||
+        (leadDetails?.data?.leadCategoryId == '12');
+
+    final showAmc = isAmcCategory;
+    final showEstimation =
+        !isAmcCategory && !isRepairCategory && (data.createEstimation == true);
+    final showPricing =
+        isRepairCategory || (!isAmcCategory && (data.createPricing == true));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -2373,11 +2701,41 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── AMC Section ───────────────────────────────────────────────
+          if (showAmc) ...[
+            _buildAMCSection(),
+            const SizedBox(height: 12),
+          ],
           // ── Estimation & Pricing Section ──────────────────────────────
-          if (showEstimation) _buildEstimationCard(context, data),
+          if (showEstimation) ...[
+            _buildEstimationCard(context, data),
+            const SizedBox(height: 12),
+          ],
           // ── Pricing Section ───────────────────────────────────────────
-          if (showPricing) _buildPricingCard(context, data),
-          const SizedBox(height: 8),
+          if (showPricing) ...[
+            _buildPricingCard(context, data),
+            const SizedBox(height: 12),
+          ],
+          // ── Quotation Request Section ──────────────────────────────────
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text(
+              'Create Quotation Request',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            value: _sendQuotationPricing,
+            onChanged: (value) {
+              setState(() {
+                _sendQuotationPricing = value ?? false;
+              });
+            },
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          if (_sendQuotationPricing) _buildQuotationRequestFormPricing(),
+          const SizedBox(height: 12),
           // ── Save Button ───────────────────────────────────────────────
           Container(
             width: double.infinity,
@@ -2476,9 +2834,267 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               ),
             ),
           ),
-          const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  Widget _buildQuotationRequestFormPricing() {
+    return _pricingCardSection(
+      title: 'Quotation Request',
+      icon: Icons.request_quote_outlined,
+      children: [
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _quotationTitlePricingCtrl,
+          decoration: _inputDecoration('Request Title *', null,
+              hintText: 'Quotation Request'),
+          validator: (value) {
+            if (_sendQuotationPricing && (value == null || value.trim().isEmpty)) {
+              return 'Please enter request title';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _quotationMessagePricingCtrl,
+          maxLines: 3,
+          decoration: _inputDecoration('Request Message *', null,
+              hintText: 'Kindly prepare and send the quotation for this lead.'),
+          validator: (value) {
+            if (_sendQuotationPricing && (value == null || value.trim().isEmpty)) {
+              return 'Please enter request message';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          value: _quotationTypePricing,
+          decoration: _inputDecoration('Type *', null, hintText: 'Select Type'),
+          items: const [
+            DropdownMenuItem(
+              value: "Amc",
+              child: Text("Amc"),
+            ),
+            DropdownMenuItem(
+              value: "General",
+              child: Text("General"),
+            ),
+            DropdownMenuItem(
+              value: "Repairing",
+              child: Text("Repairing"),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _quotationTypePricing = value;
+            });
+          },
+          validator: (value) {
+            if (_sendQuotationPricing && (value == null || value.isEmpty)) {
+              return 'Please select Type';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          value: _quotationAssignedToPricing,
+          decoration: _inputDecoration('Assigned To *', null,
+              hintText: 'Select Assigned To'),
+          items: staffList.map((expense.Staff staff) {
+            return DropdownMenuItem<String>(
+              value: staff.userIdStaff,
+              child: Text(staff.name),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _quotationAssignedToPricing = value;
+            });
+          },
+          validator: (value) {
+            if (_sendQuotationPricing && (value == null || value.isEmpty)) {
+              return 'Please select Assigned To';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 15),
+      ],
+    );
+  }
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+    bool isTransparent = false,
+  }) {
+    return Card(
+      elevation: isTransparent ? 0 : 1,
+      color: isTransparent ? Colors.transparent : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isTransparent ? 0 : 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isTransparent)
+              Row(
+                children: [
+                  Icon(icon, color: const Color(0xFF2a86c9), size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String? label, IconData? icon,
+      {bool isDense = false, String? hintText}) {
+    return InputDecoration(
+      isDense: isDense,
+      hintText: hintText,
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+      label: label != null
+          ? RichText(
+              text: TextSpan(
+                text: label.replaceAll(' *', ''),
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
+                children: [
+                  if (label.contains('*'))
+                    const TextSpan(
+                      text: ' *',
+                      style: TextStyle(
+                          color: Colors.red, fontWeight: FontWeight.bold),
+                    ),
+                ],
+              ),
+            )
+          : null,
+      prefixIcon:
+          icon != null ? Icon(icon, color: Colors.grey, size: 20) : null,
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      contentPadding:
+          EdgeInsets.symmetric(horizontal: 12, vertical: isDense ? 8 : 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+    );
+  }
+
+  Widget _buildAMCSection() {
+    _initPricingControllers();
+    return _buildSectionCard(
+      title: 'AMC',
+      icon: Icons.shield_outlined,
+      children: [
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: (_amcTypeSelected == 'Comprehensive AMC' ||
+                        _amcTypeSelected == 'Non Comprehensive AMC')
+                    ? _amcTypeSelected
+                    : null,
+                decoration: _inputDecoration('AMC Type *', null,
+                    hintText: 'Select AMC Type'),
+                hint: const Text(
+                  'Select AMC Type',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'Comprehensive AMC',
+                      child: Text('Comprehensive AMC')),
+                  DropdownMenuItem(
+                      value: 'Non Comprehensive AMC',
+                      child: Text('Non Comprehensive AMC')),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    _amcTypeSelected = val;
+                    _amcTypeCtrl.text = val ?? '';
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _liftBrandCtrl,
+                decoration: _inputDecoration('Lift Brand *', null,
+                    hintText: 'Enter Lift Brand'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _ageOfLiftCtrl,
+                decoration: _inputDecoration('Age of Lift *', null,
+                    hintText: 'Enter Age of Lift'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _pQuotationTitle,
+                decoration: _inputDecoration('Subject *', null,
+                    hintText: 'Enter Subject'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _pPassengerCapacity,
+                decoration: _inputDecoration('Passenger Capacity/KG *', null,
+                    hintText: 'Enter Passenger Capacity/KG'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _amcPriceCtrl,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration('Price *', null,
+                    hintText: 'Enter Price'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -2543,11 +3159,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             onChanged: (v) => setState(() => _pOpeningId = v),
           ),
           _pricingDropdown(
-            label: 'Door Opening',
+            label: 'Door Type',
             value: _pDoorOpeningId,
             items: data.cabinOpening ?? [],
             onChanged: (v) => setState(() => _pDoorOpeningId = v),
           ),
+          
+          _pricingField('Door Opening Size', _pDoorOpeningSize,
+          keyboardType: TextInputType.number),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
@@ -2803,19 +3422,30 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  Widget _buildGridRow(BuildContext context, List<Widget> fields) {
+  Widget _buildGridRow(
+    BuildContext context,
+    List<Widget> fields,
+  ) {
     final width = MediaQuery.of(context).size.width;
+
     final crossAxisCount = width < 600 ? 2 : (fields.length > 3 ? 4 : 3);
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final itemWidth = (constraints.maxWidth - ((crossAxisCount - 1) * 12)) /
             crossAxisCount;
+
         return Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: fields
-              .map((field) => SizedBox(width: itemWidth, child: field))
-              .toList(),
+          children: fields.map(
+            (field) {
+              return SizedBox(
+                width: itemWidth,
+                child: field,
+              );
+            },
+          ).toList(),
         );
       },
     );
@@ -2905,7 +3535,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     required List<dynamic> items,
     required ValueChanged<String?> onChanged,
   }) {
-    final validValue = items.any((e) => e.valueId == value) ? value : null;
+    final validValue = items.any((e) => (e is String ? e : e.valueId) == value)
+        ? value
+        : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2953,15 +3585,35 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               'Select',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
             ),
-            items: items.map<DropdownMenuItem<String>>((e) {
-              return DropdownMenuItem<String>(
-                value: e.valueId as String?,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+            selectedItemBuilder: (context) {
+              return items.map((e) {
+                final text = (e is String ? e : (e.valueName ?? e.valueId ?? '')).toString();
+                return Align(
+                  alignment: Alignment.centerLeft,
                   child: Text(
-                    (e.valueName ?? '').toString(),
-                    softWrap: true,
+                    text,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2C3E50),
+                    ),
+                  ),
+                );
+              }).toList();
+            },
+            items: items.map<DropdownMenuItem<String>>((e) {
+              final val = (e is String ? e : e.valueId) as String?;
+              final text = (e is String ? e : (e.valueName ?? e.valueId ?? '')).toString();
+              return DropdownMenuItem<String>(
+                value: val,
+                child: Text(
+                  text,
+                  softWrap: true,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF2C3E50),
                   ),
                 ),
               );
@@ -4106,6 +4758,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           leadSubType = data.leadSubCategory ?? 'Lead Sub Category';
           priorityId = data.priorityId ?? '2';
           priority = data.priority ?? 'Normal';
+          _initPricingControllers();
         });
 
         await Future.wait<dynamic>([
@@ -4244,17 +4897,21 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       return;
     }
 
-    final isEstimationStage = (leadDetails?.data?.createEstimation == true) &&
-        (callResult == 'Estimation & Pricing' ||
-            callResult.toLowerCase().contains('estimation'));
-    if (isEstimationStage) {
-      // if (_pQuotation.text.trim().isEmpty) {
-      //   Common.toastMessaage('Quotation Name is required', Colors.red);
-      //   return;
-      // }
-      if (_pClientName.text.trim().isEmpty) {
-        Common.toastMessaage('Client Name is required', Colors.red);
-        return;
+    final isAmcCategory = leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC' ||
+        (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'AMC') ||
+        (leadDetails?.data?.leadCategoryId == '11');
+
+    final isEstimationStage = callResultId == '16' ||
+        callResult == 'Estimation & Pricing' ||
+        callResult.toLowerCase().contains('estimation');
+
+    final isEstimationOrAmc = isEstimationStage ||
+        ((leadDetails?.data?.createEstimation == true) && isEstimationStage);
+
+    if (isEstimationOrAmc && isAmcCategory) {
+      if (_amcPriceCtrl.text.trim().isNotEmpty && cost.text.trim().isEmpty) {
+        cost.text = _amcPriceCtrl.text.trim();
       }
     }
 
@@ -4300,14 +4957,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         return;
       }
     }
-    // setState(() {
-    //   isSavingFollowup = true;
-    // });
 
-    // if (commonDetails == null) {
-    //   Common.toastMessaage('Common data not loaded yet', Colors.red);
-    //   return;
-    // }
     if (commonDetails == null) {
       Common.toastMessaage('Common data not loaded yet', Colors.red);
       return;
@@ -4331,6 +4981,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
     try {
       String productIds = _selectedProducts.map((p) => p.id).join(',');
+
+      final pricingBody = isEstimationOrAmc ? await _buildPricingBody() : null;
 
       final result = await HttpService.addLeadsFollowupUpdated(
           widget.token,
@@ -4373,10 +5025,19 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           products: productIds,
           createCustomer: createCustomer,
           whatsappLead: whatsappLead.text,
-          emailLead: emailLead.text);
+          emailLead: emailLead.text,
+          pricingData: pricingBody,
+          amcType: _amcTypeCtrl.text.trim().isNotEmpty
+              ? _amcTypeCtrl.text.trim()
+              : _amcTypeSelected,
+          liftBrand: _liftBrandCtrl.text.trim(),
+          ageOfLift: _ageOfLiftCtrl.text.trim(),
+          subject: _pQuotationTitle.text.trim(),
+          passengerCapacity: _pPassengerCapacity.text.trim(),
+          amcPrice: _amcPriceCtrl.text.trim());
       if (context.mounted) {
         if (result.status == true) {
-          if (isEstimationStage) {
+          if (isEstimationOrAmc) {
             try {
               final pricingBody = await _buildPricingBody();
               await HttpService.postPricing(pricingBody);
@@ -4397,6 +5058,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           setState(() {
             remarks.clear();
             nextFollowupDate1.clear();
+
+            _amcTypeSelected = null;
+            _amcTypeCtrl.clear();
+            _liftBrandCtrl.clear();
+            _ageOfLiftCtrl.clear();
+            _amcPriceCtrl.clear();
 
             callResponseId = '';
             callResultReasonId = '';
@@ -4581,7 +5248,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     );
   }
 
-  Widget _buildAddNewFollowupForm() {
+  Widget _buildAddNewFollowupForm({bool showAmcSection = true}) {
     if (commonDetails == null) return const SizedBox();
     return Column(
       children: [
@@ -5033,13 +5700,47 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                       ],
                     ),
 
-                  if (leadDetails?.data != null &&
-                      leadDetails?.data?.createEstimation == true &&
-                      (callResult == 'Estimation & Pricing' ||
-                          callResult.toLowerCase().contains('estimation'))) ...[
-                    _buildEstimationCard(context, leadDetails!.data),
-                    const SizedBox(height: 12),
-                  ],
+                  Builder(
+                    builder: (context) {
+                      final isAmcCategory = leadTypeId == '11' ||
+                          leadType.trim().toUpperCase() == 'AMC' ||
+                          (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'AMC') ||
+                          (leadDetails?.data?.leadCategoryId == '11');
+
+                      final isRepairCategory = leadTypeId == '12' ||
+                          leadType.trim().toUpperCase() == 'REPAIR' ||
+                          (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'REPAIR') ||
+                          (leadDetails?.data?.leadCategoryId == '12');
+
+                      final isEstimationStage = callResultId == '16' ||
+                          callResult == 'Estimation & Pricing' ||
+                          callResult.toLowerCase().contains('estimation');
+
+                      if (isEstimationStage) {
+                        if (isRepairCategory) {
+                          return const SizedBox.shrink();
+                        } else if (isAmcCategory) {
+                          if (!showAmcSection) return const SizedBox.shrink();
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildAMCSection(),
+                              const SizedBox(height: 12),
+                            ],
+                          );
+                        } else if (leadDetails?.data?.createEstimation == true) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildEstimationCard(context, leadDetails!.data),
+                              const SizedBox(height: 12),
+                            ],
+                          );
+                        }
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
                   const Text(
                     'Products',
@@ -13217,7 +13918,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     },
                     decoration: const InputDecoration(
                       contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search',
+                      hintText: 'Search', 
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),

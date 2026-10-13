@@ -971,6 +971,12 @@ class _UnitInfoDetailsPageState extends State<UnitInfoDetailsPage> {
                     unit.doorModelId,
                   ),
                   _buildTwoColumnRow(
+                    'Door Opening Size',
+                    unit.doorOpeningSize,
+                    'Door Model',
+                    unit.doorModelId,
+                  ),
+                  _buildTwoColumnRow(
                     'Machine Room Type',
                     unit.machineRoomTypeId,
                     'Lift Type',

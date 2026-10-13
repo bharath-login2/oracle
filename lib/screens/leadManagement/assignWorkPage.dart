@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
@@ -18,6 +17,10 @@ class TaskForm {
   TextEditingController descriptionController;
   String? status;
   String? taskId;
+  DateTime? startDate;
+  DateTime? endDate;
+  String? assignedStaffId;
+  List<String> supportingStaffIds;
   List<TextEditingController> remarksControllers;
 
   TaskForm({
@@ -25,8 +28,13 @@ class TaskForm {
     required this.descriptionController,
     this.status,
     this.taskId,
+    this.startDate,
+    this.endDate,
+    this.assignedStaffId,
+    List<String>? supportingStaffIds,
     List<TextEditingController>? remarks,
-  }) : remarksControllers = remarks ?? [TextEditingController()];
+  })  : supportingStaffIds = supportingStaffIds ?? [],
+        remarksControllers = remarks ?? [TextEditingController()];
 }
 
 class AssignWorkPage extends StatefulWidget {
@@ -56,8 +64,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   String? priority;
   String? assignedTo;
   final TextEditingController _searchController = TextEditingController();
-  List<Projects> _filteredProjects = [];
-  bool _isSearching = false;
   List<Projects> projectList = [];
   List<TitleListDet> titleList = [];
   List<String> participantIds = [];
@@ -83,7 +89,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   dynamic prodTaxExisting = TextEditingController();
   dynamic typeDuration;
   bool isLocationEnabled = false;
-  final bool _isGettingLocation = false;
   double? currentLatitude;
   double? currentLongitude;
   void filterCustomers(String value) {}
@@ -106,6 +111,21 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   List<String> selectedStaffIds = [];
   List<String> selectedAssignedStaffIds = [];
   bool _isAssigning = false;
+  List<dynamic> unitList = [];
+  List<dynamic> siteLiftList = [];
+  List<dynamic> stageList = [];
+  List<dynamic> unitTaskList = [];
+  String? selectedUnitId;
+  String? selectedUnitNo;
+  String? selectedSiteLiftId;
+  String? selectedSiteLiftNo;
+  String? selectedStageId;
+  String? selectedStageName;
+  bool isLoadingUnits = false;
+  bool isLoadingSiteLifts = false;
+  bool isLoadingStages = false;
+  bool isLoadingTasks = false;
+  List<String> selectedSupportingStaffIds = [];
 
   @override
   void initState() {
@@ -121,9 +141,13 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
             .map((task) => TaskForm(
                   controller: TextEditingController(text: task.taskName),
                   descriptionController:
-                      TextEditingController(text: task.description ?? ''),
+                      TextEditingController(text: task.description),
                   status: task.status,
                   taskId: task.taskId,
+                  startDate: null,
+                  endDate: null,
+                  assignedStaffId: null,
+                  supportingStaffIds: [],
                   remarks: task.remarks
                       .map((remark) => TextEditingController(text: remark))
                       .toList(),
@@ -135,6 +159,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
               descriptionController: TextEditingController(),
               status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
               taskId: null,
+              startDate: null,
+              endDate: null,
+              assignedStaffId: null,
+              supportingStaffIds: [],
               remarks: [TextEditingController()],
             )
           ];
@@ -151,18 +179,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     }
     if (widget.existingWork != null &&
         widget.existingWork!.assignedTo != null) {
-      if (widget.existingWork!.assignedTo != null) {
-        selectedStaffIds = [widget.existingWork!.assignedTo!];
-      } else {
-        selectedStaffIds = [];
-      }
+      selectedStaffIds = [widget.existingWork!.assignedTo!];
     } else if (assignedTo != null) {
       selectedStaffIds = [assignedTo!];
     }
     if (assignedTo != null && assignedTo!.isNotEmpty) {
       selectedAssignedStaffIds = assignedTo!.split(',').where((id) => id.trim().isNotEmpty && id.trim() != "0").toList();
     } else {
-      selectedAssignedStaffIds = [];
+      selectedAssignedStaffIds = []; 
     }
     whatsappNotification = false;
     pushNotification = false;
@@ -173,24 +197,21 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     _loadStaffs();
     _loadTaskState();
     _loadPrioState();
+    _loadStages();
   }
 
   void _initAsync() async {
     token = await Common.getSharedPref("token") ?? "";
-    userId = await Common.getSharedPref("userId");
+    userId = await Common.getSharedPref("userId") ?? "";
     await _loadProjects();
-    // if (assignedTo == null) {
-    //   setState(() {
-    //     assignedTo = userId;
-    //   });
-    // }
   }
 
   Future<void> _loadProjects() async {
     try {
       final response = await HttpService.getProjectList();
+      if (!mounted) return;
       setState(() {
-        projectList = response!.data;
+        projectList = response?.data ?? [];
 
         final uniqueProjects = <String, Projects>{};
         for (var project in projectList) {
@@ -214,6 +235,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
         selectedProjectId = null;
@@ -228,8 +250,9 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     if (selectedProjectId == null) return;
     try {
       final response = await HttpService.getTitleList(selectedProjectId!);
+      if (!mounted) return;
       setState(() {
-        titleList = response!.data;
+        titleList = response?.data ?? [];
         if (widget.existingWork != null &&
             widget.existingWork!.title.isNotEmpty) {
           final matchedTitle = titleList.firstWhere(
@@ -252,14 +275,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
   Future<void> _loadStaffs() async {
     final response = await HttpService.getStaffs();
+    if (!mounted) return;
     if (response != null && response.status == true) {
       setState(() {
         staffList = response.data;
-        // if (assignedTo == null) {
-        //   if (staffList.any((staff) => staff.userIdStaff == userId)) {
-        //     assignedTo = userId;
-        //   }
-        // }
         notifyToAssignedStaff = true;
         notifyOnStatusChange = false;
         notifyOtherPeople = false;
@@ -270,14 +289,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
   Future<void> _loadTaskState() async {
     final response = await HttpService.getTaskState();
+    if (!mounted) return;
     if (response != null && response.status == true) {
       setState(() {
         allTaskStates = response.data;
       });
       log("✅ Task States Loaded: ${allTaskStates.length}");
-      for (var t in allTaskStates) {
-        log("TaskState: id=${t.id}, status=${t.status}");
-      }
     } else {
       log("❌ Failed to load task states or status is false");
     }
@@ -285,6 +302,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
   Future<void> _loadPrioState() async {
     final response = await HttpService.getPrioState();
+    if (!mounted) return;
     if (response != null && response.status == true) {
       setState(() {
         allPriorities = response.data;
@@ -299,41 +317,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     }
   }
 
-  Future<void> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      debugPrint('Location services are disabled.');
-      return;
-    }
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        debugPrint('Location permission denied.');
-        return;
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      debugPrint('Location permissions are permanently denied.');
-      return;
-    }
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-    setState(() {
-      currentLatitude = position.latitude;
-      currentLongitude = position.longitude;
-    });
-    debugPrint('Lat: ${position.latitude}, Long: ${position.longitude}');
-  }
-
   @override
   void dispose() {
     titleController.dispose();
     for (var task in tasks) {
       task.controller.dispose();
+      task.descriptionController.dispose();
       for (var remark in task.remarksControllers) {
         remark.dispose();
       }
@@ -345,7 +334,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
   void _filterProjects() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredProjects = projectList.where((project) {
+      filteredProjects = projectList.where((project) {
         return project.name.toLowerCase().contains(query);
       }).toList();
     });
@@ -358,30 +347,6 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
               project.name.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
-  }
-
-  void _toggleSearch() {
-    setState(() {
-      _isSearching = !_isSearching;
-      if (!_isSearching) {
-        _searchController.clear();
-        _filteredProjects = projectList;
-      }
-    });
-  }
-
-  void _addRemarkField(int taskIndex) {
-    setState(() {
-      tasks[taskIndex].remarksControllers.add(TextEditingController());
-    });
-  }
-
-  void _removeRemarkField(int taskIndex, int remarkIndex) {
-    if (tasks[taskIndex].remarksControllers.length > 1) {
-      setState(() {
-        tasks[taskIndex].remarksControllers.removeAt(remarkIndex);
-      });
-    }
   }
 
   Future<void> _submitWork() async {
@@ -402,55 +367,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         return;
       }
 
-      if (isLocationEnabled &&
-          (currentLatitude == null || currentLongitude == null)) {
+      if (selectedStageId == null && (selectedStageName == null || selectedStageName!.isEmpty)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Location not available yet.'),
+            content: Text('Please select a stage'),
             backgroundColor: Colors.red,
           ),
         );
         return;
-      }
-
-      if (selectedTitleId == null ||
-          selectedTitleId!.isEmpty ||
-          titleController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a title'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      final currentUserId = await Common.getSharedPref('user_id');
-      if (!selectedAssignedStaffIds.contains(currentUserId)) {
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Confirm Assignment'),
-            content: const Text(
-              'Are you sure you want to assign this work?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Confirm'),
-              ),
-            ],
-          ),
-        );
-
-        if (confirmed != true) {
-          setState(() => _isAssigning = false);
-          return;
-        }
       }
 
       showDialog(
@@ -465,8 +389,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         'work_id': widget.existingWork?.id,
         'project_id': selectedProjectId,
         'project_name': selectedProjectName,
-        'title': titleController.text,
-        'title_id': selectedTitleId,
+        'unit_id': selectedUnitId,
+        'unit_no': selectedUnitNo,
+        'site_lift_id': selectedSiteLiftId,
+        'site_lift_no': selectedSiteLiftNo,
+        'stage_id': selectedStageId,
+        'stage_name': selectedStageName,
+        'title': titleController.text.isNotEmpty ? titleController.text : 'Work Assignment',
+        'title_id': selectedTitleId ?? '',
         'due_date':
             dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
         'priority': priority,
@@ -482,28 +412,31 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           'notify_to_assigned': notifyToAssignedStaff,
           'notify_on_status_change': notifyOnStatusChange,
           'notify_other_people': notifyOtherPeople,
-          'staff_ids': [
-            if (notifyToAssignedStaff)
-              ...selectedAssignedStaffIds,
-            if (notifyOtherPeople)
-              ...selectedStaffIds.where((id) => !selectedAssignedStaffIds.contains(id)),
-          ].join(','),
+          'staff_ids': selectedStaffIds.join(','),
           'on_start': notifyOnStart,
           'on_complete': notifyOnComplete,
         },
         'tasks': tasks.asMap().entries.map((entry) {
           final task = entry.value;
           return {
+            'activity_id': task.taskId,
             'task_id': task.taskId,
-            'description': task.controller.text,
+            'activity_name': task.controller.text,
+            'task_name': task.controller.text,
+            'description': task.descriptionController.text, 
             'task_description': task.descriptionController.text,
+            'start_date': task.startDate != null
+                ? DateFormat('yyyy-MM-dd').format(task.startDate!)
+                : null,
+            'end_date': task.endDate != null
+                ? DateFormat('yyyy-MM-dd').format(task.endDate!)
+                : null,
+            'assigned_staff_id': task.assignedStaffId ?? '0',
+            'assigned_to': task.assignedStaffId ?? '0',
+            'supporting_staff_ids': task.supportingStaffIds.join(','),
             'status': (task.status != null && task.status.toString().isNotEmpty)
                 ? task.status
                 : 1,
-            'remarks': task.remarksControllers
-                .map((controller) => controller.text)
-                .where((remark) => remark.isNotEmpty)
-                .toList(),
           };
         }).toList(),
       };
@@ -512,1609 +445,1262 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           ? await HttpService.updateWorkData(workData)
           : await HttpService.assignWorkData(workData);
 
+      if (!mounted) return;
       Navigator.of(context).pop();
 
       if (response.status) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.existingWork != null
-                ? 'Work stopped successfully!'
+                ? 'Work updated successfully!'
                 : 'Work Assigned successfully!'),
             backgroundColor: Colors.green,
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
-        if (context.mounted) {
+        if (mounted) {
           Navigator.pop(context, true);
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message ?? 'Operation failed'),
+            content: Text(response.message.toString()),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() => _isAssigning = false);
+      if (mounted) {
+        setState(() => _isAssigning = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isEditing = widget.existingWork != null;
-    final isPausing = widget.isPaused == 1;
-    final isRestarting = widget.Restart == 1;
 
     return AbsorbPointer(
       absorbing: _isAssigning,
       child: Scaffold(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Colors.grey[100],
         appBar: AppBar(
-          backgroundColor: isEditing
-              ? isPausing
-                  ? Colors.orange[800]
-                  : isRestarting
-                      ? Colors.green[800]
-                      : Colors.red[800]
-              : Colors.blue,
-          elevation: 2,
-          shadowColor: Colors.black12,
-          title: Row(
-            children: [
-              Icon(
-                isEditing
-                    ? isPausing
-                        ? Icons.pause_circle_outline
-                        : isRestarting
-                            ? Icons.play_circle_outline
-                            : FontAwesomeIcons.stop
-                    : Icons.assignment_add,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                isEditing
-                    ? isPausing
-                        ? 'Pause Work'
-                        : isRestarting
-                            ? 'Restart Work'
-                            : 'Stop Work'
-                    : 'Assign New Work',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          title: Text(
+            isEditing ? 'Edit Work' : 'Assign Work',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
-          centerTitle: false,
+          backgroundColor: const Color(0xFF2a86c9),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
           actions: [
             IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(60, 255, 255, 255),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.close, size: 22),
-              ),
+              icon: const Icon(Icons.close, color: Colors.white, size: 22),
               onPressed: () => Navigator.pop(context),
             ),
           ],
         ),
-        body: Stack(
+        body: Column(
           children: [
-            Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    //padding: const EdgeInsets.all(20),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Card 1: Work Information
+                    _buildSectionCard(
+                      title: 'Work Details',
+                      icon: Icons.assignment_outlined,
                       children: [
-                        // Container(
-                        //   padding: const EdgeInsets.all(16),
-                        //   decoration: BoxDecoration(
-                        //     color: Colors.blue.withOpacity(0.05),
-                        //     borderRadius: BorderRadius.circular(12),
-                        //     border: Border.all(
-                        //       color: Colors.blue.withOpacity(0.1),
-                        //     ),
-                        //   ),
-                        //   child: Row(
-                        //     children: [
-                        //       Icon(
-                        //         Icons.info_outline_rounded,
-                        //         color: Colors.blue,
-                        //         size: 24,
-                        //       ),
-                        //       const SizedBox(width: 12),
-                        //       Expanded(
-                        //         child: Text(
-                        //           isEditing
-                        //               ? 'You are ${isPausing ? 'pausing' : isRestarting ? 'restarting' : 'stopping'} an existing work assignment'
-                        //               : 'Fill in the details below to assign new work',
-                        //           style: TextStyle(
-                        //             fontSize: 14,
-                        //             color: Colors.grey[700],
-                        //             fontWeight: FontWeight.w500,
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
-                        // const SizedBox(height: 24),
-                        // Card(
-                        //   elevation: 1,
-                        //   shape: RoundedRectangleBorder(
-                        //     borderRadius: BorderRadius.circular(12),
-                        //   ),
-                        //   child: Padding(
-                        //     padding: const EdgeInsets.all(20),
-                        //     child: Column(
-                        //       children: [
-                        //         Row(
-                        //           children: [
-                        //             Icon(
-                        //               Icons.folder_special_rounded,
-                        //               color: Colors.blue,
-                        //               size: 20,
-                        //             ),
-                        //             const SizedBox(width: 8),
-                        //             Text(
-                        //               'Project Details',
-                        //               style: TextStyle(
-                        //                 fontSize: 16,
-                        //                 fontWeight: FontWeight.w600,
-                        //                 color: Colors.grey[800],
-                        //               ),
-                        //             ),
-                        //           ],
-                        //         ),
-                        //         const SizedBox(height: 16),
-                        //         Row(
-                        //           crossAxisAlignment: CrossAxisAlignment.start,
-                        //           children: [
-                        //             Expanded(
-                        //               child: Column(
-                        //                 crossAxisAlignment:
-                        //                     CrossAxisAlignment.start,
-                        //                 children: [
-                        //                   Text(
-                        //                     'Project *',
-                        //                     style: TextStyle(
-                        //                       fontSize: 14,
-                        //                       fontWeight: FontWeight.w500,
-                        //                       color: Colors.grey[700],
-                        //                     ),
-                        //                   ),
-                        //                   const SizedBox(height: 6),
-                        //                   Container(
-                        //                     decoration: BoxDecoration(
-                        //                       border: Border.all(
-                        //                         color: Colors.grey.shade300,
-                        //                       ),
-                        //                       borderRadius:
-                        //                           BorderRadius.circular(8),
-                        //                     ),
-                        //                     child: ListTile(
-                        //                       onTap: () async {
-                        //                         final selected =
-                        //                             await dropDialogExisting(
-                        //                                 context, "Projects");
-                        //                         if (selected != null) {
-                        //                           setState(() {
-                        //                             selectedProjectId =
-                        //                                 selected['id'];
-                        //                             selectedProjectController
-                        //                                     .text =
-                        //                                 selected['name'] ?? '';
-                        //                           });
-                        //                           await _loadTitle();
-                        //                         }
-                        //                       },
-                        //                       title: Text(
-                        //                         selectedProjectController
-                        //                                 .text.isEmpty
-                        //                             ? 'Select Project'
-                        //                             : selectedProjectController
-                        //                                 .text,
-                        //                         style: TextStyle(
-                        //                           color:
-                        //                               selectedProjectController
-                        //                                       .text.isEmpty
-                        //                                   ? Colors.grey[500]
-                        //                                   : Colors.grey[800],
-                        //                         ),
-                        //                       ),
-                        //                       trailing: const Icon(
-                        //                         Icons.arrow_drop_down,
-                        //                         color: Colors.grey,
-                        //                       ),
-                        //                       dense: true,
-                        //                       contentPadding:
-                        //                           const EdgeInsets.symmetric(
-                        //                               horizontal: 12),
-                        //                       shape: RoundedRectangleBorder(
-                        //                         borderRadius:
-                        //                             BorderRadius.circular(8),
-                        //                       ),
-                        //                     ),
-                        //                   ),
-                        //                 ],
-                        //               ),
-                        //             ),
-
-                        //           ],
-                        //         ),
-                        //         const SizedBox(height: 16),
-                        //         Row(
-                        //           crossAxisAlignment: CrossAxisAlignment.start,
-                        //           children: [
-
-                        //             Expanded(
-                        //               child: Column(
-                        //                 crossAxisAlignment:
-                        //                     CrossAxisAlignment.start,
-                        //                 children: [
-                        //                   Text(
-                        //                     'Module *',
-                        //                     style: TextStyle(
-                        //                       fontSize: 14,
-                        //                       fontWeight: FontWeight.w500,
-                        //                       color: Colors.grey[700],
-                        //                     ),
-                        //                   ),
-                        //                   const SizedBox(height: 6),
-                        //                   Container(
-                        //                     decoration: BoxDecoration(
-                        //                       border: Border.all(
-                        //                         color: Colors.grey.shade300,
-                        //                       ),
-                        //                       borderRadius:
-                        //                           BorderRadius.circular(8),
-                        //                     ),
-                        //                     child: ListTile(
-                        //                       onTap: () async {
-                        //                         final selected =
-                        //                             await dropTitleDialog(
-                        //                                 context, titleList);
-                        //                         if (selected != null) {
-                        //                           setState(() {
-                        //                             selectedTitleId =
-                        //                                 selected['id'];
-                        //                             titleController.text =
-                        //                                 selected['name']!;
-                        //                           });
-                        //                         }
-                        //                       },
-                        //                       title: Text(
-                        //                         titleController.text.isEmpty
-                        //                             ? 'Select Module'
-                        //                             : titleController.text,
-                        //                         style: TextStyle(
-                        //                           color: titleController
-                        //                                   .text.isEmpty
-                        //                               ? Colors.grey[500]
-                        //                               : Colors.grey[800],
-                        //                         ),
-                        //                       ),
-                        //                       trailing: Row(
-                        //                         mainAxisSize: MainAxisSize.min,
-                        //                         children: [
-                        //                           IconButton(
-                        //                             icon: const Icon(
-                        //                               Icons.add,
-                        //                               size: 18,
-                        //                             ),
-                        //                             onPressed: () async {
-                        //                               final newTitle =
-                        //                                   await showProjectTitleDialog(
-                        //                                       context);
-                        //                               if (newTitle != null) {
-                        //                                 setState(() {
-                        //                                   titleList
-                        //                                       .add(newTitle);
-                        //                                   selectedTitleId =
-                        //                                       newTitle.id;
-                        //                                   titleController.text =
-                        //                                       newTitle.name;
-                        //                                 });
-                        //                               }
-                        //                             },
-                        //                           ),
-                        //                           const Icon(
-                        //                             Icons.arrow_drop_down,
-                        //                             color: Colors.grey,
-                        //                           ),
-                        //                         ],
-                        //                       ),
-                        //                       dense: true,
-                        //                       contentPadding:
-                        //                           const EdgeInsets.symmetric(
-                        //                               horizontal: 8),
-                        //                       shape: RoundedRectangleBorder(
-                        //                         borderRadius:
-                        //                             BorderRadius.circular(8),
-                        //                       ),
-                        //                     ),
-                        //                   ),
-                        //                 ],
-                        //               ),
-                        //             ),
-                        //           ],
-                        //         ),
-                        //       ],
-                        //     ),
-                        //   ),
-                        // ),
-                        Card(
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.folder_special_rounded,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Project Details',
+                        // Row 1: Project *, Unit No, Site Lift No
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Project *
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  RichText(
+                                    text: const TextSpan(
+                                      text: 'Project ',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.grey[800],
+                                        color: Colors.black87,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Project *',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: Colors.grey.shade300,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: ListTile(
-                                              onTap: () async {
-                                                final selected =
-                                                    await dropDialogExisting(
-                                                        context, "Projects");
-                                                if (selected != null) {
-                                                  setState(() {
-                                                    selectedProjectId =
-                                                        selected['id'];
-                                                    selectedProjectController
-                                                            .text =
-                                                        selected['name'] ?? '';
-                                                  });
-                                                  await _loadTitle();
-                                                }
-                                              },
-                                              title: Text(
-                                                selectedProjectController
-                                                        .text.isEmpty
-                                                    ? 'Project'
-                                                    : selectedProjectController
-                                                        .text,
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color:
-                                                      selectedProjectController
-                                                              .text.isEmpty
-                                                          ? Colors.grey[500]
-                                                          : Colors.grey[800],
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              trailing: const Icon(
-                                                Icons.arrow_drop_down,
-                                                color: Colors.grey,
-                                                size: 20,
-                                              ),
-                                              dense: true,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 4,
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              minVerticalPadding: 0,
-                                              minLeadingWidth: 0,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    const SizedBox(width: 12),
-
-                                    // Module field
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Module *',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: Colors.grey.shade300,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: ListTile(
-                                              onTap: () async {
-                                                final selected =
-                                                    await dropTitleDialog(
-                                                        context, titleList);
-                                                if (selected != null) {
-                                                  setState(() {
-                                                    selectedTitleId =
-                                                        selected['id'];
-                                                    titleController.text =
-                                                        selected['name']!;
-                                                  });
-                                                }
-                                              },
-                                              title: Text(
-                                                titleController.text.isEmpty
-                                                    ? 'Module'
-                                                    : titleController.text,
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: titleController
-                                                          .text.isEmpty
-                                                      ? Colors.grey[500]
-                                                      : Colors.grey[800],
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              trailing: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                      Icons.add,
-                                                      size: 16,
-                                                    ),
-                                                    onPressed: () async {
-                                                      final newTitle =
-                                                          await showProjectTitleDialog(
-                                                              context);
-                                                      if (newTitle != null) {
-                                                        setState(() {
-                                                          titleList
-                                                              .add(newTitle);
-                                                          selectedTitleId =
-                                                              newTitle.id;
-                                                          titleController.text =
-                                                              newTitle.name;
-                                                        });
-                                                      }
-                                                    },
-                                                    padding: EdgeInsets.zero,
-                                                    constraints:
-                                                        const BoxConstraints(
-                                                      minWidth: 24,
-                                                      minHeight: 24,
-                                                    ),
-                                                  ),
-                                                  const Icon(
-                                                    Icons.arrow_drop_down,
-                                                    color: Colors.grey,
-                                                    size: 20,
-                                                  ),
-                                                ],
-                                              ),
-                                              dense: true,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 4,
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              minVerticalPadding: 0,
-                                              minLeadingWidth: 0,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        Card(
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.schedule_rounded,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Work Details',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[800],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Due Date',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          GestureDetector(
-                                            onTap: () async {
-                                              final picked =
-                                                  await showDatePicker(
-                                                context: context,
-                                                initialDate: DateTime.now(),
-                                                firstDate: DateTime(2022),
-                                                lastDate: DateTime(2100),
-                                              );
-                                              if (picked != null) {
-                                                setState(() {
-                                                  dueDate = picked;
-                                                });
-                                              }
-                                            },
-                                            child: Container(
-                                              padding: const EdgeInsets.all(14),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                    color:
-                                                        Colors.grey.shade300),
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.calendar_today,
-                                                    size: 20,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  Expanded(
-                                                    child: Text(
-                                                      dueDate != null
-                                                          ? DateFormat(
-                                                                  'dd-MM-yyyy')
-                                                              .format(dueDate!)
-                                                          : 'Select',
-                                                      style: TextStyle(
-                                                        color: dueDate != null
-                                                            ? Colors.grey[800]
-                                                            : Colors.grey[500],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Priority',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.grey.shade300),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: DropdownButtonHideUnderline(
-                                              child: DropdownButtonFormField<
-                                                  String>(
-                                                isExpanded: true,
-                                                value: priority,
-                                                items:
-                                                    allPriorities.map((prio) {
-                                                  Color priorityColor;
-                                                  switch (prio.priority
-                                                      .toLowerCase()) {
-                                                    case 'high':
-                                                      priorityColor =
-                                                          const Color.fromARGB(
-                                                              255,
-                                                              244,
-                                                              155,
-                                                              54);
-                                                      break;
-                                                    case 'medium':
-                                                      priorityColor =
-                                                          Colors.orange;
-                                                      break;
-                                                    case 'normal':
-                                                      priorityColor =
-                                                          const Color.fromARGB(
-                                                              255, 43, 233, 75);
-                                                      break;
-                                                    case 'critical':
-                                                      priorityColor =
-                                                          const Color.fromARGB(
-                                                              255, 255, 29, 29);
-                                                      break;
-                                                    case 'low':
-                                                      priorityColor =
-                                                          Colors.green;
-                                                      break;
-                                                    default:
-                                                      priorityColor =
-                                                          Colors.grey;
-                                                  }
-                                                  return DropdownMenuItem(
-                                                    value: prio.id,
-                                                    child: Row(
-                                                      children: [
-                                                        Container(
-                                                          width: 12,
-                                                          height: 12,
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                priorityColor,
-                                                            shape:
-                                                                BoxShape.circle,
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                            width: 12),
-                                                        Expanded(
-                                                          child: Text(
-                                                            prio.priority,
-                                                            style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w500,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (value) =>
-                                                    setState(() {
-                                                  priority = value;
-                                                }),
-                                                decoration:
-                                                    const InputDecoration(
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 12),
-                                                  border: InputBorder.none,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Task Type',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.grey.shade300),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: DropdownButtonHideUnderline(
-                                              child: DropdownButtonFormField<
-                                                  String>(
-                                                value: taskType,
-                                                items: taskTypes.map((type) {
-                                                  return DropdownMenuItem(
-                                                    value: type,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 12),
-                                                      child: Text(type),
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    taskType = value!;
-                                                  });
-                                                },
-                                                decoration:
-                                                    const InputDecoration(
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 12),
-                                                  border: InputBorder.none,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Category',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          const SizedBox(height: 6),
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                  color: Colors.grey.shade300),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: DropdownButtonHideUnderline(
-                                              child: DropdownButtonFormField<
-                                                  String>(
-                                                value: category,
-                                                items: categories.map((cat) {
-                                                  return DropdownMenuItem(
-                                                    value: cat,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 12),
-                                                      child: Text(cat),
-                                                    ),
-                                                  );
-                                                }).toList(),
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    category = value!;
-                                                  });
-                                                },
-                                                decoration:
-                                                    const InputDecoration(
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                          horizontal: 12),
-                                                  border: InputBorder.none,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        //  const SizedBox(height: 10),
-                        Card(
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.person_rounded,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Assignment',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[800],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Assigned To',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.grey[700],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        await _showMultiAssignedStaffSelectionDialog(context);
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Colors.grey.shade300),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          color: Colors.white,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.person_outline_rounded,
-                                              color: Colors.grey[600],
-                                              size: 22,
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Text(
-                                                _getAssignedStaffNames(),
-                                                style: TextStyle(
-                                                  color: selectedAssignedStaffIds.isNotEmpty
-                                                      ? Colors.grey[800]
-                                                      : Colors.grey[500],
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ),
-                                            Icon(
-                                              Icons.arrow_drop_down,
-                                              color: Colors.grey[600],
-                                              size: 24,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Card(
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.checklist_rounded,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Tasks',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[800],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                ...List.generate(tasks.length, (taskIndex) {
-                                  return Container(
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.grey.shade200),
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Colors.white,
-                                    ),
-                                    child: Column(
                                       children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Task ${taskIndex + 1}',
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: Colors.grey[700],
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  TextField(
-                                                    controller: tasks[taskIndex]
-                                                        .controller,
-                                                    minLines: 1,
-                                                    maxLines: 2,
-                                                    decoration: InputDecoration(
-                                                      hintText: 'Task',
-                                                      border:
-                                                          OutlineInputBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                      ),
-                                                      contentPadding:
-                                                          const EdgeInsets.all(
-                                                              12),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Container(
-                                              width: 120,
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Status',
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                      color: Colors.grey[700],
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  Container(
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                          color: Colors
-                                                              .grey.shade300),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                    ),
-                                                    child:
-                                                        DropdownButtonHideUnderline(
-                                                      child:
-                                                          DropdownButtonFormField<
-                                                              String>(
-                                                        isExpanded: true,
-                                                        value: tasks[taskIndex]
-                                                                .status ??
-                                                            (allTaskStates
-                                                                    .isNotEmpty
-                                                                ? allTaskStates
-                                                                    .first.id
-                                                                : null),
-                                                        items: allTaskStates
-                                                                .isNotEmpty
-                                                            ? allTaskStates
-                                                                .map((status) {
-                                                                return DropdownMenuItem(
-                                                                  value:
-                                                                      status.id,
-                                                                  child:
-                                                                      Padding(
-                                                                    padding: const EdgeInsets
-                                                                        .symmetric(
-                                                                        horizontal:
-                                                                            12),
-                                                                    child: Text(
-                                                                      status
-                                                                          .status,
-                                                                      overflow:
-                                                                          TextOverflow
-                                                                              .ellipsis,
-                                                                      maxLines:
-                                                                          1,
-                                                                    ),
-                                                                  ),
-                                                                );
-                                                              }).toList()
-                                                            : [],
-                                                        onChanged: (value) =>
-                                                            setState(() {
-                                                          tasks[taskIndex]
-                                                              .status = value;
-                                                        }),
-                                                        decoration:
-                                                            const InputDecoration(
-                                                          contentPadding:
-                                                              EdgeInsets
-                                                                  .symmetric(
-                                                                      horizontal:
-                                                                          4),
-                                                          border:
-                                                              InputBorder.none,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            if (taskIndex > 0)
-                                              IconButton(
-                                                icon: Container(
-                                                  padding:
-                                                      const EdgeInsets.all(6),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.red[50],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.close,
-                                                    size: 18,
-                                                    color: Colors.red[700],
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    tasks.removeAt(taskIndex);
-                                                  });
-                                                },
-                                              ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        TextField(
-                                          controller: tasks[taskIndex]
-                                              .descriptionController,
-                                          minLines: 2,
-                                          maxLines: 4,
-                                          decoration: InputDecoration(
-                                            hintText: 'Task description',
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            contentPadding:
-                                                const EdgeInsets.all(12),
-                                          ),
+                                        TextSpan(
+                                          text: '*',
+                                          style: TextStyle(color: Colors.red),
                                         ),
                                       ],
                                     ),
-                                  );
-                                }),
-                                const SizedBox(height: 8),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      setState(() {
-                                        tasks.add(TaskForm(
-                                          controller: TextEditingController(),
-                                          descriptionController:
-                                              TextEditingController(),
-                                          status: allTaskStates.isNotEmpty
-                                              ? allTaskStates.first.id
-                                              : null,
-                                          taskId: null,
-                                          remarks: [TextEditingController()],
-                                        ));
-                                      });
-                                    },
-                                    icon: const Icon(Icons.add,
-                                        size: 18, color: Colors.white),
-                                    label: const Text('Add Task'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 10),
-                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Card(
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.notifications_rounded,
-                                      color: Colors.blue,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Notification Settings',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[800],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-
-                                _buildNotificationOption(
-                                  icon: FontAwesomeIcons.whatsapp,
-                                  iconColor: Colors.green,
-                                  title: 'WhatsApp Notification',
-                                  value: whatsappNotification,
-                                  onChanged: (value) => setState(() {
-                                    whatsappNotification = value;
-                                  }),
-                                ),
-                                const SizedBox(height: 12),
-                                _buildNotificationOption(
-                                  icon: Icons.notifications_active_rounded,
-                                  iconColor: Colors.blue,
-                                  title: 'Push Notification',
-                                  value: pushNotification,
-                                  onChanged: (value) => setState(() {
-                                    pushNotification = value;
-                                  }),
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Notify to Assigned Staff
-                                _buildNotificationOption(
-                                  icon: Icons.person_rounded,
-                                  iconColor: Colors.orange,
-                                  title: 'Notify to Assigned Staff',
-                                  value: notifyToAssignedStaff,
-                                  onChanged: (value) => setState(() {
-                                    notifyToAssignedStaff = value;
-                                  }),
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Notify on Status Change
-                                _buildNotificationOption(
-                                  icon: Icons.change_circle_rounded,
-                                  iconColor: Colors.purple,
-                                  title: 'Notify on Status Change',
-                                  value: notifyOnStatusChange,
-                                  onChanged: (value) => setState(() {
-                                    notifyOnStatusChange = value;
-                                  }),
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Notify When Work Starts
-                                _buildNotificationOption(
-                                  icon: Icons.play_arrow_rounded,
-                                  iconColor: Colors.teal,
-                                  title: 'Notify When Work Starts',
-                                  value: notifyOnStart,
-                                  onChanged: (value) => setState(() {
-                                    notifyOnStart = value;
-                                  }),
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Notify When Work Completes
-                                _buildNotificationOption(
-                                  icon: Icons.check_circle_rounded,
-                                  iconColor: Colors.green,
-                                  title: 'Notify When Work Completes',
-                                  value: notifyOnComplete,
-                                  onChanged: (value) => setState(() {
-                                    notifyOnComplete = value;
-                                  }),
-                                ),
-                                const SizedBox(height: 12),
-
-                                // Notify Other People
-                                _buildNotificationOption(
-                                  icon: Icons.group_rounded,
-                                  iconColor: Colors.indigo,
-                                  title: 'Notify Other People',
-                                  value: notifyOtherPeople,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      notifyOtherPeople = value;
-                                      if (!notifyOtherPeople) {
-                                        selectedStaffIds.clear();
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () async {
+                                      final selected =
+                                          await dropDialogExisting(context, "Projects");
+                                      if (selected != null && mounted) {
+                                        setState(() {
+                                          selectedProjectId = selected['id'];
+                                          selectedProjectController.text =
+                                              selected['name'] ?? '';
+                                        });
+                                        await _loadUnitsByProject(selectedProjectId!);
                                       }
-                                    });
-                                  },
-                                ),
-
-                                if (notifyOtherPeople) ...[
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Select Staff to Notify:',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  GestureDetector(
-                                    onTap: () => _showMultiStaffSelectionDialog(
-                                        context, false),
+                                    },
                                     child: Container(
-                                      padding: const EdgeInsets.all(16),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 12),
                                       decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey.shade300),
+                                        border: Border.all(color: Colors.grey.shade300),
                                         borderRadius: BorderRadius.circular(8),
                                         color: Colors.white,
                                       ),
                                       child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                Icons.group_add_rounded,
-                                                color: Colors.grey[600],
-                                                size: 20,
+                                          Expanded(
+                                            child: Text(
+                                              selectedProjectController.text.isEmpty
+                                                  ? 'Select Project'
+                                                  : selectedProjectController.text,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: selectedProjectController.text.isEmpty
+                                                    ? Colors.grey[500]
+                                                    : Colors.grey[800],
                                               ),
-                                              const SizedBox(width: 12),
-                                              Text(
-                                                selectedStaffIds.isEmpty
-                                                    ? 'Select Staff to Notify'
-                                                    : '${selectedStaffIds.length} staff selected',
-                                                style: TextStyle(
-                                                  color:
-                                                      selectedStaffIds.isEmpty
-                                                          ? Colors.grey[500]
-                                                          : Colors.grey[800],
-                                                  fontSize: 15,
-                                                ),
-                                              ),
-                                            ],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
-                                          Icon(
-                                            Icons.arrow_drop_down,
-                                            color: Colors.grey[600],
-                                            size: 24,
-                                          ),
+                                          const Icon(Icons.keyboard_arrow_down,
+                                              color: Colors.grey, size: 18),
                                         ],
                                       ),
                                     ),
                                   ),
                                 ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
 
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Participants in Chat',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey[800],
+                            // Unit No
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Unit No',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () async {
+                                      if (selectedProjectId == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                              content:
+                                                  Text('Please select a project first')),
+                                        );
+                                        return;
+                                      }
+                                      await _showUnitSelectionDialog(context);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.white,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              selectedUnitNo ?? 'Select Unit No',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: selectedUnitNo != null
+                                                    ? Colors.grey[800]
+                                                    : Colors.grey[500],
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          isLoadingUnits
+                                              ? const SizedBox(
+                                                  width: 14,
+                                                  height: 14,
+                                                  child: CircularProgressIndicator(
+                                                      strokeWidth: 2),
+                                                )
+                                              : const Icon(Icons.keyboard_arrow_down,
+                                                  color: Colors.grey, size: 18),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+
+                            // Site Lift No
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Site Lift No',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () async {
+                                      if (selectedUnitId == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                              content:
+                                                  Text('Please select a Unit No first')),
+                                        );
+                                        return;
+                                      }
+                                      await _showSiteLiftSelectionDialog(context);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.white,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              selectedSiteLiftNo ?? 'Select Site Lift No',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: selectedSiteLiftNo != null
+                                                    ? Colors.grey[800]
+                                                    : Colors.grey[500],
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          isLoadingSiteLifts
+                                              ? const SizedBox(
+                                                  width: 14,
+                                                  height: 14,
+                                                  child: CircularProgressIndicator(
+                                                      strokeWidth: 2),
+                                                )
+                                              : const Icon(Icons.keyboard_arrow_down,
+                                                  color: Colors.grey, size: 18),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Stages *
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: const TextSpan(
+                                text: 'Stages ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '*',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () async {
+                                    await _showStageSelectionDialog(context);
+                                  },
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2a86c9).withOpacity(0.1),
+                                      border: Border.all(color: const Color(0xFF2a86c9)),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.add,
+                                        color: Color(0xFF2a86c9), size: 22),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                GestureDetector(
-                                  onTap: () => _showMultiStaffSelectionDialog(
-                                      context, true),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () async {
+                                      await _showStageSelectionDialog(context);
+                                    },
+                                    child: Container(
+                                      height: 44,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      alignment: Alignment.centerLeft,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.white,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              selectedStageName ?? 'Select Stage',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: selectedStageName != null
+                                                    ? Colors.grey[800]
+                                                    : Colors.grey[500],
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          isLoadingStages
+                                              ? const SizedBox(
+                                                  width: 14,
+                                                  height: 14,
+                                                  child: CircularProgressIndicator(
+                                                      strokeWidth: 2),
+                                                )
+                                              : const Icon(Icons.keyboard_arrow_down,
+                                                  color: Colors.grey, size: 18),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const Expanded(child: SizedBox()),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    // Card 2: Tasks Section Card
+                    _buildSectionCard(
+                      title: 'Tasks',
+                      icon: Icons.task_alt_rounded,
+                      children: [
+                        ...List.generate(tasks.length, (taskIndex) {
+                          final task = tasks[taskIndex];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (tasks.length > 1)
+                                  Align(
+                                    alignment: Alignment.topRight,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          tasks.removeAt(taskIndex);
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade200,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.close,
+                                            size: 16, color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
+
+                                // Task * field
+                                RichText(
+                                  text: const TextSpan(
+                                    text: 'Activity ',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: '*',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                InkWell(
+                                  onTap: () =>
+                                      _showTaskSelectionDialog(context, taskIndex),
                                   child: Container(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 12),
                                     decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.grey.shade300),
+                                      border: Border.all(color: Colors.grey.shade300),
                                       borderRadius: BorderRadius.circular(8),
                                       color: Colors.white,
                                     ),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.chat_bubble_outline_rounded,
-                                              color: Colors.grey[600],
-                                              size: 20,
+                                        Expanded(
+                                          child: Text(
+                                            task.controller.text.isEmpty
+                                                ? 'Select Task'
+                                                : task.controller.text,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: task.controller.text.isEmpty
+                                                  ? Colors.grey[500]
+                                                  : Colors.grey[800],
                                             ),
-                                            const SizedBox(width: 12),
-                                            Text(
-                                              participantIds.isEmpty
-                                                  ? 'Select Chat Participants'
-                                                  : '${participantIds.length} participants selected',
-                                              style: TextStyle(
-                                                color: participantIds.isEmpty
-                                                    ? Colors.grey[500]
-                                                    : Colors.grey[800],
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                          ],
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
-                                        Icon(
-                                          Icons.arrow_drop_down,
-                                          color: Colors.grey[600],
-                                          size: 24,
-                                        ),
+                                        const Icon(Icons.keyboard_arrow_down,
+                                            color: Colors.grey, size: 18),
                                       ],
                                     ),
                                   ),
+                                ),
+                                const SizedBox(height: 14),
+
+                                // Row 2: Description, Start Date *, End Date *
+Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    // =========================
+    // DESCRIPTION
+    // =========================
+    const Text(
+      'Description',
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+      ),
+    ),
+    const SizedBox(height: 6),
+
+    TextField(
+      controller: task.descriptionController,
+      minLines: 3,
+      maxLines: 3,
+      style: const TextStyle(fontSize: 13),
+      decoration: InputDecoration(
+        hintText: 'Enter description',
+        hintStyle: TextStyle(
+          color: Colors.grey[400],
+          fontSize: 13,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.all(12),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: Color(0xFF2a86c9),
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    ),
+
+    const SizedBox(height: 14),
+
+    // =========================
+    // START DATE + END DATE
+    // =========================
+    Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // START DATE
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: const TextSpan(
+                  text: 'Start Date ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate:
+                        task.startDate ?? DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+
+                  if (picked != null && mounted) {
+                    setState(() {
+                      task.startDate = picked;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          task.startDate != null
+                              ? DateFormat('yyyy-MM-dd')
+                                  .format(task.startDate!)
+                              : 'Start Date',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: task.startDate != null
+                                ? Colors.grey[800]
+                                : Colors.grey[400],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        color: Color(0xFF2a86c9),
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // END DATE
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: const TextSpan(
+                  text: 'End Date ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: '*',
+                      style: TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate:
+                        task.endDate ?? DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2100),
+                  );
+
+                  if (picked != null && mounted) {
+                    setState(() {
+                      task.endDate = picked;
+                    });
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.grey.shade300,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          task.endDate != null
+                              ? DateFormat('yyyy-MM-dd')
+                                  .format(task.endDate!)
+                              : 'End Date',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: task.endDate != null
+                                ? Colors.grey[800]
+                                : Colors.grey[400],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        color: Color(0xFF2a86c9),
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ],
+),
+
+                                const SizedBox(height: 14),
+
+                                // Row 3: Assigned Staff, Supporting Staffs
+                  
+Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    // =========================
+    // ASSIGNED STAFF
+    // =========================
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(
+              Icons.person_outline_rounded,
+              size: 16,
+              color: Colors.black87,
+            ),
+            SizedBox(width: 4),
+            Text(
+              'Assigned Staff',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: () => _showSingleAssignedStaffSelectionDialog(
+            context,
+            taskIndex,
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.grey.shade300,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _getTaskAssignedStaffName(taskIndex),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: task.assignedStaffId != null &&
+                              task.assignedStaffId != "0"
+                          ? Colors.grey[800]
+                          : Colors.grey[500],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (task.assignedStaffId != null &&
+                    task.assignedStaffId != "0")
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        task.assignedStaffId = null;
+                      });
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 4.0),
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+
+    const SizedBox(height: 14),
+
+    // =========================
+    // SUPPORTING STAFFS
+    // =========================
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(
+              Icons.people_outline_rounded,
+              size: 16,
+              color: Colors.black87,
+            ),
+            SizedBox(width: 4),
+            Text(
+              'Supporting Staffs',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: () =>
+              _showMultiSupportingStaffSelectionDialogForTask(
+            context,
+            taskIndex,
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.grey.shade300,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _getTaskSupportingStaffNames(taskIndex),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: task.supportingStaffIds.isNotEmpty
+                          ? Colors.grey[800]
+                          : Colors.grey[400],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: Colors.grey,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  ],
+)
+
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 8),
+
+                        // + Add Task Button
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                tasks.add(TaskForm(
+                                  controller: TextEditingController(),
+                                  descriptionController: TextEditingController(),
+                                  status: allTaskStates.isNotEmpty
+                                      ? allTaskStates.first.id
+                                      : null,
+                                  taskId: null,
+                                  startDate: null,
+                                  endDate: null,
+                                  assignedStaffId: null,
+                                  supportingStaffIds: [],
+                                  remarks: [TextEditingController()],
+                                ));
+                              });
+                            },
+                            icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                            label: const Text(
+                              'Add Task',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600, color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2a86c9),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Card 3: Notification Settings Card
+                    _buildSectionCard(
+                      title: 'Notification Settings',
+                      icon: Icons.notifications_active_outlined,
+                      children: [
+                        _buildNotificationOption(
+                          icon: FontAwesomeIcons.whatsapp,
+                          iconColor: Colors.green,
+                          title: 'WhatsApp Notification',
+                          value: whatsappNotification,
+                          onChanged: (value) => setState(() {
+                            whatsappNotification = value;
+                          }),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.notifications_active_rounded,
+                          iconColor: const Color(0xFF2a86c9),
+                          title: 'Push Notification',
+                          value: pushNotification,
+                          onChanged: (value) => setState(() {
+                            pushNotification = value;
+                          }),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.person_rounded,
+                          iconColor: Colors.orange,
+                          title: 'Notify to Assigned Staff',
+                          value: notifyToAssignedStaff,
+                          onChanged: (value) => setState(() {
+                            notifyToAssignedStaff = value;
+                          }),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.change_circle_rounded,
+                          iconColor: Colors.purple,
+                          title: 'Notify on Status Change',
+                          value: notifyOnStatusChange,
+                          onChanged: (value) => setState(() {
+                            notifyOnStatusChange = value;
+                          }),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.play_arrow_rounded,
+                          iconColor: Colors.teal,
+                          title: 'Notify When Work Starts',
+                          value: notifyOnStart,
+                          onChanged: (value) => setState(() {
+                            notifyOnStart = value;
+                          }),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.check_circle_rounded,
+                          iconColor: Colors.green,
+                          title: 'Notify When Work Completes',
+                          value: notifyOnComplete,
+                          onChanged: (value) => setState(() {
+                            notifyOnComplete = value;
+                          }),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.group_rounded,
+                          iconColor: Colors.indigo,
+                          title: 'Notify Other People',
+                          value: notifyOtherPeople,
+                          onChanged: (value) {
+                            setState(() {
+                              notifyOtherPeople = value;
+                              if (!notifyOtherPeople) {
+                                selectedStaffIds.clear();
+                              }
+                            });
+                          },
+                        ),
+                        if (notifyOtherPeople) ...[
+                          const SizedBox(height: 14),
+                          Text(
+                            'Select Staff to Notify:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: () => _showMultiStaffSelectionDialog(
+                                context, false),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border:
+                                    Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.group_add_rounded,
+                                        color: Colors.grey[600],
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        selectedStaffIds.isEmpty
+                                            ? 'Select Staff to Notify'
+                                            : '${selectedStaffIds.length} staff selected',
+                                        style: TextStyle(
+                                          color: selectedStaffIds.isEmpty
+                                              ? Colors.grey[500]
+                                              : Colors.grey[800],
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.grey[600],
+                                    size: 22,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+                        Text(
+                          'Participants in Chat',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        InkWell(
+                          onTap: () =>
+                              _showMultiStaffSelectionDialog(context, true),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.white,
+                            ),
+                            child: Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.chat_bubble_outline_rounded,
+                                      color: Colors.grey[600],
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      participantIds.isEmpty
+                                          ? 'Select Chat Participants'
+                                          : '${participantIds.length} participants selected',
+                                      style: TextStyle(
+                                        color: participantIds.isEmpty
+                                            ? Colors.grey[500]
+                                            : Colors.grey[800],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.grey[600],
+                                  size: 22,
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 32),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-                // Action Button
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border(top: BorderSide(color: Colors.grey[200]!)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
+              ),
+            ),
+
+            // Submit Button
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, -3),
                   ),
+                ],
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  width: double.maxFinite,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: _isAssigning ? null : _submitWork,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isEditing
-                          ? isPausing
-                              ? Colors.orange[800]
-                              : isRestarting
-                                  ? Colors.green[800]
-                                  : Colors.red[800]
-                          : Colors.blue,
+                      backgroundColor: const Color(0xFF2a86c9),
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 56),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      elevation: 2,
+                      elevation: 0,
                     ),
                     child: _isAssigning
                         ? const SizedBox(
-                            width: 24,
-                            height: 24,
+                            width: 20,
+                            height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor:
                                   AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                isEditing
-                                    ? isPausing
-                                        ? Icons.pause_rounded
-                                        : isRestarting
-                                            ? Icons.play_arrow_rounded
-                                            : Icons.stop_rounded
-                                    : Icons.assignment_turned_in_rounded,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                isEditing
-                                    ? isPausing
-                                        ? 'PAUSE WORK'
-                                        : isRestarting
-                                            ? 'RESTART WORK'
-                                            : 'STOP WORK'
-                                    : 'ASSIGN WORK',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                        : Text(
+                            isEditing ? 'UPDATE WORK' : 'ASSIGN WORK',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                   ),
                 ),
-              ],
-            ),
-            if (_isAssigning)
-              Container(
-                color: Colors.black.withOpacity(0.5),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
               ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // Helper widget for notification options
-  Widget _buildNotificationOption({
-    required IconData icon,
-    required Color iconColor,
+  Widget _buildSectionCard({
     required String title,
-    required bool value,
-    required Function(bool) onChanged,
+    required IconData icon,
+    required List<Widget> children,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[200]!),
-        borderRadius: BorderRadius.circular(8),
-        color: Colors.grey[50],
+    return Card(
+      elevation: 0.5,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
-              ),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2a86c9).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: const Color(0xFF2a86c9), size: 18),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
             ),
-          ),
-          Transform.scale(
-            scale: 0.9,
-            child: Switch(
-              value: value,
-              onChanged: onChanged,
-              activeColor: iconColor,
-            ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            ...children,
+          ],
+        ),
       ),
     );
   }
 
-  // All existing methods remain the same from original code
+  String _getTaskAssignedStaffName(int taskIndex) {
+    final id = tasks[taskIndex].assignedStaffId;
+    if (id == null || id == "0" || id.isEmpty) {
+      return 'Unassigned';
+    }
+    final staff = staffList.firstWhere(
+      (s) => s.userIdStaff == id,
+      orElse: () => Staff(id: '', name: '', userIdStaff: ''),
+    );
+    return staff.name.isNotEmpty ? staff.name : 'Unassigned';
+  }
+
+  String _getTaskSupportingStaffNames(int taskIndex) {
+    final ids = tasks[taskIndex].supportingStaffIds;
+    if (ids.isEmpty) {
+      return 'Select Staff';
+    }
+    final names = ids
+        .map((id) {
+          final staff = staffList.firstWhere(
+            (s) => s.userIdStaff == id,
+            orElse: () => Staff(id: '', name: '', userIdStaff: ''),
+          );
+          return staff.name;
+        })
+        .where((name) => name.isNotEmpty)
+        .toList();
+    return names.isNotEmpty ? names.join(', ') : 'Select Staff';
+  }
+
   Future<dynamic> dropDialogExisting(BuildContext context, String title) {
     return showDialog(
       context: context,
@@ -2148,25 +1734,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                         setState(() {
                           if (title == "Projects") {
                             filterProjectsDialog(value);
-                          } else if (title == "Customers") {
-                            filterCustomers(value);
-                          } else if (title == "Template") {
-                            filterTemplates(value);
-                          } else {
-                            filterProducts(value);
                           }
                         });
                       },
                       decoration: const InputDecoration(
                         contentPadding: EdgeInsets.only(left: 8),
-                        labelStyle: TextStyle(color: Colors.grey),
                         labelText: 'Search...',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                          borderRadius: BorderRadius.all(Radius.circular(15.0)),
                         ),
                       ),
                     ),
@@ -2177,173 +1752,21 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                 height: MediaQuery.of(context).size.height * 0.4,
                 width: MediaQuery.of(context).size.width * 0.8,
                 child: ListView.builder(
-                  itemCount: title == "Projects"
-                      ? filteredProjects.length
-                      : title == "Customers"
-                          ? filteredNames.length
-                          : title == "Template"
-                              ? filteredTemplates.length
-                              : filteredProducts.length,
+                  itemCount: filteredProjects.length,
                   itemBuilder: (context, index) {
-                    final project =
-                        title == "Projects" ? filteredProjects[index] : null;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          color: const Color(0xFFFCFBFA),
-                        ),
-                        child: ListTile(
-                          onTap: () {
-                            if (title == "Projects") {
-                              final project = filteredProjects[index];
-                              selectedProjectId = project.id;
-                              selectedProjectName = project.name;
-                              selectedProjectController.text = project.name;
-                            } else if (title == "Customers") {
-                              customerIdExisting = filteredNames[index].id;
-                              customerNameExisting.text =
-                                  filteredNames[index].name;
-                            } else if (title == "Template") {
-                              templateIdExisting = filteredTemplates[index].id;
-                              remindMeExisting.text =
-                                  filteredTemplates[index].templateName;
-                            } else {
-                              final p = filteredProducts[index];
-                              productIdExisting = p.id;
-                              productNameExisting.text = p.productName;
-                              prodRateExisting.text = p.sellingPrice;
-                              prodTaxExisting.text = p.taxPercent;
-                              typeDuration = p.noOfDays;
-                              calculateTotalExisting();
-                            }
-                            Navigator.pop(context, {
-                              'id': project!.id,
-                              'name': project.name,
-                            });
-                            setState(() {});
-                            search.clear();
-                            return;
-                          },
-                          title: Text(
-                            title == "Projects"
-                                ? filteredProjects[index].name
-                                : title == "Customers"
-                                    ? filteredNames[index].name
-                                    : title == "Template"
-                                        ? filteredTemplates[index].templateName
-                                        : filteredProducts[index].productName,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.black,
-                            ),
-                          ),
-                          leading: CircleAvatar(
-                            radius: 15,
-                            backgroundColor: Colors.white,
-                            child: (title == "Projects" &&
-                                        filteredProjects.isEmpty) ||
-                                    (title == "Customers" &&
-                                        filteredNames.isEmpty) ||
-                                    (title == "Template" &&
-                                        filteredTemplates.isEmpty) ||
-                                    (title == "Products" &&
-                                        filteredProducts.isEmpty)
-                                ? const Center(child: Text('No items found'))
-                                : ListView.builder(
-                                    itemCount: title == "Projects"
-                                        ? filteredProjects.length
-                                        : title == "Customers"
-                                            ? filteredNames.length
-                                            : title == "Template"
-                                                ? filteredTemplates.length
-                                                : filteredProducts.length,
-                                    itemBuilder: (context, index) {
-                                      return null;
-                                    },
-                                  ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<Map<String, String>?> dropTitleDialog(
-      BuildContext context, List<TitleListDet> titleList) async {
-    TextEditingController searchController = TextEditingController();
-    final FocusNode searchFocusNode = FocusNode();
-    List<TitleListDet> filteredTitles = List.from(titleList);
-
-    return showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!searchFocusNode.hasFocus) {
-                FocusScope.of(context).requestFocus(searchFocusNode);
-              }
-            });
-
-            return AlertDialog(
-              scrollable: true,
-              title: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    focusNode: searchFocusNode,
-                    controller: searchController,
-                    decoration: const InputDecoration(
-                      labelText: 'Search Modules...',
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        filteredTitles = titleList
-                            .where((t) => t.name
-                                .toLowerCase()
-                                .contains(value.toLowerCase()))
-                            .toList();
-                      });
-                    },
-                  ),
-                ],
-              ),
-              content: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.4,
-                width: MediaQuery.of(context).size.width * 0.8,
-                child: ListView.builder(
-                  itemCount: filteredTitles.length,
-                  itemBuilder: (context, index) {
-                    final title = filteredTitles[index];
+                    final project = filteredProjects[index];
                     return ListTile(
-                      title: Text(title.name),
                       onTap: () {
+                        selectedProjectId = project.id;
+                        selectedProjectName = project.name;
+                        selectedProjectController.text = project.name;
                         Navigator.pop(context, {
-                          'id': title.id,
-                          'name': title.name,
+                          'id': project.id,
+                          'name': project.name,
                         });
+                        search.clear();
                       },
+                      title: Text(project.name),
                     );
                   },
                 ),
@@ -2355,77 +1778,216 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     );
   }
 
-  Future<TitleListDet?> showProjectTitleDialog(BuildContext context) async {
-    TextEditingController titleController = TextEditingController();
-    TextEditingController projectController = TextEditingController();
-    projectController.text = selectedProjectName ?? '';
-    return showDialog<TitleListDet>(
+  Future<void> _loadStages() async {
+    if (mounted) setState(() => isLoadingStages = true);
+    try {
+      final res = await HttpService.getAllStages();
+      if (res != null && mounted) {
+        List<dynamic> list = [];
+        if (res is Map && res['data'] is List) {
+          list = res['data'];
+        } else if (res is List) {
+          list = res;
+        }
+        setState(() {
+          stageList = list;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading stages: $e');
+    } finally {
+      if (mounted) setState(() => isLoadingStages = false);
+    }
+  }
+
+  Future<void> _loadUnitsByProject(String projectId) async {
+    if (mounted) {
+      setState(() {
+        isLoadingUnits = true;
+        selectedUnitId = null;
+        selectedUnitNo = null;
+        unitList = [];
+        selectedSiteLiftId = null;
+        selectedSiteLiftNo = null;
+        siteLiftList = [];
+        unitTaskList = [];
+      });
+    }
+    try {
+      final res = await HttpService.getUnitsByProject(projectId);
+      if (res != null && mounted) {
+        List<dynamic> list = [];
+        if (res is Map && res['data'] is List) {
+          list = res['data'];
+        } else if (res is List) {
+          list = res;
+        }
+        setState(() {
+          unitList = list;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading units: $e');
+    } finally {
+      if (mounted) setState(() => isLoadingUnits = false);
+    }
+  }
+
+  Future<void> _loadSiteLiftsAndTasks(String unitId, String projectId) async {
+    if (mounted) {
+      setState(() {
+        isLoadingSiteLifts = true;
+        isLoadingTasks = true;
+        selectedSiteLiftId = null;
+        selectedSiteLiftNo = null;
+        siteLiftList = [];
+        unitTaskList = [];
+      });
+    }
+
+    try {
+      final resLifts = await HttpService.getSiteLiftsByUnit(unitId, projectId);
+      if (resLifts != null && mounted) {
+        List<dynamic> list = [];
+        if (resLifts is Map && resLifts['data'] is List) {
+          list = resLifts['data'];
+        } else if (resLifts is List) {
+          list = resLifts;
+        }
+        setState(() {
+          siteLiftList = list;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading site lifts: $e');
+    } finally {
+      if (mounted) setState(() => isLoadingSiteLifts = false);
+    }
+
+    try {
+      final resTasks = await HttpService.getTaskListByUnit(projectId, unitId);
+      if (resTasks != null && mounted) {
+        List<dynamic> list = [];
+        if (resTasks is Map && resTasks['data'] is List) {
+          list = resTasks['data'];
+        } else if (resTasks is List) {
+          list = resTasks;
+        }
+        setState(() {
+          unitTaskList = list;
+          if (tasks.isEmpty) {
+            tasks = [
+              TaskForm(
+                controller: TextEditingController(),
+                descriptionController: TextEditingController(),
+                status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
+                taskId: null,
+                startDate: null,
+                endDate: null,
+                assignedStaffId: null,
+                supportingStaffIds: [],
+                remarks: [TextEditingController()],
+              )
+            ];
+          } else if (widget.existingWork == null) {
+            tasks = [
+              TaskForm(
+                controller: TextEditingController(),
+                descriptionController: TextEditingController(),
+                status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
+                taskId: null,
+                startDate: null,
+                endDate: null,
+                assignedStaffId: null,
+                supportingStaffIds: [],
+                remarks: [TextEditingController()],
+              )
+            ];
+          } else {
+            tasks.first.controller.clear();
+            tasks.first.taskId = null;
+            tasks.first.descriptionController.clear();
+            tasks.first.startDate = null;
+            tasks.first.endDate = null;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading task list by unit: $e');
+    } finally {
+      if (mounted) setState(() => isLoadingTasks = false);
+    }
+  }
+
+  Future<void> _showUnitSelectionDialog(BuildContext context) async {
+    TextEditingController searchController = TextEditingController();
+    List<dynamic> filtered = List.from(unitList);
+
+    final selected = await showDialog<dynamic>(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Add Module'),
-              content: SingleChildScrollView(
+              title: const Text('Select Unit No'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.4,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    GestureDetector(
-                      onTap: () async {
-                        await dropDialogExisting(context, "Projects");
-                        setState(() {
-                          projectController.text = selectedProjectName ?? '';
-                        });
-                      },
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: projectController,
-                          decoration: const InputDecoration(
-                            labelText: 'Select Project',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
                     TextField(
-                      controller: titleController,
+                      controller: searchController,
                       decoration: const InputDecoration(
-                        labelText: 'Module',
+                        labelText: 'Search Unit',
+                        prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        setState(() {
+                          filtered = unitList.where((item) {
+                            final name = (item['unit_no'] ??
+                                    item['unit_name'] ??
+                                    item['name'] ??
+                                    item['id'] ??
+                                    '')
+                                .toString();
+                            return name
+                                .toLowerCase()
+                                .contains(value.toLowerCase());
+                          }).toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? const Center(child: Text('No Units Found'))
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final item = filtered[index];
+                                final uNo = (item['unit_no'] ??
+                                        item['unit_name'] ??
+                                        item['name'] ??
+                                        item['id'] ??
+                                        '')
+                                    .toString();
+                                return ListTile(
+                                  title: Text(uNo),
+                                  onTap: () => Navigator.pop(context, item),
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (selectedProjectId == null ||
-                        titleController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content:
-                              Text('Please select a project and enter a title'),
-                        ),
-                      );
-                      return;
-                    }
-                    final newTitle = await HttpService.submitTitle(
-                      context: context,
-                      projectId: selectedProjectId!,
-                      title: titleController.text.trim(),
-                    );
-                    if (newTitle != null) {
-                      Navigator.pop(context, newTitle);
-                    }
-                  },
-                  child: const Text('Submit'),
                 ),
               ],
             );
@@ -2433,34 +1995,382 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         );
       },
     );
+
+    if (selected != null && mounted) {
+      final uId = (selected['id'] ??
+              selected['unit_id'] ??
+              selected['unit_no'] ??
+              '')
+          .toString();
+      final uNo = (selected['unit_no'] ??
+              selected['unit_name'] ??
+              selected['name'] ??
+              selected['id'] ??
+              '')
+          .toString();
+      setState(() {
+        selectedUnitId = uId;
+        selectedUnitNo = uNo;
+      });
+      if (selectedProjectId != null) {
+        _loadSiteLiftsAndTasks(selectedUnitId!, selectedProjectId!);
+      }
+    }
   }
 
-  Future<Map<String, String>?> _showStaffSearchDialog(
-      BuildContext context) async {
+  Future<void> _showSiteLiftSelectionDialog(BuildContext context) async {
     TextEditingController searchController = TextEditingController();
-    FocusNode focusNode = FocusNode();
-    List<Staff> filteredStaff = List.from(staffList);
-    return showDialog<Map<String, String>>(
+    List<dynamic> filtered = List.from(siteLiftList);
+
+    final selected = await showDialog<dynamic>(
       context: context,
       builder: (context) {
-        Future.delayed(Duration(milliseconds: 100), () {
-          FocusScope.of(context).requestFocus(focusNode);
-        });
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Select Staff'),
+              title: const Text('Select Site Lift No'),
               content: SizedBox(
                 width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.4,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
                       controller: searchController,
-                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Search Site Lift',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filtered = siteLiftList.where((item) {
+                            final name = (item['site_lift_name'] ??
+                                    item['site_lift_no'] ??
+                                    item['lift_no'] ??
+                                    item['lift_name'] ??
+                                    item['name'] ??
+                                    item['id'] ??
+                                    '')
+                                .toString();
+                            return name
+                                .toLowerCase()
+                                .contains(value.toLowerCase());
+                          }).toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? const Center(child: Text('No Site Lifts Found'))
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final item = filtered[index];
+                                final lNo = (item['site_lift_name'] ??
+                                        item['site_lift_no'] ??
+                                        item['lift_no'] ??
+                                        item['lift_name'] ??
+                                        item['name'] ??
+                                        item['id'] ??
+                                        '')
+                                    .toString();
+                                return ListTile(
+                                  title: Text(lNo),
+                                  onTap: () => Navigator.pop(context, item),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      final lId = (selected['id'] ??
+              selected['site_lift_id'] ??
+              selected['lift_id'] ??
+              selected['site_lift_no'] ??
+              '')
+          .toString();
+      final lNo = (selected['site_lift_name'] ??
+              selected['site_lift_no'] ??
+              selected['lift_no'] ??
+              selected['lift_name'] ??
+              selected['name'] ??
+              selected['id'] ??
+              '')
+          .toString();
+      setState(() {
+        selectedSiteLiftId = lId;
+        selectedSiteLiftNo = lNo;
+      });
+    }
+  }
+
+  Future<void> _showStageSelectionDialog(BuildContext context) async {
+    TextEditingController searchController = TextEditingController();
+    List<dynamic> filtered = List.from(stageList);
+
+    final selected = await showDialog<dynamic>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Stage'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search Stage',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filtered = stageList.where((item) {
+                            final name = (item['stage'] ??
+                                    item['stage_name'] ??
+                                    item['name'] ??
+                                    item['title'] ??
+                                    item['id'] ??
+                                    '')
+                                .toString();
+                            return name
+                                .toLowerCase()
+                                .contains(value.toLowerCase());
+                          }).toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? const Center(child: Text('No Stages Found'))
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final item = filtered[index];
+                                final sName = (item['stage'] ??
+                                        item['stage_name'] ??
+                                        item['name'] ??
+                                        item['title'] ??
+                                        item['id'] ??
+                                        '')
+                                    .toString();
+                                return ListTile(
+                                  title: Text(sName),
+                                  onTap: () => Navigator.pop(context, item),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      final sId = (selected['id'] ?? selected['stage_id'] ?? '').toString();
+      final sName = (selected['stage'] ??
+              selected['stage_name'] ??
+              selected['name'] ??
+              selected['title'] ??
+              selected['id'] ??
+              '')
+          .toString();
+      setState(() {
+        selectedStageId = sId;
+        selectedStageName = sName;
+      });
+    }
+  }
+
+  Future<void> _showTaskSelectionDialog(
+      BuildContext context, int taskIndex) async {
+    TextEditingController searchController = TextEditingController();
+    List<dynamic> filtered = List.from(unitTaskList);
+
+    final selected = await showDialog<dynamic>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Task'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search Task',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filtered = unitTaskList.where((item) {
+                            final name = (item['activity_name'] ??
+                                    item['task_name'] ??
+                                    item['name'] ??
+                                    item['activity_key'] ??
+                                    '')
+                                .toString();
+                            return name
+                                .toLowerCase()
+                                .contains(value.toLowerCase());
+                          }).toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? const Center(child: Text('No tasks found for this Unit'))
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final item = filtered[index];
+                                final tName = (item['activity_name'] ??
+                                        item['task_name'] ??
+                                        item['name'] ??
+                                        item['activity_key'] ??
+                                        '')
+                                    .toString();
+                                return ListTile(
+                                  title: Text(tName),
+                                  onTap: () => Navigator.pop(context, item),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      final tName = (selected['activity_name'] ??
+              selected['task_name'] ??
+              selected['name'] ??
+              selected['activity_key'] ??
+              '')
+          .toString();
+      final tId = (selected['activity_id'] ??
+              selected['id'] ??
+              selected['task_id'] ??
+              '')
+          .toString();
+      final tDesc = (selected['description'] ??
+              selected['task_description'] ??
+              '')
+          .toString();
+
+      DateTime? sDate;
+      if (selected['start_date'] != null &&
+          selected['start_date'].toString().isNotEmpty) {
+        try {
+          sDate = DateTime.parse(selected['start_date'].toString());
+        } catch (_) {}
+      }
+      DateTime? eDate;
+      if (selected['completed_date'] != null &&
+          selected['completed_date'].toString().isNotEmpty) {
+        try {
+          eDate = DateTime.parse(selected['completed_date'].toString());
+        } catch (_) {}
+      } else if (selected['end_date'] != null &&
+          selected['end_date'].toString().isNotEmpty) {
+        try {
+          eDate = DateTime.parse(selected['end_date'].toString());
+        } catch (_) {}
+      }
+
+      setState(() {
+        tasks[taskIndex].controller.text = tName;
+        tasks[taskIndex].taskId = tId.isNotEmpty ? tId : null;
+        if (tDesc.isNotEmpty) {
+          tasks[taskIndex].descriptionController.text = tDesc;
+        }
+        if (sDate != null) {
+          tasks[taskIndex].startDate = sDate;
+        }
+        if (eDate != null) {
+          tasks[taskIndex].endDate = eDate;
+        }
+      });
+    }
+  }
+
+  Future<void> _showSingleAssignedStaffSelectionDialog(
+      BuildContext context, int taskIndex) async {
+    List<Staff> filteredStaff = List.from(staffList);
+    TextEditingController searchController = TextEditingController();
+
+    final selected = await showDialog<dynamic>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Assigned Staff'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
                       decoration: const InputDecoration(
                         labelText: 'Search Staff',
                         prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -2472,7 +2382,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                         });
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
@@ -2481,21 +2391,95 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                           if (index == 0) {
                             return ListTile(
                               title: const Text('Unassigned'),
-                              onTap: () {
-                                Navigator.pop(context, {
-                                  'id': '0',
-                                  'name': 'Unassigned',
-                                });
-                              },
+                              onTap: () => Navigator.pop(context, '0'),
                             );
                           }
                           final staff = filteredStaff[index - 1];
                           return ListTile(
                             title: Text(staff.name),
-                            onTap: () {
-                              Navigator.pop(context, {
-                                'id': staff.userIdStaff,
-                                'name': staff.name,
+                            onTap: () =>
+                                Navigator.pop(context, staff.userIdStaff),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (selected != null && mounted) {
+      setState(() {
+        tasks[taskIndex].assignedStaffId =
+            selected == '0' ? null : selected.toString();
+      });
+    }
+  }
+
+  Future<void> _showMultiSupportingStaffSelectionDialogForTask(
+      BuildContext context, int taskIndex) async {
+    final selected = await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        final tempSelected =
+            List<String>.from(tasks[taskIndex].supportingStaffIds);
+        List<Staff> filteredStaff = List.from(staffList);
+        TextEditingController searchController = TextEditingController();
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Supporting Staffs'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search Staff',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          filteredStaff = staffList
+                              .where((staff) => staff.name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase()))
+                              .toList();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredStaff.length,
+                        itemBuilder: (context, index) {
+                          final staff = filteredStaff[index];
+                          return CheckboxListTile(
+                            title: Text(staff.name),
+                            value: tempSelected.contains(staff.userIdStaff),
+                            onChanged: (val) {
+                              setState(() {
+                                if (val == true) {
+                                  tempSelected.add(staff.userIdStaff);
+                                } else {
+                                  tempSelected.remove(staff.userIdStaff);
+                                }
                               });
                             },
                           );
@@ -2505,10 +2489,67 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                   ],
                 ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, tempSelected),
+                  child: const Text('Confirm'),
+                ),
+              ],
             );
           },
         );
       },
+    );
+
+    if (selected != null && mounted) {
+      setState(() {
+        tasks[taskIndex].supportingStaffIds = selected;
+      });
+    }
+  }
+
+  Widget _buildNotificationOption({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[700],
+              ),
+            ),
+          ),
+          Transform.scale(
+            scale: 0.85,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: iconColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2520,6 +2561,9 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       context: context,
       builder: (context) {
         final tempSelected = List<String>.from(currentSelection);
+        List<Staff> filteredStaff = List.from(staffList);
+        TextEditingController searchController = TextEditingController();
+
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
@@ -2528,103 +2572,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                   : 'Select Staff to Notify'),
               content: SizedBox(
                 width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Search Staff',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                      onChanged: (value) {},
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: staffList.length,
-                        itemBuilder: (context, index) {
-                          final staff = staffList[index];
-                          return CheckboxListTile(
-                            title: Text(staff.name),
-                            value: tempSelected.contains(staff.userIdStaff),
-                            onChanged: (value) {
-                              setState(() {
-                                if (value == true) {
-                                  tempSelected.add(staff.userIdStaff);
-                                } else {
-                                  tempSelected.remove(staff.userIdStaff);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, tempSelected),
-                  child: const Text('Confirm'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-    if (selected != null) {
-      setState(() {
-        if (isForParticipants) {
-          participantIds = selected;
-        } else {
-          selectedStaffIds = selected;
-        }
-      });
-    }
-  }
-
-  String _getAssignedStaffNames() {
-    if (selectedAssignedStaffIds.isEmpty) {
-      if (assignedTo == "0") return 'Unassigned';
-      return 'Select Staff';
-    }
-    final names = selectedAssignedStaffIds
-        .map((id) {
-          final staff = staffList.firstWhere(
-            (s) => s.userIdStaff == id,
-            orElse: () => Staff(id: '', name: '', userIdStaff: ''),
-          );
-          return staff.name;
-        })
-        .where((name) => name.isNotEmpty)
-        .toList();
-
-    if (names.isEmpty) return 'Select Staff';
-    return names.join(', ');
-  }
-
-  Future<void> _showMultiAssignedStaffSelectionDialog(
-      BuildContext context) async {
-    final selected = await showDialog<List<String>>(
-      context: context,
-      builder: (context) {
-        final tempSelected = List<String>.from(selectedAssignedStaffIds);
-        List<Staff> filteredStaff = List.from(staffList);
-        TextEditingController searchController = TextEditingController();
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Select Assigned Staff'),
-              content: SizedBox(
-                width: double.maxFinite,
+                height: MediaQuery.of(context).size.height * 0.4,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -2633,6 +2581,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                       decoration: const InputDecoration(
                         labelText: 'Search Staff',
                         prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
                       ),
                       onChanged: (value) {
                         setState(() {
@@ -2644,7 +2593,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                         });
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
@@ -2654,9 +2603,9 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                           return CheckboxListTile(
                             title: Text(staff.name),
                             value: tempSelected.contains(staff.userIdStaff),
-                            onChanged: (value) {
+                            onChanged: (val) {
                               setState(() {
-                                if (value == true) {
+                                if (val == true) {
                                   tempSelected.add(staff.userIdStaff);
                                 } else {
                                   tempSelected.remove(staff.userIdStaff);
@@ -2685,12 +2634,13 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         );
       },
     );
-    if (selected != null) {
+    if (selected != null && mounted) {
       setState(() {
-        selectedAssignedStaffIds = selected;
-        assignedTo = selectedAssignedStaffIds.isNotEmpty
-            ? selectedAssignedStaffIds.join(',')
-            : null;
+        if (isForParticipants) {
+          participantIds = selected;
+        } else {
+          selectedStaffIds = selected;
+        }
       });
     }
   }

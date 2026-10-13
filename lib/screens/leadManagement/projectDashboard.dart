@@ -254,13 +254,20 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
 
   Future<void> checkExistingWorkStatus() async {
     final workStatusModel = await HttpService.getWorkStatus();
-    setState(() {
-      if (workStatusModel != null && workStatusModel.data.isNotEmpty) {
-        existingWork = workStatusModel.data.first;
-      } else {
-        existingWork = null;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        workStatus = workStatusModel;
+        if (workStatusModel != null && workStatusModel.data.isNotEmpty) {
+          existingWork = workStatusModel.data.first;
+          createdAt = DateTime.parse(workStatusModel.data.first.createdAt);
+          isWorkStarted = true;
+        } else {
+          existingWork = null;
+          createdAt = null;
+          isWorkStarted = false;
+        }
+      });
+    }
   }
 
   Future<void> loadPrefs() async {
@@ -480,10 +487,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
         }
 
         projectList = await HttpService.getProjectList();
-        workStatus = await HttpService.getWorkStatus();
-        if (workStatus!.data.isNotEmpty) {
-          createdAt = DateTime.parse(workStatus!.data.first.createdAt);
-        }
+        await checkExistingWorkStatus();
 
         userDashboard = await HttpService.mainDashboard(token);
         Common.saveSharedPref("profile_pic", userDashboard!.data.profilePic);
@@ -906,17 +910,22 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                     newExistingWork =
                                         workStatusModel.data.first;
                                   }
-                                  Navigator.push(
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => AddWorkPage(
                                         workId: "",
                                         existingWork: newExistingWork,
                                         // isAssigned: 1,
-                                        onSuccess: () {},
+                                        onSuccess: () {
+                                          checkExistingWorkStatus();
+                                          getData(token, fromdate, todate);
+                                        },
                                       ),
                                     ),
                                   );
+                                  await checkExistingWorkStatus();
+                                  getData(token, fromdate, todate);
                                 } else {
                                   showDialog(
                                     context: context,
@@ -1039,7 +1048,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                               existingWork =
                                                   workStatusModel.data.first;
                                             }
-                                            Navigator.push(
+                                            await Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
@@ -1048,14 +1057,15 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                                   existingWork: existingWork,
                                                    isAssigned: 1,
                                                   onSuccess: () {
-                                                    setState(() {
-                                                      getData(token, fromdate,
-                                                          todate);
-                                                    });
+                                                    checkExistingWorkStatus();
+                                                    getData(token, fromdate,
+                                                        todate);
                                                   },
                                                 ),
                                               ),
                                             );
+                                            await checkExistingWorkStatus();
+                                            getData(token, fromdate, todate);
                                           },
                                           child: Text(
                                             timeSince,

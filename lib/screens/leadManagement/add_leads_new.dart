@@ -18,7 +18,6 @@ import '../../models/lead_management/addLeadCommonDataModel.dart';
 import '../../models/lead_management/getLeadSourceModel.dart';
 import '../../models/userPermissionModel.dart';
 import '../../models/lead_management/leadProductsModel.dart';
-import '../../models/lead_management/productDescriptionModel.dart';
 import '../../service/service.dart';
 import '../../models/lead_management/leadExtraSettings.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
@@ -165,8 +164,15 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   final TextEditingController _pPitDepth = TextEditingController();
   final TextEditingController _pTravelHeight = TextEditingController();
   final TextEditingController _pOverheadHeight = TextEditingController();
+  final TextEditingController _pDoorOpeningSize = TextEditingController();
   final TextEditingController _pWarranty = TextEditingController();
   final TextEditingController _pAmc = TextEditingController();
+
+  String? _amcTypeSelected;
+  final TextEditingController _amcTypeCtrl = TextEditingController();
+  final TextEditingController _liftBrandCtrl = TextEditingController();
+  final TextEditingController _ageOfLiftCtrl = TextEditingController();
+  final TextEditingController _amcPriceCtrl = TextEditingController();
 
   final TextEditingController _pFactoryPrice = TextEditingController();
   final TextEditingController _pTransportation = TextEditingController();
@@ -453,6 +459,10 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     _pTotalSalePrice.dispose();
     _quotationTitleCtrl.dispose();
     _quotationMessageCtrl.dispose();
+    _amcTypeCtrl.dispose();
+    _liftBrandCtrl.dispose();
+    _ageOfLiftCtrl.dispose();
+    _amcPriceCtrl.dispose();
 
     super.dispose();
   }
@@ -674,6 +684,25 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   Map<String, dynamic> _buildPricingBody() {
+    final elevatorTypeVal = _liftBrandCtrl.text.trim().isNotEmpty
+        ? _liftBrandCtrl.text
+        : _pElevatorType.text;
+    final amcTypeVal = _amcTypeCtrl.text.trim().isNotEmpty
+        ? _amcTypeCtrl.text
+        : _pAmc.text;
+    final amcAmountVal = _amcPriceCtrl.text.trim().isNotEmpty
+        ? _amcPriceCtrl.text
+        : _pAmcAmount.text;
+    final unitPriceVal = _amcPriceCtrl.text.trim().isNotEmpty
+        ? _amcPriceCtrl.text
+        : _pUnitPrice.text;
+    final grandTotalVal = _amcPriceCtrl.text.trim().isNotEmpty
+        ? _amcPriceCtrl.text
+        : _pTotalSalePrice.text;
+    final warrantyVal = _ageOfLiftCtrl.text.trim().isNotEmpty
+        ? _ageOfLiftCtrl.text
+        : _pWarranty.text;
+
     return <String, dynamic>{
       'quotation_title': _pQuotationTitle.text,
       'quotation': _pQuotation.text,
@@ -686,7 +715,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           : (districtCtrl.text.isNotEmpty
               ? districtCtrl.text
               : addressCtrl.text),
-      'elevator_type': _pElevatorType.text,
+      'lift_brand': elevatorTypeVal,
       'type_of_opening': _pTypeOfOpening.text,
       'lift_capacity': _pCapacity.text,
       'no_of_passenger': _pPassengerCapacity.text,
@@ -698,12 +727,13 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       'lift_type': _pLiftTypeId ?? '',
       'opening_type': _pOpeningId ?? '',
       'door_opening': _pDoorOpeningId ?? '',
+      'door_opening_size': _pDoorOpeningSize.text,
       'cabin_side_wall': _pCabinSideWallId ?? '',
       'landing_door': _pLandingDoorId ?? '',
       'cop': _pCopId ?? '',
       'lop': _pLopId ?? '',
-      'wr': _pWarranty.text,
-      'amc': _pAmc.text,
+      'wr': warrantyVal,
+      'amc': amcTypeVal,
       'factory_price': _pFactoryPrice.text,
       'transportation': _pTransportation.text,
       'installation_charge': _pInstallation.text,
@@ -711,9 +741,9 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       'consumables': _pConsumables.text,
       'additional_factory_charges': _pAdditionalFactory.text,
       'additional_amount': _pAdditional.text,
-      'amc_amount': _pAmcAmount.text,
+      'amc_amount': amcAmountVal,
       'quantity': _pQuantity.text.isNotEmpty ? _pQuantity.text : '1',
-      'price': _pUnitPrice.text,
+      'price': unitPriceVal,
       'tax_type': _pTaxType ?? '',
       'tax': _pTaxPercentage.text,
       'tax_amount': _pTaxAmount.text,
@@ -722,18 +752,16 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       'sales_commission': _pSalesCommission.text,
       'sales_commission_amount': _pSalesCommissionAmount.text,
       'sub_total': _pSubTotal.text,
-      'grand_total': _pTotalSalePrice.text,
+      'grand_total': grandTotalVal,
     };
   }
 
   Future<void> _initializeData() async {
     final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity is List<ConnectivityResult>) {
-      if (!connectivity.contains(ConnectivityResult.mobile) &&
-          !connectivity.contains(ConnectivityResult.wifi)) {
-        setState(() => isLoading = false);
-        return;
-      }
+    if (!connectivity.contains(ConnectivityResult.mobile) &&
+        !connectivity.contains(ConnectivityResult.wifi)) {
+      setState(() => isLoading = false);
+      return;
     }
 
     contactPermission = await Common.getSharedPref("getContactPermission");
@@ -771,6 +799,22 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       if (widget.countryCode == null) {
         code = commonDetails!.data.countryCode.toString();
       }
+      if (leadTypeId.isNotEmpty) {
+        try {
+          final cat = commonDetails!.data.leadCategory.firstWhere(
+            (c) => c.leadCategoryId.toString() == leadTypeId,
+          );
+          leadType = cat.leadCategory;
+          leadTypeCtrl.text = cat.leadCategory;
+        } catch (_) {}
+      } else if (leadType != 'Lead Category' && leadType.isNotEmpty) {
+        try {
+          final cat = commonDetails!.data.leadCategory.firstWhere(
+            (c) => c.leadCategory.toLowerCase() == leadType.toLowerCase(),
+          );
+          leadTypeId = cat.leadCategoryId.toString();
+        } catch (_) {}
+      }
       configure = await HttpService.configure(token);
     }
     stateDetails = await HttpService.getState();
@@ -792,7 +836,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
 
     if (pinCodeCtrl.text.length == 6) {
       final model = await HttpService.fetchPostOffice(pinCodeCtrl.text);
-      postOffices = model?.postOffice ?? [];
+      postOffices = model.postOffice ?? [];
       if (postOffices.isNotEmpty && widget.postOffice != null) {
         try {
           selectedPostOffice = postOffices.firstWhere(
@@ -1104,76 +1148,165 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                 if (callResultId != '1') _buildCallResponseField(),
               ],
             ),
-            if (callResult == 'Estimation & Pricing' ||
+            if (callResultId == '16' ||
+                callResult == 'Estimation & Pricing' ||
                 callResult.toLowerCase().contains('estimation')) ...[
               const SizedBox(height: 12),
-              EstimationPricingCard(
-                data: estimationDetails?.data,
-                permissions: userPermissions,
-                showPricing: true,
-                initialClientName: clientNameCtrl.text,
-                initialPhone: contactNoCtrl.text,
-                initialLocation: districtCtrl.text.isNotEmpty
-                    ? districtCtrl.text
-                    : addressCtrl.text,
-                quotationTitleCtrl: _pQuotationTitle,
-                quotationCtrl: _pQuotation,
-                clientNameCtrl: _pClientName,
-                phoneCtrl: _pPhone,
-                locationCtrl: _pLocation,
-                elevatorTypeCtrl: _pElevatorType,
-                typeOfOpeningCtrl: _pTypeOfOpening,
-                capacityCtrl: _pCapacity,
-                passengerCapacityCtrl: _pPassengerCapacity,
-                shaftWidthCtrl: _pShaftWidth,
-                shaftDepthCtrl: _pShaftDepth,
-                pitDepthCtrl: _pPitDepth,
-                travelHeightCtrl: _pTravelHeight,
-                overheadHeightCtrl: _pOverheadHeight,
-                warrantyCtrl: _pWarranty,
-                amcCtrl: _pAmc,
-                liftTypeId: _pLiftTypeId,
-                openingId: _pOpeningId,
-                doorOpeningId: _pDoorOpeningId,
-                cabinSideWallId: _pCabinSideWallId,
-                landingDoorId: _pLandingDoorId,
-                copId: _pCopId,
-                lopId: _pLopId,
-                onLiftTypeChanged: (v) => setState(() => _pLiftTypeId = v),
-                onOpeningChanged: (v) => setState(() => _pOpeningId = v),
-                onDoorOpeningChanged: (v) =>
-                    setState(() => _pDoorOpeningId = v),
-                onCabinSideWallChanged: (v) =>
-                    setState(() => _pCabinSideWallId = v),
-                onLandingDoorChanged: (v) =>
-                    setState(() => _pLandingDoorId = v),
-                onCopChanged: (v) => setState(() => _pCopId = v),
-                onLopChanged: (v) => setState(() => _pLopId = v),
-                factoryPriceCtrl: _pFactoryPrice,
-                transportationCtrl: _pTransportation,
-                installationCtrl: _pInstallation,
-                testingCtrl: _pTesting,
-                consumablesCtrl: _pConsumables,
-                additionalFactoryCtrl: _pAdditionalFactory,
-                additionalCtrl: _pAdditional,
-                amcAmountCtrl: _pAmcAmount,
-                quantityCtrl: _pQuantity,
-                unitPriceCtrl: _pUnitPrice,
-                companyProfitCtrl: _pCompanyProfit,
-                companyProfitAmountCtrl: _pCompanyProfitAmount,
-                salesCommissionCtrl: _pSalesCommission,
-                salesCommissionAmountCtrl: _pSalesCommissionAmount,
-                subTotalCtrl: _pSubTotal,
-                taxPercentageCtrl: _pTaxPercentage,
-                taxAmountCtrl: _pTaxAmount,
-                totalSalePriceCtrl: _pTotalSalePrice,
-                taxType: _pTaxType,
-                onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
-              ),
-              const SizedBox(height: 12),
-              if (leadType == 'SUPPLY AND INSTALLATION' ||
-                  leadType == 'AMC' ||
-                  leadType == 'Repair') ...[
+              if (leadTypeId == '11' ||
+                  leadType.trim().toUpperCase() == 'AMC') ...[
+                _buildAMCSection(),
+              ] else if (leadTypeId == '12' ||
+                  leadType.trim().toUpperCase() == 'REPAIR' ||
+                  leadType.trim().toLowerCase() == 'repairing') ...[
+                EstimationPricingCard(
+                  data: estimationDetails?.data,
+                  permissions: userPermissions,
+                  showEstimation: false,
+                  showPricing: true,
+                  initialClientName: clientNameCtrl.text,
+                  initialPhone: contactNoCtrl.text,
+                  initialLocation: districtCtrl.text.isNotEmpty
+                      ? districtCtrl.text
+                      : addressCtrl.text,
+                  quotationTitleCtrl: _pQuotationTitle,
+                  quotationCtrl: _pQuotation,
+                  clientNameCtrl: _pClientName,
+                  phoneCtrl: _pPhone,
+                  locationCtrl: _pLocation,
+                  elevatorTypeCtrl: _pElevatorType,
+                  typeOfOpeningCtrl: _pTypeOfOpening,
+                  capacityCtrl: _pCapacity,
+                  passengerCapacityCtrl: _pPassengerCapacity,
+                  shaftWidthCtrl: _pShaftWidth,
+                  shaftDepthCtrl: _pShaftDepth,
+                  pitDepthCtrl: _pPitDepth,
+                  travelHeightCtrl: _pTravelHeight,
+                  overheadHeightCtrl: _pOverheadHeight,
+                  doorOpeningSizeCtrl: _pDoorOpeningSize,
+                  warrantyCtrl: _pWarranty,
+                  amcCtrl: _pAmc,
+                  liftTypeId: _pLiftTypeId,
+                  openingId: _pOpeningId,
+                  doorOpeningId: _pDoorOpeningId,
+                  cabinSideWallId: _pCabinSideWallId,
+                  landingDoorId: _pLandingDoorId,
+                  copId: _pCopId,
+                  lopId: _pLopId,
+                  onLiftTypeChanged: (v) => setState(() => _pLiftTypeId = v),
+                  onOpeningChanged: (v) => setState(() => _pOpeningId = v),
+                  onDoorOpeningChanged: (v) =>
+                      setState(() => _pDoorOpeningId = v),
+                  onCabinSideWallChanged: (v) =>
+                      setState(() => _pCabinSideWallId = v),
+                  onLandingDoorChanged: (v) =>
+                      setState(() => _pLandingDoorId = v),
+                  onCopChanged: (v) => setState(() => _pCopId = v),
+                  onLopChanged: (v) => setState(() => _pLopId = v),
+                  factoryPriceCtrl: _pFactoryPrice,
+                  transportationCtrl: _pTransportation,
+                  installationCtrl: _pInstallation,
+                  testingCtrl: _pTesting,
+                  consumablesCtrl: _pConsumables,
+                  additionalFactoryCtrl: _pAdditionalFactory,
+                  additionalCtrl: _pAdditional,
+                  amcAmountCtrl: _pAmcAmount,
+                  quantityCtrl: _pQuantity,
+                  unitPriceCtrl: _pUnitPrice,
+                  companyProfitCtrl: _pCompanyProfit,
+                  companyProfitAmountCtrl: _pCompanyProfitAmount,
+                  salesCommissionCtrl: _pSalesCommission,
+                  salesCommissionAmountCtrl: _pSalesCommissionAmount,
+                  subTotalCtrl: _pSubTotal,
+                  taxPercentageCtrl: _pTaxPercentage,
+                  taxAmountCtrl: _pTaxAmount,
+                  totalSalePriceCtrl: _pTotalSalePrice,
+                  taxType: _pTaxType,
+                  onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
+                ),
+                const SizedBox(height: 12),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text(
+                    'Create Quotation Request',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  value: _sendQuotation,
+                  onChanged: (value) {
+                    setState(() {
+                      _sendQuotation = value ?? false;
+                    });
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                if (_sendQuotation) _buildQuotationRequestForm(),
+              ] else ...[
+                EstimationPricingCard(
+                  data: estimationDetails?.data,
+                  permissions: userPermissions,
+                  showPricing: true,
+                  initialClientName: clientNameCtrl.text,
+                  initialPhone: contactNoCtrl.text,
+                  initialLocation: districtCtrl.text.isNotEmpty
+                      ? districtCtrl.text
+                      : addressCtrl.text,
+                  quotationTitleCtrl: _pQuotationTitle,
+                  quotationCtrl: _pQuotation,
+                  clientNameCtrl: _pClientName,
+                  phoneCtrl: _pPhone,
+                  locationCtrl: _pLocation,
+                  elevatorTypeCtrl: _pElevatorType,
+                  typeOfOpeningCtrl: _pTypeOfOpening,
+                  capacityCtrl: _pCapacity,
+                  passengerCapacityCtrl: _pPassengerCapacity,
+                  shaftWidthCtrl: _pShaftWidth,
+                  shaftDepthCtrl: _pShaftDepth,
+                  pitDepthCtrl: _pPitDepth,
+                  travelHeightCtrl: _pTravelHeight,
+                  overheadHeightCtrl: _pOverheadHeight,
+                  doorOpeningSizeCtrl: _pDoorOpeningSize,
+                  warrantyCtrl: _pWarranty,
+                  amcCtrl: _pAmc,
+                  liftTypeId: _pLiftTypeId,
+                  openingId: _pOpeningId,
+                  doorOpeningId: _pDoorOpeningId,
+                  cabinSideWallId: _pCabinSideWallId,
+                  landingDoorId: _pLandingDoorId,
+                  copId: _pCopId,
+                  lopId: _pLopId,
+                  onLiftTypeChanged: (v) => setState(() => _pLiftTypeId = v),
+                  onOpeningChanged: (v) => setState(() => _pOpeningId = v),
+                  onDoorOpeningChanged: (v) =>
+                      setState(() => _pDoorOpeningId = v),
+                  onCabinSideWallChanged: (v) =>
+                      setState(() => _pCabinSideWallId = v),
+                  onLandingDoorChanged: (v) =>
+                      setState(() => _pLandingDoorId = v),
+                  onCopChanged: (v) => setState(() => _pCopId = v),
+                  onLopChanged: (v) => setState(() => _pLopId = v),
+                  factoryPriceCtrl: _pFactoryPrice,
+                  transportationCtrl: _pTransportation,
+                  installationCtrl: _pInstallation,
+                  testingCtrl: _pTesting,
+                  consumablesCtrl: _pConsumables,
+                  additionalFactoryCtrl: _pAdditionalFactory,
+                  additionalCtrl: _pAdditional,
+                  amcAmountCtrl: _pAmcAmount,
+                  quantityCtrl: _pQuantity,
+                  unitPriceCtrl: _pUnitPrice,
+                  companyProfitCtrl: _pCompanyProfit,
+                  companyProfitAmountCtrl: _pCompanyProfitAmount,
+                  salesCommissionCtrl: _pSalesCommission,
+                  salesCommissionAmountCtrl: _pSalesCommissionAmount,
+                  subTotalCtrl: _pSubTotal,
+                  taxPercentageCtrl: _pTaxPercentage,
+                  taxAmountCtrl: _pTaxAmount,
+                  totalSalePriceCtrl: _pTotalSalePrice,
+                  taxType: _pTaxType,
+                  onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
+                ),
                 const SizedBox(height: 12),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
@@ -1231,6 +1364,119 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     );
   }
 
+  Widget _buildAMCSection() {
+    return _buildSectionCard(
+      title: 'AMC',
+      icon: Icons.shield_outlined,
+      children: [
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: _amcTypeSelected,
+                decoration: _inputDecoration('AMC Type *', null,
+                    hintText: 'Select AMC Type'),
+                hint: const Text(
+                  'Select AMC Type',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'Comprehensive AMC',
+                      child: Text('Comprehensive AMC')),
+                  DropdownMenuItem(
+                      value: 'Non Comprehensive AMC',
+                      child: Text('Non Comprehensive AMC')),
+                  // DropdownMenuItem(
+                  //     value: 'Semi-Comprehensive AMC',
+                  //     child: Text('Semi-Comprehensive AMC')),
+                ], 
+                onChanged: (val) {
+                  setState(() {
+                    _amcTypeSelected = val;
+                    _amcTypeCtrl.text = val ?? '';
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _liftBrandCtrl,
+                decoration: _inputDecoration('Lift Brand *', null,
+                    hintText: 'Enter Lift Brand'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _ageOfLiftCtrl,
+                decoration: _inputDecoration('Age of Lift *', null,
+                    hintText: 'Enter Age of Lift'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _pQuotationTitle,
+                decoration: _inputDecoration('Subject *', null,
+                    hintText: 'Enter Subject'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _pPassengerCapacity,
+                decoration: _inputDecoration('Passenger Capacity/KG *', null,
+                    hintText: 'Enter Passenger Capacity/KG'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _amcPriceCtrl,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration('Price *', null,
+                    hintText: 'Enter Price'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text(
+            'Create Quotation Request',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          value: _sendQuotation,
+          onChanged: (value) {
+            setState(() {
+              _sendQuotation = value ?? false;
+            });
+          },
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        if (_sendQuotation) _buildQuotationRequestForm(),
+      ],
+    );
+  }
+
   Widget _buildBranchField() {
     return DropdownButtonFormField<String>(
       value: branch,
@@ -1238,7 +1484,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       items: commonDetails!.data.branch.map((b) {
         return DropdownMenuItem(
           value: b.branchId.toString(),
-          child: Text(b.branchName!),
+          child: Text(b.branchName),
         );
       }).toList(),
       onChanged: (value) async {
@@ -1398,49 +1644,115 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   Widget _buildLeadCategoryField() {
-    return Stack(
-      alignment: Alignment.centerRight,
-      children: [
-        GestureDetector(
-          onTap: () => _showCategoryDialog(),
-          child: AbsorbPointer(
-            child: TextFormField(
-              controller: leadTypeCtrl,
-              decoration: _inputDecoration(
-                      'Lead Category', Icons.arrow_drop_down_circle_outlined)
-                  .copyWith(
-                suffixIcon: leadTypeId.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
-                        onPressed: () {
-                          setState(() {
-                            leadType = 'Lead Category';
-                            leadTypeId = '';
-                            leadSubType = 'Lead Sub Category';
-                            leadSubTypeId = '';
-                            leadSubTypeList = null;
-                          });
-                        },
-                      )
-                    : null,
+    final categoryList = commonDetails?.data.leadCategory ?? [];
+    if (categoryList.isEmpty) {
+      return Stack(
+        alignment: Alignment.centerRight,
+        children: [
+          GestureDetector(
+            onTap: () => _showCategoryDialog(),
+            child: AbsorbPointer(
+              child: TextFormField(
+                controller: leadTypeCtrl,
+                decoration: _inputDecoration(
+                        'Lead Category', Icons.arrow_drop_down_circle_outlined)
+                    .copyWith(
+                  suffixIcon: leadTypeId.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              leadType = 'Lead Category';
+                              leadTypeId = '';
+                              leadSubType = 'Lead Sub Category';
+                              leadSubTypeId = '';
+                              leadSubTypeList = null;
+                            });
+                          },
+                        )
+                      : null,
+                ),
+                validator: (value) {
+                  if (leadTypeId.isEmpty) {
+                    return 'Please select Lead Category';
+                  }
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (leadTypeId.isEmpty) {
-                  return 'Please select Lead Category';
-                }
-                return null;
-              },
             ),
+          ),
+          if (createLeadCategory == 'true')
+            Positioned(
+              right: 5,
+              child: IconButton(
+                icon: const Icon(Icons.add_circle, color: Colors.green),
+                onPressed: () => _showAddCategoryDialog(),
+              ),
+            ),
+        ],
+      );
+    }
+
+    final selectedValue = categoryList
+            .any((c) => c.leadCategoryId.toString() == leadTypeId)
+        ? leadTypeId
+        : categoryList.any(
+                (c) => c.leadCategory.toLowerCase() == leadType.toLowerCase())
+            ? categoryList
+                .firstWhere(
+                    (c) => c.leadCategory.toLowerCase() == leadType.toLowerCase())
+                .leadCategoryId
+                .toString()
+            : null;
+
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+            value: selectedValue,
+            decoration: _inputDecoration(
+                'Lead Category *', Icons.arrow_drop_down_circle_outlined),
+            hint: const Text(
+              'Select Lead Category',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            items: categoryList.map((cat) {
+              return DropdownMenuItem<String>(
+                value: cat.leadCategoryId.toString(),
+                child: Text(cat.leadCategory),
+              );
+            }).toList(),
+            onChanged: (value) async {
+              if (value != null) {
+                final cat = categoryList.firstWhere(
+                  (c) => c.leadCategoryId.toString() == value,
+                );
+                leadSubTypeList = await HttpService.leadSubType(value);
+                setState(() {
+                  leadTypeId = value;
+                  leadType = cat.leadCategory;
+                  leadTypeCtrl.text = cat.leadCategory;
+                  leadSubType = 'Lead Sub Category';
+                  leadSubTypeCtrl.text = leadSubType;
+                  leadSubTypeId = '';
+                });
+              }
+            },
+            validator: (value) {
+              if (leadTypeId.isEmpty) {
+                return 'Please select Lead Category';
+              }
+              return null;
+            },
           ),
         ),
-        if (createLeadCategory == 'true')
-          Positioned(
-            right: 5,
-            child: IconButton(
-              icon: const Icon(Icons.add_circle, color: Colors.green),
-              onPressed: () => _showAddCategoryDialog(),
-            ),
+        if (createLeadCategory == 'true') ...[
+          const SizedBox(width: 4),
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: Colors.green),
+            onPressed: () => _showAddCategoryDialog(),
           ),
+        ],
       ],
     );
   }
@@ -1527,7 +1839,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           setState(() {
             isPinLoading = false;
             postalCodeModel = model;
-            postOffices = model?.postOffice ?? [];
+            postOffices = model.postOffice ?? [];
           });
         } else {
           setState(() {
@@ -1596,15 +1908,75 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
   }
 
   Widget _buildStatusField() {
-    return GestureDetector(
-      onTap: () => _showCallResultDialog(),
-      child: AbsorbPointer(
-        child: TextFormField(
-          controller: TextEditingController(text: callResult),
-          decoration:
-              _inputDecoration('Stages', Icons.arrow_drop_down_circle_outlined),
+    final statusList = commonDetails?.data.callResult ?? [];
+    if (statusList.isEmpty) {
+      return GestureDetector(
+        onTap: () => _showCallResultDialog(),
+        child: AbsorbPointer(
+          child: TextFormField(
+            controller: TextEditingController(text: callResult),
+            decoration: _inputDecoration(
+                'Stages', Icons.arrow_drop_down_circle_outlined),
+          ),
         ),
+      );
+    }
+
+    final selectedValue = statusList
+            .any((cr) => cr.callResultId.toString() == callResultId)
+        ? callResultId
+        : statusList
+                .any((cr) => cr.callResult.toLowerCase() == callResult.toLowerCase())
+            ? statusList
+                .firstWhere(
+                    (cr) => cr.callResult.toLowerCase() == callResult.toLowerCase())
+                .callResultId
+                .toString()
+            : null;
+
+    return DropdownButtonFormField<String>(
+      value: selectedValue,
+      decoration: _inputDecoration(
+          'Stages *', Icons.arrow_drop_down_circle_outlined),
+      hint: const Text(
+        'Select Stage',
+        style: TextStyle(color: Colors.grey, fontSize: 14),
       ),
+      items: statusList.map((cr) {
+        return DropdownMenuItem<String>(
+          value: cr.callResultId.toString(),
+          child: Text(cr.callResult),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value != null) {
+          final cr = statusList.firstWhere(
+            (c) => c.callResultId.toString() == value,
+          );
+          setState(() {
+            callResult = cr.callResult;
+            callResultCtrl.text = callResult;
+            callResultId = value;
+            if (callResultId != '2') nextFollowupCtrl.clear();
+            _fetchLeadExtraSettings(callResultId);
+            if (callResultId == '16' ||
+                callResult == 'Estimation & Pricing' ||
+                callResult.toLowerCase().contains('estimation')) {
+              _syncEstimationDefaults();
+              if (estimationDetails == null ||
+                  estimationDetails?.data?.liftValues == null) {
+                _fetchEstimationDetails();
+              }
+            }
+          });
+        }
+      },
+      validator: (value) {
+        if (callResultId.isEmpty) {
+          return 'Please select Stage';
+        }
+        return null;
+      },
     );
   }
 
@@ -2049,10 +2421,12 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     costCtrl.text = total.toStringAsFixed(2);
   }
 
-  InputDecoration _inputDecoration(String? label, IconData icon,
-      {bool isDense = false}) {
+  InputDecoration _inputDecoration(String? label, IconData? icon,
+      {bool isDense = false, String? hintText}) {
     return InputDecoration(
       isDense: isDense,
+      hintText: hintText,
+      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
       label: RichText(
         text: TextSpan(
           text: (label ?? "").replaceAll(' *', ''),
@@ -2067,7 +2441,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           ],
         ),
       ),
-      prefixIcon: Icon(icon, color: Colors.grey, size: 20),
+      prefixIcon: icon != null ? Icon(icon, color: Colors.grey, size: 20) : null,
       filled: true,
       fillColor: Colors.grey.shade50,
       contentPadding:
@@ -2812,11 +3186,23 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
 
     final isEstimationStage = callResult == 'Estimation & Pricing' ||
         callResult.toLowerCase().contains('estimation');
-    if (isEstimationStage) {
-      // if (_pQuotation.text.trim().isEmpty) {
-      //   Common.toastMessaage('Quotation Name is required', Colors.red);
-      //   return;
-      // }
+    if (isEstimationStage && _sendQuotation) {
+      if (_quotationTitleCtrl.text.trim().isEmpty) {
+        Common.toastMessaage('Request Title is required', Colors.red);
+        return;
+      }
+      if (_quotationMessageCtrl.text.trim().isEmpty) {
+        Common.toastMessaage('Request Message is required', Colors.red);
+        return;
+      }
+      if (_quotationType == null || _quotationType!.isEmpty) {
+        Common.toastMessaage('Select Quotation Type', Colors.red);
+        return;
+      }
+      if (_quotationAssignedTo == null || _quotationAssignedTo!.isEmpty) {
+        Common.toastMessaage('Select Assigned To Staff', Colors.red);
+        return;
+      }
     }
 
     Common.showProgressDialog(context, 'Loading...');
@@ -2892,6 +3278,11 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
       whatsappnumber_country_code: whatsappCode,
       email: emailCtrl.text,
       pricingData: pricingBody,
+      sendQuotation: _sendQuotation,
+      requestTitle: _quotationTitleCtrl.text.trim(),
+      requestMessage: _quotationMessageCtrl.text.trim(),
+      quotationType: _quotationType,
+      quotationAssignedTo: _quotationAssignedTo,
     );
     print("ADD LEAD RESPONSE: ${result.status}");
     print("ADD LEAD MESSAGE: ${result.message}");

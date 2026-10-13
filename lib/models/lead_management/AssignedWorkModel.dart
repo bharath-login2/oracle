@@ -1,6 +1,24 @@
+class SupportingStaff {
+  final String id;
+  final String staffName;
+
+  SupportingStaff({
+    required this.id,
+    required this.staffName,
+  });
+
+  factory SupportingStaff.fromJson(Map<String, dynamic> json) {
+    return SupportingStaff(
+      id: json['id']?.toString() ?? '',
+      staffName: json['staff_name']?.toString() ?? '',
+    );
+  }
+}
+
 class WorkSession {
-   final String projectId;
-    final String taskId;
+  final String projectId;
+  final String taskId;
+  final String activityId;
   final String taskName;
   final String description;
   final String remark;
@@ -8,11 +26,13 @@ class WorkSession {
   final String count;
   final String totalHours;
   final String lastUpdatedTime;
+  final List<SupportingStaff> supportingStaff;
   final List<Work> works;
 
   WorkSession({
     required this.projectId,
-     required this.taskId,
+    required this.taskId,
+    this.activityId = '',
     required this.taskName,
     required this.description,
     required this.remark,
@@ -20,20 +40,26 @@ class WorkSession {
     required this.count,
     required this.totalHours,
     required this.lastUpdatedTime,
+    this.supportingStaff = const [],
     required this.works,
   });
 
   factory WorkSession.fromJson(Map<String, dynamic> json) {
     return WorkSession(
-       projectId: json['project_id'] ?? '',
+      projectId: json['project_id'] ?? '',
       taskId: json['task_id'] ?? '',
+      activityId: json['activity_id']?.toString() ?? '',
       taskName: json['task_name'] ?? '',
       description: json['description'] ?? '',
       remark: json['remarks'] ?? '',
       status: json['status'] ?? '',
-      count: json['count'] ?? '',
-      totalHours: json['total_hours'] ?? '',
+      count: json['count']?.toString() ?? '',
+      totalHours: json['total_hours']?.toString() ?? '',
       lastUpdatedTime: json['last_updated_time'] ?? '',
+      supportingStaff: (json['supporting_staff'] as List<dynamic>?)
+              ?.map((staff) => SupportingStaff.fromJson(staff))
+              .toList() ??
+          [],
       works: (json['works'] as List<dynamic>?)
               ?.map((work) => Work.fromJson(work))
               .toList() ??
@@ -134,11 +160,11 @@ class NotificationSettings {
 
 class AssignedWork {
   final String total;
-    final String totalTask;
+  final String totalTask;
   final String id;
-   final String projectId;
+  final String projectId;
   final String projectName;
-   final String taskId;
+  final String taskId;
   final String taskName;
   final String taskDescription;
   final String assignedBy;
@@ -146,25 +172,33 @@ class AssignedWork {
   final String assignedToId;
   final String priority;
   final String createdAt;
+  final String startDate;
   final String dueDate;
   final String status;
   final String startStatus;
   final String lastWorkTime;
+  final String totalHours;
   final List<WorkSession> workSessions;
   final String clientName;
   final String clientId;
   final String moduleName;
+  final String siteLiftName;
+  final String siteLiftNo;
+  final String siteLiftId;
+  final String unitId;
+  final String unitNo;
+  final List<SupportingStaff> supportingStaff;
   final NotificationSettings notification;
   final String unreadCount;
   final String completion;
 
   AssignedWork({
     required this.total,
-     required this.totalTask,
+    required this.totalTask,
     required this.id,
-     required this.projectId,
+    required this.projectId,
     required this.projectName,
-     required this.taskId,
+    required this.taskId,
     required this.taskName,
     required this.taskDescription,
     required this.assignedBy,
@@ -172,14 +206,22 @@ class AssignedWork {
     required this.assignedToId,
     required this.priority,
     required this.createdAt,
+    this.startDate = '',
     required this.dueDate,
     required this.status,
     required this.startStatus,
     required this.lastWorkTime,
+    this.totalHours = '',
     required this.workSessions,
     required this.clientName,
     required this.clientId,
     required this.moduleName,
+    this.siteLiftName = '',
+    this.siteLiftNo = '',
+    this.siteLiftId = '',
+    this.unitId = '',
+    this.unitNo = '',
+    this.supportingStaff = const [],
     required this.notification,
     required this.unreadCount,
     required this.completion,
@@ -191,13 +233,28 @@ class AssignedWork {
             .toList() ??
         [];
 
+    final supportingStaffList = (json['supporting_staff'] as List<dynamic>?)
+            ?.map((staff) => staff is Map<String, dynamic>
+                ? SupportingStaff.fromJson(staff)
+                : SupportingStaff(id: '', staffName: staff.toString()))
+            .toList() ??
+        (json['supporting_staffs'] as List<dynamic>?)
+            ?.map((staff) => staff is Map<String, dynamic>
+                ? SupportingStaff.fromJson(staff)
+                : SupportingStaff(id: '', staffName: staff.toString()))
+            .toList() ??
+        (json['supporting_staff_names'] as List<dynamic>?)
+            ?.map((staff) => SupportingStaff(id: '', staffName: staff.toString()))
+            .toList() ??
+        workSessions.expand((s) => s.supportingStaff).toList();
+
     return AssignedWork(
       total: json['total']?.toString() ?? '',
-        totalTask: json['total_tasks']?.toString() ?? '',
+      totalTask: json['total_tasks']?.toString() ?? '',
       id: json['id']?.toString() ?? '',
-        projectName: json['project_name'] ?? '',
+      projectName: json['project_name'] ?? '',
       projectId: json['project_id'] ?? '',
-       taskId: workSessions.isNotEmpty ? workSessions.first.taskId : '',
+      taskId: workSessions.isNotEmpty ? workSessions.first.taskId : '',
       taskName: workSessions.isNotEmpty ? workSessions.first.taskName : '',
       taskDescription:
           workSessions.isNotEmpty ? workSessions.first.description : '',
@@ -206,14 +263,22 @@ class AssignedWork {
       assignedToId: json['assigned_to_id']?.toString() ?? '',
       priority: json['priority']?.toString() ?? '',
       createdAt: json['created_at'] ?? '',
+      startDate: json['start_date']?.toString() ?? '',
       dueDate: json['due_date'] ?? '',
       status: json['status'] ?? '',
       startStatus: json['start_status'] ?? '',
       lastWorkTime: json['last_work_time'] ?? '',
+      totalHours: json['total_hours']?.toString() ?? '',
       workSessions: workSessions,
       clientName: json['client name'] ?? '',
       clientId: json['client_id'] ?? '',
       moduleName: json['module name'] ?? '',
+      siteLiftName: json['site_lift_name']?.toString() ?? '',
+      siteLiftNo: json['site_lift_no']?.toString() ?? '',
+      siteLiftId: json['site_lift_id']?.toString() ?? json['site_lift_no']?.toString() ?? '',
+      unitId: json['unit_id']?.toString() ?? '',
+      unitNo: json['unit_no']?.toString() ?? '',
+      supportingStaff: supportingStaffList,
       notification: NotificationSettings.fromJson(json['notification'] ?? {}),
       unreadCount: json['unread_count'] ?? '',
       completion: json['completion'] ?? '',

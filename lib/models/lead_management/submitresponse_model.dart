@@ -20,8 +20,20 @@ class SubmitResponse {
     required this.status,
   });
 
-  factory SubmitResponse.fromJson(Map<String, dynamic> json) {
-    var rawStatus = json["status"];
+  factory SubmitResponse.fromJson(dynamic json) {
+    Map<String, dynamic> map = {};
+    if (json is String) {
+      try {
+        final decoded = jsonDecode(json);
+        if (decoded is Map) {
+          map = Map<String, dynamic>.from(decoded);
+        }
+      } catch (_) {}
+    } else if (json is Map) {
+      map = Map<String, dynamic>.from(json);
+    }
+
+    var rawStatus = map["status"];
     bool finalStatus = false;
     if (rawStatus is bool) {
       finalStatus = rawStatus;
@@ -34,8 +46,8 @@ class SubmitResponse {
     }
 
     return SubmitResponse(
-      message: json["message"]?.toString() ?? "",
-      data: json["data"],
+      message: map["message"]?.toString() ?? "",
+      data: map["data"],
       status: finalStatus,
     );
   }

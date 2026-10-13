@@ -12,8 +12,11 @@ import '../../models/lead_management/followupDetailsModel.dart';
 import '../../models/lead_management/leadSubTypeModel.dart';
 import '../../models/lead_management/leadProductsModel.dart';
 import '../../models/lead_management/leadDetailsModel.dart';
+import '../../models/userPermissionModel.dart';
 import '../../service/service.dart';
 import '../../models/lead_management/leadExtraSettings.dart';
+import 'package:login2/models/expense/staffListModel.dart' as expense;
+import 'package:login2/widgets/estimation_pricing_card.dart';
 import 'dart:developer';
 import 'package:login2/screens/product_mannagement/add_products.dart';
 
@@ -86,6 +89,75 @@ class _EditFollowupState extends State<EditFollowup> {
   final TextEditingController timeBefore = TextEditingController(text: '10');
   bool isLoadingSettings = false;
 
+  // Estimation & AMC Data
+  LeadDeatailsModel? estimationDetails;
+  UserPermissionModel? userPermissions;
+
+  // AMC section controllers & state
+  String? _amcTypeSelected;
+  final TextEditingController _amcTypeCtrl = TextEditingController();
+  final TextEditingController _liftBrandCtrl = TextEditingController();
+  final TextEditingController _ageOfLiftCtrl = TextEditingController();
+  final TextEditingController _amcPriceCtrl = TextEditingController();
+
+  // Estimation & Pricing controllers
+  final TextEditingController _pQuotationTitle = TextEditingController();
+  final TextEditingController _pQuotation = TextEditingController();
+  final TextEditingController _pClientName = TextEditingController();
+  final TextEditingController _pPhone = TextEditingController();
+  final TextEditingController _pLocation = TextEditingController();
+  final TextEditingController _pElevatorType = TextEditingController();
+  final TextEditingController _pTypeOfOpening = TextEditingController();
+  final TextEditingController _pCapacity = TextEditingController();
+  final TextEditingController _pPassengerCapacity = TextEditingController();
+  final TextEditingController _pShaftWidth = TextEditingController();
+  final TextEditingController _pShaftDepth = TextEditingController();
+  final TextEditingController _pPitDepth = TextEditingController();
+  final TextEditingController _pTravelHeight = TextEditingController();
+  final TextEditingController _pOverheadHeight = TextEditingController();
+  final TextEditingController _pDoorOpeningSize = TextEditingController();
+  final TextEditingController _pWarranty = TextEditingController();
+  final TextEditingController _pAmc = TextEditingController();
+  String? _pLiftTypeId;
+  String? _pOpeningId;
+  String? _pDoorOpeningId;
+  String? _pCabinSideWallId;
+  String? _pLandingDoorId;
+  String? _pCopId;
+  String? _pLopId;
+  final TextEditingController _pFactoryPrice = TextEditingController();
+  final TextEditingController _pTransportation = TextEditingController();
+  final TextEditingController _pInstallation = TextEditingController();
+  final TextEditingController _pTesting = TextEditingController();
+  final TextEditingController _pConsumables = TextEditingController();
+  final TextEditingController _pAdditionalFactory = TextEditingController();
+  final TextEditingController _pAdditional = TextEditingController();
+  final TextEditingController _pAmcAmount = TextEditingController();
+  final TextEditingController _pQuantity = TextEditingController();
+  final TextEditingController _pUnitPrice = TextEditingController();
+  final TextEditingController _pCompanyProfit = TextEditingController();
+  final TextEditingController _pCompanyProfitAmount = TextEditingController();
+  final TextEditingController _pSalesCommission = TextEditingController();
+  final TextEditingController _pSalesCommissionAmount = TextEditingController();
+  final TextEditingController _pSubTotal = TextEditingController();
+  final TextEditingController _pTaxPercentage = TextEditingController();
+  final TextEditingController _pTaxAmount = TextEditingController();
+  final TextEditingController _pTotalSalePrice = TextEditingController();
+  String? _pTaxType;
+
+  // Quotation Request fields
+  final TextEditingController _quotationTitleCtrl =
+      TextEditingController(text: "Quotation Request");
+  final TextEditingController _quotationMessageCtrl = TextEditingController(
+    text: "Kindly prepare and send the quotation for this lead.",
+  );
+  String? _quotationType = "General";
+  String? _quotationAssignedTo;
+  bool _sendQuotation = false;
+
+  List<expense.Staff> quotationStaffList = [];
+  bool isQuotationStaffLoading = false;
+
   Future<void> _fetchLeadExtraSettings(String callResultId) async {
     setState(() => isLoadingSettings = true);
     try {
@@ -139,6 +211,7 @@ class _EditFollowupState extends State<EditFollowup> {
       }
     }
   }
+
   final List<TextEditingController> _additionalCtrls = [];
   final List<Map<String, dynamic>> _additionalValues = [];
 
@@ -165,6 +238,47 @@ class _EditFollowupState extends State<EditFollowup> {
     whatsappLead.dispose();
     emailLead.dispose();
     timeBefore.dispose();
+    _amcTypeCtrl.dispose();
+    _liftBrandCtrl.dispose();
+    _ageOfLiftCtrl.dispose();
+    _amcPriceCtrl.dispose();
+    _pQuotationTitle.dispose();
+    _pQuotation.dispose();
+    _pClientName.dispose();
+    _pPhone.dispose();
+    _pLocation.dispose();
+    _pElevatorType.dispose();
+    _pTypeOfOpening.dispose();
+    _pCapacity.dispose();
+    _pPassengerCapacity.dispose();
+    _pShaftWidth.dispose();
+    _pShaftDepth.dispose();
+    _pPitDepth.dispose();
+    _pTravelHeight.dispose();
+    _pOverheadHeight.dispose();
+    _pWarranty.dispose();
+    _pAmc.dispose();
+    _pFactoryPrice.dispose();
+    _pTransportation.dispose();
+    _pInstallation.dispose();
+    _pTesting.dispose();
+    _pConsumables.dispose();
+    _pAdditionalFactory.dispose();
+    _pAdditional.dispose();
+    _pAmcAmount.dispose();
+    _pQuantity.dispose();
+    _pUnitPrice.dispose();
+    _pCompanyProfit.dispose();
+    _pCompanyProfitAmount.dispose();
+    _pSalesCommission.dispose();
+    _pSalesCommissionAmount.dispose();
+    _pSubTotal.dispose();
+    _pTaxPercentage.dispose();
+    _pTaxAmount.dispose();
+    _pTotalSalePrice.dispose();
+    _quotationTitleCtrl.dispose();
+    _quotationMessageCtrl.dispose();
+
     for (var ctrl in _additionalCtrls) {
       ctrl.dispose();
     }
@@ -175,6 +289,31 @@ class _EditFollowupState extends State<EditFollowup> {
     if (dmy.isEmpty) return dmy;
     final split = dmy.split("-");
     return "${split[2]}-${split[1]}-${split[0]}";
+  }
+
+  Future<void> _loadQuotationStaffs() async {
+    setState(() => isQuotationStaffLoading = true);
+    try {
+      final response = await HttpService.getStaffs();
+      if (response != null && response.status) {
+        if (mounted) {
+          setState(() {
+            quotationStaffList = response.data;
+            isQuotationStaffLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            quotationStaffList = [];
+            isQuotationStaffLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      log("Error loading quotation staff: $e");
+      if (mounted) setState(() => isQuotationStaffLoading = false);
+    }
   }
 
   getData() async {
@@ -200,8 +339,16 @@ class _EditFollowupState extends State<EditFollowup> {
       productSectionModel = await HttpService.leadProductSection();
       leadDetails =
           await HttpService.leadDetails(widget.token, widget.callMasterId);
+      estimationDetails = leadDetails;
+      userPermissions = await HttpService.userPermissionCheck(widget.token);
       followupDetails = await HttpService.followupDetails(
           widget.token, widget.callFollowupId);
+
+      _loadQuotationStaffs();
+
+      if (estimationDetails?.data != null) {
+        _initEstimationFromData(estimationDetails!.data);
+      }
 
       if (followupDetails != null) {
         if (followupDetails!.data!.leadCategoryId.toString().isNotEmpty) {
@@ -219,6 +366,272 @@ class _EditFollowupState extends State<EditFollowup> {
     }
   }
 
+  void _initEstimationFromData(dynamic data) {
+    if (data == null) return;
+    if (_pQuotationTitle.text.isEmpty &&
+        data.quotationTitle != null &&
+        data.quotationTitle!.isNotEmpty) {
+      _pQuotationTitle.text = data.quotationTitle ?? '';
+    }
+    if (_pQuotation.text.isEmpty &&
+        data.quotation != null &&
+        data.quotation!.isNotEmpty) {
+      _pQuotation.text = data.quotation ?? '';
+    }
+    if (_pClientName.text.isEmpty) {
+      if (data.clientName != null && data.clientName!.isNotEmpty) {
+        _pClientName.text = data.clientName ?? '';
+      }
+    }
+    if (_pPhone.text.isEmpty) {
+      if (data.contactNumber1 != null && data.contactNumber1!.isNotEmpty) {
+        _pPhone.text = data.contactNumber1 ?? '';
+      }
+    }
+    if (_pLocation.text.isEmpty) {
+      if (data.location != null && data.location!.isNotEmpty) {
+        _pLocation.text = data.location ?? '';
+      }
+    }
+    if (_pElevatorType.text.isEmpty &&
+        data.elevatorType != null &&
+        data.elevatorType!.isNotEmpty) {
+      _pElevatorType.text = data.elevatorType ?? '';
+    }
+    if (_pTypeOfOpening.text.isEmpty &&
+        data.typeOfOpening != null &&
+        data.typeOfOpening!.isNotEmpty) {
+      _pTypeOfOpening.text = data.typeOfOpening ?? '';
+    }
+    if (_pCapacity.text.isEmpty &&
+        data.capacity != null &&
+        data.capacity!.isNotEmpty) {
+      _pCapacity.text = data.capacity ?? '';
+    }
+    if (_pPassengerCapacity.text.isEmpty &&
+        data.passengerCapacity != null &&
+        data.passengerCapacity!.isNotEmpty) {
+      _pPassengerCapacity.text = data.passengerCapacity ?? '';
+    }
+    if (_pShaftWidth.text.isEmpty &&
+        data.shaftWidth != null &&
+        data.shaftWidth!.isNotEmpty) {
+      _pShaftWidth.text = data.shaftWidth ?? '';
+    }
+    if (_pShaftDepth.text.isEmpty &&
+        data.shaftDepth != null &&
+        data.shaftDepth!.isNotEmpty) {
+      _pShaftDepth.text = data.shaftDepth ?? '';
+    }
+    if (_pPitDepth.text.isEmpty &&
+        data.pitDepth != null &&
+        data.pitDepth!.isNotEmpty) {
+      _pPitDepth.text = data.pitDepth ?? '';
+    }
+    if (_pTravelHeight.text.isEmpty &&
+        data.travelHeight != null &&
+        data.travelHeight!.isNotEmpty) {
+      _pTravelHeight.text = data.travelHeight ?? '';
+    }
+    if (_pOverheadHeight.text.isEmpty &&
+        data.overheadHeight != null &&
+        data.overheadHeight!.isNotEmpty) {
+      _pOverheadHeight.text = data.overheadHeight ?? '';
+    }
+    if (_pDoorOpeningSize.text.isEmpty &&
+        data.doorOpeningSize != null &&
+        data.doorOpeningSize!.isNotEmpty) {
+      _pDoorOpeningSize.text = data.doorOpeningSize ?? '';
+    }
+    if (_pWarranty.text.isEmpty &&
+        data.warranty != null &&
+        data.warranty!.isNotEmpty) {
+      _pWarranty.text = data.warranty ?? '';
+    }
+    if (_pAmc.text.isEmpty && data.amc != null && data.amc!.isNotEmpty) {
+      _pAmc.text = data.amc ?? '';
+    }
+    if (_pFactoryPrice.text.isEmpty &&
+        data.factoryPrice != null &&
+        data.factoryPrice!.isNotEmpty) {
+      _pFactoryPrice.text = data.factoryPrice ?? '';
+    }
+    if (_pTransportation.text.isEmpty &&
+        data.transportationCharge != null &&
+        data.transportationCharge!.isNotEmpty) {
+      _pTransportation.text = data.transportationCharge ?? '';
+    }
+    if (_pInstallation.text.isEmpty &&
+        data.installationCharge != null &&
+        data.installationCharge!.isNotEmpty) {
+      _pInstallation.text = data.installationCharge ?? '';
+    }
+    if (_pTesting.text.isEmpty &&
+        data.testingCharge != null &&
+        data.testingCharge!.isNotEmpty) {
+      _pTesting.text = data.testingCharge ?? '';
+    }
+    if (_pConsumables.text.isEmpty &&
+        data.consumables != null &&
+        data.consumables!.isNotEmpty) {
+      _pConsumables.text = data.consumables ?? '';
+    }
+    if (_pAdditionalFactory.text.isEmpty &&
+        data.additionalChargesApartFromFactory != null &&
+        data.additionalChargesApartFromFactory!.isNotEmpty) {
+      _pAdditionalFactory.text = data.additionalChargesApartFromFactory ?? '';
+    }
+    if (_pAdditional.text.isEmpty &&
+        data.additionalCharge != null &&
+        data.additionalCharge!.isNotEmpty) {
+      _pAdditional.text = data.additionalCharge ?? '';
+    }
+    if (_pAmcAmount.text.isEmpty &&
+        data.amcAmount != null &&
+        data.amcAmount!.isNotEmpty) {
+      _pAmcAmount.text = data.amcAmount ?? '';
+    }
+    if (_pUnitPrice.text.isEmpty &&
+        data.unitPrice != null &&
+        data.unitPrice!.isNotEmpty) {
+      _pUnitPrice.text = data.unitPrice ?? '';
+    }
+    if (_pCompanyProfit.text.isEmpty &&
+        data.companyProfit != null &&
+        data.companyProfit!.isNotEmpty) {
+      _pCompanyProfit.text = data.companyProfit ?? '';
+    }
+    if (_pCompanyProfitAmount.text.isEmpty &&
+        data.companyProfitAmount != null &&
+        data.companyProfitAmount!.isNotEmpty) {
+      _pCompanyProfitAmount.text = data.companyProfitAmount ?? '';
+    }
+    if (_pSalesCommission.text.isEmpty &&
+        data.salesCommission != null &&
+        data.salesCommission!.isNotEmpty) {
+      _pSalesCommission.text = data.salesCommission ?? '';
+    }
+    if (_pSalesCommissionAmount.text.isEmpty &&
+        data.salesCommissionAmount != null &&
+        data.salesCommissionAmount!.isNotEmpty) {
+      _pSalesCommissionAmount.text = data.salesCommissionAmount ?? '';
+    }
+    if (_pSubTotal.text.isEmpty &&
+        data.subTotal != null &&
+        data.subTotal!.isNotEmpty) {
+      _pSubTotal.text = data.subTotal ?? '';
+    }
+    if (_pTaxPercentage.text.isEmpty &&
+        data.taxPercentage != null &&
+        data.taxPercentage!.isNotEmpty) {
+      _pTaxPercentage.text = data.taxPercentage ?? '';
+    }
+    if (_pTaxAmount.text.isEmpty &&
+        data.taxAmount != null &&
+        data.taxAmount!.isNotEmpty) {
+      _pTaxAmount.text = data.taxAmount ?? '';
+    }
+    if (_pTotalSalePrice.text.isEmpty &&
+        data.totalSalePrice != null &&
+        data.totalSalePrice!.isNotEmpty) {
+      _pTotalSalePrice.text = data.totalSalePrice ?? '';
+    }
+
+    _pLiftTypeId ??= _validSpecId(data.liftValues, data.liftType);
+    _pOpeningId ??= _validSpecId(data.opening, data.openingName);
+    _pDoorOpeningId ??= _validSpecId(data.cabinOpening, data.doorOpening);
+    _pCabinSideWallId ??=
+        _validSpecId(data.cabinSideWall, data.cabinSideWallName);
+    _pLandingDoorId ??= _validSpecId(data.landingDoor, data.landingDoorName);
+    _pCopId ??= _validSpecId(data.cop, data.copName);
+    _pLopId ??= _validSpecId(data.lop, data.lopName);
+    _pTaxType ??= (data.taxType != null && data.taxType!.isNotEmpty)
+        ? data.taxType
+        : null;
+  }
+
+  String? _validSpecId(List<dynamic>? list, String? id) {
+    if (list == null || id == null || id.isEmpty) return null;
+    return list.any((e) {
+      if (e is CommonValue) return e.valueId == id;
+      try {
+        if (e.valueId != null) return e.valueId == id;
+      } catch (_) {}
+      return e.toString() == id;
+    })
+        ? id
+        : null;
+  }
+
+  Map<String, dynamic> _buildPricingBody() {
+    final elevatorTypeVal = _liftBrandCtrl.text.trim().isNotEmpty
+        ? _liftBrandCtrl.text
+        : _pElevatorType.text;
+    final amcTypeVal = _pAmc.text.trim().isNotEmpty
+        ? _pAmc.text
+        : (_amcTypeCtrl.text.trim().isNotEmpty ? _amcTypeCtrl.text : _pAmc.text);
+    final amcAmountVal = _pAmcAmount.text.trim().isNotEmpty
+        ? _pAmcAmount.text
+        : (_amcPriceCtrl.text.trim().isNotEmpty ? _amcPriceCtrl.text : _pAmcAmount.text);
+    final unitPriceVal = _pUnitPrice.text.trim().isNotEmpty
+        ? _pUnitPrice.text
+        : (_amcPriceCtrl.text.trim().isNotEmpty ? _amcPriceCtrl.text : _pUnitPrice.text);
+    final grandTotalVal = _pTotalSalePrice.text.trim().isNotEmpty
+        ? _pTotalSalePrice.text
+        : (_amcPriceCtrl.text.trim().isNotEmpty ? _amcPriceCtrl.text : _pTotalSalePrice.text);
+    final warrantyVal = _pWarranty.text.trim().isNotEmpty
+        ? _pWarranty.text
+        : (_ageOfLiftCtrl.text.trim().isNotEmpty ? _ageOfLiftCtrl.text : _pWarranty.text);
+
+    return <String, dynamic>{
+      'quotation_title': _pQuotationTitle.text,
+      'quotation': _pQuotation.text,
+      'client_name': _pClientName.text,
+      'phone': _pPhone.text,
+      'location': _pLocation.text,
+      'lift_brand': elevatorTypeVal,
+      'type_of_opening': _pTypeOfOpening.text,
+      'lift_capacity': _pCapacity.text,
+      'no_of_passenger': _pPassengerCapacity.text,
+      'shaft_width': _pShaftWidth.text,
+      'shaft_depth': _pShaftDepth.text,
+      'pit_depth': _pPitDepth.text,
+      'travel_height': _pTravelHeight.text,
+      'over_head_height': _pOverheadHeight.text,
+      'lift_type': _pLiftTypeId ?? '',
+      'opening_type': _pOpeningId ?? '',
+      'door_opening': _pDoorOpeningId ?? '',
+      'door_opening_size': _pDoorOpeningSize.text,
+      'cabin_side_wall': _pCabinSideWallId ?? '',
+      'landing_door': _pLandingDoorId ?? '',
+      'cop': _pCopId ?? '',
+      'lop': _pLopId ?? '',
+      'wr': _pWarranty.text.trim().isNotEmpty ? _pWarranty.text.trim() : warrantyVal,
+      'warranty': _pWarranty.text.trim().isNotEmpty ? _pWarranty.text.trim() : warrantyVal,
+      'amc': _pAmc.text.trim().isNotEmpty ? _pAmc.text.trim() : amcTypeVal,
+      'amc_year': _pAmc.text.trim().isNotEmpty ? _pAmc.text.trim() : amcTypeVal,
+      'factory_price': _pFactoryPrice.text,
+      'transportation': _pTransportation.text,
+      'installation_charge': _pInstallation.text,
+      'testing_commissioning': _pTesting.text,
+      'consumables': _pConsumables.text,
+      'additional_factory_charges': _pAdditionalFactory.text,
+      'additional_amount': _pAdditional.text,
+      'amc_amount': amcAmountVal,
+      'quantity': _pQuantity.text.isNotEmpty ? _pQuantity.text : '1',
+      'price': unitPriceVal,
+      'tax_type': _pTaxType ?? '',
+      'tax': _pTaxPercentage.text,
+      'tax_amount': _pTaxAmount.text,
+      'comp_profit': _pCompanyProfit.text,
+      'comp_profit_amount': _pCompanyProfitAmount.text,
+      'sales_commission': _pSalesCommission.text,
+      'sales_commission_amount': _pSalesCommissionAmount.text,
+      'sub_total': _pSubTotal.text,
+      'grand_total': grandTotalVal,
+    };
+  }
+
   void _initializeAdditionalFields() {
     if (commonDetails?.data.additionalFields != null) {
       if (_additionalCtrls.length !=
@@ -229,7 +642,6 @@ class _EditFollowupState extends State<EditFollowup> {
         _additionalCtrls.clear();
         for (int i = 0; i < commonDetails!.data.additionalFields.length; i++) {
           String initialValue = "";
-          // If editing, try to find existing value
           if (followupDetails?.data?.additionalFields != null) {
             final fieldId = commonDetails!.data.additionalFields[i].id;
             final existing = followupDetails!.data!.additionalFields!
@@ -296,6 +708,177 @@ class _EditFollowupState extends State<EditFollowup> {
       callResultReasonId = followupDetails!.data!.reasonId.toString();
       callReasonVal.text = followupDetails!.data!.reason.toString();
 
+      final fd = followupDetails?.data;
+      final ld = leadDetails?.data;
+
+      // Populate AMC section fields
+      final amcVal = (fd?.amcType != null && fd!.amcType!.isNotEmpty)
+          ? fd.amcType
+          : ((fd?.amc != null && fd!.amc!.isNotEmpty)
+              ? fd.amc
+              : ld?.amc);
+      if (amcVal != null && amcVal.isNotEmpty) {
+        _amcTypeSelected = amcVal;
+        _amcTypeCtrl.text = amcVal;
+      }
+
+      final brandVal = (fd?.liftBrand != null && fd!.liftBrand!.isNotEmpty)
+          ? fd.liftBrand
+          : ((fd?.elevatorType != null && fd!.elevatorType!.isNotEmpty)
+              ? fd.elevatorType
+              : ld?.elevatorType);
+      if (brandVal != null && brandVal.isNotEmpty) {
+        _liftBrandCtrl.text = brandVal;
+      }
+
+      final ageVal = (fd?.ageOfLift != null && fd!.ageOfLift!.isNotEmpty)
+          ? fd.ageOfLift
+          : ((fd?.wr != null && fd!.wr!.isNotEmpty)
+              ? fd.wr
+              : ld?.warranty);
+      if (ageVal != null && ageVal.isNotEmpty) {
+        _ageOfLiftCtrl.text = ageVal;
+      }
+
+      final subjectVal = (fd?.subject != null && fd!.subject!.isNotEmpty)
+          ? fd.subject
+          : ((fd?.quotationTitle != null && fd!.quotationTitle!.isNotEmpty)
+              ? fd.quotationTitle
+              : ld?.quotationTitle);
+      if (subjectVal != null && subjectVal.isNotEmpty) {
+        _pQuotationTitle.text = subjectVal;
+      }
+
+      final passCapVal = (fd?.passengerCapacity != null && fd!.passengerCapacity!.isNotEmpty)
+          ? fd.passengerCapacity
+          : ((fd?.noOfPassenger != null && fd!.noOfPassenger!.isNotEmpty)
+              ? fd.noOfPassenger
+              : ld?.passengerCapacity);
+      if (passCapVal != null && passCapVal.isNotEmpty) {
+        _pPassengerCapacity.text = passCapVal;
+      }
+
+      final amcPriceVal = (fd?.amcPrice != null && fd!.amcPrice!.isNotEmpty && fd.amcPrice != "0")
+          ? fd.amcPrice
+          : ((fd?.amcAmount != null && fd!.amcAmount!.isNotEmpty && fd.amcAmount != "0.00")
+              ? fd.amcAmount
+              : ((fd?.grandTotal != null && fd!.grandTotal!.isNotEmpty && fd.grandTotal != "0.00")
+                  ? fd.grandTotal
+                  : (ld?.amcAmount ?? ld?.totalSalePrice)));
+      if (amcPriceVal != null && amcPriceVal.isNotEmpty) {
+        _amcPriceCtrl.text = amcPriceVal;
+      }
+
+      // Populate Supply & Installation / Estimation & Pricing fields from followup details
+      if (fd != null) {
+        if (fd.clientName != null && fd.clientName!.isNotEmpty) {
+          _pClientName.text = fd.clientName!;
+        }
+        if (fd.phone != null && fd.phone!.isNotEmpty) {
+          _pPhone.text = fd.phone!;
+        }
+        if (fd.location != null && fd.location!.isNotEmpty) {
+          _pLocation.text = fd.location!;
+        }
+        if (fd.elevatorType != null && fd.elevatorType!.isNotEmpty) {
+          _pElevatorType.text = fd.elevatorType!;
+        }
+        if (fd.typeOfOpening != null && fd.typeOfOpening!.isNotEmpty) {
+          _pTypeOfOpening.text = fd.typeOfOpening!;
+        }
+        if (fd.liftCapacity != null && fd.liftCapacity!.isNotEmpty) {
+          _pCapacity.text = fd.liftCapacity!;
+        }
+        if (fd.shaftWidth != null && fd.shaftWidth!.isNotEmpty) {
+          _pShaftWidth.text = fd.shaftWidth!;
+        }
+        if (fd.shaftDepth != null && fd.shaftDepth!.isNotEmpty) {
+          _pShaftDepth.text = fd.shaftDepth!;
+        }
+        if (fd.pitDepth != null && fd.pitDepth!.isNotEmpty) {
+          _pPitDepth.text = fd.pitDepth!;
+        }
+        if (fd.travelHeight != null && fd.travelHeight!.isNotEmpty) {
+          _pTravelHeight.text = fd.travelHeight!;
+        }
+        if (fd.overHeadHeight != null && fd.overHeadHeight!.isNotEmpty) {
+          _pOverheadHeight.text = fd.overHeadHeight!;
+        }
+        if (fd.doorOpeningSize != null && fd.doorOpeningSize!.isNotEmpty) {
+          _pDoorOpeningSize.text = fd.doorOpeningSize!;
+        }
+        if (fd.wr != null && fd.wr!.isNotEmpty) {
+          _pWarranty.text = fd.wr!;
+        }
+        if (fd.amc != null && fd.amc!.isNotEmpty) {
+          _pAmc.text = fd.amc!;
+        }
+        if (fd.factoryPrice != null && fd.factoryPrice!.isNotEmpty) {
+          _pFactoryPrice.text = fd.factoryPrice!;
+        }
+        if (fd.transportation != null && fd.transportation!.isNotEmpty) {
+          _pTransportation.text = fd.transportation!;
+        }
+        if (fd.installationCharge != null && fd.installationCharge!.isNotEmpty) {
+          _pInstallation.text = fd.installationCharge!;
+        }
+        if (fd.testingCommissioning != null && fd.testingCommissioning!.isNotEmpty) {
+          _pTesting.text = fd.testingCommissioning!;
+        }
+        if (fd.consumables != null && fd.consumables!.isNotEmpty) {
+          _pConsumables.text = fd.consumables!;
+        }
+        if (fd.additionalFactoryCharges != null && fd.additionalFactoryCharges!.isNotEmpty) {
+          _pAdditionalFactory.text = fd.additionalFactoryCharges!;
+        }
+        if (fd.additionalAmount != null && fd.additionalAmount!.isNotEmpty) {
+          _pAdditional.text = fd.additionalAmount!;
+        }
+        if (fd.amcAmount != null && fd.amcAmount!.isNotEmpty) {
+          _pAmcAmount.text = fd.amcAmount!;
+        }
+        if (fd.price != null && fd.price!.isNotEmpty) {
+          _pUnitPrice.text = fd.price!;
+        }
+        if (fd.compProfit != null && fd.compProfit!.isNotEmpty) {
+          _pCompanyProfit.text = fd.compProfit!;
+        }
+        if (fd.compProfitAmount != null && fd.compProfitAmount!.isNotEmpty) {
+          _pCompanyProfitAmount.text = fd.compProfitAmount!;
+        }
+        if (fd.salesCommission != null && fd.salesCommission!.isNotEmpty) {
+          _pSalesCommission.text = fd.salesCommission!;
+        }
+        if (fd.salesCommissionAmount != null && fd.salesCommissionAmount!.isNotEmpty) {
+          _pSalesCommissionAmount.text = fd.salesCommissionAmount!;
+        }
+        if (fd.subTotal != null && fd.subTotal!.isNotEmpty) {
+          _pSubTotal.text = fd.subTotal!;
+        }
+        if (fd.tax != null && fd.tax!.isNotEmpty) {
+          _pTaxPercentage.text = fd.tax!;
+        }
+        if (fd.taxAmount != null && fd.taxAmount!.isNotEmpty) {
+          _pTaxAmount.text = fd.taxAmount!;
+        }
+        if (fd.grandTotal != null && fd.grandTotal!.isNotEmpty) {
+          _pTotalSalePrice.text = fd.grandTotal!;
+        }
+
+        if (fd.liftType != null && fd.liftType!.isNotEmpty) _pLiftTypeId = fd.liftType;
+        if (fd.openingType != null && fd.openingType!.isNotEmpty) _pOpeningId = fd.openingType;
+        if (fd.doorOpening != null && fd.doorOpening!.isNotEmpty) _pDoorOpeningId = fd.doorOpening;
+        if (fd.cabinSideWall != null && fd.cabinSideWall!.isNotEmpty) _pCabinSideWallId = fd.cabinSideWall;
+        if (fd.landingDoor != null && fd.landingDoor!.isNotEmpty) _pLandingDoorId = fd.landingDoor;
+        if (fd.cop != null && fd.cop!.isNotEmpty) _pCopId = fd.cop;
+        if (fd.lop != null && fd.lop!.isNotEmpty) _pLopId = fd.lop;
+        if (fd.taxType != null && fd.taxType!.isNotEmpty) _pTaxType = fd.taxType;
+      }
+
+      if (ld != null) {
+        _initEstimationFromData(ld);
+      }
+
       callResultReasonList();
       _fetchLeadExtraSettings(callResultId);
 
@@ -359,6 +942,19 @@ class _EditFollowupState extends State<EditFollowup> {
       return;
     }
 
+    final isEstimationStage = callResultId == '16' ||
+        callResult == 'Estimation & Pricing' ||
+        callResult.toLowerCase().contains('estimation');
+
+    final isAmcCategory = leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC';
+
+    if (isEstimationStage && isAmcCategory) {
+      if (_amcPriceCtrl.text.trim().isNotEmpty && cost.text.trim().isEmpty) {
+        cost.text = _amcPriceCtrl.text.trim();
+      }
+    }
+
     if (context.mounted) {
       Common.showProgressDialog(context, "Loading..");
     }
@@ -373,6 +969,8 @@ class _EditFollowupState extends State<EditFollowup> {
         });
       }
     }
+
+    final pricingBody = isEstimationStage ? _buildPricingBody() : null;
 
     EditLeadFollowupModel object1 = await HttpService.editLeadsFollowupUpdated(
         widget.token,
@@ -392,7 +990,18 @@ class _EditFollowupState extends State<EditFollowup> {
         _additionalValues,
         whatsappLead: whatsappLead.text,
         emailLead: emailLead.text,
-        products: _selectedProducts.map((p) => p.id).join(','));
+        products: _selectedProducts.map((p) => p.id).join(','),
+        pricingData: pricingBody,
+        amcType: _amcTypeCtrl.text.trim().isNotEmpty
+            ? _amcTypeCtrl.text.trim()
+            : _amcTypeSelected,
+        liftBrand: _liftBrandCtrl.text.trim(),
+        ageOfLift: _ageOfLiftCtrl.text.trim(),
+        subject: _pQuotationTitle.text.trim(),
+        passengerCapacity: _pPassengerCapacity.text.trim(),
+        amcPrice: _amcPriceCtrl.text.trim(),
+        warranty: _pWarranty.text.trim(),
+        amc: _pAmc.text.trim());
 
     if (context.mounted) Navigator.pop(context);
 
@@ -520,7 +1129,106 @@ class _EditFollowupState extends State<EditFollowup> {
     );
   }
 
+  Widget _buildAMCSection() {
+    return _buildSectionCard(
+      title: 'AMC',
+      icon: Icons.shield_outlined,
+      children: [
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value: _amcTypeSelected,
+                decoration: _inputDecoration('AMC Type *', Icons.merge_type),
+                hint: const Text(
+                  'Select AMC Type',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                      value: 'Comprehensive AMC',
+                      child: Text('Comprehensive AMC')),
+                  DropdownMenuItem(
+                      value: 'Non Comprehensive AMC',
+                      child: Text('Non Comprehensive AMC')),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    _amcTypeSelected = val;
+                    _amcTypeCtrl.text = val ?? '';
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _liftBrandCtrl,
+                decoration:
+                    _inputDecoration('Lift Brand *', Icons.branding_watermark),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _ageOfLiftCtrl,
+                decoration:
+                    _inputDecoration('Age of Lift *', Icons.access_time),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _pQuotationTitle,
+                decoration: _inputDecoration('Subject *', Icons.title),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _pPassengerCapacity,
+                decoration: _inputDecoration(
+                    'Passenger Capacity/KG *', Icons.people_outline),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: _amcPriceCtrl,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration('Price *', Icons.currency_rupee),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildForm() {
+    final isEstimationStage = callResultId == '16' ||
+        callResult == 'Estimation & Pricing' ||
+        callResult.toLowerCase().contains('estimation');
+
+    final isAmcCategory = leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC';
+
+    final isRepairCategory = leadTypeId == '12' ||
+        leadType.trim().toUpperCase() == 'REPAIR' ||
+        leadType.trim().toLowerCase() == 'repairing';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -554,6 +1262,140 @@ class _EditFollowupState extends State<EditFollowup> {
                   _buildNextFollowupField(),
               ],
             ),
+            if (isEstimationStage) ...[
+              const SizedBox(height: 12),
+              if (isAmcCategory) ...[
+                _buildAMCSection(),
+              ] else if (isRepairCategory) ...[
+                EstimationPricingCard(
+                  data: estimationDetails?.data,
+                  permissions: userPermissions,
+                  showEstimation: true,
+                  showPricing: false,
+                  initialClientName: _pClientName.text,
+                  initialPhone: _pPhone.text,
+                  initialLocation: _pLocation.text,
+                  quotationTitleCtrl: _pQuotationTitle,
+                  quotationCtrl: _pQuotation,
+                  clientNameCtrl: _pClientName,
+                  phoneCtrl: _pPhone,
+                  locationCtrl: _pLocation,
+                  elevatorTypeCtrl: _pElevatorType,
+                  typeOfOpeningCtrl: _pTypeOfOpening,
+                  capacityCtrl: _pCapacity,
+                  passengerCapacityCtrl: _pPassengerCapacity,
+                  shaftWidthCtrl: _pShaftWidth,
+                  shaftDepthCtrl: _pShaftDepth,
+                  pitDepthCtrl: _pPitDepth,
+                  travelHeightCtrl: _pTravelHeight,
+                  overheadHeightCtrl: _pOverheadHeight,
+                  doorOpeningSizeCtrl: _pDoorOpeningSize,
+                  warrantyCtrl: _pWarranty,
+                  amcCtrl: _pAmc,
+                  liftTypeId: _pLiftTypeId,
+                  openingId: _pOpeningId,
+                  doorOpeningId: _pDoorOpeningId,
+                  cabinSideWallId: _pCabinSideWallId,
+                  landingDoorId: _pLandingDoorId,
+                  copId: _pCopId,
+                  lopId: _pLopId,
+                  onLiftTypeChanged: (v) => setState(() => _pLiftTypeId = v),
+                  onOpeningChanged: (v) => setState(() => _pOpeningId = v),
+                  onDoorOpeningChanged: (v) =>
+                      setState(() => _pDoorOpeningId = v),
+                  onCabinSideWallChanged: (v) =>
+                      setState(() => _pCabinSideWallId = v),
+                  onLandingDoorChanged: (v) =>
+                      setState(() => _pLandingDoorId = v),
+                  onCopChanged: (v) => setState(() => _pCopId = v),
+                  onLopChanged: (v) => setState(() => _pLopId = v),
+                  factoryPriceCtrl: _pFactoryPrice,
+                  transportationCtrl: _pTransportation,
+                  installationCtrl: _pInstallation,
+                  testingCtrl: _pTesting,
+                  consumablesCtrl: _pConsumables,
+                  additionalFactoryCtrl: _pAdditionalFactory,
+                  additionalCtrl: _pAdditional,
+                  amcAmountCtrl: _pAmcAmount,
+                  quantityCtrl: _pQuantity,
+                  unitPriceCtrl: _pUnitPrice,
+                  companyProfitCtrl: _pCompanyProfit,
+                  companyProfitAmountCtrl: _pCompanyProfitAmount,
+                  salesCommissionCtrl: _pSalesCommission,
+                  salesCommissionAmountCtrl: _pSalesCommissionAmount,
+                  subTotalCtrl: _pSubTotal,
+                  taxPercentageCtrl: _pTaxPercentage,
+                  taxAmountCtrl: _pTaxAmount,
+                  totalSalePriceCtrl: _pTotalSalePrice,
+                  taxType: _pTaxType,
+                  onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
+                ),
+              ] else ...[
+                EstimationPricingCard(
+                  data: estimationDetails?.data,
+                  permissions: userPermissions,
+                  showEstimation: true,
+                  showPricing: false,
+                  initialClientName: _pClientName.text,
+                  initialPhone: _pPhone.text,
+                  initialLocation: _pLocation.text,
+                  quotationTitleCtrl: _pQuotationTitle,
+                  quotationCtrl: _pQuotation,
+                  clientNameCtrl: _pClientName,
+                  phoneCtrl: _pPhone,
+                  locationCtrl: _pLocation,
+                  elevatorTypeCtrl: _pElevatorType,
+                  typeOfOpeningCtrl: _pTypeOfOpening,
+                  capacityCtrl: _pCapacity,
+                  passengerCapacityCtrl: _pPassengerCapacity,
+                  shaftWidthCtrl: _pShaftWidth,
+                  shaftDepthCtrl: _pShaftDepth,
+                  pitDepthCtrl: _pPitDepth,
+                  travelHeightCtrl: _pTravelHeight,
+                  overheadHeightCtrl: _pOverheadHeight,
+                  doorOpeningSizeCtrl: _pDoorOpeningSize,
+                  warrantyCtrl: _pWarranty,
+                  amcCtrl: _pAmc,
+                  liftTypeId: _pLiftTypeId,
+                  openingId: _pOpeningId,
+                  doorOpeningId: _pDoorOpeningId,
+                  cabinSideWallId: _pCabinSideWallId,
+                  landingDoorId: _pLandingDoorId,
+                  copId: _pCopId,
+                  lopId: _pLopId,
+                  onLiftTypeChanged: (v) => setState(() => _pLiftTypeId = v),
+                  onOpeningChanged: (v) => setState(() => _pOpeningId = v),
+                  onDoorOpeningChanged: (v) =>
+                      setState(() => _pDoorOpeningId = v),
+                  onCabinSideWallChanged: (v) =>
+                      setState(() => _pCabinSideWallId = v),
+                  onLandingDoorChanged: (v) =>
+                      setState(() => _pLandingDoorId = v),
+                  onCopChanged: (v) => setState(() => _pCopId = v),
+                  onLopChanged: (v) => setState(() => _pLopId = v),
+                  factoryPriceCtrl: _pFactoryPrice,
+                  transportationCtrl: _pTransportation,
+                  installationCtrl: _pInstallation,
+                  testingCtrl: _pTesting,
+                  consumablesCtrl: _pConsumables,
+                  additionalFactoryCtrl: _pAdditionalFactory,
+                  additionalCtrl: _pAdditional,
+                  amcAmountCtrl: _pAmcAmount,
+                  quantityCtrl: _pQuantity,
+                  unitPriceCtrl: _pUnitPrice,
+                  companyProfitCtrl: _pCompanyProfit,
+                  companyProfitAmountCtrl: _pCompanyProfitAmount,
+                  salesCommissionCtrl: _pSalesCommission,
+                  salesCommissionAmountCtrl: _pSalesCommissionAmount,
+                  subTotalCtrl: _pSubTotal,
+                  taxPercentageCtrl: _pTaxPercentage,
+                  taxAmountCtrl: _pTaxAmount,
+                  totalSalePriceCtrl: _pTotalSalePrice,
+                  taxType: _pTaxType,
+                  onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
+                ),
+              ],
+            ],
             const SizedBox(height: 12),
             _buildSectionCard(
               title: 'Product Details',
@@ -594,27 +1436,6 @@ class _EditFollowupState extends State<EditFollowup> {
                   ..._buildAdditionalFieldsUI(),
                 ],
               ),
-            // const SizedBox(height: 12),
-            // _buildSectionCard(
-            //   title: 'Category & Sub Category',
-            //   icon: Icons.category_outlined,
-            //   children: [
-            //     const SizedBox(height: 12),
-            //     _buildLeadCategoryField(),
-            //     const SizedBox(height: 12),
-            //     if (leadSubTypeList?.data?.isNotEmpty ?? false)
-            //       _buildLeadSubCategoryField(),
-            //   ],
-            // ),
-            // const SizedBox(height: 12),
-            // _buildSectionCard(
-            //   title: 'Additional Information',
-            //   icon: Icons.note_outlined,
-            //   children: [
-            //     const SizedBox(height: 12),
-            //     _buildRemarksField(),
-            //   ],
-            // ),
             const SizedBox(height: 24),
             _buildSubmitButton(),
             const SizedBox(height: 20),
@@ -723,7 +1544,8 @@ class _EditFollowupState extends State<EditFollowup> {
       ],
     );
   }
-Widget _buildProductSelection() {
+
+  Widget _buildProductSelection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1145,7 +1967,6 @@ Widget _buildProductSelection() {
       child: AbsorbPointer(
         child: TextFormField(
           controller: leadTypeVal,
-          //   validator: (v) => v!.isEmpty ? 'Lead category is required' : null,
           decoration: _inputDecoration('Lead Category', Icons.category),
         ),
       ),
@@ -1207,7 +2028,7 @@ Widget _buildProductSelection() {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon,
+  InputDecoration _inputDecoration(String label, IconData? icon,
       {bool isDense = false}) {
     return InputDecoration(
       isDense: isDense,
@@ -1225,7 +2046,7 @@ Widget _buildProductSelection() {
           ],
         ),
       ),
-      prefixIcon: Icon(icon, color: Colors.grey, size: 20),
+      prefixIcon: icon != null ? Icon(icon, color: Colors.grey, size: 20) : null,
       filled: true,
       fillColor: Colors.grey.shade50,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -1362,7 +2183,7 @@ Widget _buildProductSelection() {
                             onTap: () async {
                               leadSubTypeList = await HttpService.leadSubType(
                                   filtered[i].leadCategoryId.toString());
-                              setState(() {
+                              this.setState(() {
                                 leadTypeVal.text =
                                     filtered[i].leadCategory.toString();
                                 leadType = filtered[i].leadCategory.toString();

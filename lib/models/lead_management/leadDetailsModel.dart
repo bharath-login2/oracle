@@ -21,6 +21,8 @@ class Data {
   String? cost;
   String? assignedUserId;
   String? callResultId;
+  String? callResponseId;
+  String? callResponse;
   String? calledDate;
   String? createdDate;
   String? createdStaff;
@@ -78,6 +80,10 @@ List<CommonValue>? lop;
 // Estimation
 String? quotationTitle;
 String? quotation;
+String? requestTitle;
+String? requestMessage;
+String? quotationType;
+String? quotationAssignedTo;
 String? location;
 String? elevatorType;
 String? typeOfOpening;
@@ -91,6 +97,7 @@ String? travelHeight;
 String? overheadHeight;
 String? openingName;
 String? doorOpening;
+String? doorOpeningSize;
 String? cabinSideWallName;
 String? landingDoorName;
 String? copName;
@@ -118,6 +125,11 @@ String? taxType;
 String? taxPercentage;
 String? taxAmount;
 String? totalSalePrice;
+  Map<String, dynamic>? rawJson;
+  Map<String, dynamic>? amcDetails;
+  dynamic additionalFields;
+  String? quoteRequestSts;
+  Map<String, dynamic>? liftQuotation;
   Data({
     this.callMasterId,
     this.leadCategoryId,
@@ -127,6 +139,8 @@ String? totalSalePrice;
     this.cost,
     this.assignedUserId,
     this.callResultId,
+    this.callResponseId,
+    this.callResponse,
     this.calledDate,
     this.createdDate,
     this.createdStaff,
@@ -193,6 +207,7 @@ this.travelHeight,
 this.overheadHeight,
 this.openingName,
 this.doorOpening,
+this.doorOpeningSize,
 this.cabinSideWallName,
 this.landingDoorName,
 this.copName,
@@ -218,9 +233,23 @@ this.taxType,
 this.taxPercentage,
 this.taxAmount,
 this.totalSalePrice,
+    this.rawJson,
+    this.amcDetails,
+    this.additionalFields,
+    this.quoteRequestSts,
+    this.liftQuotation,
   });
 
   Data.fromJson(Map<String, dynamic> json) {
+    rawJson = json;
+    quoteRequestSts = json['quote_request_sts']?.toString() ?? "";
+    if (json['amc_details'] is Map<String, dynamic>) {
+      amcDetails = json['amc_details'];
+    }
+    additionalFields = json['additional_fields'];
+    if (json['lift_quotation'] is Map<String, dynamic>) {
+      liftQuotation = json['lift_quotation'];
+    }
     callMasterId = json['call_master_id'] ?? "";
     leadCategoryId = json['lead_category_id'] ?? "";
     leadSubCategoryId = json['lead_sub_category_id'] ?? "";
@@ -230,6 +259,8 @@ this.totalSalePrice,
     assignedUserId = json['assigned_user_id'] ?? "";
     callResultId =
         (json['call_result_id'] ?? json['call_response_id'] ?? "").toString();
+    callResponseId = json['call_response_id']?.toString() ?? "";
+    callResponse = json['call_response']?.toString() ?? "";
     calledDate = json['called_date'] ?? "";
     createdStaff = json['created_staff'] ?? "";
     createdDate = json['created_date'] ?? "";
@@ -356,8 +387,12 @@ if (json['lop'] != null) {
     state = json['state'] ?? "";
     district = json['district'] ?? "";
     whatsappNumberCountryCode = json['whatsapp_country_code'] ?? "";
-    quotationTitle = pricing['quotation_title'] ?? "";
+    quotationTitle = pricing['quotation_title'] ?? json['request_title'] ?? "";
     quotation = pricing['quotation_name'] ?? "";
+    requestTitle = pricing['request_title'] ?? json['request_title'] ?? json['requestTitle'] ?? "";
+    requestMessage = pricing['request_message'] ?? json['request_message'] ?? json['requestMessage'] ?? "";
+    quotationType = pricing['quotation_type'] ?? pricing['type'] ?? json['quotation_type'] ?? json['type'] ?? "";
+    quotationAssignedTo = pricing['quotation_assigned_to'] ?? pricing['assigned_to'] ?? json['quotation_assigned_to'] ?? json['assigned_to'] ?? "";
 location = pricing['location'] ?? "";
 elevatorType = pricing['elevator_type'] ?? "";
 typeOfOpening = pricing['type_of_opening'] ?? "";
@@ -365,6 +400,7 @@ passengerCapacity = pricing['no_of_passenger'] ?? "";
 liftType = specs['lift_type'] ?? "";
 openingName = specs['opening_type'] ?? "";
 doorOpening = specs['door_opening'] ?? "";
+doorOpeningSize = specs['door_opening_size'] ?? pricing['door_opening_size'] ?? json['door_opening_size'] ?? "";
 cabinSideWallName = specs['cabin_side_wall'] ?? "";
 landingDoorName = specs['landing_door'] ?? "";
 copName = specs['cop'] ?? "";

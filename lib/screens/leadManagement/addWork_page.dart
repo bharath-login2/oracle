@@ -1,5 +1,7 @@
 import 'dart:developer';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -21,19 +23,65 @@ class TaskForm {
   TextEditingController controller;
   String? status;
   String? taskId;
+  String? activityId;
   List<TextEditingController> remarksControllers;
   bool isChecked;
+  double completion;
 
   TaskForm({
     required this.controller,
     this.status,
     this.taskId,
+    this.activityId,
     List<TextEditingController>? remarks,
     this.isChecked = false,
+    this.completion = 0.0,
   }) : remarksControllers = remarks ?? [TextEditingController()] {
     if (remarksControllers.isEmpty) {
       remarksControllers.add(TextEditingController());
     }
+  }
+}
+
+class DelayTypeItem {
+  final String id;
+  final String name;
+
+  DelayTypeItem({required this.id, required this.name});
+
+  factory DelayTypeItem.fromJson(Map<String, dynamic> json) {
+    return DelayTypeItem(
+      id: json['status_id']?.toString() ??
+          json['delay_type_id']?.toString() ??
+          json['id']?.toString() ??
+          '',
+      name: json['status_name']?.toString() ??
+          json['delay_type_name']?.toString() ??
+          json['name']?.toString() ??
+          json['title']?.toString() ??
+          '',
+    );
+  }
+}
+
+class LooseTypeItem {
+  final String id;
+  final String name;
+
+  LooseTypeItem({required this.id, required this.name});
+
+  factory LooseTypeItem.fromJson(Map<String, dynamic> json) {
+    return LooseTypeItem(
+      id: json['loose_type_id']?.toString() ??
+          json['status_id']?.toString() ??
+          json['id']?.toString() ??
+          '',
+      name: json['loose_type_name']?.toString() ??
+          json['status_name']?.toString() ??
+          json['name']?.toString() ??
+          json['title']?.toString() ??
+          '',
+    );
   }
 }
 
@@ -109,6 +157,54 @@ class _AddWorkPageState extends State<AddWorkPage> {
   List<PrioState> allPriorities = [];
   AssignedWorkStatus? assignedWorks;
 
+  String? selectedUnitNo;
+  String? selectedSiteLiftNo;
+
+  // Is Delay section state
+  bool isDelay = false;
+  String? selectedDelayType;
+  String? selectedLooseType;
+  final TextEditingController responsiblePartyController =
+      TextEditingController();
+  final TextEditingController hoursController = TextEditingController();
+
+  Future<void> _selectHours(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 0, minute: 0),
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      final String formattedHours =
+          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      setState(() {
+        hoursController.text = formattedHours;
+      });
+    }
+  }
+
+  // Upload File state
+  File? uploadedFile;
+  String? uploadedFileName;
+
+  List<DelayTypeItem> delayTypeList = [];
+  List<LooseTypeItem> looseTypeList = [];
+  bool isLoadingDelayTypes = false;
+  bool isLoadingLooseTypes = false;
+
+  bool get isStopWork =>
+      widget.existingWork != null &&
+      widget.isPaused != 1 &&
+      widget.Restart != 1;
+
+  bool get isStartOrRestartWork =>
+      widget.existingWork == null || widget.Restart == 1;
+
   @override
   void initState() {
     super.initState();
@@ -125,7 +221,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   controller: TextEditingController(text: task.taskName),
                   status: task.status,
                   taskId: task.taskId,
+                  activityId: task.activityId ?? task.taskId,
                   isChecked: task.status == '4',
+                  completion: double.tryParse(task.completion) ??
+                      (task.status == '4' ? 100.0 : 10.0),
                   remarks: task.remarks
                       .map((remark) => TextEditingController(text: remark))
                       .toList(),
@@ -136,6 +235,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
               controller: TextEditingController(),
               status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
               taskId: null,
+              completion: 0.0,
               remarks: [TextEditingController()],
             )
           ];
@@ -146,8 +246,34 @@ class _AddWorkPageState extends State<AddWorkPage> {
       dueDate = widget.existingWork!.dueDate;
       priority = widget.existingWork!.priority;
       assignedTo = widget.existingWork!.assignedTo;
+      selectedUnitNo = (widget.existingWork?.unitName?.isNotEmpty == true)
+          ? widget.existingWork!.unitName
+          : widget.existingWork?.unitNo;
+      selectedSiteLiftNo = (widget.existingWork?.siteLiftName?.isNotEmpty == true)
+          ? widget.existingWork!.siteLiftName
+          : widget.existingWork?.siteLiftNo;
+      if (widget.existingWork!.projectName != null &&
+          widget.existingWork!.projectName!.isNotEmpty) {
+        selectedProjectName = widget.existingWork!.projectName;
+        selectedProjectController.text = widget.existingWork!.projectName!;
+      }
       if (selectedProjectId == "0") {
         selectedProjectId = null;
+      }
+      if (widget.existingWork!.tasks.isNotEmpty) {
+        final firstTask = widget.existingWork!.tasks.first;
+        if (firstTask.isDelay == 'Y' || firstTask.isDelay == '1') {
+          isDelay = true;
+          selectedDelayType = firstTask.delayTypeId;
+          selectedLooseType = firstTask.looseTypeId;
+          if (firstTask.responsibleParty != null &&
+              firstTask.responsibleParty!.isNotEmpty) {
+            responsiblePartyController.text = firstTask.responsibleParty!;
+          }
+          if (firstTask.hours != null && firstTask.hours!.isNotEmpty) {
+            hoursController.text = firstTask.hours!;
+          }
+        }
       }
     }
 
@@ -155,6 +281,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
     _loadStaffs();
     _loadTaskState();
     _loadPrioState();
+    _loadDelayTypes();
+    _loadLooseTypes();
     checkAssignedWorks();
   }
 
@@ -169,6 +297,54 @@ class _AddWorkPageState extends State<AddWorkPage> {
       setState(() {
         assignedTo = userId;
       });
+    }
+  }
+
+  Future<void> _loadDelayTypes() async {
+    if (!mounted) return;
+    setState(() => isLoadingDelayTypes = true);
+    try {
+      final res = await HttpService.getDelayTypes();
+      if (res != null && mounted) {
+        final List<dynamic> list = (res is Map && res['data'] != null)
+            ? res['data']
+            : (res is List ? res : []);
+        setState(() {
+          delayTypeList = list
+              .map((item) =>
+                  DelayTypeItem.fromJson(Map<String, dynamic>.from(item)))
+              .where((item) => item.id.isNotEmpty && item.name.isNotEmpty)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading delay types: $e');
+    } finally {
+      if (mounted) setState(() => isLoadingDelayTypes = false);
+    }
+  }
+
+  Future<void> _loadLooseTypes() async {
+    if (!mounted) return;
+    setState(() => isLoadingLooseTypes = true);
+    try {
+      final res = await HttpService.getLooseTypes();
+      if (res != null && mounted) {
+        final List<dynamic> list = (res is Map && res['data'] != null)
+            ? res['data']
+            : (res is List ? res : []);
+        setState(() {
+          looseTypeList = list
+              .map((item) =>
+                  LooseTypeItem.fromJson(Map<String, dynamic>.from(item)))
+              .where((item) => item.id.isNotEmpty && item.name.isNotEmpty)
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading loose types: $e');
+    } finally {
+      if (mounted) setState(() => isLoadingLooseTypes = false);
     }
   }
 
@@ -264,12 +440,21 @@ class _AddWorkPageState extends State<AddWorkPage> {
           if (selectedProjectName != null) {
             selectedProjectController.text = selectedProjectName!;
           }
+          selectedUnitNo = (assignedWorks?.unitName?.isNotEmpty == true)
+              ? assignedWorks!.unitName
+              : assignedWorks?.unitNo;
+          selectedSiteLiftNo = (assignedWorks?.siteLiftName?.isNotEmpty == true)
+              ? assignedWorks!.siteLiftName
+              : assignedWorks?.siteLiftNo;
           tasks = (assignedWorks?.tasks ?? [])
               .map((task) => TaskForm(
                     controller: TextEditingController(text: task.taskName),
                     status: task.status,
                     taskId: task.taskId,
+                    activityId: task.activityId ?? task.taskId,
                     isChecked: task.status == '4',
+                    completion: double.tryParse(task.completion) ??
+                        (task.status == '4' ? 100.0 : 10.0),
                     remarks: task.remarks.isNotEmpty
                         ? task.remarks
                             .map(
@@ -573,20 +758,31 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
       'project_name': selectedProjectName,
+      'unit_no': selectedUnitNo ?? widget.existingWork?.unitNo ?? assignedWorks?.unitNo,
+      'site_lift_no': selectedSiteLiftNo ?? widget.existingWork?.siteLiftNo ?? assignedWorks?.siteLiftNo,
       'title': titleController.text,
       'title_id': selectedTitleId,
+      'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       if (widget.workId != "") 'attendance_id': widget.workId,
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
       'action': widget.existingWork != null ? 'stop' : 'start',
+      'is_delay': isDelay ? 'Y' : 'N',
+      'delay_type': selectedDelayType ?? '',
+      'loose_type': selectedLooseType ?? '',
+      'responsible_party': responsiblePartyController.text,
+      'hours': hoursController.text,
+      if (uploadedFile != null) 'file': uploadedFile,
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
           'task_id': task.taskId,
+          'activity_id': task.activityId ?? task.taskId ?? '',
           'description': task.controller.text,
           'status': task.status,
           'is_checked': task.isChecked ? 1 : 0,
+          'completion': task.completion.round().toString(),
           'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -614,6 +810,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
+        widget.onSuccess();
         ProjectDashboardPermission == "true"
             ? Navigator.pushReplacement(
                 context,
@@ -674,19 +871,30 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
       'project_name': selectedProjectName,
+      'unit_no': selectedUnitNo ?? widget.existingWork?.unitNo ?? assignedWorks?.unitNo,
+      'site_lift_no': selectedSiteLiftNo ?? widget.existingWork?.siteLiftNo ?? assignedWorks?.siteLiftNo,
       'title': titleController.text,
       'title_id': selectedTitleId,
+      'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
       'action': 'save',
+      'is_delay': isDelay ? 'Y' : 'N',
+      'delay_type': selectedDelayType ?? '',
+      'loose_type': selectedLooseType ?? '',
+      'responsible_party': responsiblePartyController.text,
+      'hours': hoursController.text,
+      if (uploadedFile != null) 'file': uploadedFile,
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
           'task_id': task.taskId,
+          'activity_id': task.activityId ?? task.taskId ?? '',
           'description': task.controller.text,
           'status': task.status,
           'is_checked': task.isChecked ? 1 : 0,
+          'completion': task.completion.round().toString(),
           'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -800,15 +1008,26 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'project_name': selectedProjectName,
       'title': titleController.text,
       'title_id': selectedTitleId,
+      'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      if (isDelay) ...{
+        'is_delay': 1,
+        'delay_type': selectedDelayType,
+        'loose_type': selectedLooseType,
+        'responsible_party': responsiblePartyController.text,
+        'hours': hoursController.text,
+      },
+      if (uploadedFile != null) 'file': uploadedFile,
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
           'task_id': task.taskId,
+          'activity_id': task.activityId ?? task.taskId ?? '',
           'description': task.controller.text,
           'status': task.status,
+          'completion': task.completion.round().toString(),
           'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -833,6 +1052,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
+        widget.onSuccess();
 
         ProjectDashboardPermission == "true"
             ? Navigator.pushReplacement(
@@ -940,6 +1160,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'project_name': selectedProjectName,
       'title': titleController.text,
       'title_id': selectedTitleId,
+      'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'latitude': currentLatitude,
       'longitude': currentLongitude,
       if (widget.workId != "") 'attendance_id': widget.workId,
@@ -947,8 +1168,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
         final task = entry.value;
         return {
           'task_id': task.taskId,
+          'activity_id': task.activityId ?? task.taskId ?? '',
           'description': task.controller.text,
           'status': task.status,
+          'completion': task.completion.round().toString(),
           'task_description': task.remarksControllers
               .map((controller) => controller.text)
               .where((remark) => remark.isNotEmpty)
@@ -979,6 +1202,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ),
         );
         await Future.delayed(const Duration(seconds: 1));
+        widget.onSuccess();
 
         ProjectDashboardPermission == "true"
             ? Navigator.pushReplacement(
@@ -1053,138 +1277,306 @@ class _AddWorkPageState extends State<AddWorkPage> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        // Project Field
-                        InkWell(
-                          onTap: () async {
-                            final selected =
-                                await dropDialogExisting(context, "Projects");
-                            if (selected != null) {
-                              setState(() {
-                                selectedProjectId = selected['id'];
-                                selectedProjectController.text =
-                                    selected['name'] ?? '';
-                              });
-                              await _loadTitle();
-                            }
-                          },
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: 'Project',
-                              labelStyle:
-                                  TextStyle(color: Colors.blue.shade700),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide.none,
+                  if (isStopWork) ...[
+                    // Work Details section for Stop Work popup
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Row 1: Client(Project), Unit No, Site Lift No
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Client(Project)',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      (selectedProjectName?.isNotEmpty == true)
+                                          ? selectedProjectName!
+                                          : (widget.existingWork?.projectName?.isNotEmpty == true)
+                                              ? widget.existingWork!.projectName!
+                                              : (assignedWorks?.projectName.isNotEmpty == true)
+                                                  ? assignedWorks!.projectName
+                                                  : 'Soorya',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              filled: true,
-                              fillColor: Colors.grey.shade50,
-                              prefixIcon: Icon(Icons.work_outline,
-                                  color: Colors.blue.shade700, size: 20),
-                              suffixIcon: const Icon(Icons.arrow_drop_down,
-                                  color: Colors.grey),
-                            ),
-                            child: Text(
-                              selectedProjectController.text.isEmpty
-                                  ? 'Select Project'
-                                  : selectedProjectController.text,
-                              style: TextStyle(
-                                color: selectedProjectController.text.isEmpty
-                                    ? Colors.grey.shade600
-                                    : Colors.black87,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Unit No',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      (assignedWorks?.unitName?.isNotEmpty == true)
+                                          ? assignedWorks!.unitName!
+                                          : (widget.existingWork?.unitName?.isNotEmpty == true)
+                                              ? widget.existingWork!.unitName!
+                                              : (selectedUnitNo?.isNotEmpty == true)
+                                                  ? selectedUnitNo!
+                                                  : (widget.existingWork?.unitNo?.isNotEmpty == true)
+                                                      ? widget.existingWork!.unitNo!
+                                                      : (assignedWorks?.unitNo?.isNotEmpty == true)
+                                                          ? assignedWorks!.unitNo!
+                                                          : '-',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Site Lift No',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      (assignedWorks?.siteLiftName?.isNotEmpty == true)
+                                          ? assignedWorks!.siteLiftName!
+                                          : (widget.existingWork?.siteLiftName?.isNotEmpty == true)
+                                              ? widget.existingWork!.siteLiftName!
+                                              : (selectedSiteLiftNo?.isNotEmpty == true)
+                                                  ? selectedSiteLiftNo!
+                                                  : (widget.existingWork?.siteLiftNo?.isNotEmpty == true)
+                                                      ? widget.existingWork!.siteLiftNo!
+                                                      : (assignedWorks?.siteLiftNo?.isNotEmpty == true)
+                                                          ? assignedWorks!.siteLiftNo!
+                                                          : '-',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Stage (Renamed from Modules)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Stage',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                (assignedWorks?.titleName.isNotEmpty == true &&
+                                        assignedWorks!.titleName != assignedWorks!.title)
+                                    ? assignedWorks!.titleName
+                                    : (widget.existingWork?.title_name.isNotEmpty == true &&
+                                            widget.existingWork!.title_name != widget.existingWork!.title)
+                                        ? widget.existingWork!.title_name
+                                        : (titleController.text.isNotEmpty &&
+                                                titleController.text != widget.existingWork?.title &&
+                                                titleController.text != assignedWorks?.title)
+                                            ? titleController.text
+                                            : (widget.existingWork?.title_name.isNotEmpty == true)
+                                                ? widget.existingWork!.title_name
+                                                : (assignedWorks?.titleName.isNotEmpty == true)
+                                                    ? assignedWorks!.titleName
+                                                    : (titleController.text.isNotEmpty)
+                                                        ? titleController.text
+                                                        : '-',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          // Project Field
+                          InkWell(
+                            onTap: () async {
+                              final selected =
+                                  await dropDialogExisting(context, "Projects");
+                              if (selected != null) {
+                                setState(() {
+                                  selectedProjectId = selected['id'];
+                                  selectedProjectController.text =
+                                      selected['name'] ?? '';
+                                });
+                                await _loadTitle();
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: 'Project',
+                                labelStyle:
+                                    TextStyle(color: Colors.blue.shade700),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide.none,
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.shade50,
+                                prefixIcon: Icon(Icons.work_outline,
+                                    color: Colors.blue.shade700, size: 20),
+                                suffixIcon: const Icon(Icons.arrow_drop_down,
+                                    color: Colors.grey),
+                              ),
+                              child: Text(
+                                selectedProjectController.text.isEmpty
+                                    ? 'Select Project'
+                                    : selectedProjectController.text,
+                                style: TextStyle(
+                                  color: selectedProjectController.text.isEmpty
+                                      ? Colors.grey.shade600
+                                      : Colors.black87,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
+                          const SizedBox(height: 12),
 
-                        // Module Field
-                        Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () async {
-                                  final selected =
-                                      await dropTitleDialog(context, titleList);
-                                  if (selected != null) {
-                                    setState(() {
-                                      selectedTitleId = selected['id'];
-                                      titleController.text = selected['name']!;
-                                    });
-                                  }
-                                },
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'Module',
-                                    labelStyle:
-                                        TextStyle(color: Colors.blue.shade700),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.grey.shade50,
-                                    prefixIcon: Icon(Icons.category_outlined,
-                                        color: Colors.blue.shade700, size: 20),
-                                    suffixIcon: const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.grey),
-                                  ),
-                                  child: Text(
-                                    titleController.text.isEmpty
-                                        ? 'Select Module'
-                                        : titleController.text,
-                                    style: TextStyle(
-                                      color: titleController.text.isEmpty
-                                          ? Colors.grey.shade600
-                                          : Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (addWorkModule.toString() == "true")
-                              Container(
-                                margin: const EdgeInsets.only(left: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: IconButton(
-                                  icon: Icon(Icons.add,
-                                      color: Colors.blue.shade700),
-                                  onPressed: () async {
-                                    final newTitle =
-                                        await showProjectTitleDialog(context);
-                                    if (newTitle != null) {
+                          // Stage Field (Renamed from Module)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () async {
+                                    final selected =
+                                        await dropTitleDialog(context, titleList);
+                                    if (selected != null) {
                                       setState(() {
-                                        titleList.add(newTitle);
-                                        selectedTitleId = newTitle.id;
-                                        titleController.text = newTitle.name;
+                                        selectedTitleId = selected['id'];
+                                        titleController.text = selected['name']!;
                                       });
                                     }
                                   },
+                                  child: InputDecorator(
+                                    decoration: InputDecoration(
+                                      labelText: 'Stage',
+                                      labelStyle:
+                                          TextStyle(color: Colors.blue.shade700),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.grey.shade50,
+                                      prefixIcon: Icon(Icons.category_outlined,
+                                          color: Colors.blue.shade700, size: 20),
+                                      suffixIcon: const Icon(
+                                          Icons.arrow_drop_down,
+                                          color: Colors.grey),
+                                    ),
+                                    child: Text(
+                                      titleController.text.isEmpty
+                                          ? 'Select Stage'
+                                          : titleController.text,
+                                      style: TextStyle(
+                                        color: titleController.text.isEmpty
+                                            ? Colors.grey.shade600
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                          ],
-                        ),
-                      ],
+                              if (addWorkModule.toString() == "true")
+                                Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(Icons.add,
+                                        color: Colors.blue.shade700),
+                                    onPressed: () async {
+                                      final newTitle =
+                                          await showProjectTitleDialog(context);
+                                      if (newTitle != null) {
+                                        setState(() {
+                                          titleList.add(newTitle);
+                                          selectedTitleId = newTitle.id;
+                                          titleController.text = newTitle.name;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 16),
                   ...List.generate(tasks.length, (taskIndex) {
                     final now = DateTime.now();
@@ -1193,7 +1585,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isStopWork ? const Color(0xFFEDF7F2) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -1203,13 +1595,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
                           ),
                         ],
                         border: tasks[taskIndex].isChecked
-                            ? Border.all(color: Colors.blue.shade200, width: 1)
+                            ? Border.all(color: isStopWork ? Colors.teal.shade300 : Colors.blue.shade200, width: 1)
                             : null,
                       ),
                       child: Container(
                         decoration: tasks[taskIndex].isChecked
                             ? BoxDecoration(
-                                color: Colors.blue.shade50,
+                                color: isStopWork ? const Color(0xFFE0F2F1) : Colors.blue.shade50,
                                 borderRadius: BorderRadius.circular(12),
                               )
                             : null,
@@ -1323,6 +1715,20 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                         .toList(),
                                     onChanged: (value) => setState(() {
                                       tasks[taskIndex].status = value;
+                                      final selectedStatusObj =
+                                          allTaskStates.firstWhere(
+                                        (s) => s.id == value,
+                                        orElse: () => TaskState(
+                                            id: value ?? '', status: ''),
+                                      );
+                                      bool isCompleted = value == '4' ||
+                                          selectedStatusObj.status
+                                              .toLowerCase()
+                                              .contains('complete');
+                                      if (isCompleted) {
+                                        tasks[taskIndex].isChecked = true;
+                                        tasks[taskIndex].completion = 100.0;
+                                      }
                                     }),
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
@@ -1384,78 +1790,158 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               ],
                             ),
 
-                            const SizedBox(height: 12),
+                            if (!isStartOrRestartWork) ...[
+                              const SizedBox(height: 12),
 
-                            ...List.generate(
-                                tasks[taskIndex].remarksControllers.length,
-                                (remarkIndex) {
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 6),
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
+                              // Completion Field (Draggable Progress Slider)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
-                                      child: TextField(
-                                        controller: tasks[taskIndex]
-                                            .remarksControllers[remarkIndex],
-                                        minLines: 1,
-                                        maxLines: 2,
-                                        decoration: InputDecoration(
-                                          hintText:
-                                              '${widget.Restart == 1 ? "Remark" : (widget.existingWork != null && widget.isPaused != 1 && widget.Restart != 1) ? "Remark" : "Description"} ${remarkIndex + 1}',
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(6),
-                                          ),
-                                          filled: true,
-                                          fillColor: Colors.white,
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 6,
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Completion: ',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF333333),
                                           ),
                                         ),
-                                      ),
+                                        Text(
+                                          '${tasks[taskIndex].completion.round()}%',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1B5E20),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: remarkIndex == 0
-                                            ? Colors.green.shade50
-                                            : Colors.red.shade50,
-                                        borderRadius: BorderRadius.circular(6),
+                                    const SizedBox(height: 2),
+                                    SliderTheme(
+                                      data: SliderTheme.of(context).copyWith(
+                                        trackHeight: 10,
+                                        thumbShape: const RoundSliderThumbShape(
+                                            enabledThumbRadius: 9),
+                                        overlayShape: const RoundSliderOverlayShape(
+                                            overlayRadius: 16),
+                                        activeTrackColor: const Color(0xFF2E7D32),
+                                        inactiveTrackColor: Colors.grey.shade300,
+                                        thumbColor: const Color(0xFF1B5E20),
                                       ),
-                                      child: IconButton(
-                                        icon: Icon(
-                                          remarkIndex == 0
-                                              ? Icons.add
-                                              : Icons.remove,
-                                          color: remarkIndex == 0
-                                              ? Colors.green.shade700
-                                              : Colors.red.shade700,
-                                          size: 18,
-                                        ),
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(
-                                            maxWidth: 32, maxHeight: 32),
-                                        onPressed: () {
-                                          if (remarkIndex == 0) {
-                                            _addDescriptionField(taskIndex);
-                                          } else {
-                                            _removeDescriptionField(
-                                                taskIndex, remarkIndex);
-                                          }
+                                      child: Slider(
+                                        value: tasks[taskIndex]
+                                            .completion
+                                            .clamp(0.0, 100.0),
+                                        min: 0,
+                                        max: 100,
+                                        divisions: 100,
+                                        label:
+                                            '${tasks[taskIndex].completion.round()}%',
+                                        onChanged: (value) {
+                                          setState(() {
+                                            tasks[taskIndex].completion = value;
+                                            if (value == 100.0) {
+                                              tasks[taskIndex].isChecked = true;
+                                              final completedStatus =
+                                                  allTaskStates.firstWhere(
+                                                (status) => status.id == '4',
+                                                orElse: () =>
+                                                    allTaskStates.firstWhere(
+                                                  (status) => status.status
+                                                      .toLowerCase()
+                                                      .contains('complete'),
+                                                  orElse: () =>
+                                                      allTaskStates.first,
+                                                ),
+                                              );
+                                              tasks[taskIndex].status =
+                                                  completedStatus.id;
+                                            }
+                                          });
                                         },
                                       ),
                                     ),
                                   ],
                                 ),
-                              );
-                            }),
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              ...List.generate(
+                                  tasks[taskIndex].remarksControllers.length,
+                                  (remarkIndex) {
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextField(
+                                          controller: tasks[taskIndex]
+                                              .remarksControllers[remarkIndex],
+                                          minLines: 1,
+                                          maxLines: 2,
+                                          decoration: InputDecoration(
+                                            hintText:
+                                                '${widget.Restart == 1 ? "Remark" : (widget.existingWork != null && widget.isPaused != 1 && widget.Restart != 1) ? "Remark" : "Description"} ${remarkIndex + 1}',
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: remarkIndex == 0
+                                              ? Colors.green.shade50
+                                              : Colors.red.shade50,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: IconButton(
+                                          icon: Icon(
+                                            remarkIndex == 0
+                                                ? Icons.add
+                                                : Icons.remove,
+                                            color: remarkIndex == 0
+                                                ? Colors.green.shade700
+                                                : Colors.red.shade700,
+                                            size: 18,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(
+                                              maxWidth: 32, maxHeight: 32),
+                                          onPressed: () {
+                                            if (remarkIndex == 0) {
+                                              _addDescriptionField(taskIndex);
+                                            } else {
+                                              _removeDescriptionField(
+                                                  taskIndex, remarkIndex);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
 
                             // Add Task Button (only for last task)
                             if ((taskIndex == tasks.length - 1) && widget.Restart != 1 && widget.isAssigned != 1)
@@ -1496,6 +1982,326 @@ class _AddWorkPageState extends State<AddWorkPage> {
                       ),
                     );
                   }),
+
+                  // Is Delay section & Upload File section (for Stop Work popup)
+                  if (isStopWork) ...[
+                    const SizedBox(height: 16),
+                    // Is Delay Section
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Checkbox(
+                                  value: isDelay,
+                                  activeColor: const Color(0xFF2E4B72),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      isDelay = val ?? false;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    isDelay = !isDelay;
+                                  });
+                                },
+                                child: Text(
+                                  'Is Delay',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey.shade800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isDelay) ...[
+                            const SizedBox(height: 16),
+                            // Delay Type Dropdown
+                            Text(
+                              'Delay Type',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            DropdownButtonFormField<String>(
+                              value: (selectedDelayType != null &&
+                                      delayTypeList.any((t) => t.id == selectedDelayType))
+                                  ? selectedDelayType
+                                  : null,
+                              hint: Text(
+                                isLoadingDelayTypes ? 'Loading Delay Types...' : 'Select Delay Type',
+                                style: TextStyle(
+                                    color: Colors.grey.shade500, fontSize: 14),
+                              ),
+                              isExpanded: true,
+                              items: delayTypeList
+                                  .map((type) => DropdownMenuItem(
+                                        value: type.id,
+                                        child: Text(type.name,
+                                            style:
+                                                const TextStyle(fontSize: 14)),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedDelayType = val;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            // Loose Type Dropdown
+                            Text(
+                              'Loose Type',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            DropdownButtonFormField<String>(
+                              value: (selectedLooseType != null &&
+                                      looseTypeList.any((t) => t.id == selectedLooseType))
+                                  ? selectedLooseType
+                                  : null,
+                              hint: Text(
+                                isLoadingLooseTypes ? 'Loading Loose Types...' : 'Select Loose Type',
+                                style: TextStyle(
+                                    color: Colors.grey.shade500, fontSize: 14),
+                              ),
+                              isExpanded: true,
+                              items: looseTypeList
+                                  .map((type) => DropdownMenuItem(
+                                        value: type.id,
+                                        child: Text(type.name,
+                                            style:
+                                                const TextStyle(fontSize: 14)),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedLooseType = val;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            // Responsible Party Field
+                            Text(
+                              'Responsible Party',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: responsiblePartyController,
+                              decoration: InputDecoration(
+                                hintText: 'Enter Responsible Party',
+                                hintStyle: TextStyle(
+                                    color: Colors.grey.shade400, fontSize: 14),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            // Hours Field (Time Selection)
+                            Text(
+                              'Hours',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            InkWell(
+                              onTap: () => _selectHours(context),
+                              child: IgnorePointer(
+                                child: TextField(
+                                  controller: hoursController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Select Hours',
+                                    hintStyle: TextStyle(
+                                        color: Colors.grey.shade400, fontSize: 14),
+                                    suffixIcon: const Icon(Icons.access_time,
+                                        color: Colors.grey),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 12),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey.shade300),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey.shade300),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Upload File Section (OUTSIDE Is Delay Section, ALWAYS VISIBLE)
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Upload File',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          InkWell(
+                            onTap: () async {
+                              FilePickerResult? result =
+                                  await FilePicker.platform.pickFiles();
+                              if (result != null &&
+                                  result.files.single.path != null) {
+                                setState(() {
+                                  uploadedFile = File(result.files.single.path!);
+                                  uploadedFileName = result.files.single.name;
+                                });
+                              }
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade200,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(7),
+                                        bottomLeft: Radius.circular(7),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Choose Files',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12),
+                                      child: Text(
+                                        uploadedFileName ?? 'No file chosen',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: uploadedFileName != null
+                                              ? Colors.black87
+                                              : Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1547,49 +2353,49 @@ class _AddWorkPageState extends State<AddWorkPage> {
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Checkbox(
-                          value: isLocationEnabled,
-                          activeColor: Colors.blue.shade700,
-                          onChanged: _isGettingLocation
-                              ? null
-                              : (value) async {
-                                  setState(() {
-                                    isLocationEnabled = value ?? false;
-                                    _isGettingLocation = true;
-                                  });
+                    // child: Row(
+                    //   mainAxisAlignment: MainAxisAlignment.center,
+                    //   children: [
+                    //     Checkbox(
+                    //       value: isLocationEnabled,
+                    //       activeColor: Colors.blue.shade700,
+                    //       onChanged: _isGettingLocation
+                    //           ? null
+                    //           : (value) async {
+                    //               setState(() {
+                    //                 isLocationEnabled = value ?? false;
+                    //                 _isGettingLocation = true;
+                    //               });
 
-                                  if (isLocationEnabled) {
-                                    await _getCurrentLocation();
-                                  } else {
-                                    currentLatitude = null;
-                                    currentLongitude = null;
-                                  }
+                    //               if (isLocationEnabled) {
+                    //                 await _getCurrentLocation();
+                    //               } else {
+                    //                 currentLatitude = null;
+                    //                 currentLongitude = null;
+                    //               }
 
-                                  setState(() {
-                                    _isGettingLocation = false;
-                                  });
-                                },
-                        ),
-                        Text(
-                          'Update Location',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade800,
-                          ),
-                        ),
-                        if (_isGettingLocation) ...[
-                          const SizedBox(width: 8),
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ],
-                      ],
-                    ),
+                    //               setState(() {
+                    //                 _isGettingLocation = false;
+                    //               });
+                    //             },
+                    //     ),
+                    //     Text(
+                    //       'Update Location',
+                    //       style: TextStyle(
+                    //         fontSize: 14,
+                    //         color: Colors.grey.shade800,
+                    //       ),
+                    //     ),
+                    //     if (_isGettingLocation) ...[
+                    //       const SizedBox(width: 8),
+                    //       const SizedBox(
+                    //         width: 16,
+                    //         height: 16,
+                    //         child: CircularProgressIndicator(strokeWidth: 2),
+                    //       ),
+                    //     ],
+                    //   ],
+                    // ),
                   ),
                 ),
 
@@ -1810,7 +2616,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Select Module',
+                          'Select Stage',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -1826,7 +2632,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                     TextField(
                       controller: searchController,
                       decoration: InputDecoration(
-                        hintText: 'Search Modules...',
+                        hintText: 'Search Stages...',
                         prefixIcon: const Icon(Icons.search, size: 20),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -1909,7 +2715,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Add New Module',
+                      'Add New Stage',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -1942,7 +2748,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                     TextField(
                       controller: titleController,
                       decoration: InputDecoration(
-                        labelText: 'Module Name',
+                        labelText: 'Stage Name',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

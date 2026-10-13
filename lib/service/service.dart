@@ -809,7 +809,7 @@ class HttpService {
       if (result.statusCode == 200) {
         ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
         return model;
-      }
+      } 
     } catch (e) {
       log("error: $e");
     }
@@ -1001,7 +1001,7 @@ class HttpService {
           "${await Config.getUrl()}lead_management_master_data",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
-
+    // print('lead_management_master_data:$result');
       if (result.statusCode == 200) {
         AddLeadCommonDataModel model =
             AddLeadCommonDataModel.fromJson(result.data);
@@ -1082,7 +1082,12 @@ class HttpService {
       String? whatsappNumber,
       String? whatsappnumber_country_code,
       String? email,
-      Map<String, dynamic>? pricingData}) async {
+      Map<String, dynamic>? pricingData,
+      bool? sendQuotation,
+      String? requestTitle,
+      String? requestMessage,
+      String? quotationType,
+      String? quotationAssignedTo}) async {
     var map = <String, dynamic>{
       'token': token,
       'branchId': branchId,
@@ -1114,6 +1119,16 @@ class HttpService {
     };
     if (pricingData != null) {
       map.addAll(pricingData);
+    }
+    if (sendQuotation != null && sendQuotation) {
+      map['send_quotation'] = '1';
+      map['create_quotation_request'] = '1';
+      map['request_title'] = requestTitle ?? '';
+      map['request_message'] = requestMessage ?? '';
+      map['quotation_type'] = quotationType ?? '';
+      map['type'] = quotationType ?? '';
+      map['assigned_to'] = quotationAssignedTo ?? '';
+      map['quotation_assigned_to'] = quotationAssignedTo ?? '';
     }
     var formData = FormData.fromMap(map);
 
@@ -1349,7 +1364,7 @@ class HttpService {
           queryParameters: params);
       print('leaddetails:${result}');
       if (result.statusCode == 200) {
-        LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data);
+        LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data); 
         return model;
       }
     } catch (e) {
@@ -1413,7 +1428,7 @@ class HttpService {
       "priority": priorityId,
       "reminder": checked,
       "time_before": timeBefore,
-      "call_response_id": callResponseId,
+      "call_response_id": callResponseId, 
       "reason_id": reasonId,
       "create_sales": createSales,
       "create_type": createType,
@@ -1493,7 +1508,14 @@ class HttpService {
       {String? products,
       bool? createCustomer,
       String? whatsappLead,
-      String? emailLead}) async {
+      String? emailLead,
+      Map<String, dynamic>? pricingData,
+      String? amcType,
+      String? liftBrand,
+      String? ageOfLift,
+      String? subject,
+      String? passengerCapacity,
+      String? amcPrice}) async {
     var formData = FormData.fromMap({
       "token": token,
       "next_followup_date": nextFollowupDate,
@@ -1536,6 +1558,14 @@ class HttpService {
       "whatsapp_number_lead": whatsappLead ?? '',
       "email_lead": emailLead ?? '',
       if (createCustomer != null) "create_customer": createCustomer,
+      if (pricingData != null) ...pricingData,
+      if (amcType != null && amcType.isNotEmpty) "amc_type": amcType,
+      if (liftBrand != null && liftBrand.isNotEmpty) "lift_brand": liftBrand,
+      if (ageOfLift != null && ageOfLift.isNotEmpty) "age_of_lift": ageOfLift,
+      if (subject != null && subject.isNotEmpty) "subject": subject,
+      if (passengerCapacity != null && passengerCapacity.isNotEmpty)
+        "passenger_capacity": passengerCapacity,
+      if (amcPrice != null && amcPrice.isNotEmpty) "amc_price": amcPrice,
     });
     try {
       var result = await _dio.post(
@@ -1679,7 +1709,16 @@ class HttpService {
       descriptions,
       {String? whatsappLead,
       String? emailLead,
-      String? products}) async {
+      String? products,
+      Map<String, dynamic>? pricingData,
+      String? amcType,
+      String? liftBrand,
+      String? ageOfLift,
+      String? subject,
+      String? passengerCapacity,
+      String? amcPrice,
+      String? warranty,
+      String? amc}) async {
     var formData = FormData.fromMap({
       "token": token,
       "next_followup_date": nextFollowupDate,
@@ -1699,6 +1738,18 @@ class HttpService {
       "email_lead": emailLead ?? '',
       "products_lead": products ?? '',
       "additionalFields": jsonEncode(descriptions),
+      if (pricingData != null) ...pricingData,
+      if (amcType != null && amcType.isNotEmpty) "amc_type": amcType,
+      if (liftBrand != null && liftBrand.isNotEmpty) "lift_brand": liftBrand,
+      if (ageOfLift != null && ageOfLift.isNotEmpty) "age_of_lift": ageOfLift,
+      if (subject != null && subject.isNotEmpty) "subject": subject,
+      if (passengerCapacity != null && passengerCapacity.isNotEmpty)
+        "passenger_capacity": passengerCapacity,
+      if (amcPrice != null && amcPrice.isNotEmpty) "amc_price": amcPrice,
+      if (warranty != null && warranty.isNotEmpty) "warranty": warranty,
+      if (warranty != null && warranty.isNotEmpty) "wr": warranty,
+      if (amc != null && amc.isNotEmpty) "amc": amc,
+      if (amc != null && amc.isNotEmpty) "amc_year": amc,
     });
 
     try {
@@ -1757,8 +1808,14 @@ class HttpService {
       String? products,
       String? whatsappNumber,
       String? whatsappnumber_country_code,
-      String? email}) async {
-    var formData = FormData.fromMap({
+      String? email,
+      Map<String, dynamic>? pricingData,
+      bool? sendQuotation,
+      String? requestTitle,
+      String? requestMessage,
+      String? quotationType,
+      String? quotationAssignedTo}) async {
+    var map = <String, dynamic>{
       'token': token,
       'branchId': branchId,
       'next_followup_date': nextFollowupDate,
@@ -1787,7 +1844,22 @@ class HttpService {
       'state_id': stateId ?? '',
       'district_id': districtId ?? '',
       'products': products ?? '',
-    });
+    };
+    if (pricingData != null) {
+      map.addAll(pricingData);
+    }
+    if (sendQuotation != null && sendQuotation) {
+      map['send_quotation'] = '1';
+      map['create_quotation_request'] = '1';
+      map['quote_request_sts'] = '1';
+      map['request_title'] = requestTitle ?? '';
+      map['request_message'] = requestMessage ?? '';
+      map['quotation_type'] = quotationType ?? '';
+      map['type'] = quotationType ?? '';
+      map['assigned_to'] = quotationAssignedTo ?? '';
+      map['quotation_assigned_to'] = quotationAssignedTo ?? '';
+    }
+    var formData = FormData.fromMap(map);
     try {
       var result = await _dio.post("${await Config.getUrl()}edit_lead_updated",
           data: formData);
@@ -2486,6 +2558,7 @@ class HttpService {
       log("${await Config.getUrl()}get_active_package");
       var result = await _dio.post("${await Config.getUrl()}get_active_package",
           data: formData);
+          print('mainDashboard result: ${result.data}');
       if (result.statusCode == 200) {
         DashboardModel model = DashboardModel.fromJson(result.data);
         return model;
@@ -5144,7 +5217,7 @@ class HttpService {
     try {
       var result = await _dio.post("${await Config.getUrl()}get_projects",
           data: formData);
-
+      print("getProjectList Response: ${result.data}");
       if (result.statusCode == 200) {
         return ProjectList.fromJson(result.data);
       }
@@ -5303,6 +5376,14 @@ class HttpService {
       "token": await Common.getSharedPref('token'),
       "work_id": workData['work_id'],
       "project_id": workData['project_id'],
+      "unit_id": workData['unit_id'],
+      "unit_no": workData['unit_no'],
+      "site_lift_id": workData['site_lift_id'],
+      "site_lift_no": workData['site_lift_no'],
+      "site_lift_name": workData['site_lift_name'] ?? workData['site_lift_no'],
+      "stage_id": workData['stage_id'],
+      "stage_name": workData['stage_name'],
+      "supporting_staff_ids": workData['supporting_staff_ids'],
       "title": workData['title'],
       "assigned_id": workData['assignedId'],
       //   "attendance_id": workData['attendance_id'],
@@ -5318,7 +5399,7 @@ class HttpService {
         data: formData,
       );
       if (result.statusCode == 200) {
-        return SubmitResponse.fromJson(json.decode(result.data));
+        return SubmitResponse.fromJson(result.data);
       }
       throw Exception("Failed to update work");
     } catch (e) {
@@ -5354,31 +5435,76 @@ class HttpService {
 
   static Future<SubmitResponse> saveWorkData(
       Map<String, dynamic> workData) async {
-    final data = {
-      "token": await Common.getSharedPref('token'),
-      "work_id": workData['work_id'],
-      "project_id": workData['project_id'],
-      "project_name": workData['project_name'] ?? '',
-      "title": workData['title'],
-      "title_id": workData['title_id'],
-      "assigned_id": workData['assignedId'],
-      "latitude": workData['latitude'],
-      "longitude": workData['longitude'],
-      "action": workData['action'] ?? '',
-      "tasks": workData['tasks'],
-    };
+    dynamic payload;
+    if (workData['file'] != null && workData['file'] is File) {
+      payload = FormData.fromMap({
+        "token": await Common.getSharedPref('token'),
+        "work_id": workData['work_id'],
+        "project_id": workData['project_id'],
+        "project_name": workData['project_name'] ?? '',
+        "title": workData['title'],
+        "title_id": workData['title_id'],
+        if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+        "assigned_id": workData['assignedId'],
+        "unit_no": workData['unit_no'],
+        "site_lift_no": workData['site_lift_no'],
+        "latitude": workData['latitude'],
+        "longitude": workData['longitude'],
+        "action": workData['action'] ?? '',
+        "tasks": jsonEncode(workData['tasks']),
+        if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
+        if (workData['delay_type'] != null) "delay_type": workData['delay_type'],
+        if (workData['loose_type'] != null) "loose_type": workData['loose_type'],
+        if (workData['responsible_party'] != null)
+          "responsible_party": workData['responsible_party'],
+        if (workData['hours'] != null) "hours": workData['hours'],
+        "file": await MultipartFile.fromFile(
+          (workData['file'] as File).path,
+          filename: (workData['file'] as File)
+              .path
+              .split(Platform.pathSeparator)
+              .last,
+        ),
+      });
+    } else {
+      payload = jsonEncode({
+        "token": await Common.getSharedPref('token'),
+        "work_id": workData['work_id'],
+        "project_id": workData['project_id'],
+        "project_name": workData['project_name'] ?? '',
+        "title": workData['title'],
+        "title_id": workData['title_id'],
+        if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+        "assigned_id": workData['assignedId'],
+        "unit_no": workData['unit_no'],
+        "site_lift_no": workData['site_lift_no'],
+        "latitude": workData['latitude'],
+        "longitude": workData['longitude'],
+        "action": workData['action'] ?? '',
+        "tasks": workData['tasks'],
+        if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
+        if (workData['delay_type'] != null) "delay_type": workData['delay_type'],
+        if (workData['loose_type'] != null) "loose_type": workData['loose_type'],
+        if (workData['responsible_party'] != null)
+          "responsible_party": workData['responsible_party'],
+        if (workData['hours'] != null) "hours": workData['hours'],
+      });
+    }
     try {
       var result = await _dio.post(
         "${await Config.getUrl()}save_work",
-        data: jsonEncode(data),
+        data: payload,
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: payload is FormData
+              ? null
+              : {
+                  'Content-Type': 'application/json',
+                },
         ),
       );
+      print("saveWorkData Response: ${result.data}");
       if (result.statusCode == 200) {
-        return SubmitResponse.fromJson(json.decode(result.data));
+        return SubmitResponse.fromJson(result.data);
       }
       throw Exception("Failed to save work");
     } catch (e) {
@@ -5389,41 +5515,204 @@ class HttpService {
 
   static Future<SubmitResponse> submitWorkData(
       Map<String, dynamic> workData) async {
-    var formData = FormData.fromMap({
+    var formDataMap = <String, dynamic>{
       "token": await Common.getSharedPref('token'),
+      "work_id": workData['work_id'],
       "project_id": workData['project_id'],
       "project_name": workData['project_name'],
       'work_start_time': workData['work_time'],
       "title": workData['title'],
       "title_id": workData['title_id'],
+      if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+      "unit_no": workData['unit_no'],
+      "site_lift_no": workData['site_lift_no'],
       'attendance_id': workData['attendance_id'],
+      "assigned_id": workData['assignedId'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
       "action": workData['action'] ?? '',
       "tasks": jsonEncode(workData['tasks']),
-    });
-    // try {
+      if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
+      if (workData['delay_type'] != null) "delay_type": workData['delay_type'],
+      if (workData['loose_type'] != null) "loose_type": workData['loose_type'],
+      if (workData['responsible_party'] != null)
+        "responsible_party": workData['responsible_party'],
+      if (workData['hours'] != null) "hours": workData['hours'],
+    };
+
+    if (workData['file'] != null && workData['file'] is File) {
+      formDataMap["file"] = await MultipartFile.fromFile(
+        (workData['file'] as File).path,
+        filename: (workData['file'] as File)
+            .path
+            .split(Platform.pathSeparator)
+            .last,
+      );
+    }
+
+    var formData = FormData.fromMap(formDataMap);
+
     var result = await _dio.post(
       "${await Config.getUrl()}submit_work",
       data: formData,
     );
     if (result.statusCode == 200) {
-      return SubmitResponse.fromJson(json.decode(result.data));
+      return SubmitResponse.fromJson(result.data);
     } else {
       throw Exception("Failed to submit work");
     }
-    // }
-    // catch (e) {
-    //   throw Exception("HTTP error: $e");
-    // }
+  }
+
+  static Future<dynamic> getDelayTypes() async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token') ?? "",
+      });
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_delay_types",
+        data: formData,
+      );
+      if (result.statusCode == 200) {
+        if (result.data is String) {
+          return jsonDecode(result.data);
+        }
+        return result.data;
+      }
+    } catch (e) {
+      log("Error fetching delay types: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> getLooseTypes() async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token') ?? "",
+      });
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_loose_types",
+        data: formData,
+      );
+      print("getLooseTypes Response: ${result.data}");
+      if (result.statusCode == 200) {
+        if (result.data is String) {
+          return jsonDecode(result.data);
+        }
+        return result.data;
+      }
+    } catch (e) {
+      log("Error fetching loose types: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> getUnitsByProject(String projectId) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token') ?? "",
+        "project_id": projectId,
+      });
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_units_by_project",
+        data: formData,
+      );
+      print("getUnitsByProject Response: ${result.data}");
+      if (result.statusCode == 200) {
+        if (result.data is String) {
+          return jsonDecode(result.data);
+        }
+        return result.data;
+      }
+    } catch (e) {
+      log("Error fetching units by project: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> getSiteLiftsByUnit(String unitId, String projectId) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token') ?? "",
+        "unit_id": unitId,
+        "project_id": projectId,
+      });
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_site_lifts_by_unit",
+        data: formData,
+      );
+      print("getSiteLiftsByUnit Response: ${result.data}");
+      if (result.statusCode == 200) {
+        if (result.data is String) {
+          return jsonDecode(result.data);
+        }
+        return result.data;
+      }
+    } catch (e) {
+      log("Error fetching site lifts by unit: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> getAllStages() async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token') ?? "",
+      });
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_all_stages",
+        data: formData,
+      );
+      if (result.statusCode == 200) {
+        if (result.data is String) {
+          return jsonDecode(result.data);
+        }
+        return result.data;
+      }
+    } catch (e) {
+      log("Error fetching all stages: $e");
+    }
+    return null;
+  }
+
+  static Future<dynamic> getTaskListByUnit(String projectId, String unitId) async {
+    try {
+      var formData = FormData.fromMap({
+        "token": await Common.getSharedPref('token') ?? "",
+        "project_id": projectId,
+        "unit_id": unitId,
+      });
+      var result = await _dio.post(
+        "${await Config.getUrl()}get_task_list_by_unit",
+        data: formData,
+      );
+      if (result.statusCode == 200) {
+        if (result.data is String) {
+          return jsonDecode(result.data);
+        }
+        return result.data;
+      }
+    } catch (e) {
+      log("Error fetching task list by unit: $e");
+    }
+    return null;
   }
 
   static Future<SubmitResponse> assignWorkData(
       Map<String, dynamic> workData) async {
     var formData = FormData.fromMap({
       "token": await Common.getSharedPref('token'),
+      "work_id": workData['work_id'] ?? workData['id'],
+      "assigned_id": workData['assignedId'] ?? workData['id'],
       "project_id": workData['project_id'],
       "project_name": workData['project_name'],
+      "unit_id": workData['unit_id'],
+      "unit_no": workData['unit_no'],
+      "site_lift_id": workData['site_lift_id'],
+      "site_lift_no": workData['site_lift_no'],
+      "site_lift_name": workData['site_lift_name'] ?? workData['site_lift_no'],
+      "stage_id": workData['stage_id'],
+      "stage_name": workData['stage_name'],
+      "supporting_staff_ids": workData['supporting_staff_ids'],
       "title": workData['title'],
       "title_id": workData['title_id'],
       "due_date": workData['due_date'],
@@ -5458,11 +5747,11 @@ class HttpService {
     } else {
       throw Exception("Failed to submit work");
     }
+  }
     // }
     // catch (e) {
     //   throw Exception("HTTP error: $e");
     // }
-  }
 
   static Future<SubmitResponse> pauseWorkData(
       Map<String, dynamic> workData) async {
@@ -5474,10 +5763,20 @@ class HttpService {
       'work_end_time': workData['work_time'],
       "title": workData['title'],
       "title_id": workData['title_id'],
+      if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
       "assigned_id": workData['assignedId'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
       "tasks": jsonEncode(workData['tasks']),
+      if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
+      if (workData['delay_type'] != null) "delay_type": workData['delay_type'],
+      if (workData['loose_type'] != null) "loose_type": workData['loose_type'],
+      if (workData['responsible_party'] != null)
+        "responsible_party": workData['responsible_party'],
+      if (workData['hours'] != null) "hours": workData['hours'],
+      if (workData['file'] != null && workData['file'] is File)
+        "file": await MultipartFile.fromFile((workData['file'] as File).path,
+            filename: (workData['file'] as File).path.split(Platform.pathSeparator).last),
     });
     // try {
     var result = await _dio.post(
@@ -5485,7 +5784,7 @@ class HttpService {
       data: formData,
     );
     if (result.statusCode == 200) {
-      return SubmitResponse.fromJson(json.decode(result.data));
+      return SubmitResponse.fromJson(result.data);
     } else {
       throw Exception("Failed to submit work");
     }
@@ -5506,6 +5805,7 @@ class HttpService {
       'attendance_id': workData['attendance_id'],
       "title": workData['title'],
       "title_id": workData['title_id'],
+      if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
       "tasks": jsonEncode(workData['tasks']),
@@ -5515,8 +5815,9 @@ class HttpService {
       "${await Config.getUrl()}submit_work",
       data: formData,
     );
+    print("restartWork Response: ${result.data}");
     if (result.statusCode == 200) {
-      return SubmitResponse.fromJson(json.decode(result.data));
+      return SubmitResponse.fromJson(result.data);
     } else {
       throw Exception("Failed to Restart work");
     }
@@ -8830,7 +9131,7 @@ class HttpService {
       '${await Config.getUrl()}get_assigned_worklist',
       data: formData,
     );
-
+    print("getAssignedWorks response: ${response.data}");
     if (response.statusCode == 200 && response.data['status'] == true) {
       List data = response.data['data'];
       return data.map((e) => AssignedWork.fromJson(e)).toList();
