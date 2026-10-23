@@ -1828,7 +1828,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   bool _sendQuotationPricing = false;
   final TextEditingController _quotationTitlePricingCtrl =
       TextEditingController(text: "Quotation Request");
-  final TextEditingController _quotationMessagePricingCtrl = TextEditingController(
+  final TextEditingController _quotationMessagePricingCtrl =
+      TextEditingController(
     text: "Kindly prepare and send the quotation for this lead.",
   );
   String? _quotationTypePricing = "General";
@@ -2035,7 +2036,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           (data.requestTitle != null && data.requestTitle!.isNotEmpty);
       if (data.requestTitle != null && data.requestTitle!.isNotEmpty) {
         _quotationTitlePricingCtrl.text = data.requestTitle!;
-      } else if (data.quotationTitle != null && data.quotationTitle!.isNotEmpty) {
+      } else if (data.quotationTitle != null &&
+          data.quotationTitle!.isNotEmpty) {
         _quotationTitlePricingCtrl.text = data.quotationTitle!;
       }
       if (data.requestMessage != null && data.requestMessage!.isNotEmpty) {
@@ -2389,121 +2391,121 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                           ])
                         else
                           _buildSummaryGrid([
-                          _buildSummaryTile(
-                            'Factory Price',
-                            _pFactoryPrice.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pFactoryPrice.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Transportation',
-                            _pTransportation.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pTransportation.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Installation Charge',
-                            _pInstallation.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pInstallation.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Testing & Comm.',
-                            _pTesting.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pTesting.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Consumables',
-                            _pConsumables.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pConsumables.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Add. Factory Charges',
-                            _pAdditionalFactory.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pAdditionalFactory.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Additional Charge',
-                            _pAdditional.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pAdditional.text}',
-                          ),
+                            _buildSummaryTile(
+                              'Factory Price',
+                              _pFactoryPrice.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pFactoryPrice.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Transportation',
+                              _pTransportation.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pTransportation.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Installation Charge',
+                              _pInstallation.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pInstallation.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Testing & Comm.',
+                              _pTesting.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pTesting.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Consumables',
+                              _pConsumables.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pConsumables.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Add. Factory Charges',
+                              _pAdditionalFactory.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pAdditionalFactory.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Additional Charge',
+                              _pAdditional.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pAdditional.text}',
+                            ),
 
-                          // Quantity should NOT have ₹
-                          _buildSummaryTile(
-                            'Quantity',
-                            _pQuantity.text.isEmpty ? '-' : _pQuantity.text,
-                          ),
+                            // Quantity should NOT have ₹
+                            _buildSummaryTile(
+                              'Quantity',
+                              _pQuantity.text.isEmpty ? '-' : _pQuantity.text,
+                            ),
 
-                          _buildSummaryTile(
-                            'Amc Amount',
-                            _pAmcAmount.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pAmcAmount.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Unit Price',
-                            _pUnitPrice.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pUnitPrice.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Company Profit (%)',
-                            _pCompanyProfit.text.isEmpty
-                                ? '-'
-                                : '${_pCompanyProfit.text}%',
-                          ),
-                          _buildSummaryTile(
-                            'Company Profit Amount',
-                            _pCompanyProfitAmount.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pCompanyProfitAmount.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Sales Commission (%)',
-                            _pSalesCommission.text.isEmpty
-                                ? '-'
-                                : '${_pSalesCommission.text}%',
-                          ),
-                          _buildSummaryTile(
-                            'Sales Comm. Amount',
-                            _pSalesCommissionAmount.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pSalesCommissionAmount.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Sub Total',
-                            _pSubTotal.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pSubTotal.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Tax Type',
-                            _pTaxType ?? '-',
-                          ),
-                          _buildSummaryTile(
-                            'Tax (%)',
-                            _pTaxPercentage.text.isEmpty
-                                ? '-'
-                                : '${_pTaxPercentage.text}%',
-                          ),
-                          _buildSummaryTile(
-                            'Tax Amount',
-                            _pTaxAmount.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pTaxAmount.text}',
-                          ),
-                          _buildSummaryTile(
-                            'Total Sale Price',
-                            _pTotalSalePrice.text.isEmpty
-                                ? '-'
-                                : '₹ ${_pTotalSalePrice.text}',
-                            isHighlight: true,
-                          ),
-                        ]),
+                            _buildSummaryTile(
+                              'Amc Amount',
+                              _pAmcAmount.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pAmcAmount.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Unit Price',
+                              _pUnitPrice.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pUnitPrice.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Company Profit (%)',
+                              _pCompanyProfit.text.isEmpty
+                                  ? '-'
+                                  : '${_pCompanyProfit.text}%',
+                            ),
+                            _buildSummaryTile(
+                              'Company Profit Amount',
+                              _pCompanyProfitAmount.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pCompanyProfitAmount.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Sales Commission (%)',
+                              _pSalesCommission.text.isEmpty
+                                  ? '-'
+                                  : '${_pSalesCommission.text}%',
+                            ),
+                            _buildSummaryTile(
+                              'Sales Comm. Amount',
+                              _pSalesCommissionAmount.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pSalesCommissionAmount.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Sub Total',
+                              _pSubTotal.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pSubTotal.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Tax Type',
+                              _pTaxType ?? '-',
+                            ),
+                            _buildSummaryTile(
+                              'Tax (%)',
+                              _pTaxPercentage.text.isEmpty
+                                  ? '-'
+                                  : '${_pTaxPercentage.text}%',
+                            ),
+                            _buildSummaryTile(
+                              'Tax Amount',
+                              _pTaxAmount.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pTaxAmount.text}',
+                            ),
+                            _buildSummaryTile(
+                              'Total Sale Price',
+                              _pTotalSalePrice.text.isEmpty
+                                  ? '-'
+                                  : '₹ ${_pTotalSalePrice.text}',
+                              isHighlight: true,
+                            ),
+                          ]),
                       ],
                     ),
                   )
@@ -2737,58 +2739,99 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           if (_sendQuotationPricing) _buildQuotationRequestFormPricing(),
           const SizedBox(height: 12),
           // ── Save Button ───────────────────────────────────────────────
-          Container(
-            width: double.infinity,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2a86c9), Color(0xFF1E6091)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2a86c9).withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          if (!(widget.leadDetails?.data?.quotationDetails?.isNotEmpty ==
+                  true &&
+              ['4', '7'].contains(
+                widget.leadDetails!.data!.quotationDetails!.first.quoteSts,
+              )))
+            Container(
+              width: double.infinity,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2a86c9), Color(0xFF1E6091)],
                 ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: _isSavingPricing ? null : _savePricingDetails,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2a86c9).withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: _isSavingPricing
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.save_rounded, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Save Details',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
+              child: ElevatedButton(
+                onPressed: _isSavingPricing ? null : _savePricingDetails,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isSavingPricing
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
                         ),
-                      ],
-                    ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.save_rounded,
+                              color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Save Details',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+              // child: ElevatedButton(
+              //   onPressed: _isSavingPricing ? null : _savePricingDetails,
+              //   style: ElevatedButton.styleFrom(
+              //     backgroundColor: Colors.transparent,
+              //     shadowColor: Colors.transparent,
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(12),
+              //     ),
+              //   ),
+              //   child: _isSavingPricing
+              //       ? const SizedBox(
+              //           height: 22,
+              //           width: 22,
+              //           child: CircularProgressIndicator(
+              //             color: Colors.white,
+              //             strokeWidth: 2.5,
+              //           ),
+              //         )
+              //       : const Row(
+              //           mainAxisAlignment: MainAxisAlignment.center,
+              //           children: [
+              //             Icon(Icons.save_rounded, color: Colors.white, size: 20),
+              //             SizedBox(width: 8),
+              //             Text(
+              //               'Save Details',
+              //               style: TextStyle(
+              //                 fontSize: 15,
+              //                 fontWeight: FontWeight.bold,
+              //                 color: Colors.white,
+              //                 letterSpacing: 0.5,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              // ),
             ),
-          ),
           const SizedBox(height: 12),
           // ── View Details Button ───────────────────────────────────────
           Container(
@@ -2850,7 +2893,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           decoration: _inputDecoration('Request Title *', null,
               hintText: 'Quotation Request'),
           validator: (value) {
-            if (_sendQuotationPricing && (value == null || value.trim().isEmpty)) {
+            if (_sendQuotationPricing &&
+                (value == null || value.trim().isEmpty)) {
               return 'Please enter request title';
             }
             return null;
@@ -2863,7 +2907,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           decoration: _inputDecoration('Request Message *', null,
               hintText: 'Kindly prepare and send the quotation for this lead.'),
           validator: (value) {
-            if (_sendQuotationPricing && (value == null || value.trim().isEmpty)) {
+            if (_sendQuotationPricing &&
+                (value == null || value.trim().isEmpty)) {
               return 'Please enter request message';
             }
             return null;
@@ -2926,6 +2971,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       ],
     );
   }
+
   Widget _buildSectionCard({
     required String title,
     required IconData icon,
@@ -3088,8 +3134,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               child: TextFormField(
                 controller: _amcPriceCtrl,
                 keyboardType: TextInputType.number,
-                decoration: _inputDecoration('Price *', null,
-                    hintText: 'Enter Price'),
+                decoration:
+                    _inputDecoration('Price *', null, hintText: 'Enter Price'),
               ),
             ),
           ],
@@ -3164,9 +3210,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             items: data.cabinOpening ?? [],
             onChanged: (v) => setState(() => _pDoorOpeningId = v),
           ),
-          
           _pricingField('Door Opening Size', _pDoorOpeningSize,
-          keyboardType: TextInputType.number),
+              keyboardType: TextInputType.number),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
@@ -3535,9 +3580,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     required List<dynamic> items,
     required ValueChanged<String?> onChanged,
   }) {
-    final validValue = items.any((e) => (e is String ? e : e.valueId) == value)
-        ? value
-        : null;
+    final validValue =
+        items.any((e) => (e is String ? e : e.valueId) == value) ? value : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3587,7 +3631,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             ),
             selectedItemBuilder: (context) {
               return items.map((e) {
-                final text = (e is String ? e : (e.valueName ?? e.valueId ?? '')).toString();
+                final text =
+                    (e is String ? e : (e.valueName ?? e.valueId ?? ''))
+                        .toString();
                 return Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -3604,7 +3650,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             },
             items: items.map<DropdownMenuItem<String>>((e) {
               final val = (e is String ? e : e.valueId) as String?;
-              final text = (e is String ? e : (e.valueName ?? e.valueId ?? '')).toString();
+              final text = (e is String ? e : (e.valueName ?? e.valueId ?? ''))
+                  .toString();
               return DropdownMenuItem<String>(
                 value: val,
                 child: Text(
@@ -5704,12 +5751,18 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     builder: (context) {
                       final isAmcCategory = leadTypeId == '11' ||
                           leadType.trim().toUpperCase() == 'AMC' ||
-                          (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'AMC') ||
+                          (leadDetails?.data?.leadCategory
+                                  ?.trim()
+                                  .toUpperCase() ==
+                              'AMC') ||
                           (leadDetails?.data?.leadCategoryId == '11');
 
                       final isRepairCategory = leadTypeId == '12' ||
                           leadType.trim().toUpperCase() == 'REPAIR' ||
-                          (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'REPAIR') ||
+                          (leadDetails?.data?.leadCategory
+                                  ?.trim()
+                                  .toUpperCase() ==
+                              'REPAIR') ||
                           (leadDetails?.data?.leadCategoryId == '12');
 
                       final isEstimationStage = callResultId == '16' ||
@@ -5728,7 +5781,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                               const SizedBox(height: 12),
                             ],
                           );
-                        } else if (leadDetails?.data?.createEstimation == true) {
+                        } else if (leadDetails?.data?.createEstimation ==
+                            true) {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -13918,7 +13972,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     },
                     decoration: const InputDecoration(
                       contentPadding: EdgeInsets.all(8),
-                      hintText: 'Search', 
+                      hintText: 'Search',
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),

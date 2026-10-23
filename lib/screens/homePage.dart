@@ -31,7 +31,7 @@ import 'package:login2/screens/leadManagement/AddProjectPage.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
-import 'package:login2/screens/leadManagement/quotationDashboard.dart';
+// import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/staffReport.dart';
@@ -46,6 +46,7 @@ import 'package:login2/screens/search/search.dart';
 import 'package:login2/screens/serviceman/dashboard_page.dart';
 import 'package:login2/screens/stock/stockDashboard.dart';
 import 'package:login2/screens/purchase/purchaseDashboard.dart';
+import 'package:login2/screens/quotation/quotation_dashboard.dart';
 import 'package:login2/screens/staff_reports/followupCalendarPage.dart';
 import 'package:login2/screens/staff_reports/staffwiseCallReports.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
@@ -980,30 +981,30 @@ class _HomePageState extends State<HomePage> {
                                               true) {
                                             _upgrade(context);
                                           } else {
-                                             if (userDashboard!
-                                                     .data.modules[i].menuName ==
-                                                 'call_management') {
-                                               Navigator.push(
-                                                 context,
-                                                 MaterialPageRoute(
-                                                     builder: (context) =>
-                                                         DashboardLeadNewUpdatedTwo(
-                                                             widget.token)),
-                                               );
-                                             } 
-                                             else if (userDashboard!
-                                                     .data.modules[i].menuName ==
-                                                 'project' || userDashboard!
-                                                     .data.modules[i].categoryName.trim() ==
-                                                 'Project Management') {
-                                               Navigator.push(
-                                                 context,
-                                                 MaterialPageRoute(
-                                                     builder: (context) =>
-                                                         const AddProjectPage()),
-                                               );
-                                             } 
-                                            else if (userDashboard!
+                                            if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'call_management') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        DashboardLeadNewUpdatedTwo(
+                                                            widget.token)),
+                                              );
+                                            } else if (userDashboard!.data
+                                                        .modules[i].menuName ==
+                                                    'project' ||
+                                                userDashboard!.data.modules[i]
+                                                        .categoryName
+                                                        .trim() ==
+                                                    'Project Management') {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const AddProjectPage()),
+                                              );
+                                            } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Staff_management') {
                                               Navigator.push(
@@ -1296,18 +1297,17 @@ class _HomePageState extends State<HomePage> {
                                             //         builder: (context) =>
                                             //             QuotationPage(),
                                             //       ));
-                                            //}
-                                            // else if (userDashboard!
-                                            //         .data.modules[i].menuName ==
-                                            //     'quotation') {
-                                            //   Navigator.push(
-                                            //       context,
-                                            //       MaterialPageRoute(
-                                            //         builder: (context) =>
-                                            //             QuotationDashboard(),
-                                            //       ));
-                                            // } 
+                                            // }
                                             else if (userDashboard!
+                                                    .data.modules[i].menuName ==
+                                                'orac_quotation') {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        DashboardQuotationScreen(),
+                                                  ));
+                                            } else if (userDashboard!
                                                     .data.modules[i].menuName ==
                                                 'Staff Report') {
                                               Navigator.push(
@@ -2144,39 +2144,62 @@ class _HomePageState extends State<HomePage> {
                                         child: ClipRRect(
                                             borderRadius:
                                                 BorderRadius.circular(5),
-                                            child: (userDashboard!.data.modules[i].menuName == 'project' ||
-                                                    userDashboard!.data.modules[i].categoryName.trim() == 'Project Management')
+                                            child: (userDashboard!
+                                                            .data
+                                                            .modules[i]
+                                                            .menuName ==
+                                                        'project' ||
+                                                    userDashboard!
+                                                            .data
+                                                            .modules[i]
+                                                            .categoryName
+                                                            .trim() ==
+                                                        'Project Management')
                                                 ? Container(
                                                     color: Colors.white,
-                                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 4,
+                                                        vertical: 6),
                                                     child: Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
                                                       children: [
                                                         Container(
                                                           width: 38,
                                                           height: 38,
-                                                          decoration: const BoxDecoration(
-                                                            color: Color(0xFF2A86C9),
-                                                            shape: BoxShape.circle,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                            color: Color(
+                                                                0xFF2A86C9),
+                                                            shape:
+                                                                BoxShape.circle,
                                                           ),
                                                           child: const Icon(
-                                                            Icons.assignment_rounded,
+                                                            Icons
+                                                                .assignment_rounded,
                                                             color: Colors.white,
                                                             size: 22,
                                                           ),
                                                         ),
-                                                        const SizedBox(height: 6),
+                                                        const SizedBox(
+                                                            height: 6),
                                                         const Text(
                                                           "PROJECT\nMANAGEMENT",
-                                                          textAlign: TextAlign.center,
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           style: TextStyle(
                                                             fontSize: 9,
-                                                            fontWeight: FontWeight.bold,
-                                                            color: Color(0xFF333333),
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Color(
+                                                                0xFF333333),
                                                             height: 1.1,
                                                           ),
                                                           maxLines: 2,
-                                                          overflow: TextOverflow.ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                         ),
                                                       ],
                                                     ),
@@ -2186,9 +2209,9 @@ class _HomePageState extends State<HomePage> {
                                                     imageUrl: userDashboard!
                                                         .data.modules[i].image
                                                         .toString(),
-                                                    errorWidget:
-                                                        (context, url, error) =>
-                                                            const Icon(Icons.error),
+                                                    errorWidget: (context, url,
+                                                            error) =>
+                                                        const Icon(Icons.error),
                                                   )),
                                       ),
                                     );

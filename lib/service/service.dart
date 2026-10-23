@@ -444,6 +444,8 @@ import '../models/projectdetails/unit_dropdown_model.dart';
 import '../models/projectdetails/installation_method_model.dart';
 import '../models/projectdetails/gallery_model.dart';
 import '../models/lead_management/staff_list_model.dart';
+import '../models/quotation/quotation_model.dart';
+import '../models/quotation/branch_list_model.dart';
 import 'package:file_picker/file_picker.dart';
 
 class HttpService {
@@ -809,7 +811,7 @@ class HttpService {
       if (result.statusCode == 200) {
         ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
         return model;
-      } 
+      }
     } catch (e) {
       log("error: $e");
     }
@@ -1001,7 +1003,7 @@ class HttpService {
           "${await Config.getUrl()}lead_management_master_data",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           queryParameters: params);
-    // print('lead_management_master_data:$result');
+      // print('lead_management_master_data:$result');
       if (result.statusCode == 200) {
         AddLeadCommonDataModel model =
             AddLeadCommonDataModel.fromJson(result.data);
@@ -1364,7 +1366,7 @@ class HttpService {
           queryParameters: params);
       print('leaddetails:${result}');
       if (result.statusCode == 200) {
-        LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data); 
+        LeadDeatailsModel model = LeadDeatailsModel.fromJson(result.data);
         return model;
       }
     } catch (e) {
@@ -1428,7 +1430,7 @@ class HttpService {
       "priority": priorityId,
       "reminder": checked,
       "time_before": timeBefore,
-      "call_response_id": callResponseId, 
+      "call_response_id": callResponseId,
       "reason_id": reasonId,
       "create_sales": createSales,
       "create_type": createType,
@@ -2558,7 +2560,7 @@ class HttpService {
       log("${await Config.getUrl()}get_active_package");
       var result = await _dio.post("${await Config.getUrl()}get_active_package",
           data: formData);
-          print('mainDashboard result: ${result.data}');
+      print('mainDashboard result: ${result.data}');
       if (result.statusCode == 200) {
         DashboardModel model = DashboardModel.fromJson(result.data);
         return model;
@@ -5444,7 +5446,8 @@ class HttpService {
         "project_name": workData['project_name'] ?? '',
         "title": workData['title'],
         "title_id": workData['title_id'],
-        if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+        if (workData['activity_id'] != null)
+          "activity_id": workData['activity_id'],
         "assigned_id": workData['assignedId'],
         "unit_no": workData['unit_no'],
         "site_lift_no": workData['site_lift_no'],
@@ -5453,8 +5456,10 @@ class HttpService {
         "action": workData['action'] ?? '',
         "tasks": jsonEncode(workData['tasks']),
         if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
-        if (workData['delay_type'] != null) "delay_type": workData['delay_type'],
-        if (workData['loose_type'] != null) "loose_type": workData['loose_type'],
+        if (workData['delay_type'] != null)
+          "delay_type": workData['delay_type'],
+        if (workData['loose_type'] != null)
+          "loose_type": workData['loose_type'],
         if (workData['responsible_party'] != null)
           "responsible_party": workData['responsible_party'],
         if (workData['hours'] != null) "hours": workData['hours'],
@@ -5474,7 +5479,8 @@ class HttpService {
         "project_name": workData['project_name'] ?? '',
         "title": workData['title'],
         "title_id": workData['title_id'],
-        if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+        if (workData['activity_id'] != null)
+          "activity_id": workData['activity_id'],
         "assigned_id": workData['assignedId'],
         "unit_no": workData['unit_no'],
         "site_lift_no": workData['site_lift_no'],
@@ -5483,8 +5489,10 @@ class HttpService {
         "action": workData['action'] ?? '',
         "tasks": workData['tasks'],
         if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
-        if (workData['delay_type'] != null) "delay_type": workData['delay_type'],
-        if (workData['loose_type'] != null) "loose_type": workData['loose_type'],
+        if (workData['delay_type'] != null)
+          "delay_type": workData['delay_type'],
+        if (workData['loose_type'] != null)
+          "loose_type": workData['loose_type'],
         if (workData['responsible_party'] != null)
           "responsible_party": workData['responsible_party'],
         if (workData['hours'] != null) "hours": workData['hours'],
@@ -5523,7 +5531,8 @@ class HttpService {
       'work_start_time': workData['work_time'],
       "title": workData['title'],
       "title_id": workData['title_id'],
-      if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+      if (workData['activity_id'] != null)
+        "activity_id": workData['activity_id'],
       "unit_no": workData['unit_no'],
       "site_lift_no": workData['site_lift_no'],
       'attendance_id': workData['attendance_id'],
@@ -5543,10 +5552,8 @@ class HttpService {
     if (workData['file'] != null && workData['file'] is File) {
       formDataMap["file"] = await MultipartFile.fromFile(
         (workData['file'] as File).path,
-        filename: (workData['file'] as File)
-            .path
-            .split(Platform.pathSeparator)
-            .last,
+        filename:
+            (workData['file'] as File).path.split(Platform.pathSeparator).last,
       );
     }
 
@@ -5629,7 +5636,8 @@ class HttpService {
     return null;
   }
 
-  static Future<dynamic> getSiteLiftsByUnit(String unitId, String projectId) async {
+  static Future<dynamic> getSiteLiftsByUnit(
+      String unitId, String projectId) async {
     try {
       var formData = FormData.fromMap({
         "token": await Common.getSharedPref('token') ?? "",
@@ -5674,7 +5682,8 @@ class HttpService {
     return null;
   }
 
-  static Future<dynamic> getTaskListByUnit(String projectId, String unitId) async {
+  static Future<dynamic> getTaskListByUnit(
+      String projectId, String unitId) async {
     try {
       var formData = FormData.fromMap({
         "token": await Common.getSharedPref('token') ?? "",
@@ -5748,10 +5757,10 @@ class HttpService {
       throw Exception("Failed to submit work");
     }
   }
-    // }
-    // catch (e) {
-    //   throw Exception("HTTP error: $e");
-    // }
+  // }
+  // catch (e) {
+  //   throw Exception("HTTP error: $e");
+  // }
 
   static Future<SubmitResponse> pauseWorkData(
       Map<String, dynamic> workData) async {
@@ -5763,7 +5772,8 @@ class HttpService {
       'work_end_time': workData['work_time'],
       "title": workData['title'],
       "title_id": workData['title_id'],
-      if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+      if (workData['activity_id'] != null)
+        "activity_id": workData['activity_id'],
       "assigned_id": workData['assignedId'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
@@ -5776,7 +5786,10 @@ class HttpService {
       if (workData['hours'] != null) "hours": workData['hours'],
       if (workData['file'] != null && workData['file'] is File)
         "file": await MultipartFile.fromFile((workData['file'] as File).path,
-            filename: (workData['file'] as File).path.split(Platform.pathSeparator).last),
+            filename: (workData['file'] as File)
+                .path
+                .split(Platform.pathSeparator)
+                .last),
     });
     // try {
     var result = await _dio.post(
@@ -5805,7 +5818,8 @@ class HttpService {
       'attendance_id': workData['attendance_id'],
       "title": workData['title'],
       "title_id": workData['title_id'],
-      if (workData['activity_id'] != null) "activity_id": workData['activity_id'],
+      if (workData['activity_id'] != null)
+        "activity_id": workData['activity_id'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
       "tasks": jsonEncode(workData['tasks']),
@@ -18944,5 +18958,186 @@ class HttpService {
     }
 
     return null;
+  }
+
+  //quotation list
+  static Future<QuotationResponse?> getQuotations({
+    String? quotationType,
+    dynamic? status,
+    String? fromDate,
+    String? toDate,
+    String? createdBy,
+    String? branchId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final Map<String, dynamic> data = {
+      'token': token,
+      'quotation_type': quotationType,
+    };
+
+    // Add optional filters if they are provided
+    if (status != null) {
+      data['status'] = status;
+    }
+    if (createdBy != null && createdBy != 'All') {
+      data['created_by'] = createdBy;
+    }
+    if (branchId != null && branchId != 'All') {
+      data['branch_id'] = branchId;
+    }
+    if (fromDate != null) {
+      data['from_date'] = fromDate;
+    }
+    if (toDate != null) {
+      data['to_date'] = toDate;
+    }
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}quotation_list_general",
+        data: FormData.fromMap(data),
+      );
+
+      log('getQuotations response: ${response.data}');
+
+      if (response.data != null) {
+        return QuotationResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log('getQuotations error: $e');
+    }
+
+    return null;
+  }
+
+  //quotation status updating
+  static Future<bool> updateQuotationStatus({
+    required String quotationId,
+    required int statusId,
+    required String quotationType,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'quotation_id': quotationId,
+      'quote_sts': statusId,
+      'type': quotationType,
+    };
+
+    print('data response: ${data}');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}update_quotation_status",
+        data: FormData.fromMap(data),
+      );
+
+      print('updateQuotationStatus response: ${response.data}');
+
+      if (response.data != null && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('updateQuotationStatus error: $e');
+    }
+
+    return false;
+  }
+
+  //branch list
+  static Future<BranchResponse?> getBranchwiseList() async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_branchdetails", // Update with your actual endpoint
+        data: FormData.fromMap(data),
+      );
+
+      log('getBranchList response: ${response.data}');
+
+      if (response.data != null) {
+        return BranchResponse.fromJson(response.data);
+      }
+    } catch (e) {
+      log('getBranchList error: $e');
+    }
+
+    return null;
+  }
+
+  //quotatin timeline history
+  static Future<Map<String, dynamic>?> getQuotationHistory({
+    required String quotationId,
+    required String quotationType,
+  }) async {
+    final token = await Common.getSharedPref("token");
+    final data = {
+      'token': token,
+      'quotation_id': quotationId,
+      'quotation_type':
+          quotationType, // or 'quotation_type' based on your backend field name
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_quotation_history", // Replace with your actual endpoint route
+        data: FormData.fromMap(data),
+      );
+
+      log('getQuotationHistory response: ${response.data}');
+
+      if (response.data != null) {
+        // If response.data is already a Map, return it directly
+        if (response.data is Map<String, dynamic>) {
+          return response.data;
+        }
+        // If it's a string, you can decode it if needed (depending on your Dio setup)
+      }
+    } catch (e) {
+      log('getQuotationHistory error: $e');
+    }
+
+    return null;
+  }
+
+  //revision request posting
+  static Future<bool> requestQuotationRevision({
+    required String quotationId,
+    required String quotationType,
+    required String comments,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'quotation_id': quotationId,
+      'type': quotationType,
+      'revision_comments':
+          comments, // Adjust key if your backend expects 'comments' instead
+    };
+
+    print('requestQuotationRevision data: ${data}');
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}requestQuotationRevision", // Replace with your exact endpoint route if different
+        data: FormData.fromMap(data),
+      );
+
+      print('requestQuotationRevision response: ${response.data}');
+
+      if (response.data != null && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('requestQuotationRevision error: $e');
+    }
+
+    return false;
   }
 }
