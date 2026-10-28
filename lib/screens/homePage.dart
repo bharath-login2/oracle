@@ -55,6 +55,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/common.dart';
 import '../../models/commonConfigureModel.dart';
 import '../../models/dashboardModel.dart';
+import '../../models/userPermissionModel.dart';
 import 'bottom_navigation_bar.dart';
 import '../../screens/drawerScreen.dart';
 import '../../screens/leadManagement/dashboard.dart';
@@ -99,6 +100,27 @@ class _HomePageState extends State<HomePage> {
   String? MenuDashboard;
   String? RenewalDashboardPermission;
   String? NewleadDashboardPermission;
+  String? LeadDashboardPermission;
+  String? QuotationDashboardPermission;
+  String? RoomDashboardPermission;
+  UserPermissionModel? userPermissions;
+  String? leadModulePermission;
+  String? workModulePermission;
+  String? accountsModulePermission;
+  String? renewalModulePermission;
+  String? quotationModulePermission;
+  String? roomModulePermission;
+  String? accPermission;
+  String? renewalPermission;
+  String? viewStaffPermission;
+  String? createStaffPermission;
+  String? viewStaffReportPermission;
+  String? viewLeadReportPermission;
+  String? viewTargetReportPermission;
+  String? adminCheckPermission;
+  String? viewAllWorkPermission;
+  String? fileManagerPermission;
+  String? viewWhatsappSettings;
   bool isLongPress = false;
   String officialWhatsapp = '';
   String unOfficialWhatsapp = '';
@@ -162,6 +184,37 @@ class _HomePageState extends State<HomePage> {
         await Common.getSharedPref("RenewalDashboardPermission");
     NewleadDashboardPermission =
         await Common.getSharedPref("NewleadDashboardPermission");
+    LeadDashboardPermission =
+        await Common.getSharedPref("LeadDashboard");
+    QuotationDashboardPermission =
+        await Common.getSharedPref("QuotationDashboardPermission");
+    RoomDashboardPermission =
+        await Common.getSharedPref("RoomDashboard");
+    userPermissions =
+        await HttpService.userPermissionCheck(widget.token ?? token);
+    leadModulePermission = await Common.getSharedPref("leadModule");
+    workModulePermission = await Common.getSharedPref("workModule");
+    accountsModulePermission = await Common.getSharedPref("accountsModule");
+    renewalModulePermission = await Common.getSharedPref("renewalModule");
+    quotationModulePermission = await Common.getSharedPref("quotationModule");
+    roomModulePermission = await Common.getSharedPref("RoomModule");
+    accPermission = await Common.getSharedPref("accPermission");
+    renewalPermission = await Common.getSharedPref("renewalPermission");
+    viewStaffPermission = await Common.getSharedPref("viewStaffPermission");
+    createStaffPermission = await Common.getSharedPref("createStaffPermission");
+    viewStaffReportPermission =
+        await Common.getSharedPref("viewStaffReportPermission");
+    viewLeadReportPermission =
+        await Common.getSharedPref("viewLeadReportPermission");
+    viewTargetReportPermission =
+        await Common.getSharedPref("viewTargetReportPermission");
+    adminCheckPermission =
+        await Common.getSharedPref("adminCheckPermission");
+    viewAllWorkPermission =
+        await Common.getSharedPref("viewAllWorkPermission");
+    fileManagerPermission = await Common.getSharedPref("fileManager");
+    viewWhatsappSettings =
+        await Common.getSharedPref("viewWhatsappSettings");
     log(role.toString());
     officialWhatsapp = await Common.getSharedPref("officialWhatsApp");
     unOfficialWhatsapp = await Common.getSharedPref("unofficialWhatsApp");
@@ -325,6 +378,412 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
+  }
+
+  bool _isModuleInPackage(String menuName, {String? categoryName}) {
+    if (userDashboard?.data.modules == null ||
+        userDashboard!.data.modules.isEmpty) {
+      return false;
+    }
+    final targetMenu = menuName.toLowerCase().trim();
+    final targetCategory = categoryName?.toLowerCase().trim();
+
+    return userDashboard!.data.modules.any((m) {
+      final mMenu = m.menuName.toLowerCase().trim();
+      final mCat = m.categoryName.toLowerCase().trim();
+      if (mMenu == targetMenu) return true;
+      if (targetCategory != null && mCat == targetCategory) return true;
+      return false;
+    });
+  }
+
+  bool _hasLeadUserPermission() {
+    return userPermissions?.data?.LeadDashboard == "true" ||
+        userPermissions?.data?.viewLead == "true" ||
+        userPermissions?.data?.leadModule == "true" ||
+        LeadDashboardPermission == "true" ||
+        viewLeadPermission == "true" ||
+        leadModulePermission == "true";
+  }
+
+  bool _hasProjectUserPermission() {
+    return userPermissions?.data?.ProjectDashboard == "true" ||
+        userPermissions?.data?.workModule == "true" ||
+        userPermissions?.data?.viewWorkReport == "true" ||
+        userPermissions?.data?.viewAllWorks == "true" ||
+        ProjectDashboardPermission == "true" ||
+        workModulePermission == "true" ||
+        viewWorkReportPermission == "true" ||
+        viewAllWorkPermission == "true";
+  }
+
+  bool _hasAccountsUserPermission() {
+    return userPermissions?.data?.AccountsDashboard == "true" ||
+        userPermissions?.data?.readAccount == "true" ||
+        userPermissions?.data?.accountsModule == "true" ||
+        AccountsDashboardPermission == "true" ||
+        accPermission == "true" ||
+        accountsModulePermission == "true";
+  }
+
+  bool _hasRenewalUserPermission() {
+    return userPermissions?.data?.RenewalDashboard == "true" ||
+        userPermissions?.data?.readRenewal == "true" ||
+        userPermissions?.data?.renewalModule == "true" ||
+        RenewalDashboardPermission == "true" ||
+        renewalPermission == "true" ||
+        renewalModulePermission == "true";
+  }
+
+  bool _hasQuotationUserPermission() {
+    return userPermissions?.data?.QuotationDashboard == "true" ||
+        userPermissions?.data?.quotationModule == "true" ||
+        QuotationDashboardPermission == "true" ||
+        quotationModulePermission == "true";
+  }
+
+  bool _hasRoomUserPermission() {
+    return userPermissions?.data?.RoomDashboard == "true" ||
+        userPermissions?.data?.roomModule == "true" ||
+        RoomDashboardPermission == "true" ||
+        roomModulePermission == "true";
+  }
+
+  bool _hasStaffUserPermission() {
+    return userPermissions?.data?.viewStaff == "true" ||
+        userPermissions?.data?.createStaff == "true" ||
+        viewStaffPermission == "true" ||
+        createStaffPermission == "true";
+  }
+
+  bool _hasReportsUserPermission() {
+    return userPermissions?.data?.viewStaffReport == "true" ||
+        userPermissions?.data?.viewLeadReport == "true" ||
+        userPermissions?.data?.viewTargetReport == "true" ||
+        userPermissions?.data?.adminCheck == "true" ||
+        viewStaffReportPermission == "true" ||
+        viewLeadReportPermission == "true" ||
+        viewTargetReportPermission == "true" ||
+        adminCheckPermission == "true";
+  }
+
+  bool _hasFileManagerUserPermission() {
+    return userPermissions?.data?.fileManager == "true" ||
+        fileManagerPermission == "true";
+  }
+
+  bool _hasCustomersUserPermission() {
+    return userPermissions?.data?.readAccount == "true" ||
+        userPermissions?.data?.accountsModule == "true" ||
+        accPermission == "true" ||
+        accountsModulePermission == "true";
+  }
+
+  bool _hasWhatsappUserPermission() {
+    return userPermissions?.data?.whatsappOfficial == "true" ||
+        officialWhatsapp == "true";
+  }
+
+  bool _hasSettingsUserPermission() {
+    return userPermissions?.data?.viewWhatsappSettings == "true" ||
+        userPermissions?.data?.adminCheck == "true" ||
+        viewWhatsappSettings == "true" ||
+        adminCheckPermission == "true";
+  }
+
+  void _navigateToPermittedMenu() async {
+    String effectiveToken = (token.isNotEmpty ? token : widget.token) ?? '';
+
+    // If package modules are not loaded yet, fetch them from get_active_package
+    if (userDashboard == null && effectiveToken.isNotEmpty) {
+      try {
+        userDashboard = await HttpService.mainDashboard(effectiveToken);
+      } catch (e) {
+        log("Error loading dashboard: $e");
+      }
+    }
+
+    // If user permissions are not loaded yet, fetch them
+    if (userPermissions == null && effectiveToken.isNotEmpty) {
+      try {
+        userPermissions =
+            await HttpService.userPermissionCheck(effectiveToken);
+      } catch (e) {
+        log("Error loading user permissions: $e");
+      }
+    }
+
+    // Ensure SharedPreferences fallback permissions are loaded
+    LeadDashboardPermission ??= await Common.getSharedPref("LeadDashboard");
+    viewLeadPermission = viewLeadPermission.isNotEmpty
+        ? viewLeadPermission
+        : await Common.getSharedPref("viewLeadPermission");
+    leadModulePermission ??= await Common.getSharedPref("leadModule");
+
+    ProjectDashboardPermission ??=
+        await Common.getSharedPref("ProjectDashboardPermission");
+    workModulePermission ??= await Common.getSharedPref("workModule");
+    viewWorkReportPermission = viewWorkReportPermission.isNotEmpty
+        ? viewWorkReportPermission
+        : await Common.getSharedPref("viewWorkReportPermission");
+    viewAllWorkPermission ??=
+        await Common.getSharedPref("viewAllWorkPermission");
+
+    AccountsDashboardPermission ??=
+        await Common.getSharedPref("AccountsDashboardPermission");
+    accPermission ??= await Common.getSharedPref("accPermission");
+    accountsModulePermission ??=
+        await Common.getSharedPref("accountsModule");
+
+    MenuDashboard ??= await Common.getSharedPref("MenuDashboard");
+
+    RenewalDashboardPermission ??=
+        await Common.getSharedPref("RenewalDashboardPermission");
+    renewalPermission ??= await Common.getSharedPref("renewalPermission");
+    renewalModulePermission ??=
+        await Common.getSharedPref("renewalModule");
+
+    NewleadDashboardPermission ??=
+        await Common.getSharedPref("NewleadDashboardPermission");
+
+    QuotationDashboardPermission ??=
+        await Common.getSharedPref("QuotationDashboardPermission");
+    quotationModulePermission ??=
+        await Common.getSharedPref("quotationModule");
+
+    RoomDashboardPermission ??=
+        await Common.getSharedPref("RoomDashboard");
+    roomModulePermission ??= await Common.getSharedPref("RoomModule");
+
+    viewStaffPermission ??= await Common.getSharedPref("viewStaffPermission");
+    createStaffPermission ??=
+        await Common.getSharedPref("createStaffPermission");
+
+    viewStaffReportPermission ??=
+        await Common.getSharedPref("viewStaffReportPermission");
+    viewLeadReportPermission ??=
+        await Common.getSharedPref("viewLeadReportPermission");
+    viewTargetReportPermission ??=
+        await Common.getSharedPref("viewTargetReportPermission");
+    adminCheckPermission ??=
+        await Common.getSharedPref("adminCheckPermission");
+
+    fileManagerPermission ??= await Common.getSharedPref("fileManager");
+    officialWhatsapp = officialWhatsapp.isNotEmpty
+        ? officialWhatsapp
+        : await Common.getSharedPref("officialWhatsApp");
+    viewWhatsappSettings ??=
+        await Common.getSharedPref("viewWhatsappSettings");
+
+    if (!mounted) return;
+
+    // 1. Check Project permission: must be available in get_active_package modules AND permitted for user
+    if (_isModuleInPackage('project', categoryName: 'Project Management') &&
+        _hasProjectUserPermission()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ProjectDashboard()),
+      );
+      return;
+    }
+
+    // 2. Check Accounts permission: must be available in get_active_package modules AND permitted for user
+    if (_isModuleInPackage('invoices', categoryName: 'Accounts') &&
+        _hasAccountsUserPermission()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AccountsDashboard(token: effectiveToken),
+        ),
+      );
+      return;
+    }
+
+    // 3. Check MenuDashboard permission: user has permission for MenuDashboard (HomePage)
+    if (MenuDashboard == "true" ||
+        userPermissions?.data?.MenuDashboard == "true") {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(effectiveToken)),
+      );
+      return;
+    }
+
+    // 4. Check Renewal permission: must be available in get_active_package modules AND permitted for user
+    if (_isModuleInPackage('renewal', categoryName: 'Renewal') &&
+        _hasRenewalUserPermission()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const RenewalDashboard()),
+      );
+      return;
+    }
+
+    // 5. Check Newlead / Minimal Dashboard permission: package has lead management AND user has Newlead permission
+    if (_isModuleInPackage('call_management',
+            categoryName: 'Lead Management') &&
+        (NewleadDashboardPermission == "true" ||
+            userPermissions?.data?.NewleadDashboard == "true")) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MinimalDashboard(effectiveToken),
+        ),
+      );
+      return;
+    }
+
+    // 6. Check Lead Dashboard permission: must be available in get_active_package modules AND permitted for user
+    if (_isModuleInPackage('call_management',
+            categoryName: 'Lead Management') &&
+        _hasLeadUserPermission()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DashboardLeadNewUpdatedTwo(effectiveToken),
+        ),
+      );
+      return;
+    }
+
+    // 7. Check Quotation permission: must be available in get_active_package modules AND permitted for user
+    if (_isModuleInPackage('quotation', categoryName: 'Quotation') &&
+        _hasQuotationUserPermission()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const QuotationDashboard()),
+      );
+      return;
+    }
+
+    // 8. Check Room Dashboard permission: must be available in get_active_package modules AND permitted for user
+    if ((_isModuleInPackage('room_management') ||
+            _isModuleInPackage('Rent')) &&
+        _hasRoomUserPermission()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const RoomDashboard()),
+      );
+      return;
+    }
+
+    // 9. Check other available modules from get_active_package response matching user permissions
+    if (userDashboard != null && userDashboard!.data.modules.isNotEmpty) {
+      for (var module in userDashboard!.data.modules) {
+        String mName = module.menuName.toLowerCase().trim();
+        if (mName == 'staff_management' && _hasStaffUserPermission()) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => ViewUsers(effectiveToken)),
+          );
+          return;
+        } else if (mName == 'service' &&
+            (adminCheckPermission == "true" ||
+                userPermissions?.data?.adminCheck == "true" ||
+                role.toLowerCase() == 'admin')) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => DashboardPage()),
+          );
+          return;
+        } else if (mName == 'rent' && _hasRoomUserPermission()) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RentalDashboard(
+                name: name,
+                token: effectiveToken,
+                userId: userId,
+                phoneCallLogPermission: phoneCallLogPermission,
+                custId: "",
+              ),
+            ),
+          );
+          return;
+        } else if (mName == 'stock' &&
+            (adminCheckPermission == "true" ||
+                userPermissions?.data?.adminCheck == "true" ||
+                role.toLowerCase() == 'admin')) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StockDashboard(
+                name: name,
+                token: effectiveToken,
+                userId: userId,
+                phoneCallLogPermission: phoneCallLogPermission,
+                custId: "",
+              ),
+            ),
+          );
+          return;
+        } else if (mName == 'purchase' &&
+            (adminCheckPermission == "true" ||
+                userPermissions?.data?.adminCheck == "true" ||
+                role.toLowerCase() == 'admin')) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PurchaseDashboard(
+                name: name,
+                token: effectiveToken,
+                userId: userId,
+                phoneCallLogPermission: phoneCallLogPermission,
+              ),
+            ),
+          );
+          return;
+        } else if (mName == 'whatsapp' && _hasWhatsappUserPermission()) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ChatHomeScreen()),
+          );
+          return;
+        } else if (mName == 'settings' && _hasSettingsUserPermission()) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WhatsappSettings(effectiveToken),
+            ),
+          );
+          return;
+        } else if (mName == 'file_manager' &&
+            _hasFileManagerUserPermission()) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FileMangerList(effectiveToken),
+            ),
+          );
+          return;
+        } else if (mName == 'customers' && _hasCustomersUserPermission()) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClientList(effectiveToken, _scaffoldKey),
+            ),
+          );
+          return;
+        } else if (mName == 'complaints' &&
+            (adminCheckPermission == "true" ||
+                userPermissions?.data?.adminCheck == "true" ||
+                role.toLowerCase() == 'admin')) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ComplaintListScreen(),
+            ),
+          );
+          return;
+        }
+      }
+    }
+
+    // 10. Fallback: If user has no permission for any menu, display HomePage (never show Lead Dashboard)
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage(effectiveToken)),
+    );
   }
 
   void _loadWorkStatus() async {
@@ -2231,58 +2690,9 @@ class _HomePageState extends State<HomePage> {
                 floatingActionButtonLocation:
                     FloatingActionButtonLocation.centerDocked,
                 floatingActionButton: FloatingActionButton(
-                  backgroundColor: Color(0xFF2a86c9),
+                  backgroundColor: const Color(0xFF2a86c9),
                   onPressed: () {
-                    // MenuDashboard =="true"?
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //       builder: (context) => HomePage(widget.token)),
-                    // ): Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //       builder: (context) => Dashboard(widget.token)),
-                    // );
-                    ProjectDashboardPermission == "true"
-                        ? Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ProjectDashboard()),
-                          )
-                        : AccountsDashboardPermission == "true"
-                            ? Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        AccountsDashboard(token: token)),
-                              )
-                            : MenuDashboard == "true"
-                                ? Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => HomePage(token)),
-                                  )
-                                : RenewalDashboardPermission == "true"
-                                    ? Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                RenewalDashboard()),
-                                      )
-                                    : NewleadDashboardPermission == "true"
-                                        ? Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    MinimalDashboard(token)),
-                                          )
-                                        : Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    DashboardLeadNewUpdatedTwo(
-                                                        token)),
-                                          );
+                    _navigateToPermittedMenu();
                   },
                   child: Image.asset("assets/icons/menu.png",
                       width: 25), //icon inside button
@@ -2550,53 +2960,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     );
                     if (!context.mounted) return;
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //       builder: (_) => Dashboard(widget.token)),
-                    // );
-                    ProjectDashboardPermission == "true"
-                        ? Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ProjectDashboard()),
-                          )
-                        : AccountsDashboardPermission == "true"
-                            ? Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => AccountsDashboard(
-                                        token: widget.token!)),
-                              )
-                            : MenuDashboard == "true"
-                                ? Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            HomePage(widget.token)),
-                                  )
-                                : RenewalDashboardPermission == "true"
-                                    ? Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                RenewalDashboard()),
-                                      )
-                                    : NewleadDashboardPermission == "true"
-                                        ? Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    MinimalDashboard(
-                                                        widget.token)),
-                                          )
-                                        : Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    DashboardLeadNewUpdatedTwo(
-                                                        widget.token)),
-                                          );
+                    _navigateToPermittedMenu();
                   } else {
                     showError(res?.message ?? "Failed to start work");
                   }
