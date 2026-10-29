@@ -1142,8 +1142,15 @@ class _ProjectDocumentsPageState extends State<ProjectDocumentsPage> {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: _fetchProjectDocuments,
+                  onRefresh: () async {
+                    await Future.wait([
+                      _fetchProjectDocuments(),
+                      _loadUnits(),
+                      _loadSiteLifts(),
+                    ]);
+                  },
                   child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.only(bottom: 30),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

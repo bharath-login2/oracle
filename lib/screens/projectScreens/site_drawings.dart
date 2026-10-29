@@ -12,13 +12,14 @@ class SiteDrawingPage extends StatefulWidget {
   final String projectId;
   final String projectNo;
   final String clientId;
+  final bool projectStatus;
 
-  const SiteDrawingPage({
-    super.key,
-    required this.projectId,
-    required this.projectNo,
-    required this.clientId,
-  });
+  const SiteDrawingPage(
+      {super.key,
+      required this.projectId,
+      required this.projectNo,
+      required this.clientId,
+      required this.projectStatus});
 
   @override
   State<SiteDrawingPage> createState() => _SiteDrawingPageState();
@@ -41,10 +42,16 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
   List<SiteDrawing> _drawings = [];
 
+  // bool get canAddDrawing {
+  //   return _drawings.any(
+  //     (drawing) => drawing.workStatus.trim().toLowerCase() == 'running' || widget.projectStatus == 'running',
+  //   );
+  // }
   bool get canAddDrawing {
-    return _drawings.any(
-      (drawing) => drawing.workStatus.trim().toLowerCase() == 'running',
-    );
+    return widget.projectStatus ||
+        _drawings.any(
+          (drawing) => drawing.workStatus.trim().toLowerCase() == 'running',
+        );
   }
 
   // UNIT / SITE LIFT
@@ -1657,7 +1664,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          if (canAddDrawing)
+          if (canAddDrawing || widget.projectStatus)
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: InkWell(

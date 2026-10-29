@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../core/common.dart';
 import 'package:login2/models/expense/customerListModel.dart';
 import 'package:login2/models/expense/getProjectListModel.dart';
 import 'package:login2/models/projectDashboardCountModel.dart';
@@ -17,6 +18,8 @@ class AddProjectPage extends StatefulWidget {
 
 class _AddProjectPageState extends State<AddProjectPage> {
   List<ProjectExp> projects = [];
+  String? name = '';
+  String? role = '';
   String username = "";
   String designation = "";
   ProjectPermissions? permissions;
@@ -39,7 +42,16 @@ class _AddProjectPageState extends State<AddProjectPage> {
   @override
   void initState() {
     super.initState();
+    getData();
     loadDashboardData();
+  }
+
+  Future<void> getData() async {
+    name = await Common.getSharedPref("name");
+    role = await Common.getSharedPref("role");
+
+    // Call setState if you need to update the UI with these values
+    setState(() {});
   }
 
   Future<void> loadDashboardData() async {
@@ -378,7 +390,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "Hi, ${username.isNotEmpty ? username : 'User'}",
+                                        "Hi, ${(name == null || name!.isEmpty) ? 'User' : name}",
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 20,
@@ -387,9 +399,7 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        designation.isNotEmpty
-                                            ? designation
-                                            : 'Company Admin',
+                                        "Role: ${(role == null || role!.isEmpty) ? 'Company Admin' : role}",
                                         style: const TextStyle(
                                           color: Colors.white70,
                                           fontSize: 14,
@@ -564,7 +574,8 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                          color: primaryThemeColor.withOpacity(0.3)),
+                                          color: primaryThemeColor
+                                              .withOpacity(0.3)),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.black.withOpacity(0.04),
@@ -578,8 +589,10 @@ class _AddProjectPageState extends State<AddProjectPage> {
                                         Container(
                                           padding: const EdgeInsets.all(10),
                                           decoration: BoxDecoration(
-                                            color: primaryThemeColor.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(12),
+                                            color: primaryThemeColor
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: const Icon(
                                             Icons.list_alt_rounded,

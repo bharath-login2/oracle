@@ -31,7 +31,7 @@ import 'package:login2/screens/leadManagement/AddProjectPage.dart';
 import 'package:login2/screens/leadManagement/minimalDashboard.dart';
 import 'package:login2/screens/leadManagement/notification_page.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
-// import 'package:login2/screens/leadManagement/quotationDashboard.dart';
+import 'package:login2/screens/leadManagement/quotationDashboard.dart';
 import 'package:login2/screens/leadManagement/quotationPage.dart';
 import 'package:login2/screens/leadManagement/salaryReportPage.dart';
 import 'package:login2/screens/leadManagement/staffReport.dart';

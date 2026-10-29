@@ -1,16 +1,220 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:login2/models/lead_management/newProjectListModel.dart';
 import 'package:login2/models/lead_management/projectDetailedModel.dart';
-import 'package:login2/models/projectdetails/project_documents_models.dart';
+// import 'package:login2/models/projectdetails/project_documents_models.dart';
 import '../projectScreens/project_info.dart';
 import '../projectScreens/unit_info.dart';
 import '../projectScreens/delay_management.dart';
 import '../projectScreens/project_documents.dart';
 import '../projectScreens/gallery.dart';
 import '../projectScreens/site_drawings.dart';
-import '../projectScreens/payment_schedule_screen.dart';
+// import '../projectScreens/payment_schedule_screen.dart';
+// import '../projectScreens/extra_work.dart';
+// import '../projectScreens/deduction_work.dart';
+// import '../projectScreens/expense.dart';
+// import '../projectScreens/payment_history.dart';
 import 'package:login2/service/service.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Indian-style grouping (12,50,000) without extra packages.
+String _formatAmount(double value, {int decimals = 0}) {
+  final negative = value < 0;
+  final fixed = value.abs().toStringAsFixed(decimals);
+  final parts = fixed.split('.');
+  final digits = parts[0];
+
+  String grouped;
+  if (digits.length <= 3) {
+    grouped = digits;
+  } else {
+    final last3 = digits.substring(digits.length - 3);
+    var rest = digits.substring(0, digits.length - 3);
+    final groups = <String>[];
+    while (rest.length > 2) {
+      groups.insert(0, rest.substring(rest.length - 2));
+      rest = rest.substring(0, rest.length - 2);
+    }
+    if (rest.isNotEmpty) groups.insert(0, rest);
+    grouped = '${groups.join(',')},$last3';
+  }
+  final decimalPart = parts.length > 1 ? '.${parts[1]}' : '';
+  return '${negative ? '-' : ''}₹$grouped$decimalPart';
+}
+
+/// Fade + slide + scale entrance, optionally delayed (for staggering).
+class _AnimatedEntrance extends StatefulWidget {
+  final Widget child;
+  final Duration delay;
+
+  const _AnimatedEntrance({
+    required this.child,
+    this.delay = Duration.zero,
+  });
+
+  @override
+  State<_AnimatedEntrance> createState() => _AnimatedEntranceState();
+}
+
+class _AnimatedEntranceState extends State<_AnimatedEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _scale;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
+    final curved =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _fade = curved;
+    _slide = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
+        .animate(curved);
+    _scale = Tween<double>(begin: 0.94, end: 1).animate(curved);
+
+    if (widget.delay == Duration.zero) {
+      _controller.forward();
+    } else {
+      _timer = Timer(widget.delay, () {
+        if (mounted) _controller.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(
+        position: _slide,
+        child: ScaleTransition(scale: _scale, child: widget.child),
+      ),
+    );
+  }
+}
+
+/// Shrinks slightly while a finger is down. Uses raw pointer events, so it
+/// doesn't interfere with the child's InkWell ripple or onTap.
+class _PressScale extends StatefulWidget {
+  final Widget child;
+  final double pressedScale;
+
+  const _PressScale({required this.child, this.pressedScale = 0.95});
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> {
+  bool _down = false;
+
+  void _set(bool v) {
+    if (_down != v) setState(() => _down = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => _set(true),
+      onPointerUp: (_) => _set(false),
+      onPointerCancel: (_) => _set(false),
+      child: AnimatedScale(
+        scale: _down ? widget.pressedScale : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Small glowing dot used in the "running" status chip.
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (_, __) {
+        final t = _controller.value;
+        return Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withOpacity(0.55 * t),
+                blurRadius: 4 + 6 * t,
+                spreadRadius: 1 + 2 * t,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ActionItem {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ActionItem({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
 
 class ProjectDetailPage extends StatefulWidget {
   final NewProjectItem project;
@@ -44,6 +248,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       final response = await HttpService.getProjectDetailed(
         projectId: widget.project.id,
       );
+      if (!mounted) return;
       if (response != null && response.status && response.data != null) {
         setState(() {
           _projectData = response.data;
@@ -59,6 +264,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       }
     } catch (e) {
       log('ProjectDetailPage error: $e');
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'An error occurred: $e';
         _isLoading = false;
@@ -66,7 +272,11 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     }
   }
 
-  // ── Header card (name / client / location) ──────────────────────────────
+  void _open(Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  // ── Header card (name / client / location / status) ─────────────────────
   Widget _buildInfoRow(IconData icon, String text) {
     if (text.isEmpty) return const SizedBox.shrink();
     return Padding(
@@ -89,6 +299,51 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     );
   }
 
+  Widget _buildStatusChip(String status) {
+    if (status.isEmpty) return const SizedBox.shrink();
+    final s = status.toLowerCase();
+    final isRunning = s == 'running';
+    final color = isRunning
+        ? const Color(0xFF2E9E5B)
+        : s == 'completed'
+            ? _primary
+            : const Color(0xFFF59E0B);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isRunning)
+              _PulsingDot(color: color)
+            else
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              ),
+            const SizedBox(width: 6),
+            Text(
+              status.toUpperCase(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeaderCard(ProjectDetailedData d) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -105,7 +360,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       ),
       child: Column(
         children: [
-          // Blue top accent strip
           Container(
             height: 5,
             decoration: const BoxDecoration(
@@ -149,6 +403,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      _buildStatusChip(d.workStatus),
                       _buildInfoRow(Icons.person_outline, d.clientName),
                       _buildInfoRow(Icons.phone_outlined, d.contact1),
                       _buildInfoRow(Icons.location_on_outlined, d.location),
@@ -163,8 +418,35 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
     );
   }
 
-  // ── Overview card (dates + cost + issue counts) ──────────────────────────
+  // ── Overview card (animated metric cards) ───────────────────────────────
   Widget _buildOverviewCard(ProjectDetailedData d) {
+    final metrics = <Map<String, dynamic>>[
+      {
+        'title': 'Total Project Cost',
+        'count': d.totalProjectCost,
+        'icon': Icons.currency_rupee_rounded,
+        'colors': const [Color(0xFF2A86C9), Color(0xFF1A5FA8)],
+      },
+      {
+        'title': 'Received from Client',
+        'count': d.receivedFromClient,
+        'icon': Icons.call_received_rounded,
+        'colors': const [Color(0xFF26A69A), Color(0xFF00796B)],
+      },
+      {
+        'title': 'Total Expense Payment',
+        'count': d.totalExpensePayment,
+        'icon': Icons.call_made_rounded,
+        'colors': const [Color(0xFFFF8A65), Color(0xFFE64A19)],
+      },
+      {
+        'title': 'Total Purchase Payment',
+        'count': d.totalPurchasePayment,
+        'icon': Icons.shopping_cart_rounded,
+        'colors': const [Color(0xFF7E57C2), Color(0xFF512DA8)],
+      },
+    ];
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       padding: const EdgeInsets.all(18),
@@ -182,7 +464,6 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label
           Row(
             children: [
               Container(
@@ -206,245 +487,484 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // 2-column overview grid
-          // Table(
-          //   columnWidths: const {
-          //     0: FlexColumnWidth(),
-          //     1: FlexColumnWidth(),
-          //   },
-          //   children: [
-          //     TableRow(children: [
-          //       _buildOverviewTile(
-          //         icon: Icons.calendar_today_outlined,
-          //         label: 'Start Date',
-          //         value: d.startingDate.isNotEmpty ? d.startingDate : '—',
-          //       ),
-          //       _buildOverviewTile(
-          //         icon: Icons.event_outlined,
-          //         label: 'End Date',
-          //         value: d.completionDate.isNotEmpty ? d.completionDate : '—',
-          //       ),
-          //     ]),
-          //     TableRow(children: [
-          //       _buildOverviewTile(
-          //         icon: Icons.currency_rupee_rounded,
-          //         label: 'Total Cost',
-          //         value: '₹${d.totalEstimateAmount}',
-          //         valueColor: _primaryDark,
-          //       ),
-          //       _buildOverviewTile(
-          //         icon: Icons.person_off_outlined,
-          //         label: 'Client Issues',
-          //         value: d.clientIssueCount,
-          //         valueColor: d.clientIssueCount != '0' ? Colors.orange : null,
-          //       ),
-          //     ]),
-          //     TableRow(children: [
-          //       _buildOverviewTile(
-          //         icon: Icons.business_outlined,
-          //         label: 'Company Issues',
-          //         value: d.companyIssueCount,
-          //         valueColor: d.companyIssueCount != '0' ? Colors.orange : null,
-          //       ),
-          //       _buildOverviewTile(
-          //         icon: Icons.payment_outlined,
-          //         label: 'Payment Delay',
-          //         value: d.paymentPendingCount,
-          //         valueColor: d.paymentPendingCount != '0' ? Colors.red : null,
-          //       ),
-          //     ]),
-          //     TableRow(children: [
-          //       _buildOverviewTile(
-          //         icon: Icons.public_outlined,
-          //         label: 'General Issues',
-          //         value: d.generalIssueCount,
-          //         valueColor: d.generalIssueCount != '0' ? Colors.orange : null,
-          //       ),
-          //       _buildOverviewTile(
-          //         icon: Icons.work_history_outlined,
-          //         label: 'Total Worked',
-          //         value: d.totalWorked,
-          //       ),
-          //     ]),
-          //   ],
-          // ),
-          GridView.count(
-            crossAxisCount: 2,
+          GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 14,
-            mainAxisSpacing: 14,
-            childAspectRatio: 1.25,
-            children: [
-              _buildMetricCard(
-                title: "Total Project Value",
-                // count: totalProjectValue,
-                icon: Icons.account_balance_wallet_rounded,
-                gradientColors: const [
-                  Color(0xFF2A86C9),
-                  Color(0xFF6366F1),
-                ],
-                filterType: "Total Project Value",
-              ),
-              _buildMetricCard(
-                title: "Total Amount Collected",
-                // count: totalAmountCollected,
-                icon: Icons.payments_rounded,
-                gradientColors: const [
-                  Color(0xFF2A86C9),
-                  Color(0xFF6366F1),
-                ],
-                filterType: "Total Amount Collected",
-              ),
-              _buildMetricCard(
-                title: "Balance to Claim",
-                // count: balanceToClaim,
-                icon: Icons.account_balance_rounded,
-                gradientColors: const [
-                  Color(0xFF2A86C9),
-                  Color(0xFF6366F1),
-                ],
-                filterType: "Balance to Claim",
-              ),
-              _buildMetricCard(
-                title: "Invoiced Claimed & Waiting for Collection",
-                // count: invoicedClaimedWaiting,
-                icon: Icons.receipt_long_rounded,
-                gradientColors: const [
-                  Color(0xFF2A86C9),
-                  Color(0xFF6366F1),
-                ],
-                filterType: "Invoiced Claimed & Waiting for Collection",
-              ),
-            ],
+            itemCount: metrics.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              mainAxisExtent: 130,
+            ),
+            itemBuilder: (context, i) {
+              final m = metrics[i];
+              final count = m['count'] as double;
+              // Share of total project cost (for every card except the first)
+              final double? ratio = (i > 0 && d.totalProjectCost > 0)
+                  ? (count / d.totalProjectCost).clamp(0.0, 1.0).toDouble()
+                  : null;
+
+              return _AnimatedEntrance(
+                delay: Duration(milliseconds: 150 + i * 110),
+                child: _buildMetricCard(
+                  title: m['title'] as String,
+                  count: count,
+                  icon: m['icon'] as IconData,
+                  gradientColors: m['colors'] as List<Color>,
+                  filterType: m['title'] as String,
+                  ratio: ratio,
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOverviewTile({
+  Widget _buildMetricCard({
+    required String title,
+    required double count,
     required IconData icon,
-    required String label,
-    required String value,
-    Color? valueColor,
+    required List<Color> gradientColors,
+    required String filterType,
+    double? ratio,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14, right: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: _primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: _primary),
+    return _PressScale(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          splashColor: Colors.white.withOpacity(0.2),
+          onTap: () => _showMetricDetails(
+            title: title,
+            count: count,
+            icon: icon,
+            colors: gradientColors,
+            ratio: ratio,
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: valueColor ?? Colors.black87,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: gradientColors.last.withOpacity(0.30),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Section action buttons ───────────────────────────────────────────────
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        splashColor: _primary.withOpacity(0.15),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _primary.withOpacity(0.25), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: _primary.withOpacity(0.09),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [_primary, _primaryDark],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primary.withOpacity(0.30),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Soft watermark icon in the corner
+                  Positioned(
+                    right: -12,
+                    bottom: -16,
+                    child: Icon(
+                      icon,
+                      size: 80,
+                      color: Colors.white.withOpacity(0.12),
                     ),
-                  ],
-                ),
-                child: Icon(icon, color: Colors.white, size: 24),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Top: icon (left) + animated price (right)
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.25),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(icon, color: Colors.white, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(begin: 0, end: count),
+                                  duration: const Duration(milliseconds: 1400),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (_, value, __) => Text(
+                                    _formatAmount(value),
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Bottom: title
+                        Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: _primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────
+  /// Bottom sheet shown when a metric card is tapped.
+  void _showMetricDetails({
+    required String title,
+    required double count,
+    required IconData icon,
+    required List<Color> colors,
+    double? ratio,
+  }) {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.fromLTRB(22, 12, 22, 28),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: colors,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colors.last.withOpacity(0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 30),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: count),
+                  duration: const Duration(milliseconds: 900),
+                  curve: Curves.easeOutCubic,
+                  builder: (_, value, __) => FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _formatAmount(value, decimals: 2),
+                      style: TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        color: colors.last,
+                      ),
+                    ),
+                  ),
+                ),
+                if (ratio != null) ...[
+                  const SizedBox(height: 20),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: ratio),
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOutCubic,
+                    builder: (_, value, __) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Share of total project cost',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            Text(
+                              '${(value * 100).toStringAsFixed(1)}%',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: colors.last,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: value,
+                            minHeight: 10,
+                            backgroundColor: colors.last.withOpacity(0.12),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              colors.first,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Section action buttons ──────────────────────────────────────────────
+  Widget _buildActionButton(_ActionItem item) {
+    return _PressScale(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            item.onTap();
+          },
+          borderRadius: BorderRadius.circular(16),
+          splashColor: _primary.withOpacity(0.15),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _primary.withOpacity(0.25), width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: _primary.withOpacity(0.09),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [_primary, _primaryDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _primary.withOpacity(0.30),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(item.icon, color: Colors.white, size: 24),
+                ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    item.label,
+                    style: const TextStyle(
+                      color: _primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<_ActionItem> _actions() {
+    final p = widget.project;
+    return [
+      _ActionItem(
+        label: 'Project Info',
+        icon: Icons.info_outline_rounded,
+        onTap: () => _open(ProjectInfoPage(project: p)),
+      ),
+      _ActionItem(
+        label: 'Project Document',
+        icon: Icons.description_outlined,
+        onTap: () => _open(ProjectDocumentsPage(project: p)),
+      ),
+      _ActionItem(
+        label: 'Delay Management',
+        icon: Icons.timer_off_outlined,
+        onTap: () => _open(DelayManagementPage(
+          projectId: p.id.toString(),
+          projectNo: p.projectNo.toString(),
+        )),
+      ),
+      _ActionItem(
+        label: 'Gallery',
+        icon: Icons.photo_library_outlined,
+        onTap: () => _open(GalleryPage(
+          projectId: p.id.toString(),
+          projectNo: p.projectNo.toString(),
+          clientId: p.clientId,
+        )),
+      ),
+      // Payment Schedule → Payment History are UI-only for now
+      // _ActionItem(
+      //   label: 'Payment Schedule',
+      //   icon: Icons.payment_outlined,
+      //   onTap: () => _open(PaymentScheduleScreen(
+      //     projectId: p.id,
+      //     projectNo: p.projectNo.toString(),
+      //   )),
+      // ),
+      _ActionItem(
+        label: 'Site Drawings',
+        icon: Icons.architecture_outlined,
+        onTap: () => _open(SiteDrawingPage(
+          projectId: p.id,
+          projectNo: p.projectNo,
+          clientId: p.clientId,
+          projectStatus: p.paymentStatus,
+        )),
+      ),
+      // _ActionItem(
+      //   label: 'Extra Work',
+      //   icon: Icons.trending_up,
+      //   onTap: () => _open(ExtraWorkScreen(
+      //     projectId: p.id,
+      //     projectNo: p.projectNo,
+      //     clientId: p.clientId,
+      //   )),
+      // ),
+      // _ActionItem(
+      //   label: 'Deduction Work',
+      //   icon: Icons.trending_down,
+      //   onTap: () => _open(DeductionWorkScreen(
+      //     projectId: p.id,
+      //     projectNo: p.projectNo,
+      //     clientId: p.clientId,
+      //   )),
+      // ),
+      // _ActionItem(
+      //   label: 'Expenses',
+      //   icon: Icons.account_balance_wallet_outlined,
+      //   onTap: () => _open(ExpenseScreen(
+      //     projectId: p.id,
+      //     projectNo: p.projectNo,
+      //     clientId: p.clientId,
+      //   )),
+      // ),
+      // _ActionItem(
+      //   label: 'Payment History',
+      //   icon: Icons.receipt_long_rounded,
+      //   onTap: () => _open(PaymentHistoryScreen(
+      //     projectId: p.id,
+      //     projectNo: p.projectNo,
+      //     clientId: p.clientId,
+      //   )),
+      // ),
+      _ActionItem(
+        label: 'Unit Info',
+        icon: Icons.home_work_outlined,
+        onTap: () => _open(UnitInfoPage(projectId: p.id)),
+      ),
+    ];
+  }
+
+  // ── Build ───────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final d = _projectData;
+    final actions = _actions();
+
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5FB),
       appBar: AppBar(
@@ -482,7 +1002,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: _primary))
-          : _errorMessage != null
+          : (_errorMessage != null || d == null)
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
@@ -493,7 +1013,7 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                             color: _primary, size: 52),
                         const SizedBox(height: 12),
                         Text(
-                          _errorMessage!,
+                          _errorMessage ?? 'No data available',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey.shade700),
                         ),
@@ -513,245 +1033,81 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
                     ),
                   ),
                 )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 30),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 1 – Project identity card
-                      _buildHeaderCard(_projectData!),
+              : RefreshIndicator(
+                  color: _primary,
+                  onRefresh: _fetchProjectDetailed,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 30),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 1 – Project identity card
+                        _AnimatedEntrance(child: _buildHeaderCard(d)),
 
-                      // 2 – Overview: dates + cost + issue counts
-                      _buildOverviewCard(_projectData!),
-
-                      // 3 – Section buttons label
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: _primary,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Project Sections',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
+                        // 2 – Overview: animated metric cards
+                        _AnimatedEntrance(
+                          delay: const Duration(milliseconds: 80),
+                          child: _buildOverviewCard(d),
                         ),
-                      ),
 
-                      // 4 – 2×3 grid of action buttons
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.35,
-                          children: [
-                            _buildActionButton(
-                              label: 'Project Info',
-                              icon: Icons.info_outline_rounded,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ProjectInfoPage(
-                                      project: widget.project,
-                                    ),
+                        // 3 – Section label
+                        _AnimatedEntrance(
+                          delay: const Duration(milliseconds: 250),
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: _primary,
+                                    borderRadius: BorderRadius.circular(2),
                                   ),
-                                );
-                              },
-                            ),
-                            _buildActionButton(
-                              label: 'Project Document',
-                              icon: Icons.description_outlined,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ProjectDocumentsPage(
-                                      project: widget.project,
-                                    ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Project Sections',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
                                   ),
-                                );
-                              },
+                                ),
+                              ],
                             ),
-                            _buildActionButton(
-                              label: 'Delay Management',
-                              icon: Icons.timer_off_outlined,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DelayManagementPage(
-                                      projectId: widget.project.id.toString(),
-                                      projectNo:
-                                          widget.project.projectNo.toString(),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildActionButton(
-                              label: 'Gallery',
-                              icon: Icons.photo_library_outlined,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => GalleryPage(
-                                        projectId: widget.project.id.toString(),
-                                        projectNo:
-                                            widget.project.projectNo.toString(),
-                                        clientId: widget.project.clientId),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildActionButton(
-                              label: 'Site Drawings',
-                              icon: Icons.architecture_outlined,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SiteDrawingPage(
-                                        projectId: widget.project.id,
-                                        projectNo: widget.project.projectNo,
-                                        clientId: widget.project.clientId),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildActionButton(
-                              label: 'Unit Info',
-                              icon: Icons.home_work_outlined,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => UnitInfoPage(
-                                      projectId: widget.project.id,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            // _buildActionButton(
-                            //   label: 'Payment Schedule',
-                            //   icon: Icons.attach_money,
-                            //   onTap: () {
-                            //     Navigator.push(
-                            //       context,
-                            //       MaterialPageRoute(
-                            //         builder: (context) => PaymentScheduleScreen(
-                            //           projectId: widget.project.id,
-                            //         ),
-                            //       ),
-                            //     );
-                            //   },
-                            // ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-    );
-  }
 
-  Widget _buildMetricCard({
-    required String title,
-    // required int count,
-    required IconData icon,
-    required List<Color> gradientColors,
-    required String filterType,
-  }) {
-    return GestureDetector(
-      // onTap: () => navigateToProjectList(filterType),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: gradientColors.last.withOpacity(0.35),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 24),
-                ),
-                // Text(
-                //   count.toString(),
-                //   style: const TextStyle(
-                //     color: Colors.white,
-                //     fontSize: 28,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    softWrap: true,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
+                        // 4 – Staggered grid of action buttons
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: actions.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              mainAxisExtent: 118,
+                            ),
+                            itemBuilder: (context, i) {
+                              return _AnimatedEntrance(
+                                delay: Duration(
+                                  milliseconds: 300 + (i * 60),
+                                ),
+                                child: _buildActionButton(actions[i]),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Colors.white70,
-                  size: 14,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

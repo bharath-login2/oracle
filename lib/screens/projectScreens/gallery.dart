@@ -35,6 +35,10 @@ class _GalleryPageState extends State<GalleryPage> {
   bool _isLoadingUnits = false;
   bool _isLoadingSiteLifts = false;
 
+  // LOAD ERROR / OFFLINE STATE
+  bool _hasError = false;
+  bool _isOffline = false;
+
   //FOR ADD LOADING
 
   PlatformFile? _photo1;
@@ -112,11 +116,52 @@ class _GalleryPageState extends State<GalleryPage> {
     }
   }
 
-  Future<void> _loadGallery() async {
+  // CHECK INTERNET
+  Future<bool> _hasInternet() async {
+    try {
+      final result = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(seconds: 5));
+
+      return result.isNotEmpty && result.first.rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // HANDLE LOAD FAILURE
+  Future<void> _handleLoadFailure() async {
+    final online = await _hasInternet();
+
     if (!mounted) return;
 
     setState(() {
-      _isLoadingGallery = true;
+      _hasError = true;
+      _isOffline = !online;
+    });
+
+    // If old data is still on screen, just tell the user
+    if (_galleryList.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            online ? 'Failed to refresh gallery' : 'No internet connection',
+          ),
+        ),
+      );
+    }
+  }
+
+  // showLoader = false is used for pull-to-refresh,
+  // so the pull spinner is shown instead of the full-screen loader
+  Future<void> _loadGallery({bool showLoader = true}) async {
+    if (!mounted) return;
+
+    setState(() {
+      if (showLoader) {
+        _isLoadingGallery = true;
+      }
+      _hasError = false;
+      _isOffline = false;
     });
 
     try {
@@ -126,13 +171,16 @@ class _GalleryPageState extends State<GalleryPage> {
 
       if (!mounted) return;
 
-      if (response != null && response.status) {
+      if (response == null) {
+        await _handleLoadFailure();
+      } else if (response.status) {
         setState(() {
           _galleryList = response.data;
         });
       }
     } catch (e) {
       print('Gallery API error: $e');
+      await _handleLoadFailure();
     } finally {
       if (mounted) {
         setState(() {
@@ -217,6 +265,147 @@ class _GalleryPageState extends State<GalleryPage> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  // NO INTERNET / ERROR STATE
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                color: _primary.withOpacity(0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _isOffline ? Icons.wifi_off_rounded : Icons.error_outline,
+                size: 45,
+                color: _primary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _isOffline ? 'No Internet Connection' : 'Something Went Wrong',
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _isOffline
+                  ? 'Please check your connection and pull down to refresh.'
+                  : 'Unable to load gallery. Pull down to refresh.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                _loadGallery();
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // SCROLLABLE WRAPPER (needed so pull-to-refresh works on short content)
+
+  Widget _buildScrollableState(Widget child) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  // BODY
+
+  Widget _buildBody() {
+    if (_isLoadingGallery) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: _primary,
+        ),
+      );
+    }
+
+    // Failed and nothing to show -> no internet / error state
+    if (_hasError && _galleryList.isEmpty) {
+      return RefreshIndicator(
+        color: _primary,
+        onRefresh: () => _loadGallery(showLoader: false),
+        child: _buildScrollableState(_buildErrorState()),
+      );
+    }
+
+    if (_galleryList.isEmpty) {
+      return RefreshIndicator(
+        color: _primary,
+        onRefresh: () => _loadGallery(showLoader: false),
+        child: _buildScrollableState(_buildEmptyState()),
+      );
+    }
+
+    return RefreshIndicator(
+      color: _primary,
+      onRefresh: () => _loadGallery(showLoader: false),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: _galleryList.length,
+        itemBuilder: (context, index) {
+          final gallery = _galleryList[index];
+
+          return _buildGalleryCard(
+            index: index + 1,
+            galleryId: gallery.id,
+            date: gallery.createdAt,
+            unitNo: gallery.unitNo,
+            siteLiftNo: gallery.siteLiftName,
+
+            // Image → mediaUrl
+            // YouTube → fileName
+            mediaUrl: gallery.fileType == '2'
+                ? gallery.fileName
+                : (gallery.mediaUrl ?? ''),
+
+            createdBy: gallery.staffName,
+            mediaType: gallery.fileType,
+          );
+        },
       ),
     );
   }
@@ -1794,40 +1983,7 @@ class _GalleryPageState extends State<GalleryPage> {
           ),
         ),
       ),
-      // body:
-      // _buildEmptyState()
-      body: _isLoadingGallery
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: _primary,
-              ),
-            )
-          : _galleryList.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _galleryList.length,
-                  itemBuilder: (context, index) {
-                    final gallery = _galleryList[index];
-
-                    return _buildGalleryCard(
-                      index: index + 1,
-                      galleryId: gallery.id,
-                      date: gallery.createdAt,
-                      unitNo: gallery.unitNo,
-                      siteLiftNo: gallery.siteLiftName,
-
-                      // Image → mediaUrl
-                      // YouTube → fileName
-                      mediaUrl: gallery.fileType == '2'
-                          ? gallery.fileName
-                          : (gallery.mediaUrl ?? ''),
-
-                      createdBy: gallery.staffName,
-                      mediaType: gallery.fileType,
-                    );
-                  },
-                ),
+      body: _buildBody(),
     );
   }
 }

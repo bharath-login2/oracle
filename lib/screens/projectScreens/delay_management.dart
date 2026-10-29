@@ -475,14 +475,32 @@ class _DelayManagementPageState extends State<DelayManagementPage> {
       );
     }
 
+    // Empty state (now pull-to-refresh enabled)
     if (_delayList.isEmpty) {
-      return _buildEmptyState();
+      return RefreshIndicator(
+        color: _primary,
+        onRefresh: _loadDelays,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: _buildEmptyState(),
+              ),
+            );
+          },
+        ),
+      );
     }
 
     return RefreshIndicator(
       color: _primary,
       onRefresh: _loadDelays,
       child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(
           20,
           8,

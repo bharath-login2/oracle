@@ -293,8 +293,8 @@ class _ProjectListPageState extends State<ProjectListPage> {
         backgroundColor: primaryThemeColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -498,8 +498,8 @@ class _ProjectListPageState extends State<ProjectListPage> {
                                         ],
                                       ),
                                       const Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            vertical: 10),
+                                        padding:
+                                            EdgeInsets.symmetric(vertical: 10),
                                         child: Divider(
                                             height: 1,
                                             color: Color(0xFFEEEEEE)),

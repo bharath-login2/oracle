@@ -9452,7 +9452,6 @@ class HttpService {
       if (searchkey != null && searchkey.isNotEmpty) {
         map['searchkey'] = searchkey;
       }
-
       final response = await _dio.post(
         "${await Config.getUrl()}get_project_list",
         data: FormData.fromMap(map),

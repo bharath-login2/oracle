@@ -43,15 +43,19 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   final TextEditingController projectNoController = TextEditingController();
   final TextEditingController lpoNumberController = TextEditingController();
   final TextEditingController jobNumberController = TextEditingController();
-  final TextEditingController mainContractorController = TextEditingController();
+  final TextEditingController mainContractorController =
+      TextEditingController();
   final TextEditingController consultantController = TextEditingController();
   final TextEditingController siteAddressController = TextEditingController();
   final TextEditingController contractValueController = TextEditingController();
-  final TextEditingController projectManagerController = TextEditingController();
-  final TextEditingController projectEngineersController = TextEditingController();
+  final TextEditingController projectManagerController =
+      TextEditingController();
+  final TextEditingController projectEngineersController =
+      TextEditingController();
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
-  final TextEditingController invoiceMilestoneController = TextEditingController();
+  final TextEditingController invoiceMilestoneController =
+      TextEditingController();
 
   // Selected Dropdown values
   String? selectedCustomerId;
@@ -109,7 +113,9 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
       if (statusResp != null && statusResp.status) {
         projectStatusList = statusResp.data;
       }
-      if (branchResp != null && branchResp.status == true && branchResp.data != null) {
+      if (branchResp != null &&
+          branchResp.status == true &&
+          branchResp.data != null) {
         branchList = branchResp.data!;
       }
 
@@ -150,8 +156,8 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
             (s) =>
                 s.statusName.toLowerCase() == p.workStatus.toLowerCase() ||
                 s.slugName.toLowerCase() == p.workStatus.toLowerCase(),
-            orElse: () => ProjectStatusItem(
-                statusName: '', slugName: '', companyId: ''),
+            orElse: () =>
+                ProjectStatusItem(statusName: '', slugName: '', companyId: ''),
           );
           if (matched.slugName.isNotEmpty) {
             selectedProjectStatusSlug = matched.slugName;
@@ -328,8 +334,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
       // Attach any picked files
       for (var entry in selectedFiles.entries) {
         if (entry.value != null) {
-          formMap[entry.key] =
-              await MultipartFile.fromFile(entry.value!.path);
+          formMap[entry.key] = await MultipartFile.fromFile(entry.value!.path);
         }
       }
 
@@ -394,7 +399,8 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
               ? const [
                   TextSpan(
                     text: ' *',
-                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: Colors.red, fontWeight: FontWeight.bold),
                   )
                 ]
               : [],
@@ -425,7 +431,8 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
               ? Icon(prefixIcon, color: Colors.grey.shade600, size: 20)
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         ),
       ),
     );
@@ -436,7 +443,8 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
     required String fileKey,
   }) {
     final file = selectedFiles[fileKey];
-    final fileName = file != null ? file.path.split('/').last : 'No file chosen';
+    final fileName =
+        file != null ? file.path.split('/').last : 'No file chosen';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,17 +503,20 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
       appBar: AppBar(
         title: Text(
           isEdit ? "Edit Project" : "Add Project",
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style:
+              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: primaryThemeColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: isLoadingOptions
-          ? const Center(child: CircularProgressIndicator(color: primaryThemeColor))
+          ? const Center(
+              child: CircularProgressIndicator(color: primaryThemeColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -775,32 +786,32 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                   ),
 
                   const SizedBox(height: 20),
-                  const Text(
-                    "Document Management",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: primaryThemeColor,
-                    ),
-                  ),
-                  const Divider(),
+                  // const Text(
+                  //   "Document Management",
+                  //   style: TextStyle(
+                  //     fontSize: 16,
+                  //     fontWeight: FontWeight.bold,
+                  //     color: primaryThemeColor,
+                  //   ),
+                  // ),
+                  // const Divider(),
 
-                  _buildFilePickerTile(
-                      label: "Drawings", fileKey: 'drawings'),
-                  _buildFilePickerTile(
-                      label: "Method of Statement",
-                      fileKey: 'method_of_statement'),
-                  _buildFilePickerTile(
-                      label: "Risk Assessment", fileKey: 'risk_assessment'),
-                  _buildFilePickerTile(label: "ITP", fileKey: 'itp'),
-                  _buildFilePickerTile(label: "WIR", fileKey: 'wir'),
-                  _buildFilePickerTile(
-                      label: "Inspection Reports",
-                      fileKey: 'inspection_reports'),
-                  _buildFilePickerTile(
-                      label: "Test Reports (TPI)", fileKey: 'test_reports'),
-                  _buildFilePickerTile(label: "Photos", fileKey: 'photos'),
-                  _buildFilePickerTile(label: "Videos", fileKey: 'videos'),
+                  // _buildFilePickerTile(
+                  //     label: "Drawings", fileKey: 'drawings'),
+                  // _buildFilePickerTile(
+                  //     label: "Method of Statement",
+                  //     fileKey: 'method_of_statement'),
+                  // _buildFilePickerTile(
+                  //     label: "Risk Assessment", fileKey: 'risk_assessment'),
+                  // _buildFilePickerTile(label: "ITP", fileKey: 'itp'),
+                  // _buildFilePickerTile(label: "WIR", fileKey: 'wir'),
+                  // _buildFilePickerTile(
+                  //     label: "Inspection Reports",
+                  //     fileKey: 'inspection_reports'),
+                  // _buildFilePickerTile(
+                  //     label: "Test Reports (TPI)", fileKey: 'test_reports'),
+                  // _buildFilePickerTile(label: "Photos", fileKey: 'photos'),
+                  // _buildFilePickerTile(label: "Videos", fileKey: 'videos'),
 
                   // Branch Dropdown
                   _buildFieldLabel("Branch", isRequired: true),
