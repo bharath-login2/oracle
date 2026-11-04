@@ -221,7 +221,7 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
         quotationId: item.id,
         quotationType: item.quotationType,
       );
-    
+
       if (!mounted) return;
       Navigator.pop(context); // Close loading dialog
 
@@ -318,7 +318,6 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
           item.quotationDocument.replaceAll(r'\/', '/');
       final Uri url = Uri.parse(cleanUrlString);
 
-     
       // 2. Launch directly without canLaunchUrl check to avoid Android package visibility blocks
       final bool launched = await launchUrl(
         url,
@@ -836,6 +835,12 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
     );
   }
 
+  // Treats null / empty / invalid amount as 0
+  String _formatAmount(dynamic value) {
+    final num amount = num.tryParse(value?.toString().trim() ?? '') ?? 0;
+    return amount.toStringAsFixed(2);
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'admin approved':
@@ -1113,7 +1118,8 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
               ),
               const Divider(height: 16),
               _detailGrid([
-                _detailItem('Amount', '₹${item.total}', isBold: true),
+                _detailItem('Amount', '₹${_formatAmount(item.total)}',
+                    isBold: true),
                 _detailItem('Branch', item.branchName),
                 _detailItem('State', item.state),
                 _detailItem('Created By', item.createdBy),
@@ -1496,7 +1502,6 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
                       comments: instructions,
                     ).timeout(const Duration(seconds: 30));
                   } catch (e) {
-                   
                     success = false;
                   } finally {
                     // Dismiss loading dialog safely
@@ -1524,7 +1529,6 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
 
                     if (screenContext.mounted) {
                       await _fetchQuotations();
-                     
                     }
                   } else {
                     ScaffoldMessenger.of(screenContext).showSnackBar(

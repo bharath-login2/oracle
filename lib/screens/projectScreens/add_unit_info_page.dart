@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
 import '../../models/projectdetails/unit_info_model.dart';
 import '../../models/projectdetails/unit_dropdown_model.dart';
 import '../../models/projectdetails/installation_method_model.dart';
@@ -182,8 +182,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
         unit.numberOfStops.isNotEmpty ? unit.numberOfStops : null;
     _selectedOpeningsId =
         unit.numberOfOpening.isNotEmpty ? unit.numberOfOpening : null;
-    _selectedDoorTypeId =
-        unit.doorTypeId.isNotEmpty ? unit.doorTypeId : null;
+    _selectedDoorTypeId = unit.doorTypeId.isNotEmpty ? unit.doorTypeId : null;
     _selectedDoorModelId =
         unit.doorModelId.isNotEmpty ? unit.doorModelId : null;
     _selectedMachineRoomTypeId =
@@ -412,8 +411,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
               final key = saved.activityKey;
               if (_activityPercentageControllers.containsKey(key)) {
                 if (saved.percentage.isNotEmpty) {
-                  _activityPercentageControllers[key]?.text =
-                      saved.percentage;
+                  _activityPercentageControllers[key]?.text = saved.percentage;
                 }
                 if (saved.status.isNotEmpty) {
                   _activityStatuses[key] =
@@ -439,9 +437,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
         _activityPercentageControllers.containsKey(unit.activityKey)) {
       setState(() {
         if (unit.percentage.isNotEmpty &&
-            (_activityPercentageControllers[unit.activityKey]
-                    ?.text
-                    .isEmpty ??
+            (_activityPercentageControllers[unit.activityKey]?.text.isEmpty ??
                 true)) {
           _activityPercentageControllers[unit.activityKey]?.text =
               unit.percentage;
@@ -607,7 +603,6 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
 
     return null;
   }
-
 
   InputDecoration _inputDecoration(
     String label, {
@@ -959,8 +954,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
         widget.unit != null &&
         _selectedMethodId != null &&
         _selectedMethodId!.isNotEmpty) {
-      final exists =
-          displayMethods.any((m) => m.methodId == _selectedMethodId);
+      final exists = displayMethods.any((m) => m.methodId == _selectedMethodId);
       if (!exists) {
         displayMethods.add(
           InstallationMethodItem(
@@ -973,8 +967,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
       }
     }
 
-    final hasMatch =
-        displayMethods.any((m) => m.methodId == _selectedMethodId);
+    final hasMatch = displayMethods.any((m) => m.methodId == _selectedMethodId);
 
     return DropdownButtonFormField<String>(
       value: hasMatch ? _selectedMethodId : null,
@@ -1096,16 +1089,29 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
 
           const SizedBox(height: 12),
 
-          // Percentage
+          // Percentage (max 100)
           TextFormField(
             controller: percentageController,
             keyboardType: const TextInputType.numberWithOptions(
               decimal: true,
             ),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+              MaxPercentFormatter(max: 100),
+            ],
             decoration: _inputDecoration(
               'Percentage',
               hint: '0 - 100',
             ),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty)
+                return null; // optional
+              final number = double.tryParse(value.trim());
+              if (number == null) return 'Enter a valid number';
+              if (number > 100) return 'Maximum is 100';
+              if (number < 0) return 'Minimum is 0';
+              return null;
+            },
           ),
 
           const SizedBox(height: 12),
@@ -1537,5 +1543,25 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
               ),
             ),
     );
+  }
+}
+
+// Blocks typing any value above max (default 100)
+class MaxPercentFormatter extends TextInputFormatter {
+  final double max;
+  MaxPercentFormatter({this.max = 100});
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) return newValue;
+
+    final value = double.tryParse(newValue.text);
+    if (value == null) return oldValue;
+    if (value > max) return oldValue;
+
+    return newValue;
   }
 }

@@ -835,6 +835,12 @@ class _RepairingListScreenState extends State<RepairingListScreen> {
     );
   }
 
+  // Treats null / empty / invalid amount as 0
+  String _formatAmount(dynamic value) {
+    final num amount = num.tryParse(value?.toString().trim() ?? '') ?? 0;
+    return amount.toStringAsFixed(2);
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'admin approved':
@@ -1112,7 +1118,8 @@ class _RepairingListScreenState extends State<RepairingListScreen> {
               ),
               const Divider(height: 16),
               _detailGrid([
-                _detailItem('Amount', '₹${item.total}', isBold: true),
+                _detailItem('Amount', '₹${_formatAmount(item.total)}',
+                    isBold: true),
                 _detailItem('Branch', item.branchName),
                 _detailItem('State', item.state),
                 _detailItem('Created By', item.createdBy),

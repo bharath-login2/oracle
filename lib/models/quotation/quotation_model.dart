@@ -70,7 +70,8 @@ class QuotationItem {
       customerId: json['customer_id']?.toString() ?? '',
       customerName: json['customer_name']?.toString() ?? '',
       leadId: json['lead_id']?.toString() ?? '',
-      total: json['total']?.toString() ?? '0',
+      total: (num.tryParse(json['total']?.toString().trim() ?? '') ?? 0)
+          .toString(),
       createdBy: json['created_by']?.toString() ?? '',
       createdDate: json['created_date']?.toString() ?? '',
       branchName: json['branch_name']?.toString() ?? '',

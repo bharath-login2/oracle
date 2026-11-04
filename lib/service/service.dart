@@ -446,6 +446,12 @@ import '../models/projectdetails/gallery_model.dart';
 import '../models/lead_management/staff_list_model.dart';
 import '../models/quotation/quotation_model.dart';
 import '../models/quotation/branch_list_model.dart';
+import '../models/projectdetails/deduction_work/deduction_work_model.dart';
+import '../models/projectdetails/extra_work/extra_work_model.dart';
+import '../models/projectdetails/work_management/work_management_model.dart';
+import '../models/projectdetails/assigned_supervisor/assigned_supervidor_model.dart';
+import '../models/projectdetails/payment_schedule/payment_schedule_model.dart';
+import '../models/projectdetails/payment_schedule/stage_model.dart';
 import 'package:file_picker/file_picker.dart';
 
 class HttpService {
@@ -9547,6 +9553,7 @@ class HttpService {
     final token = await Common.getSharedPref('token');
     try {
       formMap['token'] = token;
+      print(formMap);
       final endpoint = isUpdate ? "update_project" : "addProjectCustomer";
       final response = await _dio.post(
         "${await Config.getUrl()}$endpoint",
@@ -19139,4 +19146,610 @@ class HttpService {
 
     return false;
   }
+
+  //deduction_work
+  static Future<DeductionWorkResponse?> getDeductionWork({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_deduction_work",
+        data: FormData.fromMap(data),
+      );
+
+      log('getDeductionWork response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return DeductionWorkResponse.fromJson(response.data);
+      }
+
+      log(
+        'getDeductionWork failed: ${response.data}',
+      );
+    } catch (e) {
+      log('getDeductionWork error: $e');
+    }
+
+    return null;
+  }
+
+  /// Add deduction work (file is optional: image or PDF)
+  static Future<bool> addDeductionWork({
+    required String projectId,
+    required String unitNo,
+    required String siteLiftNo,
+    required String workName,
+    required String amount,
+    required String description,
+    PlatformFile? file,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+        'work_name': workName,
+        'amount': amount,
+        'description': description,
+      });
+
+      if (file != null && file.path != null) {
+        formData.files.add(
+          MapEntry(
+            'files',
+            await MultipartFile.fromFile(
+              file.path!,
+              filename: file.name,
+            ),
+          ),
+        );
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_project_deduction_work",
+        data: formData,
+      );
+
+      print('Add deduction work response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('addDeductionWork error: $e');
+    }
+
+    return false;
+  }
+
+  /// Edit deduction work (file is optional: image or PDF)
+  /// Note: edit uses work_id, edit_work_name, edit_amount, edit_description
+  static Future<bool> editDeductionWork({
+    required String projectId,
+    required String workId,
+    required String unitNo,
+    required String siteLiftNo,
+    required String workName,
+    required String amount,
+    required String description,
+    PlatformFile? file,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'work_id': workId,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+        'edit_work_name': workName,
+        'edit_amount': amount,
+        'edit_description': description,
+      });
+
+      if (file != null && file.path != null) {
+        formData.files.add(
+          MapEntry(
+            'files',
+            await MultipartFile.fromFile(
+              file.path!,
+              filename: file.name,
+            ),
+          ),
+        );
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_project_deduction_work",
+        data: formData,
+      );
+
+      print('Edit deduction work response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('editDeductionWork error: $e');
+    }
+
+    return false;
+  }
+
+  /// Delete deduction work (uses deduction_work_id)
+  static Future<bool> deleteDeductionWork({
+    required String projectId,
+    required String deductionWorkId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'deduction_work_id': deductionWorkId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_project_deduction_work",
+        data: formData,
+      );
+
+      print('Delete deduction work response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('deleteDeductionWork error: $e');
+    }
+
+    return false;
+  }
+
+  //extra work
+  static Future<ExtraWorkResponse?> getExtraWork({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_extra_work",
+        data: FormData.fromMap(data),
+      );
+
+      log('getExtraWork response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return ExtraWorkResponse.fromJson(response.data);
+      }
+
+      log(
+        'getExtraWork failed: ${response.data}',
+      );
+    } catch (e) {
+      log('getExtraWork error: $e');
+    }
+
+    return null;
+  }
+
+  /// Add extra work
+  static Future<bool> addExtraWork({
+    required String projectId,
+    required String unitNo,
+    required String siteLiftNo,
+    required String workName,
+    required String amount,
+    required String description,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+        'work_name': workName,
+        'amount': amount,
+        'description': description,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}add_project_extra_work",
+        data: formData,
+      );
+
+      print('Add extra work response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('addExtraWork error: $e');
+    }
+
+    return false;
+  }
+
+  /// Edit extra work
+  static Future<bool> editExtraWork({
+    required String projectId,
+    required String extraWorkId,
+    required String unitNo,
+    required String siteLiftNo,
+    required String workName,
+    required String amount,
+    required String description,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'extra_work_id': extraWorkId,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+        'work_name': workName,
+        'amount': amount,
+        'description': description,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}edit_project_extra_work",
+        data: formData,
+      );
+
+      print('Edit extra work response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('editExtraWork error: $e');
+    }
+
+    return false;
+  }
+
+  /// Delete extra work
+  static Future<bool> deleteExtraWork({
+    required String projectId,
+    required String workId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'work_id': workId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}delete_project_extra_work",
+        data: formData,
+      );
+
+      print('Delete extra work response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('deleteExtraWork error: $e');
+    }
+
+    return false;
+  }
+
+  //work management
+  static Future<WorkManagementResponse?> getWorkManagement({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    final data = {
+      'token': token,
+      'project_id': projectId,
+    };
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_project_assigned_worklist",
+        data: FormData.fromMap(data),
+      );
+
+      print('getWorkManagement response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return WorkManagementResponse.fromJson(response.data);
+      }
+
+      log('getWorkManagement failed: ${response.data}');
+    } catch (e) {
+      log('getWorkManagement error: $e');
+    }
+
+    return null;
+  }
+
+  /// Get assigned staff
+  /// Returns null if the request fails.
+  static Future<AssignedStaffResponse?> getAssignedStaff({
+    String? projectId, // remove if the API does not need it
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        if (projectId != null) 'project_id': projectId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}getProjectStaffById",
+        data: formData,
+      );
+
+      print('Assigned staff response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return AssignedStaffResponse.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
+      }
+    } catch (e) {
+      log('getAssignedStaff error: $e');
+    }
+
+    return null;
+  }
+
+  /// Assign staff to a project unit / site lift
+  static Future<bool> assignProjectStaff({
+    required String projectId,
+    required String staffId,
+    required String clientId,
+    required String unitNo,
+    required String siteLiftNo,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'staff_id': staffId,
+        'client_id': clientId,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+      });
+      print("hey");
+      print(projectId);
+      print(staffId);
+      print(clientId);
+      print(unitNo);
+      print(siteLiftNo);
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}assignProjectStaff",
+        data: formData,
+      );
+      print('Assign project staff response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('assignProjectStaff error: $e');
+    }
+
+    return false;
+  }
+
+  //payment schedule
+  /// Get payment schedules for a project
+  /// Returns null if the request fails.
+  static Future<PaymentScheduleResponse?> getPaymentSchedules({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+      });
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_payment_schedules",
+        data: formData,
+      );
+
+      print('Payment schedule response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return PaymentScheduleResponse.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
+      }
+    } catch (e) {
+      log('getPaymentSchedules error: $e');
+    }
+
+    return null;
+  }
+
+  //LOAD STAGES DROPDOWN
+  static Future<FitStageResponse?> getFitStages({
+    required String projectId,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final response = await _dio.post(
+        "${await Config.getUrl()}get_payment_schedule_stages",
+        data: FormData.fromMap({
+          'token': token,
+          'project_id': projectId,
+        }),
+      );
+
+      log('getFitStages response: ${response.data}');
+
+      if (response.data['status'] == true) {
+        return FitStageResponse.fromJson(response.data);
+      }
+
+      return null;
+    } catch (e) {
+      log('getFitStages error: $e');
+      return null;
+    }
+  }
+
+  /// Add a payment schedule
+  /// stageIds -> list of stage activity_keys (e.g. [scf_installation, fit_cabin])
+  /// dueDate  -> must be yyyy-MM-dd (e.g. 2026-11-25)
+  static Future<bool> addPaymentSchedule({
+    required String projectId,
+    required String unitNo,
+    required String siteLiftNo,
+    required List<String> stageIds,
+    required String amount,
+    required String percentage,
+    required String dueDate,
+  }) async {
+    final token = await Common.getSharedPref("token");
+
+    try {
+      final formData = FormData.fromMap({
+        'token': token,
+        'project_id': projectId,
+        'unit_no': unitNo,
+        'site_lift_no': siteLiftNo,
+        'amount': amount,
+        'percentage': percentage,
+        'due_date': dueDate,
+      });
+
+      // Multiple stages are sent as stage_id[] (one entry per stage)
+      for (final id in stageIds) {
+        formData.fields.add(MapEntry('stage_id[]', id));
+      }
+
+      final response = await _dio.post(
+        "${await Config.getUrl()}post_payment_schedule",
+        data: formData,
+      );
+
+      print('Add payment schedule response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['status'] == true) {
+        return true;
+      }
+    } catch (e) {
+      log('addPaymentSchedule error: $e');
+    }
+
+    return false;
+  }
+
+  //update payment schedule
+  static Future<bool> updatePaymentSchedule({
+  required String projectId,
+  required String paymentId,
+  required String amount,
+  required String percentage,
+  required String dueDate,
+  required List<String> stageIds,
+  String unitNo = '',
+  String siteLiftNo = '',
+}) async {
+  final token = await Common.getSharedPref("token");
+
+  try {
+    final formData = FormData.fromMap({
+      'token': token,
+      'project_id': projectId,
+      'id': paymentId,
+      'amount': amount,
+      'due_date': dueDate,
+      'unit_no': unitNo,
+      'site_lift_no': siteLiftNo,
+      'percentage': percentage,
+    });
+
+    // Multiple stages are sent as stage_id[] (one entry per stage)
+    for (final stageId in stageIds) {
+      formData.fields.add(MapEntry('stage_id[]', stageId));
+    }
+
+    final response = await _dio.post(
+      "${await Config.getUrl()}update_payment_schedule",
+      data: formData,
+    );
+
+    print('Update payment schedule response: ${response.data}');
+
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return true;
+    }
+  } catch (e) {
+    log('updatePaymentSchedule error: $e');
+  }
+
+  return false;
+}
+
+//delete payment schedule
+static Future<bool> deletePaymentSchedule({
+  required String projectId,
+  required String paymentId,
+}) async {
+  final token = await Common.getSharedPref("token");
+
+  try {
+    final formData = FormData.fromMap({
+      'token': token,
+      'project_id': projectId,
+      'id': paymentId,
+    });
+
+    final response = await _dio.post(
+      "${await Config.getUrl()}delete_payment_schedule",
+      data: formData,
+    );
+
+    print('Delete payment schedule response: ${response.data}');
+
+    if (response.statusCode == 200 && response.data['status'] == true) {
+      return true;
+    }
+  } catch (e) {
+    log('deletePaymentSchedule error: $e');
+  }
+
+  return false;
+}
 }

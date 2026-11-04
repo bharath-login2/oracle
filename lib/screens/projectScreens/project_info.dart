@@ -255,6 +255,11 @@ class _ProjectInfoPageState extends State<ProjectInfoPage> {
             'Project No.',
             info.projectNo,
           ),
+          // _buildDetailRow(
+          //     'Project Cost.',
+          //     // info.projectNo,
+          //     // "not added in api"
+          //     "0000"),
           _buildDetailRow(
             'Address',
             info.location,
@@ -338,9 +343,7 @@ class _ProjectInfoPageState extends State<ProjectInfoPage> {
     );
   }
 
- 
   // PROJECT STATUS
- 
 
   Widget _buildStatusCard() {
     final info = _projectInfo!;
@@ -443,9 +446,7 @@ class _ProjectInfoPageState extends State<ProjectInfoPage> {
     return value[0].toUpperCase() + value.substring(1).toLowerCase();
   }
 
- 
   // LOADING
- 
 
   Widget _buildLoading() {
     return const Center(
@@ -455,9 +456,7 @@ class _ProjectInfoPageState extends State<ProjectInfoPage> {
     );
   }
 
- 
   // ERROR
- 
 
   Widget _buildError() {
     return Center(
@@ -506,7 +505,6 @@ class _ProjectInfoPageState extends State<ProjectInfoPage> {
     );
   }
 
- 
   // BUILD
 
   @override

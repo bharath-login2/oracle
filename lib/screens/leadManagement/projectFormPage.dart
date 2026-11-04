@@ -41,6 +41,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
       TextEditingController();
   final TextEditingController projectNameController = TextEditingController();
   final TextEditingController projectNoController = TextEditingController();
+  // final TextEditingController projectCostController = TextEditingController();
   final TextEditingController lpoNumberController = TextEditingController();
   final TextEditingController jobNumberController = TextEditingController();
   final TextEditingController mainContractorController =
@@ -48,6 +49,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
   final TextEditingController consultantController = TextEditingController();
   final TextEditingController siteAddressController = TextEditingController();
   final TextEditingController contractValueController = TextEditingController();
+  final TextEditingController unitWisePriceController = TextEditingController();
   final TextEditingController projectManagerController =
       TextEditingController();
   final TextEditingController projectEngineersController =
@@ -124,6 +126,7 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
         final p = widget.project!;
         projectNameController.text = p.projectName;
         siteAddressController.text = p.location;
+        // projectCostController.text = p.pro
         contractValueController.text = p.totalAmount;
         selectedCustomerId = p.clientId.isNotEmpty ? p.clientId : null;
 
@@ -272,6 +275,15 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
       );
       return;
     }
+    // if (projectCostController.text.trim().isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text("Please enter Project Cost"),
+    //       backgroundColor: Colors.red,
+    //     ),
+    //   );
+    //   return;
+    // }
 
     if (selectedCustomerId == null || selectedCustomerId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -290,12 +302,14 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
         'customer_id': selectedCustomerId,
         'project_name': projectNameController.text.trim(),
         'project_no': projectNoController.text.trim(),
+        // 'project_cost': projectCostController.text.trim(),
         'lpo_number': lpoNumberController.text.trim(),
         'job_number': jobNumberController.text.trim(),
         'main_contractor': mainContractorController.text.trim(),
         'consultant': consultantController.text.trim(),
         'site_address': siteAddressController.text.trim(),
         'contract_value': contractValueController.text.trim(),
+        'unit_price_breakdown': unitWisePriceController.text.trim(),
         'project_manager': projectManagerController.text.trim(),
         'project_engineers': projectEngineersController.text.trim(),
         'invoice_milestone': invoiceMilestoneController.text.trim(),
@@ -567,6 +581,11 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                     controller: projectNoController,
                     hintText: 'Enter project number',
                   ),
+                  // _buildFieldLabel("Project Cost"),
+                  // _buildTextField(
+                  //   controller: projectCostController,
+                  //   hintText: 'Enter project Cost',
+                  // ),
 
                   _buildFilePickerTile(label: "LPO", fileKey: 'lpo'),
 
@@ -607,9 +626,14 @@ class _ProjectFormPageState extends State<ProjectFormPage> {
                     keyboardType: TextInputType.number,
                   ),
 
-                  _buildFilePickerTile(
-                    label: "Unit Wise Price Breakdown",
-                    fileKey: 'price_breakdown',
+                  // _buildFilePickerTile(
+                  //   label: "Unit Wise Price Breakdown",
+                  //   fileKey: 'price_breakdown',
+                  // ),
+                  _buildFieldLabel("Unit Wise Price Breakdown"),
+                  _buildTextField(
+                    controller: unitWisePriceController,
+                    hintText: 'Unit Wise Price Breakdown',
                   ),
 
                   _buildFieldLabel("Project Manager"),

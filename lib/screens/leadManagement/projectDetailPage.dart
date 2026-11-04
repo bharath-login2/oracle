@@ -11,9 +11,11 @@ import '../projectScreens/delay_management.dart';
 import '../projectScreens/project_documents.dart';
 import '../projectScreens/gallery.dart';
 import '../projectScreens/site_drawings.dart';
-// import '../projectScreens/payment_schedule_screen.dart';
-// import '../projectScreens/extra_work.dart';
-// import '../projectScreens/deduction_work.dart';
+import '../projectScreens/work_management.dart';
+import '../projectScreens/assigned_supervisor.dart';
+import '../projectScreens/payment_schedule_screen.dart';
+import '../projectScreens/extra_work.dart';
+import '../projectScreens/deduction_work.dart';
 // import '../projectScreens/expense.dart';
 // import '../projectScreens/payment_history.dart';
 import 'package:login2/service/service.dart';
@@ -888,6 +890,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         )),
       ),
       _ActionItem(
+        label: 'Work Management',
+        icon: Icons.work_outline,
+        onTap: () => _open(WorkManagementScreen(
+          projectId: p.id.toString(),
+          // projectNo: p.projectNo.toString(),
+        )),
+      ),
+      _ActionItem(
         label: 'Gallery',
         icon: Icons.photo_library_outlined,
         onTap: () => _open(GalleryPage(
@@ -897,14 +907,14 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
         )),
       ),
       // Payment Schedule → Payment History are UI-only for now
-      // _ActionItem(
-      //   label: 'Payment Schedule',
-      //   icon: Icons.payment_outlined,
-      //   onTap: () => _open(PaymentScheduleScreen(
-      //     projectId: p.id,
-      //     projectNo: p.projectNo.toString(),
-      //   )),
-      // ),
+      _ActionItem(
+        label: 'Payment Schedule',
+        icon: Icons.payment_outlined,
+        onTap: () => _open(PaymentScheduleScreen(
+          projectId: p.id,
+          projectNo: p.projectNo.toString(),
+        )),
+      ),
       _ActionItem(
         label: 'Site Drawings',
         icon: Icons.architecture_outlined,
@@ -912,27 +922,37 @@ class _ProjectDetailPageState extends State<ProjectDetailPage> {
           projectId: p.id,
           projectNo: p.projectNo,
           clientId: p.clientId,
-          projectStatus: p.paymentStatus,
+          projectStatus: p.workStatus,
         )),
       ),
-      // _ActionItem(
-      //   label: 'Extra Work',
-      //   icon: Icons.trending_up,
-      //   onTap: () => _open(ExtraWorkScreen(
-      //     projectId: p.id,
-      //     projectNo: p.projectNo,
-      //     clientId: p.clientId,
-      //   )),
-      // ),
-      // _ActionItem(
-      //   label: 'Deduction Work',
-      //   icon: Icons.trending_down,
-      //   onTap: () => _open(DeductionWorkScreen(
-      //     projectId: p.id,
-      //     projectNo: p.projectNo,
-      //     clientId: p.clientId,
-      //   )),
-      // ),
+      _ActionItem(
+        label: 'Assigned Supervisors',
+        icon: Icons.person_rounded,
+        onTap: () => _open(AssignedStaffScreen(
+          projectId: p.id,
+          projectNo: p.projectNo,
+          clientId: p.clientId,
+        )),
+      ),
+
+      _ActionItem(
+        label: 'Extra Work',
+        icon: Icons.trending_up,
+        onTap: () => _open(ExtraWorkScreen(
+          projectId: p.id,
+          projectNo: p.projectNo,
+          clientId: p.clientId,
+        )),
+      ),
+      _ActionItem(
+        label: 'Deduction Work',
+        icon: Icons.trending_down,
+        onTap: () => _open(DeductionWorkScreen(
+          projectId: p.id,
+          projectNo: p.projectNo,
+          clientId: p.clientId,
+        )),
+      ),
       // _ActionItem(
       //   label: 'Expenses',
       //   icon: Icons.account_balance_wallet_outlined,

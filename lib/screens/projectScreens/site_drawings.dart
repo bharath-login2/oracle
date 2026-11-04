@@ -12,7 +12,7 @@ class SiteDrawingPage extends StatefulWidget {
   final String projectId;
   final String projectNo;
   final String clientId;
-  final bool projectStatus;
+  final String projectStatus;
 
   const SiteDrawingPage(
       {super.key,
@@ -48,7 +48,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
   //   );
   // }
   bool get canAddDrawing {
-    return widget.projectStatus ||
+    return widget.projectStatus.trim().toLowerCase() == 'running' ||
         _drawings.any(
           (drawing) => drawing.workStatus.trim().toLowerCase() == 'running',
         );
@@ -73,7 +73,7 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
   @override
   void initState() {
     super.initState();
-
+    print('SiteDrawingPage projectStatus = ${widget.projectStatus}');
     _fetchDrawings();
     _loadUnits();
     _loadSiteLifts();
@@ -1643,6 +1643,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
 
   @override
   Widget build(BuildContext context) {
+    print('SiteDrawingPage projectStatus = ${widget.projectStatus}, '
+        'drawings = ${_drawings.length}, canAdd = $canAddDrawing');
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5FB),
       appBar: AppBar(
@@ -1664,7 +1666,8 @@ class _SiteDrawingPageState extends State<SiteDrawingPage> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          if (canAddDrawing || widget.projectStatus)
+          if (canAddDrawing ||
+              widget.projectStatus.trim().toLowerCase() == 'running')
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: InkWell(
