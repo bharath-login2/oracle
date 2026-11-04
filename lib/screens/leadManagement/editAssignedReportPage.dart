@@ -8,7 +8,6 @@ import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/titleListModel.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/models/expense/staffListModel.dart';
-import 'package:login2/models/lead_management/submitresponse_model.dart';
 
 class EditTaskForm {
   TextEditingController controller;
@@ -56,6 +55,7 @@ class EditWorkPage extends StatefulWidget {
 class _EditWorkPageState extends State<EditWorkPage> {
   late TextEditingController titleController;
   late List<EditTaskForm> tasks = [];
+  String? selectedWorkType;
   String? selectedProjectId;
   String? selectedProjectName;
   String? selectedTitleId;
@@ -125,6 +125,16 @@ class _EditWorkPageState extends State<EditWorkPage> {
 
   void _initializeData() {
     final work = widget.assignedWork;
+    final wt = work.workType.toLowerCase().trim();
+    if (wt == 'installation') {
+      selectedWorkType = 'installation';
+    } else if (wt == 'amc') {
+      selectedWorkType = 'amc';
+    } else if (wt == 'repair' || wt == 'repairing') {
+      selectedWorkType = 'repair';
+    } else if (wt.isNotEmpty) {
+      selectedWorkType = wt;
+    }
     titleController = TextEditingController(text: work.moduleName);
     selectedProjectId = work.projectId.toString();
     selectedProjectName = work.projectName;
@@ -137,9 +147,13 @@ class _EditWorkPageState extends State<EditWorkPage> {
       selectedUnitId = work.unitId;
       selectedUnitNo = work.unitNo.isNotEmpty ? work.unitNo : work.unitId;
     }
-    if (work.siteLiftId.isNotEmpty || work.siteLiftNo.isNotEmpty || work.siteLiftName.isNotEmpty) {
-      selectedSiteLiftId = work.siteLiftId.isNotEmpty ? work.siteLiftId : work.siteLiftNo;
-      selectedSiteLiftNo = work.siteLiftName.isNotEmpty ? work.siteLiftName : work.siteLiftNo;
+    if (work.siteLiftId.isNotEmpty ||
+        work.siteLiftNo.isNotEmpty ||
+        work.siteLiftName.isNotEmpty) {
+      selectedSiteLiftId =
+          work.siteLiftId.isNotEmpty ? work.siteLiftId : work.siteLiftNo;
+      selectedSiteLiftNo =
+          work.siteLiftName.isNotEmpty ? work.siteLiftName : work.siteLiftNo;
     }
 
     if (work.dueDate.isNotEmpty) {
@@ -190,7 +204,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
               : (session.taskId.isNotEmpty ? session.taskId : work.taskId),
           startDate: sDate,
           endDate: dueDate,
-          assignedStaffId: work.assignedToId.isNotEmpty ? work.assignedToId : "23",
+          assignedStaffId:
+              work.assignedToId.isNotEmpty ? work.assignedToId : "23",
           supportingStaffIds: supportingStaffIds,
           remarks: remarkList,
           isExisting: true,
@@ -207,7 +222,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
           activityId: work.taskId,
           startDate: sDate,
           endDate: dueDate,
-          assignedStaffId: work.assignedToId.isNotEmpty ? work.assignedToId : "23",
+          assignedStaffId:
+              work.assignedToId.isNotEmpty ? work.assignedToId : "23",
           supportingStaffIds: [],
           remarks: [TextEditingController()],
           isExisting: false,
@@ -269,7 +285,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
       if (projectResponse != null) {
         setState(() {
           projectList = projectResponse.data;
-          filteredProjects = List.from(projectList);
+          filteredProjects = List.from(_projectsForWorkType);
           if (selectedProjectId != null) {
             final project = projectList.firstWhere(
               (p) => p.id == selectedProjectId,
@@ -370,6 +386,61 @@ class _EditWorkPageState extends State<EditWorkPage> {
     }
   }
 
+  String _firstNonEmpty(List<dynamic> values) {
+    for (final v in values) {
+      if (v != null) {
+        final s = v.toString().trim();
+        if (s.isNotEmpty && s.toLowerCase() != 'null') {
+          return s;
+        }
+      }
+    }
+    return '';
+  }
+
+  String _extractSiteLiftId(dynamic item) {
+    if (item is Map) {
+      return _firstNonEmpty([
+        item['id'],
+        item['site_lift_id'],
+        item['lift_id'],
+        item['site_lift_no'],
+        item['site_lift_name'],
+      ]);
+    }
+    return item?.toString().trim() ?? '';
+  }
+
+  String _extractSiteLiftName(dynamic item) {
+    if (item is Map) {
+      return _firstNonEmpty([
+        item['site_lift_name'],
+        item['site_lift_no'],
+        item['lift_no'],
+        item['lift_name'],
+        item['site_lift'],
+        item['name'],
+        item['id'],
+      ]);
+    }
+    return item?.toString().trim() ?? '';
+  }
+
+  DateTime? _tryParseDate(dynamic raw) {
+    if (raw == null) return null;
+    final str = raw.toString().trim();
+    if (str.isEmpty || str.toLowerCase() == 'null') return null;
+    try {
+      return DateTime.parse(str);
+    } catch (_) {
+      try {
+        return DateFormat('dd-MM-yyyy').parse(str);
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
   Future<void> _loadSiteLiftsAndTasks(String unitId, String projectId) async {
     if (mounted) {
       setState(() {
@@ -386,11 +457,20 @@ class _EditWorkPageState extends State<EditWorkPage> {
         List<dynamic> list = [];
         if (resLifts is Map && resLifts['data'] is List) {
           list = resLifts['data'];
+        } else if (resLifts is Map && resLifts['data'] is Map) {
+          list = [resLifts['data']];
         } else if (resLifts is List) {
           list = resLifts;
         }
         setState(() {
           siteLiftList = list;
+          if (list.isNotEmpty &&
+              (selectedSiteLiftNo == null || selectedSiteLiftNo!.isEmpty)) {
+            final lId = _extractSiteLiftId(list.first);
+            final lNo = _extractSiteLiftName(list.first);
+            selectedSiteLiftId = lId.isNotEmpty ? lId : null;
+            selectedSiteLiftNo = lNo.isNotEmpty ? lNo : null;
+          }
         });
       }
     } catch (e) {
@@ -430,8 +510,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
           selectedStaffIds =
               staffIdString.split(',').where((id) => id.isNotEmpty).toList();
         } else {
-          selectedStaffIds = List<String>.from(
-              widget.assignedWork.notification.staffIds);
+          selectedStaffIds =
+              List<String>.from(widget.assignedWork.notification.staffIds);
         }
 
         if (widget.assignedWork.notification.participantIds is String) {
@@ -492,17 +572,66 @@ class _EditWorkPageState extends State<EditWorkPage> {
     super.dispose();
   }
 
-  void _filterProjects() {
-    final query = _searchController.text.toLowerCase();
+  String? _getExpectedQuotationType(String? workType) {
+    if (workType == null) return null;
+    final wt = workType.trim().toLowerCase();
+    if (wt == 'installation') return 'installation';
+    if (wt == 'amc') return 'amc';
+    if (wt == 'repair' || wt == 'repairing') return 'repairing';
+    return null;
+  }
+
+  List<Projects> get _projectsForWorkType {
+    final expected = _getExpectedQuotationType(selectedWorkType);
+    if (expected == null) {
+      return projectList;
+    }
+    return projectList.where((p) {
+      return p.quotationType.trim().toLowerCase() == expected;
+    }).toList();
+  }
+
+  void _onWorkTypeChanged(String? value) {
     setState(() {
-      filteredProjects = projectList.where((project) {
-        return project.name.toLowerCase().contains(query);
-      }).toList();
+      selectedWorkType = value;
+      _filterProjects();
+      final allowedProjects = _projectsForWorkType;
+      if (selectedProjectId != null &&
+          !allowedProjects.any((p) => p.id == selectedProjectId)) {
+        selectedProjectId = null;
+        selectedProjectName = null;
+        selectedProjectController.clear();
+        selectedUnitId = null;
+        selectedUnitNo = null;
+        selectedSiteLiftId = null;
+        selectedSiteLiftNo = null;
+        selectedStageId = null;
+        selectedStageName = null;
+        unitList = [];
+        siteLiftList = [];
+        unitTaskList = [];
+      }
+      _checkForChanges();
+    });
+  }
+
+  void _filterProjects() {
+    final query = _searchController.text.trim().toLowerCase();
+    final baseList = _projectsForWorkType;
+    setState(() {
+      if (query.isEmpty) {
+        filteredProjects = List.from(baseList);
+      } else {
+        filteredProjects = baseList.where((project) {
+          return project.name.toLowerCase().contains(query);
+        }).toList();
+      }
     });
   }
 
   Map<String, dynamic> _getCurrentData() {
     return {
+      'work_type': selectedWorkType,
       'projectId': selectedProjectId,
       'unitId': selectedUnitId,
       'unitNo': selectedUnitNo,
@@ -592,6 +721,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
         'id': widget.assignedWork.id,
         'work_id': widget.assignedWork.id,
         'assignedId': widget.assignedWork.id,
+        'work_type': selectedWorkType,
         'project_id': selectedProjectId,
         'project_name': selectedProjectName,
         'unit_id': selectedUnitId,
@@ -601,10 +731,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
         'site_lift_name': selectedSiteLiftNo,
         'stage_id': selectedStageId,
         'stage_name': selectedStageName ?? titleController.text,
-        'supporting_staff_ids': tasks
-            .expand((t) => t.supportingStaffIds)
-            .toSet()
-            .join(','),
+        'supporting_staff_ids':
+            tasks.expand((t) => t.supportingStaffIds).toSet().join(','),
         'title': titleController.text.isNotEmpty
             ? titleController.text
             : 'Work Assignment',
@@ -629,9 +757,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
         'tasks': tasks.asMap().entries.map((entry) {
           final task = entry.value;
           return {
-            'activity_id': (task.activityId != null && task.activityId!.isNotEmpty)
-                ? task.activityId
-                : (task.taskId ?? ''),
+            'activity_id':
+                (task.activityId != null && task.activityId!.isNotEmpty)
+                    ? task.activityId
+                    : (task.taskId ?? ''),
             'task_id': task.taskId,
             'task_name': task.controller.text,
             'activity_name': task.controller.text,
@@ -663,8 +792,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
       if (response != null && response.status == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                response.message.isNotEmpty ? response.message : 'Assigned work updated successfully'),
+            content: Text(response.message.isNotEmpty
+                ? response.message
+                : 'Assigned work updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -673,10 +803,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                response != null && response.message.isNotEmpty
-                    ? response.message
-                    : 'Failed to update assigned work'),
+            content: Text(response != null && response.message.isNotEmpty
+                ? response.message
+                : 'Failed to update assigned work'),
             backgroundColor: Colors.red,
           ),
         );
@@ -844,7 +973,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
           actions: [
             if (_hasChanges)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -887,6 +1017,76 @@ class _EditWorkPageState extends State<EditWorkPage> {
                       title: 'Work Details',
                       icon: Icons.assignment_outlined,
                       children: [
+                        // Work Type *
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            RichText(
+                              text: const TextSpan(
+                                text: 'Work Type ',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '*',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: (selectedWorkType != null &&
+                                          ['installation', 'amc', 'repair']
+                                              .contains(selectedWorkType))
+                                      ? selectedWorkType
+                                      : null,
+                                  isExpanded: true,
+                                  hint: Text(
+                                    'Select Work Type',
+                                    style: TextStyle(
+                                        fontSize: 13, color: Colors.grey[500]),
+                                  ),
+                                  icon: const Icon(Icons.keyboard_arrow_down,
+                                      color: Colors.grey, size: 18),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'installation',
+                                      child: Text('Installation',
+                                          style: TextStyle(fontSize: 13)),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'amc',
+                                      child: Text('AMC',
+                                          style: TextStyle(fontSize: 13)),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'repair',
+                                      child: Text('Repairing',
+                                          style: TextStyle(fontSize: 13)),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    _onWorkTypeChanged(value);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         // Row 1: Project *, Unit No, Site Lift No
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -921,10 +1121,12 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                       if (selected != null) {
                                         setState(() {
                                           selectedProjectId = selected['id'];
-                                          selectedProjectName = selected['name'];
+                                          selectedProjectName =
+                                              selected['name'];
                                           selectedProjectController.text =
                                               selected['name'] ?? '';
-                                          _loadUnitsByProject(selectedProjectId!);
+                                          _loadUnitsByProject(
+                                              selectedProjectId!);
                                           _checkForChanges();
                                         });
                                       }
@@ -986,10 +1188,11 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   InkWell(
                                     onTap: () async {
                                       if (selectedProjectId == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
-                                              content:
-                                                  Text('Please select a project first')),
+                                              content: Text(
+                                                  'Please select a project first')),
                                         );
                                         return;
                                       }
@@ -1008,7 +1211,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              selectedUnitNo ?? 'Select Unit No',
+                                              selectedUnitNo ??
+                                                  'Select Unit No',
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: selectedUnitNo != null
@@ -1023,8 +1227,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                               ? const SizedBox(
                                                   width: 14,
                                                   height: 14,
-                                                  child: CircularProgressIndicator(
-                                                      strokeWidth: 2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
                                                 )
                                               : const Icon(
                                                   Icons.keyboard_arrow_down,
@@ -1056,14 +1261,16 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   InkWell(
                                     onTap: () async {
                                       if (selectedUnitId == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
-                                              content:
-                                                  Text('Please select a Unit No first')),
+                                              content: Text(
+                                                  'Please select a Unit No first')),
                                         );
                                         return;
                                       }
-                                      await _showSiteLiftSelectionDialog(context);
+                                      await _showSiteLiftSelectionDialog(
+                                          context);
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
@@ -1078,10 +1285,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              selectedSiteLiftNo ?? 'Select Site Lift No',
+                                              (selectedSiteLiftNo != null && selectedSiteLiftNo!.isNotEmpty) ? selectedSiteLiftNo! : 'Select Site Lift No',
                                               style: TextStyle(
                                                 fontSize: 13,
-                                                color: selectedSiteLiftNo != null
+                                                color: (selectedSiteLiftNo != null && selectedSiteLiftNo!.isNotEmpty)
                                                     ? Colors.grey[800]
                                                     : Colors.grey[500],
                                               ),
@@ -1093,8 +1300,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                               ? const SizedBox(
                                                   width: 14,
                                                   height: 14,
-                                                  child: CircularProgressIndicator(
-                                                      strokeWidth: 2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
                                                 )
                                               : const Icon(
                                                   Icons.keyboard_arrow_down,
@@ -1158,7 +1366,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: (selectedStageName != null ||
-                                                  titleController.text.isNotEmpty)
+                                                  titleController
+                                                      .text.isNotEmpty)
                                               ? Colors.grey[800]
                                               : Colors.grey[500],
                                         ),
@@ -1196,7 +1405,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border:
+                                  Border.all(color: const Color(0xFFE2E8F0)),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Column(
@@ -1242,41 +1452,77 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                InkWell(
-                                  onTap: () => _showTaskSelectionDialog(
-                                      context, taskIndex),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.grey.shade300),
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Colors.white,
+                                if (selectedWorkType?.toLowerCase() == 'amc' ||
+                                    selectedWorkType?.toLowerCase() ==
+                                        'repair' ||
+                                    selectedWorkType?.toLowerCase() ==
+                                        'repairing')
+                                  TextField(
+                                    controller: task.controller,
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter Activity',
+                                      hintStyle: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[400]),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 12),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                            color: Colors.grey.shade300),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                            color: Colors.grey.shade300),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(
+                                            color: Colors.blue),
+                                      ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            task.controller.text.isEmpty
-                                                ? 'Select Task'
-                                                : task.controller.text,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: task.controller.text.isEmpty
-                                                  ? Colors.grey[500]
-                                                  : Colors.grey[800],
+                                    style: const TextStyle(fontSize: 13),
+                                    onChanged: (value) => _checkForChanges(),
+                                  )
+                                else
+                                  InkWell(
+                                    onTap: () => _showTaskSelectionDialog(
+                                        context, taskIndex),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.white,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              task.controller.text.isEmpty
+                                                  ? 'Select Activity'
+                                                  : task.controller.text,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color:
+                                                    task.controller.text.isEmpty
+                                                        ? Colors.grey[500]
+                                                        : Colors.grey[800],
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                        const Icon(Icons.keyboard_arrow_down,
-                                            color: Colors.grey, size: 18),
-                                      ],
+                                          const Icon(Icons.keyboard_arrow_down,
+                                              color: Colors.grey, size: 18),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
                                 const SizedBox(height: 14),
 
                                 // Description
@@ -1367,8 +1613,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                               }
                                             },
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 12, vertical: 12),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 12),
                                               decoration: BoxDecoration(
                                                 border: Border.all(
                                                     color:
@@ -1383,9 +1631,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                                     child: Text(
                                                       task.startDate != null
                                                           ? DateFormat(
-                                                                  'yyyy-MM-dd')
-                                                              .format(
-                                                                  task.startDate!)
+                                                                  'dd-MM-yyyy')
+                                                              .format(task
+                                                                  .startDate!)
                                                           : 'Start Date',
                                                       style: TextStyle(
                                                         fontSize: 13,
@@ -1400,7 +1648,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                                     ),
                                                   ),
                                                   const Icon(
-                                                    Icons.calendar_today_rounded,
+                                                    Icons
+                                                        .calendar_today_rounded,
                                                     color: Color(0xFF2a86c9),
                                                     size: 16,
                                                   ),
@@ -1456,8 +1705,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                               }
                                             },
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 12, vertical: 12),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 12),
                                               decoration: BoxDecoration(
                                                 border: Border.all(
                                                     color:
@@ -1472,7 +1723,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                                     child: Text(
                                                       task.endDate != null
                                                           ? DateFormat(
-                                                                  'yyyy-MM-dd')
+                                                                  'dd-MM-yyyy')
                                                               .format(
                                                                   task.endDate!)
                                                           : 'End Date',
@@ -1489,7 +1740,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                                     ),
                                                   ),
                                                   const Icon(
-                                                    Icons.calendar_today_rounded,
+                                                    Icons
+                                                        .calendar_today_rounded,
                                                     color: Color(0xFF2a86c9),
                                                     size: 16,
                                                   ),
@@ -1641,8 +1893,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                                     taskIndex),
                                                 style: TextStyle(
                                                   fontSize: 13,
-                                                  color: task
-                                                          .supportingStaffIds
+                                                  color: task.supportingStaffIds
                                                           .isNotEmpty
                                                       ? Colors.grey[800]
                                                       : Colors.grey[400],
@@ -1708,135 +1959,136 @@ class _EditWorkPageState extends State<EditWorkPage> {
                     ),
 
                     // Card 3: Notification Settings
-                    _buildSectionCard(
-                      title: 'Notification Settings',
-                      icon: Icons.notifications_active_outlined,
-                      children: [
-                        _buildNotificationOption(
-                          icon: Icons.chat_rounded,
-                          iconColor: const Color(0xFF25D366),
-                          title: 'WhatsApp Notification',
-                          value: whatsappNotification,
-                          onChanged: (val) {
-                            setState(() {
-                              whatsappNotification = val;
-                              _checkForChanges();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        _buildNotificationOption(
-                          icon: Icons.notifications_rounded,
-                          iconColor: const Color(0xFF2a86c9),
-                          title: 'Push Notification',
-                          value: pushNotification,
-                          onChanged: (val) {
-                            setState(() {
-                              pushNotification = val;
-                              _checkForChanges();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        _buildNotificationOption(
-                          icon: Icons.play_arrow_rounded,
-                          iconColor: Colors.amber.shade700,
-                          title: 'Notify On Start',
-                          value: notifyOnStart,
-                          onChanged: (val) {
-                            setState(() {
-                              notifyOnStart = val;
-                              _checkForChanges();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 10),
-                        _buildNotificationOption(
-                          icon: Icons.check_circle_rounded,
-                          iconColor: Colors.green,
-                          title: 'Notify On Complete',
-                          value: notifyOnComplete,
-                          onChanged: (val) {
-                            setState(() {
-                              notifyOnComplete = val;
-                              _checkForChanges();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: InkWell(
-                                onTap: () => _showMultiStaffSelectionDialog(
-                                    context, false),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.white,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.people_outline,
-                                          size: 16, color: Color(0xFF2a86c9)),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          selectedStaffIds.isEmpty
-                                              ? 'Staff to Notify'
-                                              : '${selectedStaffIds.length} Staff Selected',
-                                          style: const TextStyle(fontSize: 12),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: InkWell(
-                                onTap: () =>
-                                    _showMultiStaffSelectionDialog(context, true),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                        color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.white,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.chat_bubble_outline,
-                                          size: 16, color: Color(0xFF2a86c9)),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          participantIds.isEmpty
-                                              ? 'Chat Participants'
-                                              : '${participantIds.length} Selected',
-                                          style: const TextStyle(fontSize: 12),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                    // _buildSectionCard(
+                    //   title: 'Notification Settings',
+                    //   icon: Icons.notifications_active_outlined,
+                    //   children: [
+                        // _buildNotificationOption(
+                        //   icon: Icons.chat_rounded,
+                        //   iconColor: const Color(0xFF25D366),
+                        //   title: 'WhatsApp Notification',
+                        //   value: whatsappNotification,
+                        //   onChanged: (val) {
+                        //     setState(() {
+                        //       whatsappNotification = val;
+                        //       _checkForChanges();
+                        //     });
+                        //   },
+                        // ),
+                        // const SizedBox(height: 10),
+                        // _buildNotificationOption(
+                        //   icon: Icons.notifications_rounded,
+                        //   iconColor: const Color(0xFF2a86c9),
+                        //   title: 'Push Notification',
+                        //   value: pushNotification,
+                        //   onChanged: (val) {
+                        //     setState(() {
+                        //       pushNotification = val;
+                        //       _checkForChanges();
+                        //     });
+                        //   },
+                        // ),
+                        // const SizedBox(height: 10),
+                        // _buildNotificationOption(
+                        //   icon: Icons.play_arrow_rounded,
+                        //   iconColor: Colors.amber.shade700,
+                        //   title: 'Notify On Start',
+                        //   value: notifyOnStart,
+                        //   onChanged: (val) {
+                        //     setState(() {
+                        //       notifyOnStart = val;
+                        //       _checkForChanges();
+                        //     });
+                        //   },
+                        // ),
+                        // const SizedBox(height: 10),
+                        // _buildNotificationOption(
+                        //   icon: Icons.check_circle_rounded,
+                        //   iconColor: Colors.green,
+                        //   title: 'Notify On Complete',
+                        //   value: notifyOnComplete,
+                        //   onChanged: (val) {
+                        //     setState(() {
+                        //       notifyOnComplete = val;
+                        //       _checkForChanges();
+                        //     });
+                        //   },
+                        // ),
+                        // const SizedBox(height: 14),
+                        // Row(
+                        //   children: [
+                        //     Expanded(
+                        //       child: InkWell(
+                        //         onTap: () => _showMultiStaffSelectionDialog(
+                        //             context, false),
+                        //         child: Container(
+                        //           padding: const EdgeInsets.symmetric(
+                        //               horizontal: 12, vertical: 10),
+                        //           decoration: BoxDecoration(
+                        //             border:
+                        //                 Border.all(color: Colors.grey.shade300),
+                        //             borderRadius: BorderRadius.circular(8),
+                        //             color: Colors.white,
+                        //           ),
+                        //           child: Row(
+                        //             children: [
+                        //               const Icon(Icons.people_outline,
+                        //                   size: 16, color: Color(0xFF2a86c9)),
+                        //               const SizedBox(width: 8),
+                        //               Expanded(
+                        //                 child: Text(
+                        //                   selectedStaffIds.isEmpty
+                        //                       ? 'Staff to Notify'
+                        //                       : '${selectedStaffIds.length} Staff Selected',
+                        //                   style: const TextStyle(fontSize: 12),
+                        //                   maxLines: 1,
+                        //                   overflow: TextOverflow.ellipsis,
+                        //                 ),
+                        //               ),
+                        //             ],
+                        //           ),
+                        //         ),
+                        //       ),
+                        //     ),
+                        //     const SizedBox(width: 10),
+                        //     // Expanded(
+                        //     //   child: InkWell(
+                        //     //     onTap: () => _showMultiStaffSelectionDialog(
+                        //     //         context, true),
+                        //     //     child: Container(
+                        //     //       padding: const EdgeInsets.symmetric(
+                        //     //           horizontal: 12, vertical: 10),
+                        //     //       decoration: BoxDecoration(
+                        //     //         border:
+                        //     //             Border.all(color: Colors.grey.shade300),
+                        //     //         borderRadius: BorderRadius.circular(8),
+                        //     //         color: Colors.white,
+                        //     //       ),
+                        //     //       child: Row(
+                        //     //         children: [
+                        //     //           const Icon(Icons.chat_bubble_outline,
+                        //     //               size: 16, color: Color(0xFF2a86c9)),
+                        //     //           const SizedBox(width: 8),
+                        //     //           Expanded(
+                        //     //             child: Text(
+                        //     //               participantIds.isEmpty
+                        //     //                   ? 'Chat Participants'
+                        //     //                   : '${participantIds.length} Selected',
+                        //     //               style: const TextStyle(fontSize: 12),
+                        //     //               maxLines: 1,
+                        //     //               overflow: TextOverflow.ellipsis,
+                        //     //             ),
+                        //     //           ),
+                        //     //         ],
+                        //     //       ),
+                        //     //     ),
+                        //     //   ),
+                        //     // ),
+                        //   ],
+                        // ),
+                      
+                    //   ],
+                    // ),
                   ],
                 ),
               ),
@@ -1928,7 +2180,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
 
   Future<dynamic> _showProjectSelectionDialog(BuildContext context) async {
     TextEditingController searchController = TextEditingController();
-    List<Projects> filtered = List.from(projectList);
+    final baseList = _projectsForWorkType;
+    List<Projects> filtered = List.from(baseList);
 
     return showDialog<dynamic>(
       context: context,
@@ -1952,7 +2205,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                       ),
                       onChanged: (value) {
                         setState(() {
-                          filtered = projectList
+                          filtered = baseList
                               .where((p) => p.name
                                   .toLowerCase()
                                   .contains(value.toLowerCase()))
@@ -1962,20 +2215,32 @@ class _EditWorkPageState extends State<EditWorkPage> {
                     ),
                     const SizedBox(height: 12),
                     Expanded(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final project = filtered[index];
-                          return ListTile(
-                            title: Text(project.name),
-                            onTap: () => Navigator.pop(context, {
-                              'id': project.id,
-                              'name': project.name,
-                            }),
-                          );
-                        },
-                      ),
+                      child: filtered.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Text(
+                                  'No projects found for selected Work Type',
+                                  style: TextStyle(
+                                      color: Colors.grey, fontSize: 13),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final project = filtered[index];
+                                return ListTile(
+                                  title: Text(project.name),
+                                  onTap: () => Navigator.pop(context, {
+                                    'id': project.id,
+                                    'name': project.name,
+                                  }),
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
@@ -2071,11 +2336,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
     );
 
     if (selected != null && mounted) {
-      final uId = (selected['id'] ??
-              selected['unit_id'] ??
-              selected['unit_no'] ??
-              '')
-          .toString();
+      final uId =
+          (selected['id'] ?? selected['unit_id'] ?? selected['unit_no'] ?? '')
+              .toString();
       final uNo = (selected['unit_no'] ??
               selected['unit_name'] ??
               selected['name'] ??
@@ -2085,6 +2348,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
       setState(() {
         selectedUnitId = uId;
         selectedUnitNo = uNo;
+        selectedSiteLiftId = null;
+        selectedSiteLiftNo = null;
         _checkForChanges();
       });
       if (selectedProjectId != null) {
@@ -2120,7 +2385,13 @@ class _EditWorkPageState extends State<EditWorkPage> {
                       onChanged: (value) {
                         setState(() {
                           filtered = siteLiftList.where((item) {
-                            final name = (item['site_lift_name'] ??
+                            String name = _extractSiteLiftName(item);
+                            if (name.isNotEmpty) {
+                              return name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase());
+                            }
+                            name = (item['site_lift_name'] ??
                                     item['site_lift_no'] ??
                                     item['lift_no'] ??
                                     item['lift_name'] ??
@@ -2153,7 +2424,20 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                         '')
                                     .toString();
                                 return ListTile(
-                                  title: Text(lNo),
+                                  leading: Icon(
+                                    (selectedSiteLiftNo != null &&
+                                            selectedSiteLiftNo ==
+                                                _extractSiteLiftName(item))
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: (selectedSiteLiftNo != null &&
+                                            selectedSiteLiftNo ==
+                                                _extractSiteLiftName(item))
+                                        ? const Color(0xFF2a86c9)
+                                        : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  title: Text(_extractSiteLiftName(item).isNotEmpty ? _extractSiteLiftName(item) : lNo),
                                   onTap: () => Navigator.pop(context, item),
                                 );
                               },
@@ -2191,7 +2475,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
           .toString();
       setState(() {
         selectedSiteLiftId = lId;
-        selectedSiteLiftNo = lNo;
+        final extractedId = _extractSiteLiftId(selected);
+        final extractedNo = _extractSiteLiftName(selected);
+        selectedSiteLiftId = extractedId.isNotEmpty ? extractedId : lId;
+        selectedSiteLiftNo = extractedNo.isNotEmpty ? extractedNo : lNo;
         _checkForChanges();
       });
     }
@@ -2305,7 +2592,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Select Task'),
+              title: const Text('Select Activity'),
               content: SizedBox(
                 width: double.maxFinite,
                 height: MediaQuery.of(context).size.height * 0.4,
@@ -2315,7 +2602,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                     TextField(
                       controller: searchController,
                       decoration: const InputDecoration(
-                        labelText: 'Search Task',
+                        labelText: 'Search Activity',
                         prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(),
                       ),
@@ -2338,7 +2625,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                     const SizedBox(height: 12),
                     Expanded(
                       child: filtered.isEmpty
-                          ? const Center(child: Text('No tasks found for this Unit'))
+                          ? const Center(
+                              child: Text('No tasks found for this Unit'))
                           : ListView.builder(
                               shrinkWrap: true,
                               itemCount: filtered.length,
@@ -2384,28 +2672,27 @@ class _EditWorkPageState extends State<EditWorkPage> {
               selected['task_id'] ??
               '')
           .toString();
-      final tDesc = (selected['description'] ??
-              selected['task_description'] ??
-              '')
-          .toString();
+      final tDesc =
+          (selected['description'] ?? selected['task_description'] ?? '')
+              .toString();
 
       DateTime? sDate;
       if (selected['start_date'] != null &&
           selected['start_date'].toString().isNotEmpty) {
         try {
-          sDate = DateTime.parse(selected['start_date'].toString());
+          sDate = _tryParseDate(selected['start_date']);
         } catch (_) {}
       }
       DateTime? eDate;
       if (selected['completed_date'] != null &&
           selected['completed_date'].toString().isNotEmpty) {
         try {
-          eDate = DateTime.parse(selected['completed_date'].toString());
+          eDate = _tryParseDate(selected['completed_date']);
         } catch (_) {}
       } else if (selected['end_date'] != null &&
           selected['end_date'].toString().isNotEmpty) {
         try {
-          eDate = DateTime.parse(selected['end_date'].toString());
+          eDate = _tryParseDate(selected['end_date']);
         } catch (_) {}
       }
 

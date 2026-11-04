@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +12,7 @@ import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/screens/leadManagement/dashboard.dart';
 import 'package:login2/screens/leadManagement/projectDashboard.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
+import 'package:login2/widgets/timer_widget.dart';
 
 import '../../core/common.dart';
 import '../../models/lead_management/projectList_model.dart';
@@ -162,8 +164,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
   // Is Delay section state
   bool isDelay = false;
+  bool hasAssignedDelay = false;
   String? selectedDelayType;
   String? selectedLooseType;
+  String? previousTimeline;
   final TextEditingController responsiblePartyController =
       TextEditingController();
   final TextEditingController hoursController = TextEditingController();
@@ -191,11 +195,190 @@ class _AddWorkPageState extends State<AddWorkPage> {
   // Upload File state
   File? uploadedFile;
   String? uploadedFileName;
+  List<File> uploadedFiles = [];
+
+  void _syncUploadedFilesState() {
+    if (uploadedFiles.isEmpty) {
+      uploadedFile = null;
+      uploadedFileName = null;
+    } else {
+      uploadedFile = uploadedFiles.first;
+      uploadedFileName = uploadedFiles
+          .map((f) => f.path.split(Platform.pathSeparator).last)
+          .join(', ');
+    }
+  }
+
+  bool _isImageFile(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.bmp') ||
+        lower.endsWith('.heic');
+  }
+
+  Future<void> _capturePhotoFromCamera() async {
+    try {
+      final XFile? photo =
+          await ImagePicker().pickImage(source: ImageSource.camera);
+      if (photo != null) {
+        setState(() {
+          final file = File(photo.path);
+          if (!uploadedFiles.any((f) => f.path == file.path)) {
+            uploadedFiles.add(file);
+          }
+          _syncUploadedFilesState();
+        });
+      }
+    } catch (e) {
+      log('Error capturing photo: $e');
+    }
+  }
+
+  void _removeUploadedFile(int index) {
+    if (index < 0 || index >= uploadedFiles.length) return;
+    setState(() {
+      uploadedFiles.removeAt(index);
+      _syncUploadedFilesState();
+    });
+  }
+
+  void _showImagePreviewDialog(File imageFile) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: InteractiveViewer(
+                child: Image.file(
+                  imageFile,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                ),
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUploadedFilesPreview() {
+    return SizedBox(
+      height: 84,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: uploadedFiles.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final file = uploadedFiles[index];
+          final fileName = file.path.split(Platform.pathSeparator).last;
+          final isImage = _isImageFile(file.path);
+
+          return Stack(
+            children: [
+              GestureDetector(
+                onTap: isImage ? () => _showImagePreviewDialog(file) : null,
+                child: Container(
+                  width: isImage ? 84 : 140,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: isImage
+                      ? Image.file(
+                          file,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.broken_image_outlined,
+                            color: Colors.grey.shade500,
+                          ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.insert_drive_file_outlined,
+                                color: Colors.blue.shade700,
+                                size: 26,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                fileName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
+              ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: GestureDetector(
+                  onTap: () => _removeUploadedFile(index),
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 
   List<DelayTypeItem> delayTypeList = [];
   List<LooseTypeItem> looseTypeList = [];
   bool isLoadingDelayTypes = false;
   bool isLoadingLooseTypes = false;
+  bool _isStartingWork = false;
+  bool _isStoppingWork = false;
+  bool _isRestartingWork = false;
+  bool _isSavingWork = false;
+  bool _submitWorkSucceeded = false;
+  bool _saveWorkSucceeded = false;
+  bool _restartWorkSucceeded = false;
 
   bool get isStopWork =>
       widget.existingWork != null &&
@@ -263,6 +446,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       if (widget.existingWork!.tasks.isNotEmpty) {
         final firstTask = widget.existingWork!.tasks.first;
         if (firstTask.isDelay == 'Y' || firstTask.isDelay == '1') {
+          hasAssignedDelay = true;
           isDelay = true;
           selectedDelayType = firstTask.delayTypeId;
           selectedLooseType = firstTask.looseTypeId;
@@ -272,6 +456,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
           }
           if (firstTask.hours != null && firstTask.hours!.isNotEmpty) {
             hoursController.text = firstTask.hours!;
+          }
+          if (firstTask.previousTimeline != null &&
+              firstTask.previousTimeline!.isNotEmpty) {
+            previousTimeline = firstTask.previousTimeline;
+          } else if (widget.existingWork!.previousTimeline != null &&
+              widget.existingWork!.previousTimeline!.isNotEmpty) {
+            previousTimeline = widget.existingWork!.previousTimeline;
           }
         }
       }
@@ -315,6 +506,16 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   DelayTypeItem.fromJson(Map<String, dynamic>.from(item)))
               .where((item) => item.id.isNotEmpty && item.name.isNotEmpty)
               .toList();
+          if (selectedDelayType != null && selectedDelayType!.isNotEmpty) {
+            final match = delayTypeList.firstWhere(
+              (t) =>
+                  t.id == selectedDelayType ||
+                  t.name.toLowerCase() == selectedDelayType!.toLowerCase(),
+              orElse: () => DelayTypeItem(
+                  id: selectedDelayType!, name: selectedDelayType!),
+            );
+            selectedDelayType = match.id;
+          }
         });
       }
     } catch (e) {
@@ -339,6 +540,16 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   LooseTypeItem.fromJson(Map<String, dynamic>.from(item)))
               .where((item) => item.id.isNotEmpty && item.name.isNotEmpty)
               .toList();
+          if (selectedLooseType != null && selectedLooseType!.isNotEmpty) {
+            final match = looseTypeList.firstWhere(
+              (t) =>
+                  t.id == selectedLooseType ||
+                  t.name.toLowerCase() == selectedLooseType!.toLowerCase(),
+              orElse: () => LooseTypeItem(
+                  id: selectedLooseType!, name: selectedLooseType!),
+            );
+            selectedLooseType = match.id;
+          }
         });
       }
     } catch (e) {
@@ -428,6 +639,84 @@ class _AddWorkPageState extends State<AddWorkPage> {
       if (AssignedWorkModel != null && AssignedWorkModel.data.isNotEmpty) {
         assignedWorks = AssignedWorkModel.data.first;
 
+        final rawIsDelay = assignedWorks?.isDelay ??
+            (assignedWorks?.tasks.isNotEmpty == true
+                ? assignedWorks!.tasks.first.isDelay
+                : null);
+        final rawDelayType = assignedWorks?.delayTypeId ??
+            (assignedWorks?.tasks.isNotEmpty == true
+                ? assignedWorks!.tasks.first.delayTypeId
+                : null);
+        final rawLooseType = assignedWorks?.looseTypeId ??
+            (assignedWorks?.tasks.isNotEmpty == true
+                ? assignedWorks!.tasks.first.looseTypeId
+                : null);
+        final rawRespParty = assignedWorks?.responsibleParty ??
+            (assignedWorks?.tasks.isNotEmpty == true
+                ? assignedWorks!.tasks.first.responsibleParty
+                : null);
+        final rawHours = assignedWorks?.delayHours ??
+            (assignedWorks?.tasks.isNotEmpty == true
+                ? (assignedWorks!.tasks.first.delayHours ??
+                    assignedWorks!.tasks.first.hours)
+                : null);
+        final rawPrevTimeline = assignedWorks?.previousTimeline ??
+            (assignedWorks?.tasks.isNotEmpty == true
+                ? assignedWorks!.tasks.first.previousTimeline
+                : null);
+
+        if (rawPrevTimeline != null && rawPrevTimeline.isNotEmpty) {
+          previousTimeline = rawPrevTimeline;
+        }
+
+        final bool isApiDelay = rawIsDelay != null &&
+            (rawIsDelay.trim().toUpperCase() == 'Y' ||
+                rawIsDelay.trim() == '1' ||
+                rawIsDelay.trim().toLowerCase() == 'true');
+        hasAssignedDelay = isApiDelay;
+
+        if (isApiDelay) {
+          isDelay = true;
+        } else if (rawIsDelay == 'N' ||
+            rawIsDelay == '0' ||
+            rawIsDelay?.toLowerCase() == 'false' ||
+            widget.Restart == 1) {
+          isDelay = false;
+        }
+
+        if (rawDelayType != null && rawDelayType.isNotEmpty) {
+          selectedDelayType = rawDelayType;
+          if (delayTypeList.isNotEmpty) {
+            final match = delayTypeList.firstWhere(
+              (t) =>
+                  t.id == selectedDelayType ||
+                  t.name.toLowerCase() == selectedDelayType!.toLowerCase(),
+              orElse: () => DelayTypeItem(
+                  id: selectedDelayType!, name: selectedDelayType!),
+            );
+            selectedDelayType = match.id;
+          }
+        }
+        if (rawLooseType != null && rawLooseType.isNotEmpty) {
+          selectedLooseType = rawLooseType;
+          if (looseTypeList.isNotEmpty) {
+            final match = looseTypeList.firstWhere(
+              (t) =>
+                  t.id == selectedLooseType ||
+                  t.name.toLowerCase() == selectedLooseType!.toLowerCase(),
+              orElse: () => LooseTypeItem(
+                  id: selectedLooseType!, name: selectedLooseType!),
+            );
+            selectedLooseType = match.id;
+          }
+        }
+        if (rawRespParty != null && rawRespParty.isNotEmpty) {
+          responsiblePartyController.text = rawRespParty;
+        }
+        if (rawHours != null && rawHours.isNotEmpty) {
+          hoursController.text = rawHours;
+        }
+
         if (widget.existingWork == null) {
           titleController.text = assignedWorks?.titleName ?? '';
           selectedProjectId = assignedWorks?.projectId;
@@ -504,13 +793,13 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
         if (selectedProjectId != null) {
           final exists = projectList.any((p) => p.id == selectedProjectId);
-          if (!exists) {
+          if (!exists && widget.existingWork == null && assignedWorks == null) {
             selectedProjectId = null;
           }
           _loadTitle();
         }
 
-        if (widget.existingWork != null && selectedProjectId != null) {
+        if (selectedProjectId != null && projectList.any((p) => p.id == selectedProjectId)) {
           final selectedProject =
               projectList.firstWhere((p) => p.id == selectedProjectId);
 
@@ -544,6 +833,14 @@ class _AddWorkPageState extends State<AddWorkPage> {
       final response = await HttpService.getTitleList(selectedProjectId!);
       setState(() {
         titleList = response!.data;
+        if (widget.existingWork == null &&
+            selectedTitleId != null &&
+            selectedTitleId!.isNotEmpty) {
+          final matched = titleList.where((t) => t.id == selectedTitleId);
+          if (matched.isNotEmpty) {
+            titleController.text = matched.first.name;
+          }
+        }
         if (widget.existingWork != null &&
             widget.existingWork!.title.isNotEmpty) {
           final matchedTitle = titleList.firstWhere(
@@ -695,6 +992,50 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> _submitWork() async {
+    final bool isStopAction = widget.existingWork != null;
+    if (isStopAction) {
+      if (_isStoppingWork) return;
+      setState(() => _isStoppingWork = true);
+    } else {
+      if (_isStartingWork) return;
+      setState(() => _isStartingWork = true);
+    }
+    _submitWorkSucceeded = false;
+    try {
+      await _performSubmitWork();
+    } finally {
+      if (!_submitWorkSucceeded && mounted) {
+        setState(() {
+          if (isStopAction) {
+            _isStoppingWork = false;
+          } else {
+            _isStartingWork = false;
+          }
+        });
+      }
+    }
+  }
+
+  Future<void> _performSubmitWork() async {
+    if (widget.existingWork == null) {
+      final loginResponse = await HttpService.getCurrentLoginStatus();
+      if (loginResponse == null ||
+          loginResponse.status != true ||
+          loginResponse.data != true) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please login first.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade400,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+        return;
+      }
+    }
     if (!_validateTasks()) return;
 
     if (selectedProjectId == null) {
@@ -774,6 +1115,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'responsible_party': responsiblePartyController.text,
       'hours': hoursController.text,
       if (uploadedFile != null) 'file': uploadedFile,
+      if (uploadedFiles.isNotEmpty) 'files': uploadedFiles,
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
@@ -795,6 +1137,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ?await HttpService.saveWorkData(workData)
           // await HttpService.updateWorkData(workData)
           : await HttpService.submitWorkData(workData);
+      _submitWorkSucceeded = response.status;
 
       if (response.status) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -809,8 +1152,16 @@ class _AddWorkPageState extends State<AddWorkPage> {
             ),
           ),
         );
+        if (widget.existingWork != null) {
+          RunningWorkTimerService.instance.clear();
+        } else {
+          await RunningWorkTimerService.instance.refresh();
+        }
+        ProjectDashboard.triggerRefresh();
         await Future.delayed(const Duration(seconds: 1));
         widget.onSuccess();
+        await RunningWorkTimerService.instance.refresh();
+        ProjectDashboard.triggerRefresh();
         ProjectDashboardPermission == "true"
             ? Navigator.pushReplacement(
                 context,
@@ -853,6 +1204,19 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> _savework() async {
+    if (_isSavingWork) return;
+    setState(() => _isSavingWork = true);
+    _saveWorkSucceeded = false;
+    try {
+      await _performSaveWork();
+    } finally {
+      if (!_saveWorkSucceeded && mounted) {
+        setState(() => _isSavingWork = false);
+      }
+    }
+  }
+
+  Future<void> _performSaveWork() async {
     if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -886,6 +1250,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'responsible_party': responsiblePartyController.text,
       'hours': hoursController.text,
       if (uploadedFile != null) 'file': uploadedFile,
+      if (uploadedFiles.isNotEmpty) 'files': uploadedFiles,
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
@@ -904,6 +1269,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
     };
     try {
       final response = await HttpService.saveWorkData(workData);
+      _saveWorkSucceeded = response.status;
       if (response.status) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -916,6 +1282,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
           ),
         );
         widget.onSuccess();
+        ProjectDashboard.triggerRefresh();
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1020,6 +1387,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
         'hours': hoursController.text,
       },
       if (uploadedFile != null) 'file': uploadedFile,
+      if (uploadedFiles.isNotEmpty) 'files': uploadedFiles,
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
@@ -1051,8 +1419,12 @@ class _AddWorkPageState extends State<AddWorkPage> {
             ),
           ),
         );
+        await RunningWorkTimerService.instance.refresh();
+        ProjectDashboard.triggerRefresh();
         await Future.delayed(const Duration(seconds: 1));
         widget.onSuccess();
+        await RunningWorkTimerService.instance.refresh();
+        ProjectDashboard.triggerRefresh();
 
         ProjectDashboardPermission == "true"
             ? Navigator.pushReplacement(
@@ -1096,6 +1468,36 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> _restartWork() async {
+    if (_isRestartingWork) return;
+    setState(() => _isRestartingWork = true);
+    _restartWorkSucceeded = false;
+    try {
+      await _performRestartWork();
+    } finally {
+      if (!_restartWorkSucceeded && mounted) {
+        setState(() => _isRestartingWork = false);
+      }
+    }
+  }
+
+  Future<void> _performRestartWork() async {
+    final loginResponse = await HttpService.getCurrentLoginStatus();
+    if (loginResponse == null ||
+        loginResponse.status != true ||
+        loginResponse.data != true) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please login first.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red.shade400,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
     if (!_validateTasks()) return;
     if (selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1158,12 +1560,23 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
       'project_name': selectedProjectName,
+      'unit_no': selectedUnitNo ?? widget.existingWork?.unitNo ?? assignedWorks?.unitNo,
+      'site_lift_no': selectedSiteLiftNo ?? widget.existingWork?.siteLiftNo ?? assignedWorks?.siteLiftNo,
       'title': titleController.text,
       'title_id': selectedTitleId,
       'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'latitude': currentLatitude,
       'longitude': currentLongitude,
       if (widget.workId != "") 'attendance_id': widget.workId,
+      'is_delay': isDelay ? 'Y' : 'N',
+      'delay_type_id': isDelay ? (selectedDelayType ?? '') : '',
+      'delay_type': isDelay ? (selectedDelayType ?? '') : '',
+      'loose_type_id': isDelay ? (selectedLooseType ?? '') : '',
+      'loose_type': isDelay ? (selectedLooseType ?? '') : '',
+      'responsible_party': isDelay ? responsiblePartyController.text : '',
+      'delay_hours': isDelay ? hoursController.text : '',
+      'hours': isDelay ? hoursController.text : '',
+      'previous_timeline': previousTimeline ?? '',
       'tasks': tasks.asMap().entries.map((entry) {
         final task = entry.value;
         return {
@@ -1181,6 +1594,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
     };
     try {
       final response = await HttpService.restartWork(workData);
+      _restartWorkSucceeded = response.status;
 
       if (response.status) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1201,8 +1615,12 @@ class _AddWorkPageState extends State<AddWorkPage> {
             ),
           ),
         );
+        await RunningWorkTimerService.instance.refresh();
+        ProjectDashboard.triggerRefresh();
         await Future.delayed(const Duration(seconds: 1));
         widget.onSuccess();
+        await RunningWorkTimerService.instance.refresh();
+        ProjectDashboard.triggerRefresh();
 
         ProjectDashboardPermission == "true"
             ? Navigator.pushReplacement(
@@ -1269,6 +1687,12 @@ class _AddWorkPageState extends State<AddWorkPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: const [
+          RunningWorkTimerBadge(
+            enableTapNavigation: false,
+            margin: EdgeInsets.only(right: 12),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -1461,6 +1885,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                         children: [
                           // Project Field
                           InkWell(
+                            onTap: null, /*
+                          InkWell(
                             onTap: () async {
                               final selected =
                                   await dropDialogExisting(context, "Projects");
@@ -1473,7 +1899,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                 await _loadTitle();
                               }
                             },
-                            child: InputDecorator(
+                            */ child: InputDecorator(
                               decoration: InputDecoration(
                                 labelText: 'Project',
                                 labelStyle:
@@ -1508,7 +1934,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             children: [
                               Expanded(
                                 child: InkWell(
-                                  onTap: () async {
+                                  onTap: null, /* () async {
                                     final selected =
                                         await dropTitleDialog(context, titleList);
                                     if (selected != null) {
@@ -1518,7 +1944,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                       });
                                     }
                                   },
-                                  child: InputDecorator(
+                                  */ child: InputDecorator(
                                     decoration: InputDecoration(
                                       labelText: 'Stage',
                                       labelStyle:
@@ -1548,29 +1974,29 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                   ),
                                 ),
                               ),
-                              if (addWorkModule.toString() == "true")
-                                Container(
-                                  margin: const EdgeInsets.only(left: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.shade50,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: IconButton(
-                                    icon: Icon(Icons.add,
-                                        color: Colors.blue.shade700),
-                                    onPressed: () async {
-                                      final newTitle =
-                                          await showProjectTitleDialog(context);
-                                      if (newTitle != null) {
-                                        setState(() {
-                                          titleList.add(newTitle);
-                                          selectedTitleId = newTitle.id;
-                                          titleController.text = newTitle.name;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
+                              // if (addWorkModule.toString() == "true")
+                              //   Container(
+                              //     margin: const EdgeInsets.only(left: 8),
+                              //     decoration: BoxDecoration(
+                              //       color: Colors.blue.shade50,
+                              //       borderRadius: BorderRadius.circular(10),
+                              //     ),
+                              //     child: IconButton(
+                              //       icon: Icon(Icons.add,
+                              //           color: Colors.blue.shade700),
+                              //       onPressed: () async {
+                              //         final newTitle =
+                              //             await showProjectTitleDialog(context);
+                              //         if (newTitle != null) {
+                              //           setState(() {
+                              //             titleList.add(newTitle);
+                              //             selectedTitleId = newTitle.id;
+                              //             titleController.text = newTitle.name;
+                              //           });
+                              //         }
+                              //       },
+                              //     ),
+                              //   ),
                             ],
                           ),
                         ],
@@ -1983,8 +2409,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                     );
                   }),
 
-                  // Is Delay section & Upload File section (for Stop Work popup)
-                  if (isStopWork) ...[
+                  // Is Delay section (for Stop Work, and for Restart Work only when is_delay == "Y")
+                  if (isStopWork || (widget.Restart == 1 && hasAssignedDelay)) ...[
                     const SizedBox(height: 16),
                     // Is Delay Section
                     Container(
@@ -2051,8 +2477,18 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
                               value: (selectedDelayType != null &&
-                                      delayTypeList.any((t) => t.id == selectedDelayType))
-                                  ? selectedDelayType
+                                      delayTypeList.any((t) =>
+                                          t.id == selectedDelayType ||
+                                          t.name.toLowerCase() ==
+                                              selectedDelayType!.toLowerCase()))
+                                  ? (delayTypeList
+                                          .any((t) => t.id == selectedDelayType)
+                                      ? selectedDelayType
+                                      : delayTypeList
+                                          .firstWhere((t) =>
+                                              t.name.toLowerCase() ==
+                                              selectedDelayType!.toLowerCase())
+                                          .id)
                                   : null,
                               hint: Text(
                                 isLoadingDelayTypes ? 'Loading Delay Types...' : 'Select Delay Type',
@@ -2101,8 +2537,18 @@ class _AddWorkPageState extends State<AddWorkPage> {
                             const SizedBox(height: 6),
                             DropdownButtonFormField<String>(
                               value: (selectedLooseType != null &&
-                                      looseTypeList.any((t) => t.id == selectedLooseType))
-                                  ? selectedLooseType
+                                      looseTypeList.any((t) =>
+                                          t.id == selectedLooseType ||
+                                          t.name.toLowerCase() ==
+                                              selectedLooseType!.toLowerCase()))
+                                  ? (looseTypeList
+                                          .any((t) => t.id == selectedLooseType)
+                                      ? selectedLooseType
+                                      : looseTypeList
+                                          .firstWhere((t) =>
+                                              t.name.toLowerCase() ==
+                                              selectedLooseType!.toLowerCase())
+                                          .id)
                                   : null,
                               hint: Text(
                                 isLoadingLooseTypes ? 'Loading Loose Types...' : 'Select Loose Type',
@@ -2211,6 +2657,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                         ],
                       ),
                     ),
+                  ],
+                  if (isStopWork) ...[
                     const SizedBox(height: 16),
                     // Upload File Section (OUTSIDE Is Delay Section, ALWAYS VISIBLE)
                     Container(
@@ -2242,12 +2690,17 @@ class _AddWorkPageState extends State<AddWorkPage> {
                           InkWell(
                             onTap: () async {
                               FilePickerResult? result =
-                                  await FilePicker.platform.pickFiles();
+                                  await FilePicker.platform.pickFiles(allowMultiple: true);
                               if (result != null &&
-                                  result.files.single.path != null) {
+                                  result.files.isNotEmpty) {
                                 setState(() {
-                                  uploadedFile = File(result.files.single.path!);
-                                  uploadedFileName = result.files.single.name;
+                                  for (final picked in result.files) {
+                                    if (picked.path != null &&
+                                        !uploadedFiles.any((f) => f.path == picked.path)) {
+                                      uploadedFiles.add(File(picked.path!));
+                                    }
+                                  }
+                                  _syncUploadedFilesState();
                                 });
                               }
                             },
@@ -2290,6 +2743,58 @@ class _AddWorkPageState extends State<AddWorkPage> {
                                           color: uploadedFileName != null
                                               ? Colors.black87
                                               : Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    height: 44,
+                                    width: 1,
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  InkWell(
+                                    onTap: _capturePhotoFromCamera,
+                                    borderRadius: const BorderRadius.only(
+                                      topRight: Radius.circular(7),
+                                      bottomRight: Radius.circular(7),
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 14, vertical: 11),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        borderRadius: const BorderRadius.only(
+                                          topRight: Radius.circular(7),
+                                          bottomRight: Radius.circular(7),
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.camera_alt_outlined,
+                                        size: 20,
+                                        color: Colors.blue.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (uploadedFiles.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            _buildUploadedFilesPreview(),
+                          ],
+                          if (false)
+                            InkWell(
+                              child: Container(
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: EdgeInsets.zero,
+                                        child: Text(
+                                          '',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade500,
                                         ),
                                       ),
                                     ),
@@ -2419,7 +2924,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                           ),
-                          onPressed: _submitWork,
+                          onPressed: _isStoppingWork ? null : _submitWork,
                           child: const Text(
                             'STOP WORK',
                             style: TextStyle(
@@ -2442,7 +2947,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                           ),
-                          onPressed: _savework,
+                          onPressed: _isSavingWork ? null : _savework,
                           child: const Text(
                             'SAVE WORK',
                             style: TextStyle(
@@ -2470,8 +2975,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                       onPressed: widget.isPaused == 1 && widget.Restart != 1
                           ? _pauseWork
                           : (widget.Restart == 1
-                              ? _restartWork
-                              : _submitWork),
+                              ? (_isRestartingWork ? null : _restartWork)
+                              : (_isStartingWork ? null : _submitWork)),
                       child: Text(
                         widget.isPaused == 1
                             ? "PAUSE WORK"

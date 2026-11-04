@@ -173,6 +173,7 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
               revisionId: item.revisionId,
               revisionComments: item.revisionComments,
               quotationDocument: item.quotationDocument,
+              agreementDocument: item.agreementDocument,
             );
           }
         });
@@ -329,6 +330,49 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
       }
     } catch (e) {
       print('Error launching quotation document: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open document: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  //download agreement document
+  Future<void> _handleDownloadClick(QuotationItem item) async {
+    final String docLink = item.agreementDocument.trim();
+    if (docLink.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Agreement document link not available'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // 1. Sanitize the string to fix any escaped slashes from the backend
+      String cleanUrlString = docLink.replaceAll(r'\/', '/');
+      if (!cleanUrlString.startsWith('http://') &&
+          !cleanUrlString.startsWith('https://')) {
+        cleanUrlString = 'https://$cleanUrlString';
+      }
+      final Uri url = Uri.parse(cleanUrlString);
+
+      // 2. Launch directly without canLaunchUrl check to avoid Android package visibility blocks
+      final bool launched = await launchUrl(
+        url,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched) {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      print('Error launching agreement document: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1114,6 +1158,14 @@ class _QuotationListScreenState extends State<QuotationListScreen> {
                     'History',
                     () => _handleHistoryClick(item),
                   ),
+                  if (item.status == 4) ...[
+                    const SizedBox(width: 8),
+                    _circleAction(
+                      Icons.download,
+                      'Download',
+                      () => _handleDownloadClick(item),
+                    ),
+                  ],
                 ],
               ),
               const Divider(height: 16),

@@ -6,6 +6,7 @@ import 'package:login2/models/lead_management/staffWisePendingModel.dart';
 import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/filterWidget.dart';
+import 'package:login2/widgets/timer_widget.dart';
 import '../../models/lead_management/workDetailsModel.dart' as workDetails;
 import 'package:login2/models/lead_management/workstatus_model.dart'
     as workStatus;
@@ -134,7 +135,8 @@ class _PendingWorkPageState extends State<PendingWorkPage>
   }
 
   Future<void> checkExistingWorkStatus() async {
-    final workStatusModel = await HttpService.getWorkStatus();
+    final workStatusModel = await RunningWorkTimerService.instance.refresh();
+    if (!mounted) return;
     setState(() {
       if (workStatusModel != null && workStatusModel.data.isNotEmpty) {
         existingWork = workStatusModel.data.first;
@@ -327,6 +329,39 @@ class _PendingWorkPageState extends State<PendingWorkPage>
                                                 : true))
                                           GestureDetector(
                                             onTap: () async {
+                                              final loginResponse =
+                                                  await HttpService
+                                                      .getCurrentLoginStatus();
+                                              if (loginResponse == null ||
+                                                  loginResponse.status !=
+                                                      true ||
+                                                  loginResponse.data != true) {
+                                                if (!mounted) return;
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: const Text(
+                                                          'Login Required'),
+                                                      content: const Text(
+                                                          'Please login first.'),
+                                                      actions: [
+                                                        TextButton(
+                                                          child:
+                                                              const Text('OK'),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          },
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                                return;
+                                              }
                                               final result = await HttpService
                                                   .getWorkStatus();
 
@@ -1056,6 +1091,14 @@ class _PendingWorkPageState extends State<PendingWorkPage>
           tabs: const [Tab(text: "Staff Wise"), Tab(text: "Project Wise")],
         ),
         actions: [
+          RunningWorkTimerBadge(
+            margin: const EdgeInsets.only(right: 4),
+            onWorkUpdated: () {
+              if (!mounted) return;
+              fetchData();
+              checkExistingWorkStatus();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.filter_alt),
             onPressed: _showFilters,

@@ -8,6 +8,7 @@ import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/assignWorkPage.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/filterWidget.dart';
+import 'package:login2/widgets/timer_widget.dart';
 
 class CompletedWorkPageNew extends StatefulWidget {
   final String workId;
@@ -327,6 +328,13 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          RunningWorkTimerBadge(
+            margin: const EdgeInsets.only(right: 4),
+            onWorkUpdated: () {
+              if (!mounted) return;
+              _loadData(currentFilters);
+            },
+          ),
           Stack(
             children: [
               IconButton(
@@ -1469,7 +1477,31 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
   }
 
   Future<void> _handleStartWork(Task task) async {
-    final result = await HttpService.getWorkStatus();
+    final loginResponse = await HttpService.getCurrentLoginStatus(token);
+    if (loginResponse == null ||
+        loginResponse.status != true ||
+        loginResponse.data != true) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Login Required'),
+            content: const Text('Please login first.'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+    final result = await RunningWorkTimerService.instance.refresh();
     if (result != null && result.data.isNotEmpty) {
       showDialog(
         context: context,
@@ -1497,11 +1529,13 @@ class _CompletedWorkPageNewState extends State<CompletedWorkPageNew> {
             isPaused: 0,
             Restart: 0,
             onSuccess: () {
+              RunningWorkTimerService.instance.refresh();
               _loadData(currentFilters);
             },
           ),
         ),
       );
+      RunningWorkTimerService.instance.refresh();
       if (result == true) {
         _loadData(currentFilters);
       }

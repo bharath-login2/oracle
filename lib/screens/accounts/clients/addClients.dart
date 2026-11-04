@@ -72,7 +72,7 @@ class _AddClientsState extends State<AddClients> {
   String roleId = '';
   String multiBranch = '';
   String customerAddInvoicePermission = '';
-    String createRenewalPermission = '';
+  String createRenewalPermission = '';
   String? branch;
   BranchListModel? branchList;
   bool result = true;
@@ -148,8 +148,10 @@ class _AddClientsState extends State<AddClients> {
     // }
     roleId = await Common.getSharedPref("roleId");
     multiBranch = await Common.getSharedPref("multiBranch");
-     customerAddInvoicePermission = await Common.getSharedPref("customerAddInvoicePermission");
-       createRenewalPermission = await Common.getSharedPref("createRenewalPermission");
+    customerAddInvoicePermission =
+        await Common.getSharedPref("customerAddInvoicePermission");
+    createRenewalPermission =
+        await Common.getSharedPref("createRenewalPermission");
     branchList = await HttpService.getBranchList(widget.token);
     if (branchList != null) {
       setState(() {});
@@ -483,7 +485,7 @@ class _AddClientsState extends State<AddClients> {
                                 ),
                                 labelStyle: TextStyle(color: Colors.grey)),
                           ),
-                           SizedBox(
+                          SizedBox(
                             height: 10,
                           ),
                           postal != null
@@ -725,7 +727,6 @@ class _AddClientsState extends State<AddClients> {
                             ],
                           ),
 
-                         
                           const SizedBox(
                             height: 15,
                           ),
@@ -1152,7 +1153,6 @@ class _AddClientsState extends State<AddClients> {
                           Visibility(
                             visible: createOrder &&
                                 customerAddInvoicePermission == "true",
-                                  
                             child: Column(
                               children: [
                                 Padding(
@@ -2434,7 +2434,7 @@ class _AddClientsState extends State<AddClients> {
                               ],
                             ),
                           ),
-                          if (createOrder && createRenewalPermission =="true")
+                          if (createOrder && createRenewalPermission == "true")
                             CheckboxListTile(
                                 contentPadding: EdgeInsets.zero,
                                 title: const Text('Create Renewal'),
@@ -2449,7 +2449,7 @@ class _AddClientsState extends State<AddClients> {
                           Visibility(
                               visible: createRenewal &&
                                   createOrder &&
-                                  createRenewalPermission =="true",
+                                  createRenewalPermission == "true",
                               child: Column(
                                 children: [
                                   Row(
@@ -3002,13 +3002,13 @@ class _AddClientsState extends State<AddClients> {
                                     Colors.red);
                               } else if (createOrder == true &&
                                   paymentStatus != "unpaid" &&
-                                 customerAddInvoicePermission == "true" &&
+                                  customerAddInvoicePermission == "true" &&
                                   paymentMethod == null) {
                                 Common.toastMessaage(
                                     'Payment Method is required to add invoice',
                                     Colors.red);
                               } else if (createOrder == true &&
-                                  customerAddInvoicePermission == "true"  &&
+                                  customerAddInvoicePermission == "true" &&
                                   paymentStatus != "unpaid" &&
                                   staffId == "") {
                                 Common.toastMessaage(

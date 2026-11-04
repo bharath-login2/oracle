@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/leadManagement/CompanyLocationPage.dart';
@@ -340,11 +341,45 @@ class _StartStopToggleState extends State<StartStopToggle> {
         //   }
         // }
 
+        String address = '';
+        try {
+          final placemarks = await placemarkFromCoordinates(
+            position.latitude,
+            position.longitude,
+          ).timeout(const Duration(seconds: 5));
+          if (placemarks.isNotEmpty) {
+            final place = placemarks.first;
+            final parts = <String>[];
+            void addPart(String? value) {
+              if (value != null) {
+                final trimmed = value.trim();
+                if (trimmed.isNotEmpty && !parts.contains(trimmed)) {
+                  parts.add(trimmed);
+                }
+              }
+            }
+
+            addPart(place.name);
+            addPart(place.street);
+            addPart(place.subLocality);
+            addPart(place.locality);
+            addPart(place.subAdministrativeArea);
+            addPart(place.administrativeArea);
+            addPart(place.postalCode);
+            addPart(place.country);
+
+            address = parts.join(', ');
+          }
+        } catch (_) {
+          address = '';
+        }
+
         final response = await HttpService.startWork(
           now,
           latitude: position.latitude,
           longitude: position.longitude,
           faceData: _faceBase64,
+          address: address,
         );
         if (response != null && response.status == true) {
           await Common.saveSharedPref("is_work_started", "true");

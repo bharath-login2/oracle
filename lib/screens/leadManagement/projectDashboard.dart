@@ -43,6 +43,7 @@ import 'package:login2/screens/leadManagement/totalSummeryPage.dart';
 import 'package:login2/screens/leadManagement/viewallcompanyworks.dart';
 import 'package:login2/screens/leave_request_list_page.dart';
 import 'package:login2/service/service.dart';
+import 'package:login2/widgets/timer_widget.dart';
 import 'package:login2/widgets/togglebutton_start.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,6 +52,11 @@ import '../authentication/deep_link_handler.dart';
 
 class ProjectDashboard extends StatefulWidget {
   const ProjectDashboard({super.key});
+  static final ValueNotifier<int> refreshNotifier = ValueNotifier<int>(0);
+  static void triggerRefresh() {
+    RunningWorkTimerService.instance.refresh();
+    refreshNotifier.value++;
+  }
 
   @override
   State<ProjectDashboard> createState() => _ProjectDashboardState();
@@ -154,6 +160,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
 
     _loadWorkStatus();
     loadAssignedData();
+    checkExistingWorkStatus();
+    ProjectDashboard.refreshNotifier.addListener(_onWorkActionRefresh);
 
     // Consume pending deep links if any
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -166,8 +174,24 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     });
   }
 
+  void _onWorkActionRefresh() {
+    if (mounted) {
+      _refreshDashboard();
+      if (token.isNotEmpty) {
+        getData(token, fromdate, todate);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    ProjectDashboard.refreshNotifier.removeListener(_onWorkActionRefresh);
+    super.dispose();
+  }
+
   // Refresh method for pull-to-refresh
   Future<void> _refreshDashboard() async {
+    await checkExistingWorkStatus();
     await loginorNot();
     await dashboardCounts();
     await checkExistingWorkStatus();
@@ -253,19 +277,13 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   }
 
   Future<void> checkExistingWorkStatus() async {
-    final workStatusModel = await HttpService.getWorkStatus();
+    final workStatusModel = await RunningWorkTimerService.instance.refresh();
     if (mounted) {
       setState(() {
         workStatus = workStatusModel;
-        if (workStatusModel != null && workStatusModel.data.isNotEmpty) {
-          existingWork = workStatusModel.data.first;
-          createdAt = DateTime.parse(workStatusModel.data.first.createdAt);
-          isWorkStarted = true;
-        } else {
-          existingWork = null;
-          createdAt = null;
-          isWorkStarted = false;
-        }
+        existingWork = RunningWorkTimerService.instance.existingWork;
+        createdAt = RunningWorkTimerService.instance.createdAt;
+        isWorkStarted = RunningWorkTimerService.instance.isRunning;
       });
     }
   }
@@ -274,7 +292,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
     final value = await Common.getSharedPref("multipleWorks");
     userId = await Common.getSharedPref("userId");
     token = await Common.getSharedPref("token");
-      viewWorkReport = await Common.getSharedPref("viewWorkReport");
+    viewWorkReport = await Common.getSharedPref("viewWorkReport");
     ProjectDashboardPermission =
         await Common.getSharedPref("ProjectDashboardPermission");
     AccountsDashboardPermission =
@@ -900,7 +918,14 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                           children: [
                             ElevatedButton.icon(
                               onPressed: () async {
-                                if (isLoggedIn == true) {
+                                final loginResponse = await HttpService
+                                    .getCurrentLoginStatus(token);
+                                isLoggedIn = loginResponse != null &&
+                                    loginResponse.status == true &&
+                                    loginResponse.data == true;
+                                if (!mounted) return;
+                                if (isLoggedIn == true ||
+                                    existingWork != null) {
                                   final workStatusModel =
                                       await HttpService.getWorkStatus();
                                   WorkStatus? newExistingWork;
@@ -918,6 +943,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                         existingWork: newExistingWork,
                                         // isAssigned: 1,
                                         onSuccess: () {
+                                          _refreshDashboard();
                                           checkExistingWorkStatus();
                                           getData(token, fromdate, todate);
                                         },
@@ -933,7 +959,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                       return AlertDialog(
                                         title: const Text('Login Required'),
                                         content: const Text(
-                                            'Please login to add work.'),
+                                            'Please login first.'),
                                         actions: [
                                           TextButton(
                                             child: const Text('OK'),
@@ -966,7 +992,8 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                           builder: (context) => AssignWorkPage(
                                             onSuccess: () {
                                               setState(() {
-                                                checkExistingWorkStatus();
+                                                _refreshDashboard();
+                                                getData(token, fromdate, todate);
                                               });
                                             },
                                           ),
@@ -985,102 +1012,13 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                   )
                                 : const SizedBox(width: 0),
                             const SizedBox(width: 10),
-                            Visibility(
-                              visible: workStatus != null &&
-                                  workStatus!.data.isNotEmpty,
-                              maintainSize: true,
-                              maintainAnimation: true,
-                              maintainState: true,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.3),
-                                      blurRadius: 5,
-                                      spreadRadius: 1,
-                                      offset: const Offset(0, 2),
-                                    )
-                                  ],
-                                  border: Border.all(
-                                    color: Colors.red.shade100,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.timer,
-                                      size: 15,
-                                      color: Colors.red.shade400,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    StreamBuilder<DateTime>(
-                                      stream: Stream.periodic(
-                                          const Duration(seconds: 1),
-                                          (_) => DateTime.now()),
-                                      builder: (context, snapshot) {
-                                        if (!snapshot.hasData ||
-                                            createdAt == null) {
-                                          return const SizedBox();
-                                        }
-
-                                        final now = snapshot.data!;
-                                        final diff = now.difference(createdAt!);
-
-                                        String timeSince =
-                                            "${diff.inHours}h ${diff.inMinutes % 60}m ${diff.inSeconds % 60}s";
-
-                                        return GestureDetector(
-                                          onTap: () async {
-                                            final workStatusModel =
-                                                await HttpService
-                                                    .getWorkStatus();
-
-                                            WorkStatus? existingWork;
-                                            if (workStatusModel != null &&
-                                                workStatusModel
-                                                    .data.isNotEmpty) {
-                                              existingWork =
-                                                  workStatusModel.data.first;
-                                            }
-                                            await Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddWorkPage(
-                                                  workId: "",
-                                                  existingWork: existingWork,
-                                                   isAssigned: 1,
-                                                  onSuccess: () {
-                                                    checkExistingWorkStatus();
-                                                    getData(token, fromdate,
-                                                        todate);
-                                                  },
-                                                ),
-                                              ),
-                                            );
-                                            await checkExistingWorkStatus();
-                                            getData(token, fromdate, todate);
-                                          },
-                                          child: Text(
-                                            timeSince,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.red.shade700,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            RunningWorkTimerBadge(
+                              maintainSizeWhenHidden: true,
+                              onWorkUpdated: () {
+                                _refreshDashboard();
+                                checkExistingWorkStatus();
+                                getData(token, fromdate, todate);
+                              },
                             ),
                           ],
                         ),
@@ -1109,7 +1047,11 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
 
                             return GestureDetector(
                               onTap: () {
-                                if (countData.staffWiseCounts.isNotEmpty) {
+                                if (countData.label.toLowerCase() ==
+                                    'pending') {
+                                  _showStaffCountPopup(countData);
+                                } else if (countData
+                                    .staffWiseCounts.isNotEmpty) {
                                   _showStaffCountPopup(countData);
                                 } else {
                                   _navigateToStatusPage(
@@ -1208,90 +1150,98 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                             ? _buildAssignedByMeSection()
                             : const SizedBox(),
                         const SizedBox(height: 16),
-                        
+
                         // Recent Projects Section
-                        if (projectList != null && projectList!.data.isNotEmpty) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                "Recent Projects",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const AddProjectPage(),
-                                    ),
-                                  );
-                                },
-                                child: const Row(
-                                  children: [
-                                    Text(
-                                      'View More',
-                                      style: TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.arrow_forward_ios,
-                                      size: 12,
-                                      color: Colors.blue,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: projectList!.data.length > 5 ? 5 : projectList!.data.length,
-                            itemBuilder: (context, index) {
-                              final project = projectList!.data[index];
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                  border: Border.all(color: Colors.grey.shade100),
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.blue.shade50,
-                                    child: Icon(Icons.rocket_launch_rounded, color: Colors.blue.shade400, size: 20),
-                                  ),
-                                  title: Text(
-                                    project.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    "Project ID: ${project.id}",
-                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 24),
-                        ],
+                        // if (projectList != null &&
+                        //     projectList!.data.isNotEmpty) ...[
+                        //   Row(
+                        //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //     children: [
+                        //       const Text(
+                        //         "Recent Projects",
+                        //         style: TextStyle(
+                        //           fontSize: 18,
+                        //           fontWeight: FontWeight.bold,
+                        //         ),
+                        //       ),
+                        //       TextButton(
+                        //         onPressed: () {
+                        //           Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //               builder: (context) =>
+                        //                   const AddProjectPage(),
+                        //             ),
+                        //           );
+                        //         },
+                        //         child: const Row(
+                        //           children: [
+                        //             Text(
+                        //               'View More',
+                        //               style: TextStyle(
+                        //                 color: Colors.blue,
+                        //                 fontWeight: FontWeight.bold,
+                        //               ),
+                        //             ),
+                        //             Icon(
+                        //               Icons.arrow_forward_ios,
+                        //               size: 12,
+                        //               color: Colors.blue,
+                        //             ),
+                        //           ],
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        //   const SizedBox(height: 10),
+                        //   ListView.builder(
+                        //     shrinkWrap: true,
+                        //     physics: const NeverScrollableScrollPhysics(),
+                        //     itemCount: projectList!.data.length > 5
+                        //         ? 5
+                        //         : projectList!.data.length,
+                        //     itemBuilder: (context, index) {
+                        //       final project = projectList!.data[index];
+                        //       return Container(
+                        //         margin: const EdgeInsets.only(bottom: 12),
+                        //         decoration: BoxDecoration(
+                        //           color: Colors.white,
+                        //           borderRadius: BorderRadius.circular(16),
+                        //           boxShadow: [
+                        //             BoxShadow(
+                        //               color: Colors.black.withOpacity(0.05),
+                        //               blurRadius: 10,
+                        //               offset: const Offset(0, 4),
+                        //             ),
+                        //           ],
+                        //           border:
+                        //               Border.all(color: Colors.grey.shade100),
+                        //         ),
+                        //         child: ListTile(
+                        //           leading: CircleAvatar(
+                        //             backgroundColor: Colors.blue.shade50,
+                        //             child: Icon(Icons.rocket_launch_rounded,
+                        //                 color: Colors.blue.shade400, size: 20),
+                        //           ),
+                        //           title: Text(
+                        //             project.name,
+                        //             style: const TextStyle(
+                        //               fontWeight: FontWeight.bold,
+                        //               color: Colors.black87,
+                        //             ),
+                        //           ),
+                        //           subtitle: Text(
+                        //             "Project ID: ${project.id}",
+                        //             style: TextStyle(
+                        //                 color: Colors.grey.shade600,
+                        //                 fontSize: 12),
+                        //           ),
+                        //         ),
+                        //       );
+                        //     },
+                        //   ),
+                        //   const SizedBox(height: 24),
+                        // ],
 
                         Container(
                           width: double.infinity,
@@ -1374,7 +1324,6 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                                   _buildQuickLinkCard(
                                     "Work Summery All",
                                     Colors.cyan.shade100,
-                                    
                                     () => Navigator.push(
                                       context,
                                       MaterialPageRoute(
@@ -1798,6 +1747,28 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                 ),
                 const SizedBox(height: 16),
                 if (countData.staffWiseCounts.isEmpty)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToStatusPage(
+                        countData.label,
+                        countData.id.toString(),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      alignment: Alignment.center,
+                      child: Text(
+                        "No staff found",
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  )
+                else if (countData.staffWiseCounts.isEmpty)
                   Container(
                     padding: const EdgeInsets.all(20),
                     alignment: Alignment.center,
@@ -1824,6 +1795,7 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
                               countData.label,
                               countData.id.toString(),
                               staff.staffId,
+                              staff.staffName,
                             );
                           },
                           child: Container(
@@ -1940,6 +1912,33 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   }
 
   void _navigateToStatusPage(String status, String sectionId) {
+    if (status.toLowerCase() == 'overdue') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PendingWorkPageNew(
+            workId: "",
+            sectionId: sectionId,
+            staffId: '',
+            isOverdue: '1',
+          ),
+        ),
+      );
+      return;
+    }
+    if (status.toLowerCase() == 'pending') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PendingWorkPageNew(
+            workId: "",
+            sectionId: sectionId,
+            staffId: '',
+          ),
+        ),
+      );
+      return;
+    }
     switch (status.toLowerCase()) {
       case 'to do':
         Navigator.push(
@@ -2011,7 +2010,37 @@ class _ProjectDashboardState extends State<ProjectDashboard> {
   }
 
   void _navigateToStatusPageWithStaff(
-      String status, String sectionId, String staffId) {
+      String status, String sectionId, String staffId,
+      [String? staffName]) {
+    if (status.toLowerCase() == 'overdue') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PendingWorkPageNew(
+            workId: "",
+            sectionId: sectionId,
+            staffId: staffId,
+            staffName: staffName,
+            isOverdue: '1',
+          ),
+        ),
+      );
+      return;
+    }
+    if (status.toLowerCase() == 'pending') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PendingWorkPageNew(
+            workId: "",
+            sectionId: sectionId,
+            staffId: staffId,
+            staffName: staffName,
+          ),
+        ),
+      );
+      return;
+    }
     switch (status.toLowerCase()) {
       case 'to do':
         Navigator.push(

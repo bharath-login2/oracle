@@ -10,6 +10,7 @@ import 'package:login2/screens/leadManagement/assignWorkPage.dart';
 import 'package:login2/screens/leadManagement/pendingWorkPage.dart';
 import 'package:login2/screens/leadManagement/totalSummeryPage.dart';
 import 'package:login2/screens/leadManagement/viewwork_page.dart';
+import 'package:login2/widgets/timer_widget.dart';
 import '../../models/lead_management/workDetailsCompanyModel.dart';
 import 'package:login2/models/lead_management/workstatus_model.dart'
     as workStatus;
@@ -73,7 +74,8 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
   }
 
   Future<void> checkExistingWorkStatus() async {
-    final workStatusModel = await HttpService.getWorkStatus();
+    final workStatusModel = await RunningWorkTimerService.instance.refresh();
+    if (!mounted) return;
     setState(() {
       if (workStatusModel != null && workStatusModel.data.isNotEmpty) {
         existingWork = workStatusModel.data.first;
@@ -85,7 +87,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
 
   Future<void> loginorNot() async {
     final token = await Common.getSharedPref("token");
-    final response = await HttpService.getLoginorNot(token);
+    final response = await HttpService.getCurrentLoginStatus(token);
 
     setState(() {
       if (response != null && response.data == true) {
@@ -137,6 +139,16 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
         actions: [
           Row(
             children: [
+              RunningWorkTimerBadge(
+                margin: const EdgeInsets.only(right: 4),
+                onWorkUpdated: () {
+                  if (!mounted) return;
+                  setState(() {
+                    getWorkDuration(currentDate);
+                    checkExistingWorkStatus();
+                  });
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.calendar_month_sharp),
                 onPressed: () {
@@ -246,17 +258,11 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
         ],
       ),
       floatingActionButton: existingWork != null
-          ? StreamBuilder<DateTime>(
-              stream: Stream.periodic(
-                  const Duration(seconds: 1), (_) => DateTime.now()),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const SizedBox();
-
-                final now = snapshot.data!;
-                final createdAt = DateTime.parse(existingWork!.createdAt);
-                final diff = now.difference(createdAt);
-                String timeSince =
-                    "${diff.inHours.toString().padLeft(2, '0')}:${(diff.inMinutes % 60).toString().padLeft(2, '0')}:${(diff.inSeconds % 60).toString().padLeft(2, '0')}";
+          ? ListenableBuilder(
+              listenable: RunningWorkTimerService.instance,
+              builder: (context, _) {
+                final timeSince =
+                    RunningWorkTimerService.instance.formattedClockTime;
 
                 return FloatingActionButton.extended(
                   onPressed: () async {
@@ -312,6 +318,12 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
             )
           : FloatingActionButton(
               onPressed: () async {
+                final loginResponse =
+                    await HttpService.getCurrentLoginStatus();
+                isLoggedIn = loginResponse != null &&
+                    loginResponse.status == true &&
+                    loginResponse.data == true;
+                if (!mounted) return;
                 if (isLoggedIn == true) {
                   final workStatusModel = await HttpService.getWorkStatus();
                   workStatus.WorkStatus? newExistingWork;
@@ -342,7 +354,7 @@ class _ViewCompanyWorkPageState extends State<ViewCompanyWorkPage> {
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: const Text('Login Required'),
-                        content: const Text('Please login to add work.'),
+                        content: const Text('Please login first.'),
                         actions: [
                           TextButton(
                             child: const Text('OK'),

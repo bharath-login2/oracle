@@ -8,6 +8,7 @@ import 'package:login2/screens/leadManagement/addWork_page.dart';
 import 'package:login2/screens/leadManagement/assignWorkPage.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/filterWidget.dart';
+import 'package:login2/widgets/timer_widget.dart';
 
 class PendingWorkPageNew extends StatefulWidget {
   final String workId;
@@ -15,6 +16,7 @@ class PendingWorkPageNew extends StatefulWidget {
   final String? preselectedWorkId;
   final String? selectedStatus;
   final String staffId;
+  final String? staffName;
   final String? assignedToMyself;
   final String? assignedByMyself;
   final String? isOverdue;
@@ -26,6 +28,7 @@ class PendingWorkPageNew extends StatefulWidget {
     this.preselectedWorkId,
     this.selectedStatus,
     required this.staffId,
+    this.staffName,
     this.assignedToMyself,
     this.assignedByMyself,
     this.isOverdue,
@@ -81,6 +84,9 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
   // }
   @override
   void initState() {
+    if (widget.staffName != null && widget.staffName!.isNotEmpty) {
+      selectedStaffName = widget.staffName;
+    }
     super.initState();
     _loadName();
     currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -183,6 +189,10 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
 
         currentFilters['assigned_to_ids'] = [widget.staffId!];
         // currentFilters['assigned_by_ids'] = [userId]; // Removed as per user request for general pending
+        _hasInitialStatusFilter = false;
+        _initialStatus = null;
+      } else if (widget.staffId != null && widget.staffId.isNotEmpty) {
+        currentFilters['assigned_to_ids'] = [widget.staffId];
         _hasInitialStatusFilter = false;
         _initialStatus = null;
       }
@@ -318,6 +328,14 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
         _calculateFilterCounts(data.summary);
 
         if (widget.staffId.isNotEmpty) {
+          if (selectedStaffName == null) {
+            for (var staff in data.summary) {
+              if (staff.userId == widget.staffId) {
+                selectedStaffName = staff.staffName;
+                break;
+              }
+            }
+          }
           _expandAllCards();
         }
 
@@ -514,7 +532,12 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
     List<Summary>? filtered = staffwiseData;
     if (selectedStaffName != null) {
       filtered = staffwiseData!.where((staff) {
-        return staff.staffName == selectedStaffName;
+        return staff.staffName.toLowerCase().trim() ==
+            selectedStaffName!.toLowerCase().trim();
+      }).toList();
+    } else if (widget.staffId.isNotEmpty) {
+      filtered = staffwiseData!.where((staff) {
+        return staff.userId == widget.staffId;
       }).toList();
     }
 
@@ -568,6 +591,13 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          RunningWorkTimerBadge(
+            margin: const EdgeInsets.only(right: 4),
+            onWorkUpdated: () {
+              if (!mounted) return;
+              _loadData(currentFilters);
+            },
+          ),
           Stack(
             children: [
               IconButton(
@@ -1411,6 +1441,23 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
     return pendingTask.workId;
   }
 
+  Future<void> _openTaskView(String selectedWorkId) async {
+    await Navigator.push(
+      context,
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (context, _, __) => AssignReport(
+          workId: selectedWorkId,
+          sectionId: widget.sectionId,
+          returnOnClose: true,
+        ),
+      ),
+    );
+    if (mounted) {
+      _loadData(currentFilters);
+    }
+  }
+
   Widget _buildProjectCard(Project project) {
     final projectKey = '${project.projectId}_${project.customerId}';
     final isProjectExpanded = _expandedProjects[projectKey] ?? true;
@@ -1443,16 +1490,7 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
               onTap: () {
                 String? selectedWorkId = _getSelectedTaskWorkId(project);
                 if (selectedWorkId != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AssignReport(
-                        // preselectedWorkId: selectedWorkId,
-                        workId: selectedWorkId,
-                        sectionId: widget.sectionId,
-                      ),
-                    ),
-                  );
+                  _openTaskView(selectedWorkId);
                 }
               },
               child: Text(
@@ -1556,18 +1594,8 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () {
-                              String? selectedWorkId = task.workId;
-                              if (selectedWorkId != null) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => AssignReport(
-                                      // preselectedWorkId: selectedWorkId,
-                                      workId: selectedWorkId,
-                                      sectionId: widget.sectionId,
-                                    ),
-                                  ),
-                                );
+                              if (task.workId.isNotEmpty) {
+                                _openTaskView(task.workId);
                               }
                             },
                             child: Text(
@@ -1624,42 +1652,47 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
                     const SizedBox(height: 2),
 
                     // Priority and due date
-                    Row(
-                      children: [
-                        if (task.priority.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.flag,
-                                  size: 12, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Priority: ${_getPriorityText(task.priority)}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: _getPriorityColor(task.priority),
-                                ),
-                              ),
-                            ],
-                          ),
-                        if (task.priority.isNotEmpty && task.dueDate.isNotEmpty)
-                          const SizedBox(width: 12),
-                        if (task.dueDate.isNotEmpty)
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today,
-                                  size: 12, color: Colors.grey),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Due: ${task.dueDate}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: _getDueDateColor(task.dueDate),
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
+                    Wrap(
+  spacing: 12,
+  runSpacing: 6,
+  crossAxisAlignment: WrapCrossAlignment.center,
+  children: [
+    if (task.priority.isNotEmpty)
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.flag, size: 12, color: Colors.grey),
+          const SizedBox(width: 4),
+          Text(
+            'Priority: ${_getPriorityText(task.priority)}',
+            style: TextStyle(
+              fontSize: 13,
+              color: _getPriorityColor(task.priority),
+            ),
+          ),
+        ],
+      ),
+    if (task.dueDate.isNotEmpty)
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.calendar_today,
+            size: 12,
+            color: Colors.grey,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'Due: ${task.dueDate}',
+            style: TextStyle(
+              fontSize: 13,
+              color: _getDueDateColor(task.dueDate),
+            ),
+          ),
+        ],
+      ),
+  ],
+),
 
                     // Remarks (expandable)
                     if (task.remarks.isNotEmpty &&
@@ -1771,7 +1804,31 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
   }
 
   Future<void> _handleStartWork(Task task) async {
-    final result = await HttpService.getWorkStatus();
+    final loginResponse = await HttpService.getCurrentLoginStatus(token);
+    if (loginResponse == null ||
+        loginResponse.status != true ||
+        loginResponse.data != true) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Login Required'),
+            content: const Text('Please login first.'),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+    final result = await RunningWorkTimerService.instance.refresh();
     if (result != null && result.data.isNotEmpty) {
       showDialog(
         context: context,
@@ -1799,11 +1856,13 @@ class _PendingWorkPageNewState extends State<PendingWorkPageNew> {
             isPaused: 0,
             Restart: 0,
             onSuccess: () {
+              RunningWorkTimerService.instance.refresh();
               _loadData(currentFilters);
             },
           ),
         ),
       );
+      RunningWorkTimerService.instance.refresh();
       if (result == true) {
         _loadData(currentFilters);
       }

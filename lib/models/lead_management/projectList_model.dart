@@ -35,18 +35,22 @@ class ProjectList {
 class Projects {
     final String id;
     final String name;
+    final String quotationType;
 
     Projects({
         required this.id,
         required this.name,
+        this.quotationType = '',
     });
 
     factory Projects.fromJson(Map<String, dynamic> json) => Projects(
         id: json["id"]??"",
         name: json["name"]??"",
+        quotationType: (json["quotation_type"] ?? json["quotationType"] ?? "").toString(),
     );
     Map<String, dynamic> toJson() => {
         "id": id,
         "name": name,
+        "quotation_type": quotationType,
     };
 }

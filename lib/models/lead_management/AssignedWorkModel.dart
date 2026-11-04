@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class SupportingStaff {
   final String id;
   final String staffName;
@@ -26,8 +28,10 @@ class WorkSession {
   final String count;
   final String totalHours;
   final String lastUpdatedTime;
+  final String workCompletePercent;
   final List<SupportingStaff> supportingStaff;
   final List<Work> works;
+  final List<String> attachments;
 
   WorkSession({
     required this.projectId,
@@ -40,11 +44,87 @@ class WorkSession {
     required this.count,
     required this.totalHours,
     required this.lastUpdatedTime,
+    this.workCompletePercent = '',
     this.supportingStaff = const [],
     required this.works,
+    this.attachments = const [],
   });
 
   factory WorkSession.fromJson(Map<String, dynamic> json) {
+    List<String> parsedSessionAttachments = [];
+    final rawSessionAttachments = json['attachments'] ?? json['attachment'];
+    if (rawSessionAttachments != null) {
+      if (rawSessionAttachments is List) {
+        for (var item in rawSessionAttachments) {
+          if (item == null) continue;
+          if (item is String && item.trim().isNotEmpty) {
+            parsedSessionAttachments.add(item.trim());
+          } else if (item is Map) {
+            final url = item['url'] ??
+                item['file'] ??
+                item['attachment'] ??
+                item['path'] ??
+                item['link'];
+            if (url != null && url.toString().trim().isNotEmpty) {
+              parsedSessionAttachments.add(url.toString().trim());
+            }
+          } else {
+            final str = item.toString().trim();
+            if (str.isNotEmpty) parsedSessionAttachments.add(str);
+          }
+        }
+      } else if (rawSessionAttachments is String) {
+        final trimmed = rawSessionAttachments.trim();
+        if (trimmed.isNotEmpty) {
+          if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+              final decoded = jsonDecode(trimmed);
+              if (decoded is List) {
+                for (var item in decoded) {
+                  if (item != null && item.toString().trim().isNotEmpty) {
+                    parsedSessionAttachments.add(item.toString().trim());
+                  }
+                }
+              }
+            } catch (_) {
+              parsedSessionAttachments.add(trimmed);
+            }
+          } else {
+            parsedSessionAttachments.addAll(
+              trimmed
+                  .split(RegExp(r'[,\n]'))
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty),
+            );
+          }
+        }
+      }
+    }
+
+    final parsedWorks = (json['works'] as List<dynamic>?)
+            ?.map((work) => Work.fromJson(work))
+            .toList() ??
+        [];
+
+    String parsedWorkCompletePercent = (json['work_complete_percent'] ??
+            json['completion_percent'] ??
+            json['work_completion_percent'] ??
+            json['complete_percent'] ??
+            json['completion'] ??
+            '')
+        .toString()
+        .trim();
+
+    if (parsedWorkCompletePercent.isEmpty && parsedWorks.isNotEmpty) {
+      final lastWorkWithPercent = parsedWorks.lastWhere(
+        (w) => w.completionPercent.isNotEmpty,
+        orElse: () => parsedWorks.last,
+      );
+      if (lastWorkWithPercent.completionPercent.isNotEmpty) {
+        parsedWorkCompletePercent = lastWorkWithPercent.completionPercent;
+      }
+    }
+
     return WorkSession(
       projectId: json['project_id'] ?? '',
       taskId: json['task_id'] ?? '',
@@ -56,14 +136,13 @@ class WorkSession {
       count: json['count']?.toString() ?? '',
       totalHours: json['total_hours']?.toString() ?? '',
       lastUpdatedTime: json['last_updated_time'] ?? '',
+      workCompletePercent: parsedWorkCompletePercent,
       supportingStaff: (json['supporting_staff'] as List<dynamic>?)
               ?.map((staff) => SupportingStaff.fromJson(staff))
               .toList() ??
           [],
-      works: (json['works'] as List<dynamic>?)
-              ?.map((work) => Work.fromJson(work))
-              .toList() ??
-          [],
+      works: parsedWorks,
+      attachments: parsedSessionAttachments,
     );
   }
 }
@@ -74,6 +153,8 @@ class Work {
   final String endTime;
   final String duration;
   final List<String> remarks;
+  final String completionPercent;
+  final List<String> attachments;
 
   Work({
     required this.workedDate,
@@ -81,6 +162,8 @@ class Work {
     required this.endTime,
     required this.duration,
     required this.remarks,
+    this.completionPercent = '',
+    this.attachments = const [],
   });
 
   factory Work.fromJson(Map<String, dynamic> json) {
@@ -104,12 +187,74 @@ class Work {
       }
     }
 
+    List<String> parsedAttachments = [];
+    final rawAttachments = json['attachments'] ?? json['attachment'];
+    if (rawAttachments != null) {
+      if (rawAttachments is List) {
+        for (var item in rawAttachments) {
+          if (item == null) continue;
+          if (item is String && item.trim().isNotEmpty) {
+            parsedAttachments.add(item.trim());
+          } else if (item is Map) {
+            final url = item['url'] ??
+                item['file'] ??
+                item['attachment'] ??
+                item['path'] ??
+                item['link'];
+            if (url != null && url.toString().trim().isNotEmpty) {
+              parsedAttachments.add(url.toString().trim());
+            }
+          } else {
+            final str = item.toString().trim();
+            if (str.isNotEmpty) parsedAttachments.add(str);
+          }
+        }
+      } else if (rawAttachments is String) {
+        final trimmed = rawAttachments.trim();
+        if (trimmed.isNotEmpty) {
+          if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+              final decoded = jsonDecode(trimmed);
+              if (decoded is List) {
+                for (var item in decoded) {
+                  if (item != null && item.toString().trim().isNotEmpty) {
+                    parsedAttachments.add(item.toString().trim());
+                  }
+                }
+              }
+            } catch (_) {
+              parsedAttachments.add(trimmed);
+            }
+          } else {
+            parsedAttachments.addAll(
+              trimmed
+                  .split(RegExp(r'[,\n]'))
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty),
+            );
+          }
+        }
+      }
+    }
+
+    String parsedCompletionPercent = (json['completion_percent'] ??
+            json['work_complete_percent'] ??
+            json['work_completion_percent'] ??
+            json['complete_percent'] ??
+            json['completion'] ??
+            json['completion_percentage'] ??
+            '')
+        .toString()
+        .trim();
+
     return Work(
       workedDate: json['worked_date']?.toString() ?? '',
       startTime: json['start_time']?.toString() ?? '',
       endTime: json['end_time']?.toString() ?? '',
       duration: json['duration']?.toString() ?? '',
       remarks: parsedRemarks,
+      completionPercent: parsedCompletionPercent,
+      attachments: parsedAttachments,
     );
   }
 }
@@ -191,6 +336,8 @@ class AssignedWork {
   final NotificationSettings notification;
   final String unreadCount;
   final String completion;
+  final String workType;
+  final String phNo;
 
   AssignedWork({
     required this.total,
@@ -225,6 +372,8 @@ class AssignedWork {
     required this.notification,
     required this.unreadCount,
     required this.completion,
+    this.workType = '',
+    this.phNo = '',
   });
 
   factory AssignedWork.fromJson(Map<String, dynamic> json) {
@@ -281,7 +430,13 @@ class AssignedWork {
       supportingStaff: supportingStaffList,
       notification: NotificationSettings.fromJson(json['notification'] ?? {}),
       unreadCount: json['unread_count'] ?? '',
-      completion: json['completion'] ?? '',
+      workType: (json['work_type'] ?? json['workType'] ?? '').toString(),
+      phNo: (json['phone_number'] ?? json['phone_number'] ?? '').toString(),
+      completion: (json['completion'] ??
+              json['work_complete_percent'] ??
+              json['completion_percent'] ??
+              '')
+          .toString(),
     );
   }
 }

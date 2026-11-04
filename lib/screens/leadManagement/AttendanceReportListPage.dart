@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/getAttendanceReportModel.dart';
@@ -40,6 +41,136 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
   }
 
   String? addAttendanceRemarks;
+  final Map<String, String> _addressCache = {};
+  final Map<String, Future<String>> _addressFutures = {};
+
+  Future<GetAttendanceReportModel?> _fetchAttendanceReportWithAddresses(
+    String fromDate,
+    String toDate,
+    String staffId,
+  ) async {
+    final report = await HttpService.getAttendanceReport(
+      fromDate,
+      toDate,
+      staffId,
+    );
+    if (report?.data?.list != null && report!.data!.list!.isNotEmpty) {
+      await Future.wait(
+        report.data!.list!.map((item) => _resolveAddressForItem(item)),
+      );
+    }
+    return report;
+  }
+
+  String _getItemCoordKey(ListData item) {
+    final lat = item.latitude?.trim() ?? '';
+    final lng = item.longitude?.trim() ?? '';
+    return '${lat}_$lng';
+  }
+
+  Future<String> _resolveAddressForItem(ListData item) async {
+    final latStr = item.latitude?.trim();
+    final lngStr = item.longitude?.trim();
+    if (latStr == null ||
+        lngStr == null ||
+        latStr.isEmpty ||
+        lngStr.isEmpty ||
+        latStr.toLowerCase() == 'null' ||
+        lngStr.toLowerCase() == 'null') {
+      return '-';
+    }
+
+    final lat = double.tryParse(latStr);
+    final lng = double.tryParse(lngStr);
+    if (lat == null ||
+        lng == null ||
+        lat.isNaN ||
+        lng.isNaN ||
+        (lat == 0.0 && lng == 0.0) ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180) {
+      return '-';
+    }
+
+    final key = _getItemCoordKey(item);
+    if (_addressCache.containsKey(key)) {
+      return _addressCache[key]!;
+    }
+
+    final future = _addressFutures.putIfAbsent(key, () async {
+      try {
+        final placemarks = await placemarkFromCoordinates(lat, lng)
+            .timeout(const Duration(seconds: 5));
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          final parts = <String>[];
+          void addPart(String? value) {
+            if (value != null) {
+              final trimmed = value.trim();
+              if (trimmed.isNotEmpty && !parts.contains(trimmed)) {
+                parts.add(trimmed);
+              }
+            }
+          }
+
+          addPart(place.name);
+          addPart(place.street);
+          addPart(place.subLocality);
+          addPart(place.locality);
+          addPart(place.subAdministrativeArea);
+          addPart(place.administrativeArea);
+          addPart(place.postalCode);
+          addPart(place.country);
+
+          final formatted = parts.join(', ');
+          if (formatted.isNotEmpty) {
+            _addressCache[key] = formatted;
+            return formatted;
+          }
+        }
+      } catch (_) {}
+      _addressCache[key] = '-';
+      return '-';
+    });
+
+    final result = await future;
+    _addressCache[key] = result;
+    return result;
+  }
+
+  String _getDisplayAddress(ListData item) {
+    final latStr = item.latitude?.trim();
+    final lngStr = item.longitude?.trim();
+    if (latStr == null ||
+        lngStr == null ||
+        latStr.isEmpty ||
+        lngStr.isEmpty ||
+        latStr.toLowerCase() == 'null' ||
+        lngStr.toLowerCase() == 'null') {
+      return '-';
+    }
+    final lat = double.tryParse(latStr);
+    final lng = double.tryParse(lngStr);
+    if (lat == null ||
+        lng == null ||
+        lat.isNaN ||
+        lng.isNaN ||
+        (lat == 0.0 && lng == 0.0) ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180) {
+      return '-';
+    }
+    final key = _getItemCoordKey(item);
+    final cached = _addressCache[key];
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+    return '-';
+  }
   @override
   void dispose() {
     _remarkController.dispose();
@@ -49,7 +180,7 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
   Future<void> _loadData() async {
     addAttendanceRemarks = await Common.getSharedPref("addAttendanceRemarks");
     setState(() {
-      reportFuture = HttpService.getAttendanceReport(
+      reportFuture = _fetchAttendanceReportWithAddresses(
         _fromDate,
         _toDate,
         widget.staffId,
@@ -765,7 +896,7 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  "Remarks",
+                                  "Address",
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey.shade600,
@@ -774,15 +905,15 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  item.remarks?.isNotEmpty == true
-                                      ? item.remarks!
-                                      : "No remarks added",
+                                  _getDisplayAddress(item).isNotEmpty
+                                      ? _getDisplayAddress(item)
+                                      : "-",
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: item.remarks?.isNotEmpty == true
+                                    color: _getDisplayAddress(item) != "-"
                                         ? Colors.black87
                                         : Colors.grey.shade500,
-                                    fontStyle: item.remarks?.isNotEmpty == true
+                                    fontStyle: _getDisplayAddress(item).isNotEmpty
                                         ? FontStyle.normal
                                         : FontStyle.italic,
                                   ),
@@ -792,7 +923,7 @@ class _AttendanceReportListPageState extends State<AttendanceReportListPage> {
                               ],
                             ),
                           ),
-                          addAttendanceRemarks !="false"?
+                          addAttendanceRemarks == "__disabled__" ?
                           IconButton(
                             icon: const Icon(Icons.edit_note, size: 20),
                             color: const Color.fromARGB(255, 44, 126, 180),

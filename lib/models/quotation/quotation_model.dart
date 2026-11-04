@@ -41,6 +41,7 @@ class QuotationItem {
   final String revisionId;
   final String revisionComments;
   final String quotationDocument;
+  final String agreementDocument;
 
   QuotationItem({
     required this.id,
@@ -61,6 +62,7 @@ class QuotationItem {
     required this.revisionId,
     required this.revisionComments,
     required this.quotationDocument,
+    this.agreementDocument = '',
   });
 
   factory QuotationItem.fromJson(Map<String, dynamic> json) {
@@ -86,6 +88,7 @@ class QuotationItem {
       revisionId: json['revision_id']?.toString() ?? '',
       revisionComments: json['revision_comments']?.toString() ?? '',
       quotationDocument: json['quotation_document']?.toString() ?? '',
+      agreementDocument: json['agreement_document']?.toString() ?? '',
     );
   }
 }

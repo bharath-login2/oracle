@@ -61,6 +61,8 @@ class ListData {
   String? status;
   String? logoutStatus;
  String? remarks;
+  String? latitude;
+  String? longitude;
   ListData({
     this.id,
     this.date,
@@ -71,6 +73,8 @@ class ListData {
     this.status,
     this.logoutStatus, 
     this.remarks,
+    this.latitude,
+    this.longitude,
   });
 
   ListData.fromJson(Map<String, dynamic> json) {
@@ -83,6 +87,8 @@ class ListData {
     status = json['status'];
     logoutStatus = json['logout_status'];
     remarks = json['remark'];
+    latitude = json['latitude']?.toString();
+    longitude = json['longitude']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -96,6 +102,8 @@ class ListData {
     data['status'] = status;   
     data['logout_status'] = logoutStatus;
     data['remark'] = remarks;
+    data['latitude'] = latitude;
+    data['longitude'] = longitude;
     return data;
   }
 }

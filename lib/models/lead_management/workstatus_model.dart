@@ -56,6 +56,13 @@ class WorkStatus {
   final String? unitName;
   final String? siteLiftName;
   final String? projectName;
+  final String? workType;
+  final String? isDelay;
+  final String? delayHours;
+  final String? delayTypeId;
+  final String? looseTypeId;
+  final String? responsibleParty;
+  final String? previousTimeline;
 
   WorkStatus({
     required this.id,
@@ -75,6 +82,13 @@ class WorkStatus {
     this.unitName,
     this.siteLiftName,
     this.projectName,
+    this.workType,
+    this.isDelay,
+    this.delayHours,
+    this.delayTypeId,
+    this.looseTypeId,
+    this.responsibleParty,
+    this.previousTimeline,
   });
 
   factory WorkStatus.fromJson(Map<String, dynamic> json) => WorkStatus(
@@ -97,6 +111,13 @@ class WorkStatus {
         unitName: json["unit_name"]?.toString() ?? json["unit_no_name"]?.toString() ?? json["unitName"]?.toString() ?? json["unit_no"]?.toString(),
         siteLiftName: json["site_lift_name"]?.toString() ?? json["site_lift_no_name"]?.toString() ?? json["siteLiftName"]?.toString() ?? json["site_lift_no"]?.toString(),
         projectName: json["project_name"]?.toString() ?? json["projectName"]?.toString(),
+        workType: json["work_type"]?.toString() ?? json["workType"]?.toString(),
+        isDelay: json["is_delay"]?.toString(),
+        delayHours: json["delay_hours"]?.toString() ?? json["hours"]?.toString(),
+        delayTypeId: json["delay_type_id"]?.toString() ?? json["delay_type"]?.toString(),
+        looseTypeId: json["loose_type_id"]?.toString() ?? json["loose_type"]?.toString(),
+        responsibleParty: json["responsible_party"]?.toString(),
+        previousTimeline: json["previous_timeline"]?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -128,6 +149,8 @@ class Task {
   final String? looseTypeId;
   final String? responsibleParty;
   final String? hours;
+  final String? delayHours;
+  final String? previousTimeline;
 
   Task({
     required this.taskId,
@@ -142,6 +165,8 @@ class Task {
     this.looseTypeId,
     this.responsibleParty,
     this.hours,
+    this.delayHours,
+    this.previousTimeline,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
@@ -156,7 +181,9 @@ class Task {
         delayTypeId: json["delay_type_id"]?.toString() ?? json["delay_type"]?.toString(),
         looseTypeId: json["loose_type_id"]?.toString() ?? json["loose_type"]?.toString(),
         responsibleParty: json["responsible_party"]?.toString(),
-        hours: json["hours"]?.toString(),
+        hours: json["hours"]?.toString() ?? json["delay_hours"]?.toString(),
+        delayHours: json["delay_hours"]?.toString() ?? json["hours"]?.toString(),
+        previousTimeline: json["previous_timeline"]?.toString(),
       );
 
   Map<String, dynamic> toJson() => {

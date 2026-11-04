@@ -128,6 +128,7 @@ class Data {
   String? taxPercentage;
   String? taxAmount;
   String? totalSalePrice;
+  String? notes;
   Map<String, dynamic>? rawJson;
   Map<String, dynamic>? amcDetails;
   dynamic additionalFields;
@@ -235,6 +236,7 @@ class Data {
     this.taxPercentage,
     this.taxAmount,
     this.totalSalePrice,
+    this.notes,
     this.rawJson,
     this.amcDetails,
     this.additionalFields,
@@ -466,6 +468,8 @@ class Data {
     salesCommissionAmount = pricing['sales_commission_amount'] ?? "";
     subTotal = pricing['sub_total'] ?? "";
     totalSalePrice = pricing['grand_total'] ?? "";
+    notes = (pricing['notes'] ?? pricing['note'] ?? json['notes'] ?? "")
+        .toString();
   }
 }
 

@@ -69,6 +69,7 @@ class EstimationPricingCard extends StatefulWidget {
   final TextEditingController? taxPercentageCtrl;
   final TextEditingController? taxAmountCtrl;
   final TextEditingController? totalSalePriceCtrl;
+  final TextEditingController? notesCtrl;
 
   final String? taxType;
   final ValueChanged<String?>? onTaxTypeChanged;
@@ -130,6 +131,7 @@ class EstimationPricingCard extends StatefulWidget {
     this.taxPercentageCtrl,
     this.taxAmountCtrl,
     this.totalSalePriceCtrl,
+    this.notesCtrl,
     this.taxType,
     this.onTaxTypeChanged,
     this.permissions,
@@ -180,6 +182,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
   late final TextEditingController _internalTaxPercentage;
   late final TextEditingController _internalTaxAmount;
   late final TextEditingController _internalTotalSalePrice;
+  late final TextEditingController _internalNotes;
 
   // ============================================================
   // ACTIVE CONTROLLERS
@@ -287,6 +290,8 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
 
   TextEditingController get _cTotalSalePrice =>
       widget.totalSalePriceCtrl ?? _internalTotalSalePrice;
+
+  TextEditingController get _cNotes => widget.notesCtrl ?? _internalNotes;
 
   // ============================================================
   // DROPDOWN INTERNAL VALUES
@@ -409,6 +414,8 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
     _internalTaxAmount = TextEditingController();
 
     _internalTotalSalePrice = TextEditingController();
+
+    _internalNotes = TextEditingController();
 
     _initFromData();
 
@@ -778,6 +785,22 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
       _cTotalSalePrice.text = data.totalSalePrice ?? '';
     }
 
+    if (widget.notesCtrl == null) {
+      if (data.notes != null && data.notes!.isNotEmpty) {
+        _cNotes.text = data.notes ?? '';
+      } else {
+        try {
+          final raw = data.rawJson;
+          if (raw is Map) {
+            final n = raw['notes'] ?? raw['note'];
+            if (n != null && n.toString().isNotEmpty) {
+              _cNotes.text = n.toString();
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
     // ==========================================================
     // EXISTING DROPDOWN VALUES
     // ==========================================================
@@ -869,7 +892,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
   // PRICING CALCULATION
   // ============================================================
 
-  void _calculatePricing() {
+  void _calculatePricing({bool fromUnitPrice = false}) {
     final factory = double.tryParse(_cFactoryPrice.text) ?? 0;
 
     final transportation = double.tryParse(_cTransportation.text) ?? 0;
@@ -892,17 +915,25 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
       quantity = 1;
     }
 
-    final unitPrice = (factory +
-            transportation +
-            installation +
-            testing +
-            consumables +
-            additionalFactory +
-            additional +
-            amcAmount) *
-        quantity;
-
-    _cUnitPrice.text = unitPrice.toStringAsFixed(2);
+    double unitPrice = 0;
+    if (fromUnitPrice) {
+      unitPrice = double.tryParse(_cUnitPrice.text) ?? 0;
+    } else {
+      final sumCosts = factory +
+          transportation +
+          installation +
+          testing +
+          consumables +
+          additionalFactory +
+          additional +
+          amcAmount;
+      if (sumCosts > 0 || _cFactoryPrice.text.trim().isNotEmpty) {
+        unitPrice = sumCosts * quantity;
+        _cUnitPrice.text = unitPrice.toStringAsFixed(2);
+      } else {
+        unitPrice = double.tryParse(_cUnitPrice.text) ?? 0;
+      }
+    }
 
     final companyProfit = double.tryParse(_cCompanyProfit.text) ?? 0;
 
@@ -1009,6 +1040,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
           _cQuotationTitle,
           prefixIcon: Icons.title_outlined,
           hintText: 'Quotation Title',
+          isRequired: true,
         ),
         const SizedBox(height: 14),
         _buildGridRow(
@@ -1024,6 +1056,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               'Client Name',
               _cClientName,
               prefixIcon: Icons.person_outline,
+              isRequired: true,
             ),
           ],
         ),
@@ -1036,11 +1069,13 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               _cPhone,
               keyboardType: TextInputType.phone,
               prefixIcon: Icons.phone_outlined,
+              isRequired: true,
             ),
             _pricingField(
               'Location',
               _cLocation,
               prefixIcon: Icons.location_on_outlined,
+              isRequired: true,
             ),
             _pricingField(
               'Elevator Type',
@@ -1087,6 +1122,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               _cPassengerCapacity,
               keyboardType: TextInputType.number,
               hintText: '6',
+              isRequired: true,
             ),
             _pricingField(
               'Shaft Width',
@@ -1123,9 +1159,10 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
           context,
           [
             _pricingDropdown(
-              label: 'Opening',
+              label: 'No. of Openings',
               value: _openingId,
               items: openingList,
+              isRequired: true,
               onChanged: (v) {
                 if (widget.onOpeningChanged != null) {
                   widget.onOpeningChanged!(v);
@@ -1140,6 +1177,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               label: 'Door Type',
               value: _doorOpeningId,
               items: cabinOpeningList,
+              isRequired: true,
               onChanged: (v) {
                 if (widget.onDoorOpeningChanged != null) {
                   widget.onDoorOpeningChanged!(v);
@@ -1155,6 +1193,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               _cDoorOpeningSize,
               keyboardType: TextInputType.number,
               hintText: '1',
+              isRequired: true,
             ),
           ],
         ),
@@ -1332,14 +1371,17 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
             _pricingField(
               'Unit Price',
               _cUnitPrice,
-              readOnly: true,
+              keyboardType: TextInputType.number,
               prefixText: '₹',
+              isRequired: true,
+              onChanged: (_) => _calculatePricing(fromUnitPrice: true),
             ),
             _pricingField(
               'Company Profit (%)',
               _cCompanyProfit,
               keyboardType: TextInputType.number,
               prefixText: '%',
+              isRequired: true,
               onChanged: (_) => _calculatePricing(),
             ),
             _pricingField(
@@ -1413,6 +1455,15 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               prefixText: '₹',
             ),
           ],
+        ),
+        const SizedBox(height: 14),
+        _pricingField(
+          'Notes',
+          _cNotes,
+          keyboardType: TextInputType.multiline,
+          hintText: 'Enter Notes',
+          prefixIcon: Icons.notes_outlined,
+          maxLines: 3,
         ),
       ],
     );
@@ -1547,22 +1598,39 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
     bool readOnly = false,
     ValueChanged<String>? onChanged,
     String? hintText,
+    bool isRequired = false,
+    int? maxLines = 1,
   }) {
+    final showRequired = isRequired || label.contains('*');
+    final cleanLabel = label.replaceAll(' *', '').replaceAll('*', '').trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF34495E),
+        RichText(
+          text: TextSpan(
+            text: cleanLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF34495E),
+            ),
+            children: [
+              if (showRequired)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 5),
         TextFormField(
           controller: ctrl,
           keyboardType: keyboardType,
+          maxLines: maxLines,
           style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -1575,9 +1643,9 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
               fontSize: 13,
             ),
             isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 11,
+              vertical: (maxLines != null && maxLines > 1) ? 12 : 11,
             ),
             prefixIcon: prefixIcon != null
                 ? Icon(
@@ -1645,7 +1713,10 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
     required String? value,
     required List<dynamic> items,
     required ValueChanged<String?> onChanged,
+    bool isRequired = false,
   }) {
+    final showRequired = isRequired || label.contains('*');
+    final cleanLabel = label.replaceAll(' *', '').replaceAll('*', '').trim();
     String? getItemId(dynamic item) {
       if (item is CommonValue) {
         return item.valueId?.toString();
@@ -1722,12 +1793,24 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF34495E),
+        RichText(
+          text: TextSpan(
+            text: cleanLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF34495E),
+            ),
+            children: [
+              if (showRequired)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 5),
@@ -1867,6 +1950,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
     _internalTaxPercentage.dispose();
     _internalTaxAmount.dispose();
     _internalTotalSalePrice.dispose();
+    _internalNotes.dispose();
 
     super.dispose();
   }

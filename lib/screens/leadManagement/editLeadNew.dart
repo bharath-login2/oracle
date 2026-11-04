@@ -152,6 +152,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
   final TextEditingController _pTaxPercentage = TextEditingController();
   final TextEditingController _pTaxAmount = TextEditingController();
   final TextEditingController _pTotalSalePrice = TextEditingController();
+  final TextEditingController _pNotes = TextEditingController();
   final TextEditingController _quotationTitleCtrl =
       TextEditingController(text: "Quotation Request");
 
@@ -334,6 +335,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
     _pTaxPercentage.dispose();
     _pTaxAmount.dispose();
     _pTotalSalePrice.dispose();
+    _pNotes.dispose();
     _quotationTitleCtrl.dispose();
     _quotationMessageCtrl.dispose();
 
@@ -634,6 +636,12 @@ class _EditLeadNewState extends State<EditLeadNew> {
         data.taxAmount!.isNotEmpty) {
       _pTaxAmount.text = data.taxAmount ?? '';
     }
+    if (_pNotes.text.isEmpty) {
+      _pNotes.text = pricingMap['notes']?.toString() ??
+          pricingMap['note']?.toString() ??
+          data.notes ??
+          '';
+    }
 
     _pLiftTypeId ??= _validSpecId(data.liftValues, data.liftType);
     _pOpeningId ??= _validSpecId(data.opening, data.openingName);
@@ -731,6 +739,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
       'sales_commission_amount': _pSalesCommissionAmount.text,
       'sub_total': _pSubTotal.text,
       'grand_total': grandTotalVal,
+      'notes': _pNotes.text.trim(),
 
       // AMC specific parameters
       'amc_type': amcTypeVal,
@@ -752,6 +761,62 @@ class _EditLeadNewState extends State<EditLeadNew> {
       'assigned_to': _quotationAssignedTo ?? '',
       'quotation_assigned_to': _quotationAssignedTo ?? '',
     };
+  }
+
+  bool _validatePricingDetails() {
+    if (_pQuotationTitle.text.trim().isEmpty) {
+      Common.toastMessaage('Subject is required', Colors.red);
+      return false;
+    }
+    final clientName = _pClientName.text.trim().isNotEmpty
+        ? _pClientName.text.trim()
+        : clientNameCtrl.text.trim();
+    if (clientName.isEmpty) {
+      Common.toastMessaage('Client Name is required', Colors.red);
+      return false;
+    }
+    final phone = _pPhone.text.trim().isNotEmpty
+        ? _pPhone.text.trim()
+        : contactNoCtrl.text.trim();
+    if (phone.isEmpty) {
+      Common.toastMessaage('Phone is required', Colors.red);
+      return false;
+    }
+    final location = _pLocation.text.trim().isNotEmpty
+        ? _pLocation.text.trim()
+        : (districtCtrl.text.trim().isNotEmpty
+            ? districtCtrl.text.trim()
+            : addressCtrl.text.trim());
+    if (location.isEmpty) {
+      Common.toastMessaage('Location is required', Colors.red);
+      return false;
+    }
+    if (_pPassengerCapacity.text.trim().isEmpty) {
+      Common.toastMessaage('Passenger Capacity is required', Colors.red);
+      return false;
+    }
+    if (_pOpeningId == null || _pOpeningId!.trim().isEmpty) {
+      Common.toastMessaage('No. of Openings is required', Colors.red);
+      return false;
+    }
+    if (_pDoorOpeningId == null || _pDoorOpeningId!.trim().isEmpty) {
+      Common.toastMessaage('Door Type is required', Colors.red);
+      return false;
+    }
+    if (_pDoorOpeningSize.text.trim().isEmpty) {
+      Common.toastMessaage('Door Opening Size is required', Colors.red);
+      return false;
+    }
+    final unitPrice = double.tryParse(_pUnitPrice.text.trim()) ?? 0;
+    if (_pUnitPrice.text.trim().isEmpty || unitPrice <= 0) {
+      Common.toastMessaage('Unit Price is required', Colors.red);
+      return false;
+    }
+    if (_pCompanyProfit.text.trim().isEmpty) {
+      Common.toastMessaage('Company Profit (%) is required', Colors.red);
+      return false;
+    }
+    return true;
   }
 
   Future<void> _initializeData() async {
@@ -1279,6 +1344,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
                   taxPercentageCtrl: _pTaxPercentage,
                   taxAmountCtrl: _pTaxAmount,
                   totalSalePriceCtrl: _pTotalSalePrice,
+                  notesCtrl: _pNotes,
                   taxType: _pTaxType,
                   onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
                 ),
@@ -1363,6 +1429,7 @@ class _EditLeadNewState extends State<EditLeadNew> {
                   taxPercentageCtrl: _pTaxPercentage,
                   taxAmountCtrl: _pTaxAmount,
                   totalSalePriceCtrl: _pTotalSalePrice,
+                  notesCtrl: _pNotes,
                   taxType: _pTaxType,
                   onTaxTypeChanged: (v) => setState(() => _pTaxType = v),
                 ),
@@ -3023,6 +3090,41 @@ class _EditLeadNewState extends State<EditLeadNew> {
       return;
     }
 
+    final isEstimationStage = callResultId == '16' ||
+        callResultId == '17' ||
+        callResult == 'Estimation & Pricing' ||
+        callResult == 'Quotation Request' ||
+        callResult.toLowerCase().contains('estimation') ||
+        callResult.toLowerCase().contains('quotation') ||
+        leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC' ||
+        _sendQuotation;
+
+    final isAmcCategory = leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC' ||
+        (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'AMC') ||
+        (leadDetails?.data?.leadCategoryId == '11');
+
+    if (isEstimationStage && !isAmcCategory) {
+      if (!_validatePricingDetails()) {
+        return;
+      }
+    } else if (isEstimationStage && isAmcCategory) {
+      if (_pQuotationTitle.text.trim().isEmpty) {
+        Common.toastMessaage('Subject is required', Colors.red);
+        return;
+      }
+      if (_pPassengerCapacity.text.trim().isEmpty) {
+        Common.toastMessaage('Passenger Capacity is required', Colors.red);
+        return;
+      }
+      if (_amcPriceCtrl.text.trim().isEmpty &&
+          _pUnitPrice.text.trim().isEmpty) {
+        Common.toastMessaage('Price is required', Colors.red);
+        return;
+      }
+    }
+
     if (_sendQuotation) {
       if (_quotationTitleCtrl.text.trim().isEmpty) {
         Common.toastMessaage('Request Title is required', Colors.red);
@@ -3045,15 +3147,6 @@ class _EditLeadNewState extends State<EditLeadNew> {
       });
     }
 
-    final isEstimationStage = callResultId == '16' ||
-        callResultId == '17' ||
-        callResult == 'Estimation & Pricing' ||
-        callResult == 'Quotation Request' ||
-        callResult.toLowerCase().contains('estimation') ||
-        callResult.toLowerCase().contains('quotation') ||
-        leadTypeId == '11' ||
-        leadType.trim().toUpperCase() == 'AMC' ||
-        _sendQuotation;
     final pricingBody = isEstimationStage ? _buildPricingBody() : null;
 
     final res = await HttpService.editLeads(

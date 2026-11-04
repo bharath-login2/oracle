@@ -1816,6 +1816,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   final TextEditingController _pTaxAmount = TextEditingController();
   final TextEditingController _pTotalSalePrice = TextEditingController();
   final TextEditingController _pDoorOpeningSize = TextEditingController();
+  final TextEditingController _pNotes = TextEditingController();
   // Dropdown selections for pricing specs
   String? _pLiftTypeId;
   String? _pOpeningId;
@@ -1855,7 +1856,8 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         _pSubTotal.text.trim().isNotEmpty ||
         _pTaxPercentage.text.trim().isNotEmpty ||
         _pTaxAmount.text.trim().isNotEmpty ||
-        _pTotalSalePrice.text.trim().isNotEmpty;
+        _pTotalSalePrice.text.trim().isNotEmpty ||
+        _pNotes.text.trim().isNotEmpty;
   }
 
   void _initPricingControllers() {
@@ -1898,6 +1900,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     _pTaxPercentage.text = data.taxPercentage ?? '';
     _pTaxAmount.text = data.taxAmount ?? '';
     _pTotalSalePrice.text = data.totalSalePrice ?? '';
+    _pNotes.text = data.notes ?? '';
     // Spec dropdowns: model stores raw IDs from the API (e.g. "13", "105")
     _pLiftTypeId = _validSpecId(data.liftValues, data.liftType);
     _pOpeningId = _validSpecId(data.opening, data.openingName);
@@ -2025,6 +2028,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       if (_pTotalSalePrice.text.isEmpty) _pTotalSalePrice.text = priceVal;
     }
 
+    if (_pNotes.text.isEmpty) {
+      _pNotes.text = pricingMap['notes']?.toString() ??
+          pricingMap['note']?.toString() ??
+          '';
+    }
+
     if (staffList.isEmpty) {
       _loadStaffs();
     }
@@ -2050,6 +2059,15 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           data.quotationAssignedTo!.isNotEmpty) {
         _quotationAssignedToPricing = data.quotationAssignedTo!;
       }
+    }
+
+    final quoteRequestSts = (data.quoteRequestSts ??
+            data.rawJson?['quote_request_sts']?.toString() ??
+            '')
+        .toString()
+        .trim();
+    if (quoteRequestSts == "1") {
+      _sendQuotationPricing = false;
     }
   }
 
@@ -2134,6 +2152,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       'sales_commission_amount': _pSalesCommissionAmount.text,
       'sub_total': _pSubTotal.text,
       'grand_total': grandTotalVal,
+      'notes': _pNotes.text.trim(),
       // AMC specific parameters
       'amc_type': amcTypeVal,
       'lift_brand': elevatorTypeVal,
@@ -2154,10 +2173,75 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     };
   }
 
-  Future<void> _savePricingDetails() async {
+  bool _validatePricingDetails() {
+    if (_pQuotationTitle.text.trim().isEmpty) {
+      Common.toastMessaage('Subject is required', Colors.red);
+      return false;
+    }
     if (_pClientName.text.trim().isEmpty) {
       Common.toastMessaage('Client Name is required', Colors.red);
-      return;
+      return false;
+    }
+    if (_pPhone.text.trim().isEmpty) {
+      Common.toastMessaage('Phone is required', Colors.red);
+      return false;
+    }
+    if (_pLocation.text.trim().isEmpty) {
+      Common.toastMessaage('Location is required', Colors.red);
+      return false;
+    }
+    if (_pPassengerCapacity.text.trim().isEmpty) {
+      Common.toastMessaage('Passenger Capacity is required', Colors.red);
+      return false;
+    }
+    if (_pOpeningId == null || _pOpeningId!.trim().isEmpty) {
+      Common.toastMessaage('No. of Openings is required', Colors.red);
+      return false;
+    }
+    if (_pDoorOpeningId == null || _pDoorOpeningId!.trim().isEmpty) {
+      Common.toastMessaage('Door Type is required', Colors.red);
+      return false;
+    }
+    if (_pDoorOpeningSize.text.trim().isEmpty) {
+      Common.toastMessaage('Door Opening Size is required', Colors.red);
+      return false;
+    }
+    if (_pUnitPrice.text.trim().isEmpty ||
+        (double.tryParse(_pUnitPrice.text.trim()) ?? 0) <= 0) {
+      Common.toastMessaage('Unit Price is required', Colors.red);
+      return false;
+    }
+    if (_pCompanyProfit.text.trim().isEmpty) {
+      Common.toastMessaage('Company Profit (%) is required', Colors.red);
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _savePricingDetails() async {
+    final isAmcCategory = leadTypeId == '11' ||
+        leadType.trim().toUpperCase() == 'AMC' ||
+        (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'AMC') ||
+        (leadDetails?.data?.leadCategoryId == '11');
+
+    if (isAmcCategory) {
+      if (_pQuotationTitle.text.trim().isEmpty) {
+        Common.toastMessaage('Subject is required', Colors.red);
+        return;
+      }
+      if (_pPassengerCapacity.text.trim().isEmpty) {
+        Common.toastMessaage('Passenger Capacity is required', Colors.red);
+        return;
+      }
+      if (_amcPriceCtrl.text.trim().isEmpty &&
+          _pUnitPrice.text.trim().isEmpty) {
+        Common.toastMessaage('Price is required', Colors.red);
+        return;
+      }
+    } else {
+      if (!_validatePricingDetails()) {
+        return;
+      }
     }
 
     if (_sendQuotationPricing) {
@@ -2505,6 +2589,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                                   : '₹ ${_pTotalSalePrice.text}',
                               isHighlight: true,
                             ),
+                            _buildSummaryTile(
+                              'Notes',
+                              _pNotes.text.isEmpty ? '-' : _pNotes.text,
+                            ),
                           ]),
                       ],
                     ),
@@ -2691,6 +2779,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         (leadDetails?.data?.leadCategory?.trim().toUpperCase() == 'REPAIR') ||
         (leadDetails?.data?.leadCategoryId == '12');
 
+    final quoteRequestSts = (data.quoteRequestSts ??
+            data.rawJson?['quote_request_sts']?.toString() ??
+            '')
+        .toString()
+        .trim();
+
     final showAmc = isAmcCategory;
     final showEstimation =
         !isAmcCategory && !isRepairCategory && (data.createEstimation == true);
@@ -2719,25 +2813,27 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             const SizedBox(height: 12),
           ],
           // ── Quotation Request Section ──────────────────────────────────
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text(
-              'Create Quotation Request',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+          if (quoteRequestSts != "1") ...[
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'Create Quotation Request',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
+              value: _sendQuotationPricing,
+              onChanged: (value) {
+                setState(() {
+                  _sendQuotationPricing = value ?? false;
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
             ),
-            value: _sendQuotationPricing,
-            onChanged: (value) {
-              setState(() {
-                _sendQuotationPricing = value ?? false;
-              });
-            },
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
-          if (_sendQuotationPricing) _buildQuotationRequestFormPricing(),
-          const SizedBox(height: 12),
+            if (_sendQuotationPricing) _buildQuotationRequestFormPricing(),
+            const SizedBox(height: 12),
+          ],
           // ── Save Button ───────────────────────────────────────────────
           if (!(widget.leadDetails?.data?.quotationDetails?.isNotEmpty ==
                   true &&
@@ -3151,21 +3247,24 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       icon: Icons.assignment_outlined,
       children: [
         _pricingField('Subject', _pQuotationTitle,
-            prefixIcon: Icons.title_outlined, hintText: 'Quotation Title'),
+            prefixIcon: Icons.title_outlined,
+            hintText: 'Quotation Title',
+            isRequired: true),
         const SizedBox(height: 14),
         _buildGridRow(context, [
           // _pricingField('Quotation', _pQuotation,
           //     prefixIcon: Icons.description_outlined, hintText: 'Home Lift'),
           _pricingField('Client Name', _pClientName,
-              prefixIcon: Icons.person_outline),
+              prefixIcon: Icons.person_outline, isRequired: true),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
           _pricingField('Phone', _pPhone,
               keyboardType: TextInputType.phone,
-              prefixIcon: Icons.phone_outlined),
+              prefixIcon: Icons.phone_outlined,
+              isRequired: true),
           _pricingField('Location', _pLocation,
-              prefixIcon: Icons.location_on_outlined),
+              prefixIcon: Icons.location_on_outlined, isRequired: true),
           _pricingField('Elevator Type', _pElevatorType,
               prefixIcon: Icons.elevator_outlined),
           _pricingField('Type of Opening', _pTypeOfOpening),
@@ -3184,7 +3283,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         const SizedBox(height: 14),
         _buildGridRow(context, [
           _pricingField('Passenger Capacity', _pPassengerCapacity,
-              keyboardType: TextInputType.number, hintText: '6'),
+              keyboardType: TextInputType.number,
+              hintText: '6',
+              isRequired: true),
           _pricingField('Shaft Width', _pShaftWidth,
               keyboardType: TextInputType.number, hintText: '1500'),
           _pricingField('Shaft Depth', _pShaftDepth,
@@ -3199,19 +3300,21 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         const SizedBox(height: 14),
         _buildGridRow(context, [
           _pricingDropdown(
-            label: 'Opening',
+            label: 'No. of Openings',
             value: _pOpeningId,
             items: data.opening ?? [],
             onChanged: (v) => setState(() => _pOpeningId = v),
+            isRequired: true,
           ),
           _pricingDropdown(
             label: 'Door Type',
             value: _pDoorOpeningId,
             items: data.cabinOpening ?? [],
             onChanged: (v) => setState(() => _pDoorOpeningId = v),
+            isRequired: true,
           ),
           _pricingField('Door Opening Size', _pDoorOpeningSize,
-              keyboardType: TextInputType.number),
+              keyboardType: TextInputType.number, isRequired: true),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [
@@ -3299,10 +3402,14 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         const SizedBox(height: 14),
         _buildGridRow(context, [
           _pricingField('Unit Price', _pUnitPrice,
-              readOnly: true, prefixText: '₹'),
+              keyboardType: TextInputType.number,
+              prefixText: '₹',
+              isRequired: true,
+              onChanged: (_) => _calculatePricing(fromUnitPrice: true)),
           _pricingField('Company Profit (%)', _pCompanyProfit,
               keyboardType: TextInputType.number,
               prefixText: '%',
+              isRequired: true,
               onChanged: (_) => _calculatePricing()),
           _pricingField('Company Profit Amount', _pCompanyProfitAmount,
               readOnly: true, prefixText: '₹'),
@@ -3335,11 +3442,17 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           _pricingField('Total Sale Price', _pTotalSalePrice,
               keyboardType: TextInputType.number, prefixText: '₹'),
         ]),
+        const SizedBox(height: 14),
+        _pricingField('Notes', _pNotes,
+            keyboardType: TextInputType.multiline,
+            hintText: 'Enter Notes',
+            prefixIcon: Icons.notes_outlined,
+            maxLines: 3),
       ],
     );
   }
 
-  void _calculatePricing() {
+  void _calculatePricing({bool fromUnitPrice = false}) {
     double factory = double.tryParse(_pFactoryPrice.text) ?? 0;
     double transportation = double.tryParse(_pTransportation.text) ?? 0;
     double installation = double.tryParse(_pInstallation.text) ?? 0;
@@ -3353,18 +3466,25 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     double quantity = double.tryParse(_pQuantity.text) ?? 1;
     if (quantity <= 0) quantity = 1;
 
-    // Unit Price (sum of all cost components)
-    double unitPrice = (factory +
-            transportation +
-            installation +
-            testing +
-            consumables +
-            additionalFactory +
-            additional +
-            amcAmount) *
-        quantity;
-
-    _pUnitPrice.text = unitPrice.toStringAsFixed(2);
+    double unitPrice = 0;
+    if (fromUnitPrice) {
+      unitPrice = double.tryParse(_pUnitPrice.text) ?? 0;
+    } else {
+      double sumCosts = factory +
+          transportation +
+          installation +
+          testing +
+          consumables +
+          additionalFactory +
+          additional +
+          amcAmount;
+      if (sumCosts > 0 || _pFactoryPrice.text.trim().isNotEmpty) {
+        unitPrice = sumCosts * quantity;
+        _pUnitPrice.text = unitPrice.toStringAsFixed(2);
+      } else {
+        unitPrice = double.tryParse(_pUnitPrice.text) ?? 0;
+      }
+    }
 
     // Company Profit
     double companyProfit = double.tryParse(_pCompanyProfit.text) ?? 0;
@@ -3505,22 +3625,39 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     bool readOnly = false,
     ValueChanged<String>? onChanged,
     String? hintText,
+    bool isRequired = false,
+    int? maxLines = 1,
   }) {
+    final showRequired = isRequired || label.contains('*');
+    final cleanLabel = label.replaceAll(' *', '').replaceAll('*', '').trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF34495E),
+        RichText(
+          text: TextSpan(
+            text: cleanLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF34495E),
+            ),
+            children: [
+              if (showRequired)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 5),
         TextFormField(
           controller: ctrl,
           keyboardType: keyboardType,
+          maxLines: maxLines,
           style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -3532,8 +3669,9 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
               fontSize: 13,
             ),
             isDense: true,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: (maxLines != null && maxLines > 1) ? 12 : 11),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, size: 16, color: const Color(0xFF2a86c9))
                 : (prefixText != null
@@ -3579,18 +3717,33 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     required String? value,
     required List<dynamic> items,
     required ValueChanged<String?> onChanged,
+    bool isRequired = false,
   }) {
+    final showRequired = isRequired || label.contains('*');
+    final cleanLabel = label.replaceAll(' *', '').replaceAll('*', '').trim();
     final validValue =
         items.any((e) => (e is String ? e : e.valueId) == value) ? value : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF34495E),
+        RichText(
+          text: TextSpan(
+            text: cleanLabel,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF34495E),
+            ),
+            children: [
+              if (showRequired)
+                const TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 5),
@@ -5001,6 +5154,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
         Common.toastMessaage(
             'Paid Amount cannot be less than Grand Total for Paid status',
             Colors.red);
+        return;
+      }
+    }
+
+    if (isEstimationOrAmc && !isAmcCategory) {
+      if (!_validatePricingDetails()) {
         return;
       }
     }
@@ -15031,7 +15190,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
           ),
           child: Column(
             children: [
-              // ── Header ────────────────────────────────────────────────
+              // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -15109,7 +15268,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                 ),
               ),
 
-              // ── Detail rows (2 per row) ────────────────────────────────
+              // â”€â”€ Detail rows (2 per row) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
@@ -15117,7 +15276,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
                     _buildQuotationDetailRow(
                       label1: 'Quotation Amount',
                       value1:
-                          q.total?.isNotEmpty == true ? '₹ ${q.total}' : '-',
+                          q.total?.isNotEmpty == true ? 'â‚¹ ${q.total}' : '-',
                       label2: 'Created By',
                       value2: q.quotationCreatedBy?.isNotEmpty == true
                           ? q.quotationCreatedBy!
@@ -15141,7 +15300,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
 
                     const SizedBox(height: 14),
 
-                    // ── Print button ──────────────────────────────────────
+                    // â”€â”€ Print button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (q.printQuotation?.isNotEmpty == true)
                       SizedBox(
                         width: double.infinity,

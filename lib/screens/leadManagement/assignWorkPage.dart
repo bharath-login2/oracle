@@ -57,6 +57,7 @@ class AssignWorkPage extends StatefulWidget {
 class _AssignWorkPageState extends State<AssignWorkPage> {
   late TextEditingController titleController;
   late List<TaskForm> tasks;
+  String? selectedWorkType;
   String? selectedProjectId;
   String? selectedProjectName;
   String? selectedTitleId;
@@ -169,6 +170,19 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
     if (widget.existingWork != null) {
       selectedProjectId = widget.existingWork!.projectId;
+      if (widget.existingWork!.workType != null &&
+          widget.existingWork!.workType!.isNotEmpty) {
+        final wt = widget.existingWork!.workType!.toLowerCase().trim();
+        if (wt == 'installation' || wt == 'install') {
+          selectedWorkType = 'installation';
+        } else if (wt == 'amc') {
+          selectedWorkType = 'amc';
+        } else if (wt == 'repair' || wt == 'repairing') {
+          selectedWorkType = 'repair';
+        } else {
+          selectedWorkType = wt;
+        }
+      }
       selectedTitleId = widget.existingWork!.title;
       dueDate = widget.existingWork!.dueDate;
       priority = widget.existingWork!.priority;
@@ -184,9 +198,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       selectedStaffIds = [assignedTo!];
     }
     if (assignedTo != null && assignedTo!.isNotEmpty) {
-      selectedAssignedStaffIds = assignedTo!.split(',').where((id) => id.trim().isNotEmpty && id.trim() != "0").toList();
+      selectedAssignedStaffIds = assignedTo!
+          .split(',')
+          .where((id) => id.trim().isNotEmpty && id.trim() != "0")
+          .toList();
     } else {
-      selectedAssignedStaffIds = []; 
+      selectedAssignedStaffIds = [];
     }
     whatsappNotification = false;
     pushNotification = false;
@@ -218,9 +235,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
           uniqueProjects[project.id] = project;
         }
         projectList = uniqueProjects.values.toList();
-        filteredProjects = List.from(projectList);
+        filteredProjects = List.from(_projectsForWorkType);
         if (selectedProjectId != null) {
-          final exists = projectList.any((p) => p.id == selectedProjectId);
+          final exists =
+              _projectsForWorkType.any((p) => p.id == selectedProjectId);
           if (!exists) {
             selectedProjectId = null;
           }
@@ -331,21 +349,73 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     super.dispose();
   }
 
-  void _filterProjects() {
-    final query = _searchController.text.toLowerCase();
+  String? _getExpectedQuotationType(String? workType) {
+    if (workType == null) return null;
+    final wt = workType.trim().toLowerCase();
+    if (wt == 'installation') return 'installation';
+    if (wt == 'amc') return 'amc';
+    if (wt == 'repair' || wt == 'repairing') return 'repairing';
+    return null;
+  }
+
+  List<Projects> get _projectsForWorkType {
+    final expected = _getExpectedQuotationType(selectedWorkType);
+    if (expected == null) {
+      return projectList;
+    }
+    return projectList.where((p) {
+      return p.quotationType.trim().toLowerCase() == expected;
+    }).toList();
+  }
+
+  void _onWorkTypeChanged(String? value) {
     setState(() {
-      filteredProjects = projectList.where((project) {
-        return project.name.toLowerCase().contains(query);
-      }).toList();
+      selectedWorkType = value;
+      _filterProjects();
+      final allowedProjects = _projectsForWorkType;
+      if (selectedProjectId != null &&
+          !allowedProjects.any((p) => p.id == selectedProjectId)) {
+        selectedProjectId = null;
+        selectedProjectName = null;
+        selectedProjectController.clear();
+        selectedUnitId = null;
+        selectedUnitNo = null;
+        selectedSiteLiftId = null;
+        selectedSiteLiftNo = null;
+        selectedStageId = null;
+        selectedStageName = null;
+        unitList = [];
+        siteLiftList = [];
+        unitTaskList = [];
+      }
+    });
+  }
+
+  void _filterProjects() {
+    final query = _searchController.text.trim().toLowerCase();
+    final baseList = _projectsForWorkType;
+    setState(() {
+      if (query.isEmpty) {
+        filteredProjects = List.from(baseList);
+      } else {
+        filteredProjects = baseList.where((project) {
+          return project.name.toLowerCase().contains(query);
+        }).toList();
+      }
     });
   }
 
   void filterProjectsDialog(String query) {
+    final baseList = _projectsForWorkType;
+    final q = query.trim().toLowerCase();
     setState(() {
-      filteredProjects = projectList
-          .where((project) =>
-              project.name.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      if (q.isEmpty) {
+        filteredProjects = List.from(baseList);
+      } else {
+        filteredProjects = baseList
+            .where((project) => project.name.toLowerCase().contains(q))
+            .toList();
+      }
     });
   }
 
@@ -367,7 +437,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         return;
       }
 
-      if (selectedStageId == null && (selectedStageName == null || selectedStageName!.isEmpty)) {
+      if (selectedStageId == null &&
+          (selectedStageName == null || selectedStageName!.isEmpty)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please select a stage'),
@@ -387,6 +458,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
       final workData = {
         'work_id': widget.existingWork?.id,
+        'work_type': selectedWorkType,
         'project_id': selectedProjectId,
         'project_name': selectedProjectName,
         'unit_id': selectedUnitId,
@@ -395,7 +467,9 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         'site_lift_no': selectedSiteLiftNo,
         'stage_id': selectedStageId,
         'stage_name': selectedStageName,
-        'title': titleController.text.isNotEmpty ? titleController.text : 'Work Assignment',
+        'title': titleController.text.isNotEmpty
+            ? titleController.text
+            : 'Work Assignment',
         'title_id': selectedTitleId ?? '',
         'due_date':
             dueDate != null ? DateFormat('yyyy-MM-dd').format(dueDate!) : null,
@@ -423,7 +497,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
             'task_id': task.taskId,
             'activity_name': task.controller.text,
             'task_name': task.controller.text,
-            'description': task.descriptionController.text, 
+            'description': task.descriptionController.text,
             'task_description': task.descriptionController.text,
             'start_date': task.startDate != null
                 ? DateFormat('yyyy-MM-dd').format(task.startDate!)
@@ -449,6 +523,7 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       Navigator.of(context).pop();
 
       if (response.status) {
+        widget.onSuccess();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(widget.existingWork != null
@@ -530,6 +605,68 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                       title: 'Work Details',
                       icon: Icons.assignment_outlined,
                       children: [
+                        // Work Type
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Work Type',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: (selectedWorkType != null &&
+                                          ['installation', 'amc', 'repair']
+                                              .contains(selectedWorkType))
+                                      ? selectedWorkType
+                                      : null,
+                                  isExpanded: true,
+                                  hint: Text(
+                                    'Select Work Type',
+                                    style: TextStyle(
+                                        fontSize: 13, color: Colors.grey[500]),
+                                  ),
+                                  icon: const Icon(Icons.keyboard_arrow_down,
+                                      color: Colors.grey, size: 18),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'installation',
+                                      child: Text('Installation',
+                                          style: TextStyle(fontSize: 13)),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'amc',
+                                      child: Text('AMC',
+                                          style: TextStyle(fontSize: 13)),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'repair',
+                                      child: Text('Repairing',
+                                          style: TextStyle(fontSize: 13)),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    _onWorkTypeChanged(value);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         // Row 1: Project *, Unit No, Site Lift No
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,22 +695,24 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   const SizedBox(height: 6),
                                   InkWell(
                                     onTap: () async {
-                                      final selected =
-                                          await dropDialogExisting(context, "Projects");
+                                      final selected = await dropDialogExisting(
+                                          context, "Projects");
                                       if (selected != null && mounted) {
                                         setState(() {
                                           selectedProjectId = selected['id'];
                                           selectedProjectController.text =
                                               selected['name'] ?? '';
                                         });
-                                        await _loadUnitsByProject(selectedProjectId!);
+                                        await _loadUnitsByProject(
+                                            selectedProjectId!);
                                       }
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 12),
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey.shade300),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
                                         borderRadius: BorderRadius.circular(8),
                                         color: Colors.white,
                                       ),
@@ -581,12 +720,15 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              selectedProjectController.text.isEmpty
+                                              selectedProjectController
+                                                      .text.isEmpty
                                                   ? 'Select Project'
-                                                  : selectedProjectController.text,
+                                                  : selectedProjectController
+                                                      .text,
                                               style: TextStyle(
                                                 fontSize: 13,
-                                                color: selectedProjectController.text.isEmpty
+                                                color: selectedProjectController
+                                                        .text.isEmpty
                                                     ? Colors.grey[500]
                                                     : Colors.grey[800],
                                               ),
@@ -622,10 +764,11 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   InkWell(
                                     onTap: () async {
                                       if (selectedProjectId == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
-                                              content:
-                                                  Text('Please select a project first')),
+                                              content: Text(
+                                                  'Please select a project first')),
                                         );
                                         return;
                                       }
@@ -635,7 +778,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 12),
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey.shade300),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
                                         borderRadius: BorderRadius.circular(8),
                                         color: Colors.white,
                                       ),
@@ -643,7 +787,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              selectedUnitNo ?? 'Select Unit No',
+                                              selectedUnitNo ??
+                                                  'Select Unit No',
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: selectedUnitNo != null
@@ -658,11 +803,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                               ? const SizedBox(
                                                   width: 14,
                                                   height: 14,
-                                                  child: CircularProgressIndicator(
-                                                      strokeWidth: 2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
                                                 )
-                                              : const Icon(Icons.keyboard_arrow_down,
-                                                  color: Colors.grey, size: 18),
+                                              : const Icon(
+                                                  Icons.keyboard_arrow_down,
+                                                  color: Colors.grey,
+                                                  size: 18),
                                         ],
                                       ),
                                     ),
@@ -689,20 +837,23 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   InkWell(
                                     onTap: () async {
                                       if (selectedUnitId == null) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
                                           const SnackBar(
-                                              content:
-                                                  Text('Please select a Unit No first')),
+                                              content: Text(
+                                                  'Please select a Unit No first')),
                                         );
                                         return;
                                       }
-                                      await _showSiteLiftSelectionDialog(context);
+                                      await _showSiteLiftSelectionDialog(
+                                          context);
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 12),
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey.shade300),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
                                         borderRadius: BorderRadius.circular(8),
                                         color: Colors.white,
                                       ),
@@ -710,10 +861,17 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              selectedSiteLiftNo ?? 'Select Site Lift No',
+                                              (selectedSiteLiftNo != null &&
+                                                      selectedSiteLiftNo!
+                                                          .isNotEmpty)
+                                                  ? selectedSiteLiftNo!
+                                                  : 'Select Site Lift No',
                                               style: TextStyle(
                                                 fontSize: 13,
-                                                color: selectedSiteLiftNo != null
+                                                color: (selectedSiteLiftNo !=
+                                                            null &&
+                                                        selectedSiteLiftNo!
+                                                            .isNotEmpty)
                                                     ? Colors.grey[800]
                                                     : Colors.grey[500],
                                               ),
@@ -725,11 +883,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                               ? const SizedBox(
                                                   width: 14,
                                                   height: 14,
-                                                  child: CircularProgressIndicator(
-                                                      strokeWidth: 2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
                                                 )
-                                              : const Icon(Icons.keyboard_arrow_down,
-                                                  color: Colors.grey, size: 18),
+                                              : const Icon(
+                                                  Icons.keyboard_arrow_down,
+                                                  color: Colors.grey,
+                                                  size: 18),
                                         ],
                                       ),
                                     ),
@@ -772,8 +933,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                     width: 44,
                                     height: 44,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF2a86c9).withOpacity(0.1),
-                                      border: Border.all(color: const Color(0xFF2a86c9)),
+                                      color: const Color(0xFF2a86c9)
+                                          .withOpacity(0.1),
+                                      border: Border.all(
+                                          color: const Color(0xFF2a86c9)),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: const Icon(Icons.add,
@@ -788,10 +951,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                     },
                                     child: Container(
                                       height: 44,
-                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12),
                                       alignment: Alignment.centerLeft,
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.grey.shade300),
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
                                         borderRadius: BorderRadius.circular(8),
                                         color: Colors.white,
                                       ),
@@ -799,7 +964,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              selectedStageName ?? 'Select Stage',
+                                              selectedStageName ??
+                                                  'Select Stage',
                                               style: TextStyle(
                                                 fontSize: 13,
                                                 color: selectedStageName != null
@@ -814,11 +980,14 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                               ? const SizedBox(
                                                   width: 14,
                                                   height: 14,
-                                                  child: CircularProgressIndicator(
-                                                      strokeWidth: 2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
                                                 )
-                                              : const Icon(Icons.keyboard_arrow_down,
-                                                  color: Colors.grey, size: 18),
+                                              : const Icon(
+                                                  Icons.keyboard_arrow_down,
+                                                  color: Colors.grey,
+                                                  size: 18),
                                         ],
                                       ),
                                     ),
@@ -844,7 +1013,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border:
+                                  Border.all(color: const Color(0xFFE2E8F0)),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Column(
@@ -889,132 +1059,236 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                InkWell(
-                                  onTap: () =>
-                                      _showTaskSelectionDialog(context, taskIndex),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 12),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey.shade300),
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Colors.white,
+                                if (selectedWorkType?.toLowerCase() == 'amc' ||
+                                    selectedWorkType?.toLowerCase() ==
+                                        'repair' ||
+                                    selectedWorkType?.toLowerCase() ==
+                                        'repairing')
+                                  TextField(
+                                    controller: task.controller,
+                                    decoration: InputDecoration(
+                                      hintText: 'Enter Activity',
+                                      hintStyle: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey[400]),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 12),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                            color: Colors.grey.shade300),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                            color: Colors.grey.shade300),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(
+                                            color: Colors.blue),
+                                      ),
                                     ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            task.controller.text.isEmpty
-                                                ? 'Select Task'
-                                                : task.controller.text,
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: task.controller.text.isEmpty
-                                                  ? Colors.grey[500]
-                                                  : Colors.grey[800],
+                                    style: const TextStyle(fontSize: 13),
+                                  )
+                                else
+                                  InkWell(
+                                    onTap: () => _showTaskSelectionDialog(
+                                        context, taskIndex),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.white,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              task.controller.text.isEmpty
+                                                  ? 'Select Activity'
+                                                  : task.controller.text,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color:
+                                                    task.controller.text.isEmpty
+                                                        ? Colors.grey[500]
+                                                        : Colors.grey[800],
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                        const Icon(Icons.keyboard_arrow_down,
-                                            color: Colors.grey, size: 18),
-                                      ],
+                                          const Icon(Icons.keyboard_arrow_down,
+                                              color: Colors.grey, size: 18),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
                                 const SizedBox(height: 14),
 
                                 // Row 2: Description, Start Date *, End Date *
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    // =========================
-    // DESCRIPTION
-    // =========================
-    const Text(
-      'Description',
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: Colors.black87,
-      ),
-    ),
-    const SizedBox(height: 6),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // =========================
+                                    // DESCRIPTION
+                                    // =========================
+                                    const Text(
+                                      'Description',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
 
-    TextField(
-      controller: task.descriptionController,
-      minLines: 3,
-      maxLines: 3,
-      style: const TextStyle(fontSize: 13),
-      decoration: InputDecoration(
-        hintText: 'Enter description',
-        hintStyle: TextStyle(
-          color: Colors.grey[400],
-          fontSize: 13,
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.all(12),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Colors.grey.shade300,
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-            color: Color(0xFF2a86c9),
-          ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    ),
+                                    TextField(
+                                      controller: task.descriptionController,
+                                      minLines: 3,
+                                      maxLines: 3,
+                                      style: const TextStyle(fontSize: 13),
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter description',
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey[400],
+                                          fontSize: 13,
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        contentPadding:
+                                            const EdgeInsets.all(12),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: const BorderSide(
+                                            color: Color(0xFF2a86c9),
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
 
-    const SizedBox(height: 14),
+                                    const SizedBox(height: 14),
 
-    // =========================
-    // START DATE + END DATE
-    // =========================
-    Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // START DATE
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: const TextSpan(
-                  text: 'Start Date ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: '*',
-                      style: TextStyle(
-                        color: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
+                                    // =========================
+                                    // START DATE + END DATE
+                                    // =========================
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // START DATE
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              RichText(
+                                                text: const TextSpan(
+                                                  text: 'Start Date ',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black87,
+                                                  ),
+                                                  children: [
+                                                    TextSpan(
+                                                      text: '*',
+                                                      style: TextStyle(
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              InkWell(
+                                                onTap: () async {
+                                                  final picked =
+                                                      await showDatePicker(
+                                                    context: context,
+                                                    initialDate:
+                                                        task.startDate ??
+                                                            DateTime.now(),
+                                                    firstDate: DateTime(2020),
+                                                    lastDate: DateTime(2100),
+                                                  );
 
-              InkWell(
-                onTap: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate:
-                        task.startDate ?? DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                  );
+                                                  if (picked != null &&
+                                                      mounted) {
+                                                    setState(() {
+                                                      task.startDate = picked;
+                                                    });
+                                                  }
+                                                },
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          task.startDate != null
+                                                              ? DateFormat(
+                                                                      'dd-MM-yyyy')
+                                                                  .format(task
+                                                                      .startDate!)
+                                                              : 'Start Date',
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            color: task.startDate !=
+                                                                    null
+                                                                ? Colors
+                                                                    .grey[800]
+                                                                : Colors
+                                                                    .grey[400],
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                      const Icon(
+                                                        Icons
+                                                            .calendar_today_rounded,
+                                                        color:
+                                                            Color(0xFF2a86c9),
+                                                        size: 16,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
 
-                  if (picked != null && mounted) {
+                                        /* if (picked != null && mounted) {
                     setState(() {
                       task.startDate = picked;
                     });
@@ -1037,7 +1311,7 @@ Column(
                       Expanded(
                         child: Text(
                           task.startDate != null
-                              ? DateFormat('yyyy-MM-dd')
+                              ? DateFormat('dd-MM-yyyy')
                                   .format(task.startDate!)
                               : 'Start Date',
                           style: TextStyle(
@@ -1063,34 +1337,110 @@ Column(
           ),
         ),
 
-        const SizedBox(width: 12),
+                                        */
+                                        const SizedBox(width: 12), // END DATE
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              RichText(
+                                                text: const TextSpan(
+                                                  text: 'End Date ',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black87,
+                                                  ),
+                                                  children: [
+                                                    TextSpan(
+                                                      text: '*',
+                                                      style: TextStyle(
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              InkWell(
+                                                onTap: () async {
+                                                  final picked =
+                                                      await showDatePicker(
+                                                    context: context,
+                                                    initialDate: task.endDate ??
+                                                        DateTime.now(),
+                                                    firstDate: DateTime(2020),
+                                                    lastDate: DateTime(2100),
+                                                  );
 
-        // END DATE
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: const TextSpan(
-                  text: 'End Date ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: '*',
-                      style: TextStyle(
-                        color: Colors.red,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
+                                                  if (picked != null &&
+                                                      mounted) {
+                                                    setState(() {
+                                                      task.endDate = picked;
+                                                    });
+                                                  }
+                                                },
+                                                child: Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                      color:
+                                                          Colors.grey.shade300,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    color: Colors.white,
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          task.endDate != null
+                                                              ? DateFormat(
+                                                                      'dd-MM-yyyy')
+                                                                  .format(task
+                                                                      .endDate!)
+                                                              : 'End Date',
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            color: task.endDate !=
+                                                                    null
+                                                                ? Colors
+                                                                    .grey[800]
+                                                                : Colors
+                                                                    .grey[400],
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                      const Icon(
+                                                        Icons
+                                                            .calendar_today_rounded,
+                                                        color:
+                                                            Color(0xFF2a86c9),
+                                                        size: 16,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
 
-              InkWell(
+                                /* InkWell(
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
@@ -1100,7 +1450,7 @@ Column(
                     lastDate: DateTime(2100),
                   );
 
-                  if (picked != null && mounted) {
+                  /* if (picked != null && mounted) {
                     setState(() {
                       task.endDate = picked;
                     });
@@ -1123,7 +1473,7 @@ Column(
                       Expanded(
                         child: Text(
                           task.endDate != null
-                              ? DateFormat('yyyy-MM-dd')
+                              ? DateFormat('dd-MM-yyyy')
                                   .format(task.endDate!)
                               : 'End Date',
                           style: TextStyle(
@@ -1155,174 +1505,192 @@ Column(
 
                                 const SizedBox(height: 14),
 
-                                // Row 3: Assigned Staff, Supporting Staffs
-                  
-Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    // =========================
-    // ASSIGNED STAFF
-    // =========================
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            Icon(
-              Icons.person_outline_rounded,
-              size: 16,
-              color: Colors.black87,
-            ),
-            SizedBox(width: 4),
-            Text(
-              'Assigned Staff',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        InkWell(
-          onTap: () => _showSingleAssignedStaffSelectionDialog(
-            context,
-            taskIndex,
-          ),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.shade300,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.white,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _getTaskAssignedStaffName(taskIndex),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: task.assignedStaffId != null &&
-                              task.assignedStaffId != "0"
-                          ? Colors.grey[800]
-                          : Colors.grey[500],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (task.assignedStaffId != null &&
-                    task.assignedStaffId != "0")
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        task.assignedStaffId = null;
-                      });
-                    },
-                    child: const Padding(
-                      padding: EdgeInsets.only(right: 4.0),
-                      child: Icon(
-                        Icons.close,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.grey,
-                  size: 18,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
+                                */ */
+                                const SizedBox(
+                                    height:
+                                        14), // Row 3: Assigned Staff, Supporting Staffs
 
-    const SizedBox(height: 14),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // =========================
+                                    // ASSIGNED STAFF
+                                    // =========================
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.person_outline_rounded,
+                                              size: 16,
+                                              color: Colors.black87,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Assigned Staff',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        InkWell(
+                                          onTap: () =>
+                                              _showSingleAssignedStaffSelectionDialog(
+                                            context,
+                                            taskIndex,
+                                          ),
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              color: Colors.white,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    _getTaskAssignedStaffName(
+                                                        taskIndex),
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: task.assignedStaffId !=
+                                                                  null &&
+                                                              task.assignedStaffId !=
+                                                                  "0"
+                                                          ? Colors.grey[800]
+                                                          : Colors.grey[500],
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                if (task.assignedStaffId !=
+                                                        null &&
+                                                    task.assignedStaffId != "0")
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        task.assignedStaffId =
+                                                            null;
+                                                      });
+                                                    },
+                                                    child: const Padding(
+                                                      padding: EdgeInsets.only(
+                                                          right: 4.0),
+                                                      child: Icon(
+                                                        Icons.close,
+                                                        size: 16,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                const Icon(
+                                                  Icons.keyboard_arrow_down,
+                                                  color: Colors.grey,
+                                                  size: 18,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
 
-    // =========================
-    // SUPPORTING STAFFS
-    // =========================
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Row(
-          children: [
-            Icon(
-              Icons.people_outline_rounded,
-              size: 16,
-              color: Colors.black87,
-            ),
-            SizedBox(width: 4),
-            Text(
-              'Supporting Staffs',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        InkWell(
-          onTap: () =>
-              _showMultiSupportingStaffSelectionDialogForTask(
-            context,
-            taskIndex,
-          ),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey.shade300,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.white,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _getTaskSupportingStaffNames(taskIndex),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: task.supportingStaffIds.isNotEmpty
-                          ? Colors.grey[800]
-                          : Colors.grey[400],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.grey,
-                  size: 18,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
-  ],
-)
+                                    const SizedBox(height: 14),
 
+                                    // =========================
+                                    // SUPPORTING STAFFS
+                                    // =========================
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.people_outline_rounded,
+                                              size: 16,
+                                              color: Colors.black87,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Supporting Staffs',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        InkWell(
+                                          onTap: () =>
+                                              _showMultiSupportingStaffSelectionDialogForTask(
+                                            context,
+                                            taskIndex,
+                                          ),
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                color: Colors.grey.shade300,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              color: Colors.white,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    _getTaskSupportingStaffNames(
+                                                        taskIndex),
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: task
+                                                              .supportingStaffIds
+                                                              .isNotEmpty
+                                                          ? Colors.grey[800]
+                                                          : Colors.grey[400],
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                const Icon(
+                                                  Icons.keyboard_arrow_down,
+                                                  color: Colors.grey,
+                                                  size: 18,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                )
                               ],
                             ),
                           );
@@ -1337,7 +1705,8 @@ Column(
                               setState(() {
                                 tasks.add(TaskForm(
                                   controller: TextEditingController(),
-                                  descriptionController: TextEditingController(),
+                                  descriptionController:
+                                      TextEditingController(),
                                   status: allTaskStates.isNotEmpty
                                       ? allTaskStates.first.id
                                       : null,
@@ -1350,11 +1719,13 @@ Column(
                                 ));
                               });
                             },
-                            icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                            icon: const Icon(Icons.add,
+                                size: 18, color: Colors.white),
                             label: const Text(
                               'Add Task',
                               style: TextStyle(
-                                  fontWeight: FontWeight.w600, color: Colors.white),
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2a86c9),
@@ -1376,15 +1747,15 @@ Column(
                       title: 'Notification Settings',
                       icon: Icons.notifications_active_outlined,
                       children: [
-                        _buildNotificationOption(
-                          icon: FontAwesomeIcons.whatsapp,
-                          iconColor: Colors.green,
-                          title: 'WhatsApp Notification',
-                          value: whatsappNotification,
-                          onChanged: (value) => setState(() {
-                            whatsappNotification = value;
-                          }),
-                        ),
+                        // _buildNotificationOption(
+                        //   icon: FontAwesomeIcons.whatsapp,
+                        //   iconColor: Colors.green,
+                        //   title: 'WhatsApp Notification',
+                        //   value: whatsappNotification,
+                        //   onChanged: (value) => setState(() {
+                        //     whatsappNotification = value;
+                        //   }),
+                        // ),
                         const SizedBox(height: 10),
                         _buildNotificationOption(
                           icon: Icons.notifications_active_rounded,
@@ -1462,13 +1833,12 @@ Column(
                           ),
                           const SizedBox(height: 6),
                           InkWell(
-                            onTap: () => _showMultiStaffSelectionDialog(
-                                context, false),
+                            onTap: () =>
+                                _showMultiStaffSelectionDialog(context, false),
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                border:
-                                    Border.all(color: Colors.grey.shade300),
+                                border: Border.all(color: Colors.grey.shade300),
                                 borderRadius: BorderRadius.circular(8),
                                 color: Colors.white,
                               ),
@@ -1508,60 +1878,58 @@ Column(
                           ),
                         ],
                         const SizedBox(height: 14),
-                        Text(
-                          'Participants in Chat',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        InkWell(
-                          onTap: () =>
-                              _showMultiStaffSelectionDialog(context, true),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.white,
-                            ),
-                            child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.chat_bubble_outline_rounded,
-                                      color: Colors.grey[600],
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      participantIds.isEmpty
-                                          ? 'Select Chat Participants'
-                                          : '${participantIds.length} participants selected',
-                                      style: TextStyle(
-                                        color: participantIds.isEmpty
-                                            ? Colors.grey[500]
-                                            : Colors.grey[800],
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.grey[600],
-                                  size: 22,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        // Text(
+                        //   'Participants in Chat',
+                        //   style: TextStyle(
+                        //     fontSize: 13,
+                        //     fontWeight: FontWeight.w600,
+                        //     color: Colors.grey[800],
+                        //   ),
+                        // ),
+                        // const SizedBox(height: 6),
+                        // InkWell(
+                        //   onTap: () =>
+                        //       _showMultiStaffSelectionDialog(context, true),
+                        //   child: Container(
+                        //     padding: const EdgeInsets.all(12),
+                        //     decoration: BoxDecoration(
+                        //       border: Border.all(color: Colors.grey.shade300),
+                        //       borderRadius: BorderRadius.circular(8),
+                        //       color: Colors.white,
+                        //     ),
+                        //     child: Row(
+                        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //       children: [
+                        //         Row(
+                        //           children: [
+                        //             Icon(
+                        //               Icons.chat_bubble_outline_rounded,
+                        //               color: Colors.grey[600],
+                        //               size: 20,
+                        //             ),
+                        //             const SizedBox(width: 10),
+                        //             Text(
+                        //               participantIds.isEmpty
+                        //                   ? 'Select Chat Participants'
+                        //                   : '${participantIds.length} participants selected',
+                        //               style: TextStyle(
+                        //                 color: participantIds.isEmpty
+                        //                     ? Colors.grey[500]
+                        //                     : Colors.grey[800],
+                        //                 fontSize: 13,
+                        //               ),
+                        //             ),
+                        //           ],
+                        //         ),
+                        //         Icon(
+                        //           Icons.arrow_drop_down,
+                        //           color: Colors.grey[600],
+                        //           size: 22,
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ],
@@ -1702,6 +2070,10 @@ Column(
   }
 
   Future<dynamic> dropDialogExisting(BuildContext context, String title) {
+    if (title == "Projects") {
+      search.clear();
+      filteredProjects = List.from(_projectsForWorkType);
+    }
     return showDialog(
       context: context,
       builder: (context) {
@@ -1751,25 +2123,36 @@ Column(
               content: SizedBox(
                 height: MediaQuery.of(context).size.height * 0.4,
                 width: MediaQuery.of(context).size.width * 0.8,
-                child: ListView.builder(
-                  itemCount: filteredProjects.length,
-                  itemBuilder: (context, index) {
-                    final project = filteredProjects[index];
-                    return ListTile(
-                      onTap: () {
-                        selectedProjectId = project.id;
-                        selectedProjectName = project.name;
-                        selectedProjectController.text = project.name;
-                        Navigator.pop(context, {
-                          'id': project.id,
-                          'name': project.name,
-                        });
-                        search.clear();
-                      },
-                      title: Text(project.name),
-                    );
-                  },
-                ),
+                child: (title == "Projects" && filteredProjects.isEmpty)
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'No projects found for selected Work Type',
+                            style: TextStyle(color: Colors.grey, fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredProjects.length,
+                        itemBuilder: (context, index) {
+                          final project = filteredProjects[index];
+                          return ListTile(
+                            onTap: () {
+                              selectedProjectId = project.id;
+                              selectedProjectName = project.name;
+                              selectedProjectController.text = project.name;
+                              Navigator.pop(context, {
+                                'id': project.id,
+                                'name': project.name,
+                              });
+                              search.clear();
+                            },
+                            title: Text(project.name),
+                          );
+                        },
+                      ),
               ),
             );
           },
@@ -1833,6 +2216,61 @@ Column(
     }
   }
 
+  String _firstNonEmpty(List<dynamic> values) {
+    for (final v in values) {
+      if (v != null) {
+        final s = v.toString().trim();
+        if (s.isNotEmpty && s.toLowerCase() != 'null') {
+          return s;
+        }
+      }
+    }
+    return '';
+  }
+
+  String _extractSiteLiftId(dynamic item) {
+    if (item is Map) {
+      return _firstNonEmpty([
+        item['id'],
+        item['site_lift_id'],
+        item['lift_id'],
+        item['site_lift_no'],
+        item['site_lift_name'],
+      ]);
+    }
+    return item?.toString().trim() ?? '';
+  }
+
+  String _extractSiteLiftName(dynamic item) {
+    if (item is Map) {
+      return _firstNonEmpty([
+        item['site_lift_name'],
+        item['site_lift_no'],
+        item['lift_no'],
+        item['lift_name'],
+        item['site_lift'],
+        item['name'],
+        item['id'],
+      ]);
+    }
+    return item?.toString().trim() ?? '';
+  }
+
+  DateTime? _tryParseDate(dynamic raw) {
+    if (raw == null) return null;
+    final str = raw.toString().trim();
+    if (str.isEmpty || str.toLowerCase() == 'null') return null;
+    try {
+      return DateTime.parse(str);
+    } catch (_) {
+      try {
+        return DateFormat('dd-MM-yyyy').parse(str);
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
   Future<void> _loadSiteLiftsAndTasks(String unitId, String projectId) async {
     if (mounted) {
       setState(() {
@@ -1851,11 +2289,19 @@ Column(
         List<dynamic> list = [];
         if (resLifts is Map && resLifts['data'] is List) {
           list = resLifts['data'];
+        } else if (resLifts is Map && resLifts['data'] is Map) {
+          list = [resLifts['data']];
         } else if (resLifts is List) {
           list = resLifts;
         }
         setState(() {
           siteLiftList = list;
+          if (list.isNotEmpty) {
+            final lId = _extractSiteLiftId(list.first);
+            final lNo = _extractSiteLiftName(list.first);
+            selectedSiteLiftId = lId.isNotEmpty ? lId : null;
+            selectedSiteLiftNo = lNo.isNotEmpty ? lNo : null;
+          }
         });
       }
     } catch (e) {
@@ -1880,7 +2326,8 @@ Column(
               TaskForm(
                 controller: TextEditingController(),
                 descriptionController: TextEditingController(),
-                status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
+                status:
+                    allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
                 taskId: null,
                 startDate: null,
                 endDate: null,
@@ -1894,7 +2341,8 @@ Column(
               TaskForm(
                 controller: TextEditingController(),
                 descriptionController: TextEditingController(),
-                status: allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
+                status:
+                    allTaskStates.isNotEmpty ? allTaskStates.first.id : null,
                 taskId: null,
                 startDate: null,
                 endDate: null,
@@ -1997,11 +2445,9 @@ Column(
     );
 
     if (selected != null && mounted) {
-      final uId = (selected['id'] ??
-              selected['unit_id'] ??
-              selected['unit_no'] ??
-              '')
-          .toString();
+      final uId =
+          (selected['id'] ?? selected['unit_id'] ?? selected['unit_no'] ?? '')
+              .toString();
       final uNo = (selected['unit_no'] ??
               selected['unit_name'] ??
               selected['name'] ??
@@ -2045,7 +2491,13 @@ Column(
                       onChanged: (value) {
                         setState(() {
                           filtered = siteLiftList.where((item) {
-                            final name = (item['site_lift_name'] ??
+                            String name = _extractSiteLiftName(item);
+                            if (name.isNotEmpty) {
+                              return name
+                                  .toLowerCase()
+                                  .contains(value.toLowerCase());
+                            }
+                            name = (item['site_lift_name'] ??
                                     item['site_lift_no'] ??
                                     item['lift_no'] ??
                                     item['lift_name'] ??
@@ -2078,7 +2530,23 @@ Column(
                                         '')
                                     .toString();
                                 return ListTile(
-                                  title: Text(lNo),
+                                  leading: Icon(
+                                    (selectedSiteLiftNo != null &&
+                                            selectedSiteLiftNo ==
+                                                _extractSiteLiftName(item))
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_unchecked,
+                                    color: (selectedSiteLiftNo != null &&
+                                            selectedSiteLiftNo ==
+                                                _extractSiteLiftName(item))
+                                        ? const Color(0xFF2a86c9)
+                                        : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  title: Text(
+                                      _extractSiteLiftName(item).isNotEmpty
+                                          ? _extractSiteLiftName(item)
+                                          : lNo),
                                   onTap: () => Navigator.pop(context, item),
                                 );
                               },
@@ -2116,7 +2584,10 @@ Column(
           .toString();
       setState(() {
         selectedSiteLiftId = lId;
-        selectedSiteLiftNo = lNo;
+        final extractedId = _extractSiteLiftId(selected);
+        final extractedNo = _extractSiteLiftName(selected);
+        selectedSiteLiftId = extractedId.isNotEmpty ? extractedId : lId;
+        selectedSiteLiftNo = extractedNo.isNotEmpty ? extractedNo : lNo;
       });
     }
   }
@@ -2227,7 +2698,7 @@ Column(
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Select Task'),
+              title: const Text('Select Activity'),
               content: SizedBox(
                 width: double.maxFinite,
                 height: MediaQuery.of(context).size.height * 0.4,
@@ -2237,7 +2708,7 @@ Column(
                     TextField(
                       controller: searchController,
                       decoration: const InputDecoration(
-                        labelText: 'Search Task',
+                        labelText: 'Search Activity',
                         prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(),
                       ),
@@ -2260,7 +2731,8 @@ Column(
                     const SizedBox(height: 12),
                     Expanded(
                       child: filtered.isEmpty
-                          ? const Center(child: Text('No tasks found for this Unit'))
+                          ? const Center(
+                              child: Text('No tasks found for this Unit'))
                           : ListView.builder(
                               shrinkWrap: true,
                               itemCount: filtered.length,
@@ -2306,28 +2778,27 @@ Column(
               selected['task_id'] ??
               '')
           .toString();
-      final tDesc = (selected['description'] ??
-              selected['task_description'] ??
-              '')
-          .toString();
+      final tDesc =
+          (selected['description'] ?? selected['task_description'] ?? '')
+              .toString();
 
       DateTime? sDate;
       if (selected['start_date'] != null &&
           selected['start_date'].toString().isNotEmpty) {
         try {
-          sDate = DateTime.parse(selected['start_date'].toString());
+          sDate = _tryParseDate(selected['start_date']);
         } catch (_) {}
       }
       DateTime? eDate;
       if (selected['completed_date'] != null &&
           selected['completed_date'].toString().isNotEmpty) {
         try {
-          eDate = DateTime.parse(selected['completed_date'].toString());
+          eDate = _tryParseDate(selected['completed_date']);
         } catch (_) {}
       } else if (selected['end_date'] != null &&
           selected['end_date'].toString().isNotEmpty) {
         try {
-          eDate = DateTime.parse(selected['end_date'].toString());
+          eDate = _tryParseDate(selected['end_date']);
         } catch (_) {}
       }
 

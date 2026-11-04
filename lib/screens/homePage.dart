@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/expense/expense_post.dart';
@@ -2941,11 +2942,44 @@ class _HomePageState extends State<HomePage> {
                   //   }
                   // }
                   final now = DateTime.now();
+                  String address = '';
+                  try {
+                    final placemarks = await placemarkFromCoordinates(
+                      position.latitude,
+                      position.longitude,
+                    ).timeout(const Duration(seconds: 5));
+                    if (placemarks.isNotEmpty) {
+                      final place = placemarks.first;
+                      final parts = <String>[];
+                      void addPart(String? value) {
+                        if (value != null) {
+                          final trimmed = value.trim();
+                          if (trimmed.isNotEmpty && !parts.contains(trimmed)) {
+                            parts.add(trimmed);
+                          }
+                        }
+                      }
+
+                      addPart(place.name);
+                      addPart(place.street);
+                      addPart(place.subLocality);
+                      addPart(place.locality);
+                      addPart(place.subAdministrativeArea);
+                      addPart(place.administrativeArea);
+                      addPart(place.postalCode);
+                      addPart(place.country);
+
+                      address = parts.join(', ');
+                    }
+                  } catch (_) {
+                    address = '';
+                  }
                   final res = await HttpService.startWork(
                     now,
                     latitude: position.latitude,
                     longitude: position.longitude,
                     faceData: faceBase64,
+                    address: address,
                   );
                   Navigator.of(context).pop();
                   if (res != null && res.status == true) {

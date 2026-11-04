@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/AssignedWorkModel.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
 import 'package:login2/models/lead_management/workDetailsCompanyModel.dart';
 import 'package:login2/models/lead_management/workstatus_model.dart'
@@ -14,6 +15,7 @@ import 'package:login2/screens/leadManagement/editAssignedReportPage.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/widgets/blinkwidget.dart';
 import 'package:login2/widgets/filterWidget.dart';
+import 'package:login2/widgets/timer_widget.dart';
 import 'package:login2/models/expense/staffListModel.dart';
 import 'package:login2/models/lead_management/staffwisePendingUpdatedModel.dart';
 
@@ -26,6 +28,7 @@ class AssignReport extends StatefulWidget {
   final String? assignedToMyself;
   final String? assignedByMyself;
   final String? isUnassigned;
+  final bool returnOnClose;
 
   const AssignReport(
       {super.key,
@@ -36,7 +39,8 @@ class AssignReport extends StatefulWidget {
       this.staffId,
       this.assignedToMyself,
       this.assignedByMyself,
-      this.isUnassigned});
+      this.isUnassigned,
+      this.returnOnClose = false});
 
   @override
   State<AssignReport> createState() => _AssignReportState();
@@ -92,7 +96,7 @@ class _AssignReportState extends State<AssignReport> {
 
   Future<void> loginorNot() async {
     final token = await Common.getSharedPref("token");
-    final response = await HttpService.getLoginorNot(token);
+    final response = await HttpService.getCurrentLoginStatus(token);
 
     setState(() {
       if (response != null && response.data == true) {
@@ -670,15 +674,29 @@ class _AssignReportState extends State<AssignReport> {
       List<AssignedWork> filteredList = assignedList;
 
       if (widget.workId.isNotEmpty && !_hasShownTaskDetails) {
-        final AssignedWork matchedItem = filteredList.firstWhere(
-          (item) => item.id.toString() == widget.workId,
-          orElse: () => null as AssignedWork,
+        final AssignedWork? matchedItem = filteredList.cast<AssignedWork?>().firstWhere(
+          (item) => item?.id.toString() == widget.workId,
+          orElse: () => null,
         );
         if (mounted) {
           _hasShownTaskDetails = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showTaskDetails(context, matchedItem);
-          });
+          if (matchedItem != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              await _showTaskDetails(context, matchedItem);
+              if (widget.returnOnClose && mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            });
+          } else if (widget.returnOnClose) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                Common.toastMessaage("Task details not found", Colors.orange);
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              }
+            });
+          }
         }
       }
 
@@ -694,6 +712,10 @@ class _AssignReportState extends State<AssignReport> {
         setState(() {
           isLoading = false;
         });
+        if (widget.returnOnClose && Navigator.of(context).canPop()) {
+          Common.toastMessaage("Failed to load task details", Colors.red);
+          Navigator.of(context).pop();
+        }
       }
       return <AssignedWork>[];
     });
@@ -725,7 +747,8 @@ class _AssignReportState extends State<AssignReport> {
   }
 
   Future<void> checkExistingWorkStatus() async {
-    final workStatusModel = await HttpService.getWorkStatus();
+    final workStatusModel = await RunningWorkTimerService.instance.refresh();
+    if (!mounted) return;
     setState(() {
       if (workStatusModel != null && workStatusModel.data.isNotEmpty) {
         existingWork = workStatusModel.data.first;
@@ -749,6 +772,17 @@ class _AssignReportState extends State<AssignReport> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.returnOnClose) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : const SizedBox.shrink(),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -758,6 +792,17 @@ class _AssignReportState extends State<AssignReport> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
+          RunningWorkTimerBadge(
+            margin: const EdgeInsets.only(right: 4),
+            onWorkUpdated: () {
+              if (!mounted) return;
+              setState(() {
+                _loadData(currentFilters);
+                checkExistingWorkStatus();
+                checkAssignedWorks();
+              });
+            },
+          ),
           IconButton(
             icon: Icon(
               _isMinimalView ? Icons.grid_view : Icons.view_list,
@@ -1882,6 +1927,53 @@ class _AssignReportState extends State<AssignReport> {
                                                 ),
                                               ),
                                             ],
+                                            if (session.workCompletePercent
+                                                .isNotEmpty) ...[
+                                              const SizedBox(width: 8),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  border: Border.all(
+                                                      color: Colors
+                                                          .green.shade200,
+                                                      width: 0.6),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .check_circle_outline,
+                                                      size: 10,
+                                                      color: Colors
+                                                          .green.shade700,
+                                                    ),
+                                                    const SizedBox(width: 3),
+                                                    Text(
+                                                      session.workCompletePercent
+                                                              .endsWith('%')
+                                                          ? session
+                                                              .workCompletePercent
+                                                          : '${session.workCompletePercent}%',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: Colors
+                                                            .green.shade700,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ],
                                         ),
                                       ],
@@ -2163,45 +2255,45 @@ class _AssignReportState extends State<AssignReport> {
                       },
                       itemBuilder: (BuildContext context) =>
                           <PopupMenuEntry<String>>[
-                        PopupMenuItem<String>(
-                          value: 'chat',
-                          child: SizedBox(
-                            width: 100, // Set your desired width here
-                            child: Row(
-                              children: [
-                                const Icon(Icons.message,
-                                    color: Colors.green, size: 20),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'Chat',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                                if (item.unreadCount != "0" &&
-                                    item.unreadCount != "0") ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      item.unreadCount,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
+                        // PopupMenuItem<String>(
+                        //   value: 'chat',
+                        //   child: SizedBox(
+                        //     width: 100, // Set your desired width here
+                        //     child: Row(
+                        //       children: [
+                        //         const Icon(Icons.message,
+                        //             color: Colors.green, size: 20),
+                        //         const SizedBox(width: 12),
+                        //         const Expanded(
+                        //           child: Text(
+                        //             'Chat',
+                        //             style: TextStyle(fontSize: 14),
+                        //           ),
+                        //         ),
+                        //         if (item.unreadCount != "0" &&
+                        //             item.unreadCount != "0") ...[
+                        //           const SizedBox(width: 8),
+                        //           Container(
+                        //             padding: const EdgeInsets.symmetric(
+                        //                 horizontal: 6, vertical: 2),
+                        //             decoration: BoxDecoration(
+                        //               color: Colors.red,
+                        //               borderRadius: BorderRadius.circular(10),
+                        //             ),
+                        //             child: Text(
+                        //               item.unreadCount,
+                        //               style: const TextStyle(
+                        //                 color: Colors.white,
+                        //                 fontSize: 12,
+                        //                 fontWeight: FontWeight.bold,
+                        //               ),
+                        //             ),
+                        //           ),
+                        //         ],
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
                         const PopupMenuDivider(),
                         if (editAssignWork == "true") ...[
                         PopupMenuItem<String>(
@@ -2416,6 +2508,8 @@ class _AssignReportState extends State<AssignReport> {
                   ],
                 ),
                 _buildCompletionWidget(item.completion),
+                if (item.createdAt.isNotEmpty)
+                  _buildInfoRow(Icons.event_available, "Assigned By Date", item.createdAt),
                 _buildInfoRow(Icons.work, "Work Status", item.startStatus),
                 const SizedBox(height: 12),
                 Row(
@@ -2969,13 +3063,18 @@ class _AssignReportState extends State<AssignReport> {
   }
 
   Future<void> _handleStartWork(AssignedWork item) async {
+    final loginResponse = await HttpService.getCurrentLoginStatus(token);
+    isLoggedIn = loginResponse != null &&
+        loginResponse.status == true &&
+        loginResponse.data == true;
+    if (!mounted) return;
     if (!isLoggedIn) {
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Login Required'),
-            content: const Text('Please login to start work.'),
+            content: const Text('Please login first.'),
             actions: [
               TextButton(
                 child: const Text('OK'),
@@ -3055,9 +3154,9 @@ class _AssignReportState extends State<AssignReport> {
     }
   }
 
-  void _showTaskDetails(BuildContext context, AssignedWork item) {
+  Future<void> _showTaskDetails(BuildContext context, AssignedWork item) async {
     Map<String, bool> localExpandedSessions = {};
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -3115,100 +3214,12 @@ class _AssignReportState extends State<AssignReport> {
                           ),
                           if (session.description.isNotEmpty) ...[
                             const SizedBox(height: 8),
-                            StatefulBuilder(
-                              builder: (context, setState) {
-                                final isExpanded = _expandedDescriptions[
-                                        '${item.id}_${session.taskName}'] ??
-                                    false;
-
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _expandedDescriptions[
-                                                  '${item.id}_${session.taskName}'] =
-                                              !isExpanded;
-                                        });
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade100,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border: Border.all(
-                                              color: Colors.grey.shade300,
-                                              width: 1),
-                                        ),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Icon(
-                                            //   isExpanded
-                                            //       ? Icons.expand_more
-                                            //       : Icons.chevron_right,
-                                            //   size: 20,
-                                            //   color: Colors.grey.shade600,
-                                            // ),
-                                            // const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    session.description,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color:
-                                                          Colors.grey.shade700,
-                                                    ),
-                                                    maxLines:
-                                                        isExpanded ? null : 1,
-                                                    overflow: isExpanded
-                                                        ? null
-                                                        : TextOverflow.ellipsis,
-                                                  ),
-                                                  if (!isExpanded &&
-                                                      session.description
-                                                              .length >
-                                                          80)
-                                                    const SizedBox(height: 4),
-                                                  if (!isExpanded &&
-                                                      session.description
-                                                              .length >
-                                                          80)
-                                                    Text(
-                                                      'View more',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors
-                                                            .blue.shade600,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                            ),
-                                            Icon(
-                                              isExpanded
-                                                  ? Icons.keyboard_arrow_up
-                                                  : Icons.keyboard_arrow_down,
-                                              size: 18,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
+                            Text(
+                              session.description,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade700,
+                              ),
                             ),
                           ],
                           if (session.totalHours.isNotEmpty) ...[
@@ -3273,6 +3284,84 @@ class _AssignReportState extends State<AssignReport> {
                               ],
                             )
                           ],
+                          if (session.workCompletePercent.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text(
+                                  'Work Complete:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.green.shade200,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle_outline,
+                                        size: 13,
+                                        color: Colors.green.shade700,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        session.workCompletePercent.endsWith('%')
+                                            ? session.workCompletePercent
+                                            : '${session.workCompletePercent}%',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.green.shade800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (double.tryParse(session.workCompletePercent
+                                        .replaceAll('%', '')
+                                        .trim()) !=
+                                    null) ...[
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: (double.tryParse(session
+                                                    .workCompletePercent
+                                                    .replaceAll('%', '')
+                                                    .trim())! /
+                                                100.0)
+                                            .clamp(0.0, 1.0),
+                                        minHeight: 6,
+                                        backgroundColor: Colors.grey.shade200,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          double.tryParse(session
+                                                      .workCompletePercent
+                                                      .replaceAll('%', '')
+                                                      .trim())! >=
+                                                  100.0
+                                              ? Colors.green
+                                              : Colors.blue,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
                           if (session.lastUpdatedTime.isNotEmpty) ...[
                             const SizedBox(height: 8),
                             Row(
@@ -3294,6 +3383,10 @@ class _AssignReportState extends State<AssignReport> {
                                 ),
                               ],
                             ),
+                          ],
+                          if (session.attachments.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            _buildAttachmentsSection(session.attachments, session: session),
                           ],
                         ],
                       ),
@@ -3387,7 +3480,7 @@ class _AssignReportState extends State<AssignReport> {
                             children: [
                               const SizedBox(height: 12),
                               ...session.works.map((work) {
-                                return _buildCompactTimelineItem(work);
+                                return _buildCompactTimelineItem(work, session: session);
                               }),
                             ],
                           ),
@@ -3459,7 +3552,7 @@ class _AssignReportState extends State<AssignReport> {
                                   ),
                                 ),
                                 Text(
-                                  item.createdAt,
+                                  item.phNo,
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey.shade600,
@@ -3712,6 +3805,17 @@ class _AssignReportState extends State<AssignReport> {
                                   ),
                                 ),
                               ],
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            child: _buildCompactDetailCard(
+                              icon: Icons.event_available,
+                              title: "Assigned By Date",
+                              value: item.createdAt.isNotEmpty
+                                  ? item.createdAt
+                                  : "-",
+                              color: Colors.blueGrey,
                             ),
                           ),
                           Container(
@@ -4375,6 +4479,83 @@ class _AssignReportState extends State<AssignReport> {
                     ],
                   )
                 ],
+                if (session.workCompletePercent.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        'Work Complete:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.green.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              size: 13,
+                              color: Colors.green.shade700,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              session.workCompletePercent.endsWith('%')
+                                  ? session.workCompletePercent
+                                  : '${session.workCompletePercent}%',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.green.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (double.tryParse(session.workCompletePercent
+                              .replaceAll('%', '')
+                              .trim()) !=
+                          null) ...[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (double.tryParse(session
+                                          .workCompletePercent
+                                          .replaceAll('%', '')
+                                          .trim())! /
+                                      100.0)
+                                  .clamp(0.0, 1.0),
+                              minHeight: 6,
+                              backgroundColor: Colors.grey.shade200,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                double.tryParse(session.workCompletePercent
+                                            .replaceAll('%', '')
+                                            .trim())! >=
+                                        100.0
+                                    ? Colors.green
+                                    : Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
                 if (session.lastUpdatedTime.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Row(
@@ -4396,6 +4577,10 @@ class _AssignReportState extends State<AssignReport> {
                       ),
                     ],
                   ),
+                ],
+                if (session.attachments.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildAttachmentsSection(session.attachments, session: session),
                 ],
               ],
             ),
@@ -4437,7 +4622,7 @@ class _AssignReportState extends State<AssignReport> {
                   const SizedBox(height: 12),
                   // Show timeline items (limited to 5 if not expanded)
                   ...worksToShow.map((work) {
-                    return _buildCompactTimelineItem(work);
+                    return _buildCompactTimelineItem(work, session: session);
                   }),
 
                   // Show "Show More/Less" button if there are more than 5 items
@@ -4694,7 +4879,7 @@ class _AssignReportState extends State<AssignReport> {
   //   );
   // }
 
-  Widget _buildCompactTimelineItem(Work work) {
+  Widget _buildCompactTimelineItem(Work work, {WorkSession? session}) {
     String formatDate(String datetime) {
       try {
         final dateTime = DateTime.tryParse(datetime);
@@ -4871,6 +5056,36 @@ class _AssignReportState extends State<AssignReport> {
                   ],
                 ),
 
+                if (work.completionPercent.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                          color: Colors.green.shade200, width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_outline,
+                            size: 12, color: Colors.green.shade700),
+                        const SizedBox(width: 4),
+                        Text(
+                          "Completion: ${work.completionPercent.endsWith('%') ? work.completionPercent : '${work.completionPercent}%'}",
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 // const SizedBox(height: 8),
                 // Row(
                 //   children: [
@@ -4972,10 +5187,407 @@ class _AssignReportState extends State<AssignReport> {
                     ),
                   ),
                 ],
+
+                // Attachments section
+                if (work.attachments.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _buildAttachmentsSection(work.attachments, session: session, work: work),
+                ],
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  String? _extractDriveFileId(String url) {
+    if (url.contains('drive.google.com')) {
+      final regExp = RegExp(r'file/d/([a-zA-Z0-9_-]+)');
+      final match = regExp.firstMatch(url);
+      if (match != null && match.groupCount >= 1) {
+        return match.group(1);
+      }
+      final idParamMatch = RegExp(r'[?&]id=([a-zA-Z0-9_-]+)').firstMatch(url);
+      if (idParamMatch != null && idParamMatch.groupCount >= 1) {
+        return idParamMatch.group(1);
+      }
+    }
+    return null;
+  }
+
+  String _getDirectAttachmentImageUrl(String url) {
+    final fileId = _extractDriveFileId(url);
+    if (fileId != null && fileId.isNotEmpty) {
+      return 'https://drive.google.com/uc?export=view&id=$fileId';
+    }
+    return url;
+  }
+
+  String? _getHighResDriveThumbnailUrl(String url) {
+    final fileId = _extractDriveFileId(url);
+    if (fileId != null && fileId.isNotEmpty) {
+      return 'https://drive.google.com/thumbnail?id=$fileId&sz=w1200';
+    }
+    return null;
+  }
+
+  Future<void> _openAttachment(
+    String urlStr, {
+    int index = 1,
+    WorkSession? session,
+    Work? work,
+  }) async {
+    final trimmed = urlStr.trim();
+    if (trimmed.isEmpty) {
+      Common.toastMessaage("Attachment link is empty", Colors.orange);
+      return;
+    }
+
+    final directUrl = _getDirectAttachmentImageUrl(trimmed);
+    final highResThumbnail = _getHighResDriveThumbnailUrl(trimmed);
+    final label = _getAttachmentLabel(trimmed, index);
+
+    final String taskTitle =
+        (session != null && session.taskName.trim().isNotEmpty)
+            ? session.taskName.trim()
+            : label;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(dialogContext).size.height * 0.85,
+              maxWidth: MediaQuery.of(dialogContext).size.width * 0.94,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.image_outlined,
+                            size: 18, color: Colors.blue),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          taskTitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 20),
+                        onPressed: () => Navigator.pop(dialogContext),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        color: Colors.grey.shade100,
+                        child: InteractiveViewer(
+                          minScale: 0.5,
+                          maxScale: 5.0,
+                          child: Image.network(
+                            directUrl,
+                            fit: BoxFit.contain,
+                            loadingBuilder:
+                                (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return const SizedBox(
+                                height: 320,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              if (highResThumbnail != null) {
+                                return Image.network(
+                                  highResThumbnail,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (ctx, err, st) =>
+                                      const SizedBox(
+                                    height: 320,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.broken_image_outlined,
+                                        size: 48,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return const SizedBox(
+                                height: 320,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 48,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openAttachmentExternal(String urlStr) async {
+    final trimmed = urlStr.trim();
+    if (trimmed.isEmpty) {
+      Common.toastMessaage("Attachment link is empty", Colors.orange);
+      return;
+    }
+    try {
+      final Uri uri = Uri.parse(trimmed);
+      final bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
+        final bool fallbackLaunched = await launchUrl(uri);
+        if (!fallbackLaunched) {
+          Common.toastMessaage("Could not open attachment", Colors.red);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error opening attachment: $e");
+      Common.toastMessaage("Could not open attachment", Colors.red);
+    }
+  }
+
+  String? _getDriveThumbnailUrl(String url) {
+    if (url.contains('drive.google.com')) {
+      final regExp = RegExp(r'file/d/([a-zA-Z0-9_-]+)');
+      final match = regExp.firstMatch(url);
+      if (match != null && match.groupCount >= 1) {
+        final fileId = match.group(1);
+        return 'https://drive.google.com/thumbnail?id=$fileId&sz=w200';
+      }
+      final idParamMatch = RegExp(r'[?&]id=([a-zA-Z0-9_-]+)').firstMatch(url);
+      if (idParamMatch != null && idParamMatch.groupCount >= 1) {
+        final fileId = idParamMatch.group(1);
+        return 'https://drive.google.com/thumbnail?id=$fileId&sz=w200';
+      }
+    }
+    return null;
+  }
+
+  bool _isImageUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif');
+  }
+
+  bool _isPdfUrl(String url) {
+    final lower = url.toLowerCase();
+    return lower.endsWith('.pdf');
+  }
+
+  String _getAttachmentLabel(String url, int index) {
+    try {
+      final uri = Uri.parse(url);
+      final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+      if (segments.isNotEmpty) {
+        final lastSegment = segments.last;
+        if (lastSegment != 'preview' &&
+            lastSegment != 'view' &&
+            lastSegment != 'edit' &&
+            lastSegment.length < 35 &&
+            lastSegment.contains('.')) {
+          return lastSegment;
+        }
+      }
+    } catch (_) {}
+    if (url.contains('drive.google.com')) {
+      return 'Google Drive File $index';
+    }
+    return 'Attachment $index';
+  }
+
+  Widget _buildAttachmentsSection(List<String> attachments, {WorkSession? session, Work? work}) {
+    if (attachments.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F7FF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.shade100, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.attach_file, size: 14, color: Colors.blue.shade700),
+              const SizedBox(width: 4),
+              Text(
+                'Attachments (${attachments.length})',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.blue.shade900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...attachments.asMap().entries.map((entry) {
+            final index = entry.key + 1;
+            final url = entry.value;
+            return _buildAttachmentCard(url, index, session: session, work: work);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachmentCard(String url, int index, {WorkSession? session, Work? work}) {
+    final driveThumbnail = _getDriveThumbnailUrl(url);
+    final isImg = _isImageUrl(url);
+    final isPdf = _isPdfUrl(url);
+    final isDrive = url.contains('drive.google.com');
+    final thumbnailUrl = driveThumbnail ?? (isImg ? url : null);
+    final label = _getAttachmentLabel(url, index);
+
+    return InkWell(
+      onTap: () => _openAttachment(url, index: index, session: session, work: work),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.shade100, width: 0.8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                width: 38,
+                height: 38,
+                color: Colors.blue.shade50,
+                child: thumbnailUrl != null
+                    ? Image.network(
+                        thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          isPdf
+                              ? Icons.picture_as_pdf
+                              : isDrive
+                                  ? Icons.add_to_drive
+                                  : Icons.insert_drive_file,
+                          color: isPdf ? Colors.red : Colors.blue.shade700,
+                          size: 20,
+                        ),
+                      )
+                    : Icon(
+                        isPdf
+                            ? Icons.picture_as_pdf
+                            : isDrive
+                                ? Icons.add_to_drive
+                                : Icons.insert_drive_file,
+                        color: isPdf ? Colors.red : Colors.blue.shade700,
+                        size: 20,
+                      ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Tap to view image',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.blue.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.open_in_new,
+                size: 14,
+                color: Colors.blue.shade700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -5528,26 +6140,26 @@ class _AssignReportState extends State<AssignReport> {
                     const Text("Notification Settings",
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          whatsappNotification = !whatsappNotification;
-                        });
-                      },
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: whatsappNotification,
-                            onChanged: (value) {
-                              setState(() {
-                                whatsappNotification = value ?? false;
-                              });
-                            },
-                          ),
-                          const Text('WhatsApp Notification'),
-                        ],
-                      ),
-                    ),
+                    // InkWell(
+                    //   onTap: () {
+                    //     setState(() {
+                    //       whatsappNotification = !whatsappNotification;
+                    //     });
+                    //   },
+                    //   child: Row(
+                    //     children: [
+                    //       Checkbox(
+                    //         value: whatsappNotification,
+                    //         onChanged: (value) {
+                    //           setState(() {
+                    //             whatsappNotification = value ?? false;
+                    //           });
+                    //         },
+                    //       ),
+                    //       const Text('WhatsApp Notification'),
+                    //     ],
+                    //   ),
+                    // ),
                     InkWell(
                       onTap: () {
                         setState(() {
@@ -5699,47 +6311,47 @@ class _AssignReportState extends State<AssignReport> {
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Participants in Chat',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () async {
-                        final selected = await _showMultiStaffSelectionDialog(
-                          context,
-                          true,
-                          item.assignedToId,
-                          participantIds,
-                          item,
-                        );
-                        if (selected != null) {
-                          setState(() => participantIds = selected);
-                        }
-                      },
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              participantIds.isEmpty
-                                  ? 'Select Chat Participants'
-                                  : '${participantIds.length} participants selected',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const Icon(Icons.arrow_drop_down),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // const Text(
+                    //   'Participants in Chat',
+                    //   style: TextStyle(
+                    //     fontSize: 16,
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 8),
+                    // InkWell(
+                    //   onTap: () async {
+                    //     final selected = await _showMultiStaffSelectionDialog(
+                    //       context,
+                    //       true,
+                    //       item.assignedToId,
+                    //       participantIds,
+                    //       item,
+                    //     );
+                    //     if (selected != null) {
+                    //       setState(() => participantIds = selected);
+                    //     }
+                    //   },
+                    //   child: InputDecorator(
+                    //     decoration: const InputDecoration(
+                    //       border: OutlineInputBorder(),
+                    //       contentPadding: EdgeInsets.symmetric(
+                    //           horizontal: 12, vertical: 10),
+                    //     ),
+                    //     child: Row(
+                    //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //       children: [
+                    //         Text(
+                    //           participantIds.isEmpty
+                    //               ? 'Select Chat Participants'
+                    //               : '${participantIds.length} participants selected',
+                    //           style: const TextStyle(fontSize: 16),
+                    //         ),
+                    //         const Icon(Icons.arrow_drop_down),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),

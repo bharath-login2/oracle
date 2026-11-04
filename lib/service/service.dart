@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -888,7 +889,7 @@ class HttpService {
       var result = await _dio.post("${await Config.getUrl()}leadReport",
           options: Options(receiveTimeout: const Duration(seconds: 30)),
           data: jsonEncode(body));
-      print('leadReport:$result');
+      // print('leadReport:$result');
       if (result.statusCode == 200) {
         ViewLeadsModel model = ViewLeadsModel.fromJson(result.data);
         return model;
@@ -4432,7 +4433,10 @@ class HttpService {
     }
   }
 
-  static Future getCurrentLoginStatus(token) async {
+  static Future getCurrentLoginStatus([token]) async {
+    token = (token != null && token.toString().isNotEmpty)
+        ? token
+        : await Common.getSharedPref("token");
     var formData = FormData.fromMap({
       'token': token,
     });
@@ -4441,7 +4445,9 @@ class HttpService {
           "${await Config.getUrl()}getLoginorNotCurrentState",
           data: formData);
       if (response.statusCode == 200) {
-        var commonResponse = CommonDataResponse.fromJson(response.data);
+        final decodedData =
+            response.data is String ? jsonDecode(response.data) : response.data;
+        var commonResponse = CommonDataResponse.fromJson(decodedData);
         return commonResponse;
       }
     } catch (e) {
@@ -5391,6 +5397,7 @@ class HttpService {
       "site_lift_name": workData['site_lift_name'] ?? workData['site_lift_no'],
       "stage_id": workData['stage_id'],
       "stage_name": workData['stage_name'],
+      "work_type": workData['work_type'] ?? '',
       "supporting_staff_ids": workData['supporting_staff_ids'],
       "title": workData['title'],
       "assigned_id": workData['assignedId'],
@@ -5469,13 +5476,22 @@ class HttpService {
         if (workData['responsible_party'] != null)
           "responsible_party": workData['responsible_party'],
         if (workData['hours'] != null) "hours": workData['hours'],
-        "file": await MultipartFile.fromFile(
-          (workData['file'] as File).path,
-          filename: (workData['file'] as File)
-              .path
-              .split(Platform.pathSeparator)
-              .last,
-        ),
+        "file": (workData['files'] is List &&
+                (workData['files'] as List).whereType<File>().length > 1)
+            ? [
+                for (final f in (workData['files'] as List).whereType<File>())
+                  await MultipartFile.fromFile(
+                    f.path,
+                    filename: f.path.split(Platform.pathSeparator).last,
+                  ),
+              ]
+            : await MultipartFile.fromFile(
+                (workData['file'] as File).path,
+                filename: (workData['file'] as File)
+                    .path
+                    .split(Platform.pathSeparator)
+                    .last,
+              ),
       });
     } else {
       payload = jsonEncode({
@@ -5556,11 +5572,22 @@ class HttpService {
     };
 
     if (workData['file'] != null && workData['file'] is File) {
-      formDataMap["file"] = await MultipartFile.fromFile(
-        (workData['file'] as File).path,
-        filename:
-            (workData['file'] as File).path.split(Platform.pathSeparator).last,
-      );
+      formDataMap["file"] = (workData['files'] is List &&
+              (workData['files'] as List).whereType<File>().length > 1)
+          ? [
+              for (final f in (workData['files'] as List).whereType<File>())
+                await MultipartFile.fromFile(
+                  f.path,
+                  filename: f.path.split(Platform.pathSeparator).last,
+                ),
+            ]
+          : await MultipartFile.fromFile(
+              (workData['file'] as File).path,
+              filename: (workData['file'] as File)
+                  .path
+                  .split(Platform.pathSeparator)
+                  .last,
+            );
     }
 
     var formData = FormData.fromMap(formDataMap);
@@ -5727,6 +5754,7 @@ class HttpService {
       "site_lift_name": workData['site_lift_name'] ?? workData['site_lift_no'],
       "stage_id": workData['stage_id'],
       "stage_name": workData['stage_name'],
+      "work_type": workData['work_type'] ?? '',
       "supporting_staff_ids": workData['supporting_staff_ids'],
       "title": workData['title'],
       "title_id": workData['title_id'],
@@ -5791,11 +5819,20 @@ class HttpService {
         "responsible_party": workData['responsible_party'],
       if (workData['hours'] != null) "hours": workData['hours'],
       if (workData['file'] != null && workData['file'] is File)
-        "file": await MultipartFile.fromFile((workData['file'] as File).path,
-            filename: (workData['file'] as File)
-                .path
-                .split(Platform.pathSeparator)
-                .last),
+        "file": (workData['files'] is List &&
+                (workData['files'] as List).whereType<File>().length > 1)
+            ? [
+                for (final f in (workData['files'] as List).whereType<File>())
+                  await MultipartFile.fromFile(
+                    f.path,
+                    filename: f.path.split(Platform.pathSeparator).last,
+                  ),
+              ]
+            : await MultipartFile.fromFile((workData['file'] as File).path,
+                filename: (workData['file'] as File)
+                    .path
+                    .split(Platform.pathSeparator)
+                    .last),
     });
     // try {
     var result = await _dio.post(
@@ -5820,6 +5857,9 @@ class HttpService {
       "work_id": workData['work_id'],
       "project_id": workData['project_id'],
       "project_name": workData['project_name'],
+      if (workData['unit_no'] != null) "unit_no": workData['unit_no'],
+      if (workData['site_lift_no'] != null)
+        "site_lift_no": workData['site_lift_no'],
       'work_start_time': workData['work_time'],
       'attendance_id': workData['attendance_id'],
       "title": workData['title'],
@@ -5828,6 +5868,22 @@ class HttpService {
         "activity_id": workData['activity_id'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
+      if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
+      if (workData['delay_type_id'] != null)
+        "delay_type_id": workData['delay_type_id'],
+      if (workData['delay_type'] != null)
+        "delay_type": workData['delay_type'],
+      if (workData['loose_type_id'] != null)
+        "loose_type_id": workData['loose_type_id'],
+      if (workData['loose_type'] != null)
+        "loose_type": workData['loose_type'],
+      if (workData['responsible_party'] != null)
+        "responsible_party": workData['responsible_party'],
+      if (workData['delay_hours'] != null)
+        "delay_hours": workData['delay_hours'],
+      if (workData['hours'] != null) "hours": workData['hours'],
+      if (workData['previous_timeline'] != null)
+        "previous_timeline": workData['previous_timeline'],
       "tasks": jsonEncode(workData['tasks']),
     });
     // try {
@@ -7904,11 +7960,44 @@ class HttpService {
     }
   }
 
+  static Future<String> _resolveAddressFromCoordinates(
+      double latitude, double longitude) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(latitude, longitude)
+          .timeout(const Duration(seconds: 5));
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        final parts = <String>[];
+        void addPart(String? value) {
+          if (value != null) {
+            final trimmed = value.trim();
+            if (trimmed.isNotEmpty && !parts.contains(trimmed)) {
+              parts.add(trimmed);
+            }
+          }
+        }
+
+        addPart(place.name);
+        addPart(place.street);
+        addPart(place.subLocality);
+        addPart(place.locality);
+        addPart(place.subAdministrativeArea);
+        addPart(place.administrativeArea);
+        addPart(place.postalCode);
+        addPart(place.country);
+
+        return parts.join(', ');
+      }
+    } catch (_) {}
+    return '';
+  }
+
   static Future<CommonResponse?> startWork(
     DateTime startTime, {
     required double latitude,
     required double longitude,
     required String? faceData,
+    String? address,
   }) async {
     var body = {
       "token": await Common.getSharedPref("token"),
@@ -7916,6 +8005,8 @@ class HttpService {
       "latitude": latitude.toString(),
       "longitude": longitude.toString(),
       'face_data': faceData ?? '',
+      "address":
+          address ?? await _resolveAddressFromCoordinates(latitude, longitude),
     };
 
     try {
@@ -9151,7 +9242,7 @@ class HttpService {
       '${await Config.getUrl()}get_assigned_worklist',
       data: formData,
     );
-    print("getAssignedWorks response: ${response.data}");
+    // print("getAssignedWorks response: ${response.data}");
     if (response.statusCode == 200 && response.data['status'] == true) {
       List data = response.data['data'];
       return data.map((e) => AssignedWork.fromJson(e)).toList();
