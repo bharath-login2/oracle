@@ -856,6 +856,28 @@ class _EditWorkPageState extends State<EditWorkPage> {
     );
   }
 
+  String _getWorkTypeDisplay(String? wt) {
+    if (wt == null || wt.isEmpty) return 'Select Work Type';
+    final lower = wt.trim().toLowerCase();
+    if (lower == 'installation') return 'Installation';
+    if (lower == 'amc') return 'AMC';
+    if (lower == 'repair' || lower == 'repairing') return 'Repairing';
+    return wt;
+  }
+
+  bool _isWorkStatusToDo([int? taskIndex]) {
+    String status = '';
+    if (taskIndex != null &&
+        taskIndex < widget.assignedWork.workSessions.length) {
+      status = widget.assignedWork.workSessions[taskIndex].status;
+    }
+    if (status.trim().isEmpty) {
+      status = widget.assignedWork.status;
+    }
+    final s = status.trim().toLowerCase();
+    return s == 'to do' || s == 'todo' || s == '1';
+  }
+
   String _getTaskAssignedStaffName(int taskIndex) {
     final staffId = tasks[taskIndex].assignedStaffId ?? assignedTo;
     if (staffId == null || staffId == "0" || staffId.isEmpty) {
@@ -1039,6 +1061,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                             ),
                             const SizedBox(height: 6),
                             Container(
+                              height: 48,
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 12),
                               decoration: BoxDecoration(
@@ -1046,42 +1069,25 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                 borderRadius: BorderRadius.circular(8),
                                 color: Colors.white,
                               ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: (selectedWorkType != null &&
-                                          ['installation', 'amc', 'repair']
-                                              .contains(selectedWorkType))
-                                      ? selectedWorkType
-                                      : null,
-                                  isExpanded: true,
-                                  hint: Text(
-                                    'Select Work Type',
-                                    style: TextStyle(
-                                        fontSize: 13, color: Colors.grey[500]),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _getWorkTypeDisplay(selectedWorkType),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: (selectedWorkType != null &&
+                                                selectedWorkType!.isNotEmpty)
+                                            ? Colors.grey[800]
+                                            : Colors.grey[500],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                  icon: const Icon(Icons.keyboard_arrow_down,
+                                  const Icon(Icons.keyboard_arrow_down,
                                       color: Colors.grey, size: 18),
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'installation',
-                                      child: Text('Installation',
-                                          style: TextStyle(fontSize: 13)),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'amc',
-                                      child: Text('AMC',
-                                          style: TextStyle(fontSize: 13)),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'repair',
-                                      child: Text('Repairing',
-                                          style: TextStyle(fontSize: 13)),
-                                    ),
-                                  ],
-                                  onChanged: (value) {
-                                    _onWorkTypeChanged(value);
-                                  },
-                                ),
+                                ],
                               ),
                             ),
                           ],
@@ -1114,23 +1120,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   ),
                                   const SizedBox(height: 6),
                                   InkWell(
-                                    onTap: () async {
-                                      final selected =
-                                          await _showProjectSelectionDialog(
-                                              context);
-                                      if (selected != null) {
-                                        setState(() {
-                                          selectedProjectId = selected['id'];
-                                          selectedProjectName =
-                                              selected['name'];
-                                          selectedProjectController.text =
-                                              selected['name'] ?? '';
-                                          _loadUnitsByProject(
-                                              selectedProjectId!);
-                                          _checkForChanges();
-                                        });
-                                      }
-                                    },
+                                    onTap: null,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 12),
@@ -1186,18 +1176,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   ),
                                   const SizedBox(height: 6),
                                   InkWell(
-                                    onTap: () async {
-                                      if (selectedProjectId == null) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Please select a project first')),
-                                        );
-                                        return;
-                                      }
-                                      await _showUnitSelectionDialog(context);
-                                    },
+                                    onTap: null,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 12),
@@ -1259,19 +1238,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   ),
                                   const SizedBox(height: 6),
                                   InkWell(
-                                    onTap: () async {
-                                      if (selectedUnitId == null) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Please select a Unit No first')),
-                                        );
-                                        return;
-                                      }
-                                      await _showSiteLiftSelectionDialog(
-                                          context);
-                                    },
+                                    onTap: null,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 12),
@@ -1488,8 +1455,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   )
                                 else
                                   InkWell(
-                                    onTap: () => _showTaskSelectionDialog(
-                                        context, taskIndex),
+                                    onTap: null,
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 12),
@@ -1781,9 +1747,11 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                     ),
                                     const SizedBox(height: 6),
                                     InkWell(
-                                      onTap: () =>
-                                          _showSingleAssignedStaffSelectionDialog(
-                                              context, taskIndex),
+                                      onTap: _isWorkStatusToDo(taskIndex)
+                                          ? () =>
+                                              _showSingleAssignedStaffSelectionDialog(
+                                                  context, taskIndex)
+                                          : null,
                                       child: Container(
                                         width: double.infinity,
                                         padding: const EdgeInsets.symmetric(
@@ -1815,7 +1783,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                               ),
                                             ),
                                             if (task.assignedStaffId != null &&
-                                                task.assignedStaffId != "0")
+                                                task.assignedStaffId != "0" &&
+                                                _isWorkStatusToDo(taskIndex))
                                               GestureDetector(
                                                 onTap: () {
                                                   setState(() {
@@ -2716,6 +2685,7 @@ class _EditWorkPageState extends State<EditWorkPage> {
 
   Future<void> _showSingleAssignedStaffSelectionDialog(
       BuildContext context, int taskIndex) async {
+    if (!_isWorkStatusToDo(taskIndex)) return;
     List<Staff> filteredStaff = List.from(staffList);
     TextEditingController searchController = TextEditingController();
 

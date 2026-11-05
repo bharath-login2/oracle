@@ -349,23 +349,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     super.dispose();
   }
 
-  String? _getExpectedQuotationType(String? workType) {
-    if (workType == null) return null;
-    final wt = workType.trim().toLowerCase();
-    if (wt == 'installation') return 'installation';
-    if (wt == 'amc') return 'amc';
-    if (wt == 'repair' || wt == 'repairing') return 'repairing';
-    return null;
-  }
-
   List<Projects> get _projectsForWorkType {
-    final expected = _getExpectedQuotationType(selectedWorkType);
-    if (expected == null) {
-      return projectList;
-    }
-    return projectList.where((p) {
-      return p.quotationType.trim().toLowerCase() == expected;
-    }).toList();
+    return projectList;
   }
 
   void _onWorkTypeChanged(String? value) {
