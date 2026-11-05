@@ -972,8 +972,8 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
     final showEstimation = widget.showEstimation ??
         (widget.permissions?.data?.createEstimation == true);
 
-    final showPricing = widget.showPricing ??
-        (widget.permissions?.data?.createPricing == true);
+    final showPricing =
+        widget.showPricing ?? (widget.permissions?.data?.createPricing == true);
     print(
       'PERMISSION DEBUG: '
       'permissions=${widget.permissions}, '
@@ -1109,7 +1109,7 @@ class _EstimationPricingCardState extends State<EstimationPricingCard> {
             _pricingField(
               'Capacity',
               _cCapacity,
-              keyboardType: TextInputType.number,
+              keyboardType: TextInputType.text,
             ),
           ],
         ),

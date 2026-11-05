@@ -3278,7 +3278,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
             onChanged: (v) => setState(() => _pLiftTypeId = v),
           ),
           _pricingField('Capacity', _pCapacity,
-              keyboardType: TextInputType.number),
+              keyboardType: TextInputType.text),
         ]),
         const SizedBox(height: 14),
         _buildGridRow(context, [

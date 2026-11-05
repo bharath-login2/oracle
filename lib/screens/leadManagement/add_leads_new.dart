@@ -694,9 +694,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     final elevatorTypeVal = _liftBrandCtrl.text.trim().isNotEmpty
         ? _liftBrandCtrl.text
         : _pElevatorType.text;
-    final amcTypeVal = _amcTypeCtrl.text.trim().isNotEmpty
-        ? _amcTypeCtrl.text
-        : _pAmc.text;
+    final amcTypeVal =
+        _amcTypeCtrl.text.trim().isNotEmpty ? _amcTypeCtrl.text : _pAmc.text;
     final amcAmountVal = _amcPriceCtrl.text.trim().isNotEmpty
         ? _amcPriceCtrl.text
         : _pAmcAmount.text;
@@ -1458,7 +1457,7 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
                   // DropdownMenuItem(
                   //     value: 'Semi-Comprehensive AMC',
                   //     child: Text('Semi-Comprehensive AMC')),
-                ], 
+                ],
                 onChanged: (val) {
                   setState(() {
                     _amcTypeSelected = val;
@@ -1514,8 +1513,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
               child: TextFormField(
                 controller: _amcPriceCtrl,
                 keyboardType: TextInputType.number,
-                decoration: _inputDecoration('Price *', null,
-                    hintText: 'Enter Price'),
+                decoration:
+                    _inputDecoration('Price *', null, hintText: 'Enter Price'),
               ),
             ),
           ],
@@ -1765,8 +1764,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
         : categoryList.any(
                 (c) => c.leadCategory.toLowerCase() == leadType.toLowerCase())
             ? categoryList
-                .firstWhere(
-                    (c) => c.leadCategory.toLowerCase() == leadType.toLowerCase())
+                .firstWhere((c) =>
+                    c.leadCategory.toLowerCase() == leadType.toLowerCase())
                 .leadCategoryId
                 .toString()
             : null;
@@ -1991,19 +1990,19 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
     final selectedValue = statusList
             .any((cr) => cr.callResultId.toString() == callResultId)
         ? callResultId
-        : statusList
-                .any((cr) => cr.callResult.toLowerCase() == callResult.toLowerCase())
+        : statusList.any(
+                (cr) => cr.callResult.toLowerCase() == callResult.toLowerCase())
             ? statusList
-                .firstWhere(
-                    (cr) => cr.callResult.toLowerCase() == callResult.toLowerCase())
+                .firstWhere((cr) =>
+                    cr.callResult.toLowerCase() == callResult.toLowerCase())
                 .callResultId
                 .toString()
             : null;
 
     return DropdownButtonFormField<String>(
       value: selectedValue,
-      decoration: _inputDecoration(
-          'Stages *', Icons.arrow_drop_down_circle_outlined),
+      decoration:
+          _inputDecoration('Stages *', Icons.arrow_drop_down_circle_outlined),
       hint: const Text(
         'Select Stage',
         style: TextStyle(color: Colors.grey, fontSize: 14),
@@ -2507,7 +2506,8 @@ class _AddLeadsNewState extends State<AddLeadsNew> {
           ],
         ),
       ),
-      prefixIcon: icon != null ? Icon(icon, color: Colors.grey, size: 20) : null,
+      prefixIcon:
+          icon != null ? Icon(icon, color: Colors.grey, size: 20) : null,
       filled: true,
       fillColor: Colors.grey.shade50,
       contentPadding:
