@@ -1260,7 +1260,7 @@ class _AddUnitInfoPageState extends State<AddUnitInfoPage> {
                         _textField(
                           label: 'Capacity',
                           controller: _capacityController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: TextInputType.text,
                         ),
                         const SizedBox(height: 14),
                         _dropdownField(
