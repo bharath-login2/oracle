@@ -4,6 +4,7 @@ import 'package:call_e_log/call_log.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/screens/accounts/dashboard/accounts_dashboard.dart';
 import 'package:login2/screens/accounts/renewal_mannagement/renewal_dashboard.dart';
@@ -109,6 +110,27 @@ class _InfoCardExampleState extends State<InfoCardExample> {
       }
       setState(() => isSyncingCallLogs = true);
       await _getSharedData();
+
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Location Required'),
+            content: const Text(
+                'Please turn on your device GPS/Location to log out.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        setState(() => isSyncingCallLogs = false);
+        return;
+      }
+
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -120,10 +142,18 @@ class _InfoCardExampleState extends State<InfoCardExample> {
         }
       }
       if (permission == LocationPermission.deniedForever) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                "Location permission permanently denied. Please enable it from settings."),
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Location Permission Required'),
+            content: const Text(
+                'Location permission is permanently denied. Please enable it from your device settings to log out.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
         return;
@@ -131,10 +161,43 @@ class _InfoCardExampleState extends State<InfoCardExample> {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+
+      String? resolvedAddress;
+      try {
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        ).timeout(const Duration(seconds: 5));
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          final parts = <String>[];
+          void addPart(String? value) {
+            if (value != null) {
+              final trimmed = value.trim();
+              if (trimmed.isNotEmpty && !parts.contains(trimmed)) {
+                parts.add(trimmed);
+              }
+            }
+          }
+          addPart(place.name);
+          addPart(place.street);
+          addPart(place.subLocality);
+          addPart(place.locality);
+          addPart(place.subAdministrativeArea);
+          addPart(place.administrativeArea);
+          addPart(place.postalCode);
+          addPart(place.country);
+          resolvedAddress = parts.join(', ');
+        }
+      } catch (e) {
+        debugPrint("Error geocoding on logout: $e");
+      }
+
       final response = await HttpService.stopWork(
         now,
         latitude: position.latitude,
         longitude: position.longitude,
+        address: resolvedAddress,
         ideal_time: ideal_time,
         work_time: work_time,
       );

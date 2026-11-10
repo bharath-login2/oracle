@@ -5466,6 +5466,7 @@ class HttpService {
         "site_lift_no": workData['site_lift_no'],
         "latitude": workData['latitude'],
         "longitude": workData['longitude'],
+        'address': workData['address'],
         "action": workData['action'] ?? '',
         "tasks": jsonEncode(workData['tasks']),
         if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
@@ -5508,6 +5509,7 @@ class HttpService {
         "site_lift_no": workData['site_lift_no'],
         "latitude": workData['latitude'],
         "longitude": workData['longitude'],
+        'address': workData['address'],
         "action": workData['action'] ?? '',
         "tasks": workData['tasks'],
         if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
@@ -5561,6 +5563,7 @@ class HttpService {
       "assigned_id": workData['assignedId'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
+      'address': workData['address'],
       "action": workData['action'] ?? '',
       "tasks": jsonEncode(workData['tasks']),
       if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
@@ -5868,6 +5871,7 @@ class HttpService {
         "activity_id": workData['activity_id'],
       "latitude": workData['latitude'],
       "longitude": workData['longitude'],
+      'address': workData['address'],
       if (workData['is_delay'] != null) "is_delay": workData['is_delay'],
       if (workData['delay_type_id'] != null)
         "delay_type_id": workData['delay_type_id'],
@@ -8024,16 +8028,18 @@ class HttpService {
 
   static Future<CommonResponse?> stopWork(
     DateTime endTime, {
-    required double latitude,
-    required double longitude,
+    double? latitude,
+    double? longitude,
+    String? address,
     String? ideal_time,
     String? work_time,
   }) async {
     var body = {
       "token": await Common.getSharedPref("token"),
       "end_time": endTime.toIso8601String(),
-      "latitude": latitude.toString(),
-      "longitude": longitude.toString(),
+      "latitude": latitude != null ? latitude.toString() : "",
+      "longitude": longitude != null ? longitude.toString() : "",
+      "address": address ?? "",
       "ideal_time": ideal_time,
       "work_time": work_time,
     };

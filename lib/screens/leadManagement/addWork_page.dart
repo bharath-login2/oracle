@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:intl/intl.dart';
 import 'package:login2/models/lead_management/assignedWorkStatusModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
@@ -146,6 +147,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
   bool _isGettingLocation = false;
   double? currentLatitude;
   double? currentLongitude;
+  String? currentAddress;
   void filterCustomers(String value) {}
   void filterTemplates(String value) {}
   void filterProjects(String value) {}
@@ -926,14 +928,60 @@ class _AddWorkPageState extends State<AddWorkPage> {
       debugPrint('Location permissions are permanently denied.');
       return;
     }
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-    setState(() {
-      currentLatitude = position.latitude;
-      currentLongitude = position.longitude;
-    });
-    debugPrint('Lat: ${position.latitude}, Long: ${position.longitude}');
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      String? resolvedAddress;
+      try {
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude,
+          position.longitude,
+        ).timeout(const Duration(seconds: 5));
+        if (placemarks.isNotEmpty) {
+          final place = placemarks.first;
+          final parts = <String>[];
+          void addPart(String? value) {
+            if (value != null) {
+              final trimmed = value.trim();
+              if (trimmed.isNotEmpty && !parts.contains(trimmed)) {
+                parts.add(trimmed);
+              }
+            }
+          }
+
+          addPart(place.name);
+          addPart(place.street);
+          addPart(place.subLocality);
+          addPart(place.locality);
+          addPart(place.subAdministrativeArea);
+          addPart(place.administrativeArea);
+          addPart(place.postalCode);
+          addPart(place.country);
+
+          resolvedAddress = parts.join(', ');
+        }
+      } catch (e) {
+        debugPrint('Error getting address: $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          currentLatitude = position.latitude;
+          currentLongitude = position.longitude;
+          currentAddress = resolvedAddress;
+        });
+      } else {
+        currentLatitude = position.latitude;
+        currentLongitude = position.longitude;
+        currentAddress = resolvedAddress;
+      }
+      debugPrint(
+          'Lat: ${position.latitude}, Long: ${position.longitude}, Address: $currentAddress');
+    } catch (e) {
+      debugPrint('Error getting location: $e');
+    }
   }
 
   @override
@@ -1095,6 +1143,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
       return;
     }
 
+    await _getCurrentLocation();
+
     final workData = {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
@@ -1108,6 +1158,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      'address': currentAddress,
       'action': widget.existingWork != null ? 'stop' : 'start',
       'is_delay': isDelay ? 'Y' : 'N',
       'delay_type': selectedDelayType ?? '',
@@ -1231,6 +1282,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       );
       return;
     }
+    await _getCurrentLocation();
     final workData = {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
@@ -1243,6 +1295,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      'address': currentAddress,
       'action': 'save',
       'is_delay': isDelay ? 'Y' : 'N',
       'delay_type': selectedDelayType ?? '',
@@ -1369,6 +1422,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
       return;
     }
 
+    await _getCurrentLocation();
+
     final workData = {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
@@ -1379,6 +1434,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      'address': currentAddress,
       if (isDelay) ...{
         'is_delay': 1,
         'delay_type': selectedDelayType,
@@ -1556,6 +1612,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
       return;
     }
 
+    await _getCurrentLocation();
+
     final workData = {
       'work_id': widget.existingWork?.id,
       'project_id': selectedProjectId,
@@ -1567,6 +1625,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'latitude': currentLatitude,
       'longitude': currentLongitude,
+      'address': currentAddress,
       if (widget.workId != "") 'attendance_id': widget.workId,
       'is_delay': isDelay ? 'Y' : 'N',
       'delay_type_id': isDelay ? (selectedDelayType ?? '') : '',
@@ -2846,6 +2905,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
                           } else {
                             currentLatitude = null;
                             currentLongitude = null;
+                            currentAddress = null;
                           }
 
                           setState(() {
