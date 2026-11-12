@@ -57,6 +57,8 @@ class AssignWorkPage extends StatefulWidget {
 class _AssignWorkPageState extends State<AssignWorkPage> {
   late TextEditingController titleController;
   late List<TaskForm> tasks;
+  String selectedWorkCategory = 'site';
+  bool get _isOfficeWork => selectedWorkCategory == 'office';
   String? selectedWorkType;
   String? selectedProjectId;
   String? selectedProjectName;
@@ -189,6 +191,37 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
       assignedTo = widget.existingWork!.assignedTo;
       if (selectedProjectId == "0") {
         selectedProjectId = null;
+      }
+      final st = (widget.existingWork!.staffType ?? '').trim().toLowerCase();
+      final hasProject = selectedProjectId != null &&
+          selectedProjectId!.trim().isNotEmpty &&
+          selectedProjectId!.trim() != '0' &&
+          selectedProjectId!.trim().toLowerCase() != 'null';
+      final wtLower = (widget.existingWork!.workType ?? '').toLowerCase().trim();
+      if (st == '1' ||
+          st == 'office' ||
+          st == 'office_work' ||
+          st == 'office work') {
+        selectedWorkCategory = 'office';
+      } else if (st == '2' ||
+          st == 'site' ||
+          st == 'site_work' ||
+          st == 'site work') {
+        selectedWorkCategory = 'site';
+      } else if (wtLower == 'office' ||
+          wtLower == 'office_work' ||
+          wtLower == 'office work') {
+        selectedWorkCategory = 'office';
+      } else if (!hasProject &&
+          wtLower.isNotEmpty &&
+          wtLower != 'installation' &&
+          wtLower != 'install' &&
+          wtLower != 'amc' &&
+          wtLower != 'repair' &&
+          wtLower != 'repairing') {
+        selectedWorkCategory = 'office';
+      } else {
+        selectedWorkCategory = 'site';
       }
     }
     if (widget.existingWork != null &&
@@ -412,25 +445,64 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
     });
 
     try {
-      if (selectedProjectId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a project'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
+      if (!_isOfficeWork) {
+        if (selectedProjectId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a project'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        if (selectedStageId == null &&
+            (selectedStageName == null || selectedStageName!.isEmpty)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a stage'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
       }
 
-      if (selectedStageId == null &&
-          (selectedStageName == null || selectedStageName!.isEmpty)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a stage'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
+      for (int i = 0; i < tasks.length; i++) {
+        final task = tasks[i];
+        if (task.controller.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tasks.length > 1
+                  ? 'Please enter/select an activity for Task ${i + 1}'
+                  : 'Please enter/select an activity'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        if (task.startDate == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tasks.length > 1
+                  ? 'Please select a start date for Task ${i + 1}'
+                  : 'Please select a start date'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        if (task.endDate == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tasks.length > 1
+                  ? 'Please select an end date for Task ${i + 1}'
+                  : 'Please select an end date'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
       }
 
       showDialog(
@@ -443,15 +515,17 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
 
       final workData = {
         'work_id': widget.existingWork?.id,
-        'work_type': selectedWorkType,
-        'project_id': selectedProjectId,
-        'project_name': selectedProjectName,
-        'unit_id': selectedUnitId,
-        'unit_no': selectedUnitNo,
-        'site_lift_id': selectedSiteLiftId,
-        'site_lift_no': selectedSiteLiftNo,
-        'stage_id': selectedStageId,
-        'stage_name': selectedStageName,
+        'staff_type': _isOfficeWork ? 1 : 2,
+        'staff_type_name': _isOfficeWork ? 1 : 2,
+        'work_type': _isOfficeWork ? null : selectedWorkType,
+        'project_id': _isOfficeWork ? null : selectedProjectId,
+        'project_name': _isOfficeWork ? null : selectedProjectName,
+        'unit_id': _isOfficeWork ? null : selectedUnitId,
+        'unit_no': _isOfficeWork ? null : selectedUnitNo,
+        'site_lift_id': _isOfficeWork ? null : selectedSiteLiftId,
+        'site_lift_no': _isOfficeWork ? null : selectedSiteLiftNo,
+        'stage_id': _isOfficeWork ? null : selectedStageId,
+        'stage_name': _isOfficeWork ? null : selectedStageName,
         'title': titleController.text.isNotEmpty
             ? titleController.text
             : 'Work Assignment',
@@ -585,9 +659,105 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Work Category Radio Buttons (Site Work / Office Work)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: () {
+                                setState(() {
+                                  selectedWorkCategory = 'site';
+                                });
+                              },
+                              child: Row(
+                                children: [
+                                  Radio<String>(
+                                    value: 'site',
+                                    groupValue: selectedWorkCategory,
+                                    activeColor: const Color(0xFF2a86c9),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          selectedWorkCategory = val;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  const Text(
+                                    'Site Work',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: () {
+                                setState(() {
+                                  selectedWorkCategory = 'office';
+                                });
+                              },
+                              child: Row(
+                                children: [
+                                  Radio<String>(
+                                    value: 'office',
+                                    groupValue: selectedWorkCategory,
+                                    activeColor: const Color(0xFF2a86c9),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          selectedWorkCategory = val;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                  const Text(
+                                    'Office Work',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     // Card 1: Work Information
-                    _buildSectionCard(
-                      title: 'Work Details',
+                    if (!_isOfficeWork)
+                      _buildSectionCard(
+                        title: 'Work Details',
                       icon: Icons.assignment_outlined,
                       children: [
                         // Work Type
@@ -1044,7 +1214,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                if (selectedWorkType?.toLowerCase() == 'amc' ||
+                                if (_isOfficeWork ||
+                                    selectedWorkType?.toLowerCase() == 'amc' ||
                                     selectedWorkType?.toLowerCase() ==
                                         'repair' ||
                                     selectedWorkType?.toLowerCase() ==

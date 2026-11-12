@@ -390,6 +390,36 @@ class _AddWorkPageState extends State<AddWorkPage> {
   bool get isStartOrRestartWork =>
       widget.existingWork == null || widget.Restart == 1;
 
+  String selectedWorkCategory = 'site'; // 'site' = Site Work (2), 'office' = Office Work (1)
+  bool get _isOfficeWork => selectedWorkCategory == 'office';
+
+  void _applyStaffType(
+    String? rawStaffType, {
+    String? projectId,
+    String? projectName,
+  }) {
+    final st = rawStaffType?.trim().toLowerCase() ?? '';
+    if (st == '1' ||
+        st == 'office' ||
+        st == 'office_work' ||
+        st == 'office work') {
+      selectedWorkCategory = 'office';
+      isDelay = false;
+    } else if (st == '2' ||
+        st == 'site' ||
+        st == 'site_work' ||
+        st == 'site work') {
+      selectedWorkCategory = 'site';
+    } else if (st.isEmpty || st == '0' || st == 'null') {
+      final pid = projectId?.trim() ?? '';
+      if ((pid.isEmpty || pid == '0' || pid.toLowerCase() == 'null') &&
+          (widget.existingWork != null || assignedWorks != null)) {
+        selectedWorkCategory = 'office';
+        isDelay = false;
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -442,10 +472,20 @@ class _AddWorkPageState extends State<AddWorkPage> {
         selectedProjectName = widget.existingWork!.projectName;
         selectedProjectController.text = widget.existingWork!.projectName!;
       }
-      if (selectedProjectId == "0") {
+      if (selectedProjectId == "0" ||
+          (selectedProjectId != null && selectedProjectId!.isEmpty)) {
         selectedProjectId = null;
       }
-      if (widget.existingWork!.tasks.isNotEmpty) {
+      final rawExistingStaffType = widget.existingWork!.staffType ??
+          (widget.existingWork!.tasks.isNotEmpty
+              ? widget.existingWork!.tasks.first.staffType
+              : null);
+      _applyStaffType(
+        rawExistingStaffType,
+        projectId: widget.existingWork!.projectId,
+        projectName: widget.existingWork!.projectName,
+      );
+      if (!_isOfficeWork && widget.existingWork!.tasks.isNotEmpty) {
         final firstTask = widget.existingWork!.tasks.first;
         if (firstTask.isDelay == 'Y' || firstTask.isDelay == '1') {
           hasAssignedDelay = true;
@@ -633,13 +673,30 @@ class _AddWorkPageState extends State<AddWorkPage> {
   }
 
   Future<void> checkAssignedWorks() async {
-    if (widget.workId.isEmpty) return;
+    final String effectiveWorkId = widget.workId.isNotEmpty
+        ? widget.workId
+        : (widget.existingWork?.assignedId != null &&
+                widget.existingWork!.assignedId!.isNotEmpty &&
+                widget.existingWork!.assignedId != "0"
+            ? widget.existingWork!.assignedId!
+            : "");
+    if (effectiveWorkId.isEmpty) return;
 
     final AssignedWorkModel =
-        await HttpService.getAssinedWorkStatus(widget.workId, sectionId = "");
+        await HttpService.getAssinedWorkStatus(effectiveWorkId, sectionId = "");
     setState(() {
       if (AssignedWorkModel != null && AssignedWorkModel.data.isNotEmpty) {
         assignedWorks = AssignedWorkModel.data.first;
+
+        final rawStaffType = assignedWorks?.staffType ??
+            (assignedWorks?.tasks.isNotEmpty == true
+                ? assignedWorks!.tasks.first.staffType
+                : null);
+        _applyStaffType(
+          rawStaffType,
+          projectId: assignedWorks?.projectId,
+          projectName: assignedWorks?.projectName,
+        );
 
         final rawIsDelay = assignedWorks?.isDelay ??
             (assignedWorks?.tasks.isNotEmpty == true
@@ -671,13 +728,16 @@ class _AddWorkPageState extends State<AddWorkPage> {
           previousTimeline = rawPrevTimeline;
         }
 
-        final bool isApiDelay = rawIsDelay != null &&
+        final bool isApiDelay = !_isOfficeWork &&
+            rawIsDelay != null &&
             (rawIsDelay.trim().toUpperCase() == 'Y' ||
                 rawIsDelay.trim() == '1' ||
                 rawIsDelay.trim().toLowerCase() == 'true');
         hasAssignedDelay = isApiDelay;
 
-        if (isApiDelay) {
+        if (_isOfficeWork) {
+          isDelay = false;
+        } else if (isApiDelay) {
           isDelay = true;
         } else if (rawIsDelay == 'N' ||
             rawIsDelay == '0' ||
@@ -722,6 +782,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
         if (widget.existingWork == null) {
           titleController.text = assignedWorks?.titleName ?? '';
           selectedProjectId = assignedWorks?.projectId;
+          if (selectedProjectId == "0" ||
+              (selectedProjectId != null && selectedProjectId!.isEmpty)) {
+            selectedProjectId = null;
+          }
           selectedProjectName = assignedWorks?.projectName;
           selectedTitleId = assignedWorks?.title;
           dueDate = assignedWorks?.dueDate;
@@ -1086,7 +1150,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
     }
     if (!_validateTasks()) return;
 
-    if (selectedProjectId == null) {
+    if (!_isOfficeWork && selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a project'),
@@ -1127,9 +1191,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
       );
       return;
     }
-    if (selectedTitleId == null ||
-        selectedTitleId!.isEmpty ||
-        titleController.text.trim().isEmpty) {
+    if (!_isOfficeWork &&
+        (selectedTitleId == null ||
+            selectedTitleId!.isEmpty ||
+            titleController.text.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a title'),
@@ -1147,12 +1212,14 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
     final workData = {
       'work_id': widget.existingWork?.id,
-      'project_id': selectedProjectId,
-      'project_name': selectedProjectName,
+      'staff_type': _isOfficeWork ? 1 : 2,
+      'staff_type_name': _isOfficeWork ? 1 : 2,
+      'project_id': _isOfficeWork ? null : selectedProjectId,
+      'project_name': _isOfficeWork ? null : selectedProjectName,
       'unit_no': selectedUnitNo ?? widget.existingWork?.unitNo ?? assignedWorks?.unitNo,
       'site_lift_no': selectedSiteLiftNo ?? widget.existingWork?.siteLiftNo ?? assignedWorks?.siteLiftNo,
-      'title': titleController.text,
-      'title_id': selectedTitleId,
+      'title': _isOfficeWork ? '' : titleController.text,
+      'title_id': _isOfficeWork ? '' : selectedTitleId,
       'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       if (widget.workId != "") 'attendance_id': widget.workId,
       'assignedId': widget.existingWork?.assignedId,
@@ -1160,11 +1227,12 @@ class _AddWorkPageState extends State<AddWorkPage> {
       'longitude': currentLongitude,
       'address': currentAddress,
       'action': widget.existingWork != null ? 'stop' : 'start',
-      'is_delay': isDelay ? 'Y' : 'N',
-      'delay_type': selectedDelayType ?? '',
-      'loose_type': selectedLooseType ?? '',
-      'responsible_party': responsiblePartyController.text,
-      'hours': hoursController.text,
+      'is_delay': (!_isOfficeWork && isDelay) ? 'Y' : 'N',
+      'delay_type': (!_isOfficeWork && isDelay) ? (selectedDelayType ?? '') : '',
+      'loose_type': (!_isOfficeWork && isDelay) ? (selectedLooseType ?? '') : '',
+      'responsible_party':
+          (!_isOfficeWork && isDelay) ? responsiblePartyController.text : '',
+      'hours': (!_isOfficeWork && isDelay) ? hoursController.text : '',
       if (uploadedFile != null) 'file': uploadedFile,
       if (uploadedFiles.isNotEmpty) 'files': uploadedFiles,
       'tasks': tasks.asMap().entries.map((entry) {
@@ -1269,7 +1337,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
   Future<void> _performSaveWork() async {
     if (!_validateTasks()) return;
-    if (selectedProjectId == null) {
+    if (!_isOfficeWork && selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a project'),
@@ -1285,23 +1353,26 @@ class _AddWorkPageState extends State<AddWorkPage> {
     await _getCurrentLocation();
     final workData = {
       'work_id': widget.existingWork?.id,
-      'project_id': selectedProjectId,
-      'project_name': selectedProjectName,
+      'staff_type': _isOfficeWork ? 1 : 2,
+      'staff_type_name': _isOfficeWork ? 1 : 2,
+      'project_id': _isOfficeWork ? null : selectedProjectId,
+      'project_name': _isOfficeWork ? null : selectedProjectName,
       'unit_no': selectedUnitNo ?? widget.existingWork?.unitNo ?? assignedWorks?.unitNo,
       'site_lift_no': selectedSiteLiftNo ?? widget.existingWork?.siteLiftNo ?? assignedWorks?.siteLiftNo,
-      'title': titleController.text,
-      'title_id': selectedTitleId,
+      'title': _isOfficeWork ? '' : titleController.text,
+      'title_id': _isOfficeWork ? '' : selectedTitleId,
       'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
       'longitude': currentLongitude,
       'address': currentAddress,
       'action': 'save',
-      'is_delay': isDelay ? 'Y' : 'N',
-      'delay_type': selectedDelayType ?? '',
-      'loose_type': selectedLooseType ?? '',
-      'responsible_party': responsiblePartyController.text,
-      'hours': hoursController.text,
+      'is_delay': (!_isOfficeWork && isDelay) ? 'Y' : 'N',
+      'delay_type': (!_isOfficeWork && isDelay) ? (selectedDelayType ?? '') : '',
+      'loose_type': (!_isOfficeWork && isDelay) ? (selectedLooseType ?? '') : '',
+      'responsible_party':
+          (!_isOfficeWork && isDelay) ? responsiblePartyController.text : '',
+      'hours': (!_isOfficeWork && isDelay) ? hoursController.text : '',
       if (uploadedFile != null) 'file': uploadedFile,
       if (uploadedFiles.isNotEmpty) 'files': uploadedFiles,
       'tasks': tasks.asMap().entries.map((entry) {
@@ -1365,7 +1436,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
   Future<void> _pauseWork() async {
     if (!_validateTasks()) return;
-    if (selectedProjectId == null) {
+    if (!_isOfficeWork && selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a project'),
@@ -1406,9 +1477,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
       );
       return;
     }
-    if (selectedTitleId == null ||
-        selectedTitleId!.isEmpty ||
-        titleController.text.trim().isEmpty) {
+    if (!_isOfficeWork &&
+        (selectedTitleId == null ||
+            selectedTitleId!.isEmpty ||
+            titleController.text.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a title'),
@@ -1426,10 +1498,12 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
     final workData = {
       'work_id': widget.existingWork?.id,
-      'project_id': selectedProjectId,
-      'project_name': selectedProjectName,
-      'title': titleController.text,
-      'title_id': selectedTitleId,
+      'staff_type': _isOfficeWork ? 1 : 2,
+      'staff_type_name': _isOfficeWork ? 1 : 2,
+      'project_id': _isOfficeWork ? null : selectedProjectId,
+      'project_name': _isOfficeWork ? null : selectedProjectName,
+      'title': _isOfficeWork ? '' : titleController.text,
+      'title_id': _isOfficeWork ? '' : selectedTitleId,
       'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'assignedId': widget.existingWork?.assignedId,
       'latitude': currentLatitude,
@@ -1555,7 +1629,7 @@ class _AddWorkPageState extends State<AddWorkPage> {
       return;
     }
     if (!_validateTasks()) return;
-    if (selectedProjectId == null) {
+    if (!_isOfficeWork && selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a project'),
@@ -1596,9 +1670,10 @@ class _AddWorkPageState extends State<AddWorkPage> {
       );
       return;
     }
-    if (selectedTitleId == null ||
-        selectedTitleId!.isEmpty ||
-        titleController.text.trim().isEmpty) {
+    if (!_isOfficeWork &&
+        (selectedTitleId == null ||
+            selectedTitleId!.isEmpty ||
+            titleController.text.trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a title'),
@@ -1616,12 +1691,14 @@ class _AddWorkPageState extends State<AddWorkPage> {
 
     final workData = {
       'work_id': widget.existingWork?.id,
-      'project_id': selectedProjectId,
-      'project_name': selectedProjectName,
+      'staff_type': _isOfficeWork ? 1 : 2,
+      'staff_type_name': _isOfficeWork ? 1 : 2,
+      'project_id': _isOfficeWork ? null : selectedProjectId,
+      'project_name': _isOfficeWork ? null : selectedProjectName,
       'unit_no': selectedUnitNo ?? widget.existingWork?.unitNo ?? assignedWorks?.unitNo,
       'site_lift_no': selectedSiteLiftNo ?? widget.existingWork?.siteLiftNo ?? assignedWorks?.siteLiftNo,
-      'title': titleController.text,
-      'title_id': selectedTitleId,
+      'title': _isOfficeWork ? '' : titleController.text,
+      'title_id': _isOfficeWork ? '' : selectedTitleId,
       'activity_id': tasks.isNotEmpty ? (tasks.first.activityId ?? tasks.first.taskId ?? '') : '',
       'latitude': currentLatitude,
       'longitude': currentLongitude,
@@ -1926,7 +2003,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                         ],
                       ),
                     ),
-                  ] else ...[
+                    const SizedBox(height: 16),
+                  ] else if (!_isOfficeWork) ...[
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -2061,8 +2139,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
                   ],
-                  const SizedBox(height: 16),
                   ...List.generate(tasks.length, (taskIndex) {
                     final now = DateTime.now();
                     final formattedTime = DateFormat('hh:mm a').format(now);
@@ -2279,82 +2357,84 @@ class _AddWorkPageState extends State<AddWorkPage> {
                               const SizedBox(height: 12),
 
                               // Completion Field (Draggable Progress Slider)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 4),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          'Completion: ',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF333333),
+                              if (!_isOfficeWork) ...[
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 4),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            'Completion: ',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFF333333),
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          '${tasks[taskIndex].completion.round()}%',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1B5E20),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 2),
-                                    SliderTheme(
-                                      data: SliderTheme.of(context).copyWith(
-                                        trackHeight: 10,
-                                        thumbShape: const RoundSliderThumbShape(
-                                            enabledThumbRadius: 9),
-                                        overlayShape: const RoundSliderOverlayShape(
-                                            overlayRadius: 16),
-                                        activeTrackColor: const Color(0xFF2E7D32),
-                                        inactiveTrackColor: Colors.grey.shade300,
-                                        thumbColor: const Color(0xFF1B5E20),
-                                      ),
-                                      child: Slider(
-                                        value: tasks[taskIndex]
-                                            .completion
-                                            .clamp(0.0, 100.0),
-                                        min: 0,
-                                        max: 100,
-                                        divisions: 100,
-                                        label:
+                                          Text(
                                             '${tasks[taskIndex].completion.round()}%',
-                                        onChanged: (value) {
-                                          setState(() {
-                                            tasks[taskIndex].completion = value;
-                                            if (value == 100.0) {
-                                              tasks[taskIndex].isChecked = true;
-                                              final completedStatus =
-                                                  allTaskStates.firstWhere(
-                                                (status) => status.id == '4',
-                                                orElse: () =>
-                                                    allTaskStates.firstWhere(
-                                                  (status) => status.status
-                                                      .toLowerCase()
-                                                      .contains('complete'),
-                                                  orElse: () =>
-                                                      allTaskStates.first,
-                                                ),
-                                              );
-                                              tasks[taskIndex].status =
-                                                  completedStatus.id;
-                                            }
-                                          });
-                                        },
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF1B5E20),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 2),
+                                      SliderTheme(
+                                        data: SliderTheme.of(context).copyWith(
+                                          trackHeight: 10,
+                                          thumbShape: const RoundSliderThumbShape(
+                                              enabledThumbRadius: 9),
+                                          overlayShape: const RoundSliderOverlayShape(
+                                              overlayRadius: 16),
+                                          activeTrackColor: const Color(0xFF2E7D32),
+                                          inactiveTrackColor: Colors.grey.shade300,
+                                          thumbColor: const Color(0xFF1B5E20),
+                                        ),
+                                        child: Slider(
+                                          value: tasks[taskIndex]
+                                              .completion
+                                              .clamp(0.0, 100.0),
+                                          min: 0,
+                                          max: 100,
+                                          divisions: 100,
+                                          label:
+                                              '${tasks[taskIndex].completion.round()}%',
+                                          onChanged: (value) {
+                                            setState(() {
+                                              tasks[taskIndex].completion = value;
+                                              if (value == 100.0) {
+                                                tasks[taskIndex].isChecked = true;
+                                                final completedStatus =
+                                                    allTaskStates.firstWhere(
+                                                  (status) => status.id == '4',
+                                                  orElse: () =>
+                                                      allTaskStates.firstWhere(
+                                                    (status) => status.status
+                                                        .toLowerCase()
+                                                        .contains('complete'),
+                                                    orElse: () =>
+                                                        allTaskStates.first,
+                                                  ),
+                                                );
+                                                tasks[taskIndex].status =
+                                                    completedStatus.id;
+                                              }
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
 
-                              const SizedBox(height: 8),
+                                const SizedBox(height: 8),
+                              ],
 
                               ...List.generate(
                                   tasks[taskIndex].remarksControllers.length,
@@ -2469,7 +2549,8 @@ class _AddWorkPageState extends State<AddWorkPage> {
                   }),
 
                   // Is Delay section (for Stop Work, and for Restart Work only when is_delay == "Y")
-                  if (isStopWork || (widget.Restart == 1 && hasAssignedDelay)) ...[
+                  if (!_isOfficeWork &&
+                      (isStopWork || (widget.Restart == 1 && hasAssignedDelay))) ...[
                     const SizedBox(height: 16),
                     // Is Delay Section
                     Container(

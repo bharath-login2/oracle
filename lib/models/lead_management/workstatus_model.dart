@@ -38,6 +38,24 @@ class WorkStatusModel {
       };
 }
 
+String? _extractWorkStatusStaffType(Map<String, dynamic> json) {
+  for (final key in [
+    'staff_type_name',
+    'staff_type',
+    'staffTypeName',
+    'staffType',
+  ]) {
+    final raw = json[key]?.toString().trim();
+    if (raw != null &&
+        raw.isNotEmpty &&
+        raw.toLowerCase() != 'null' &&
+        raw != '0') {
+      return raw;
+    }
+  }
+  return null;
+}
+
 class WorkStatus {
   final String id;
   final String projectId;
@@ -57,6 +75,7 @@ class WorkStatus {
   final String? siteLiftName;
   final String? projectName;
   final String? workType;
+  final String? staffType;
   final String? isDelay;
   final String? delayHours;
   final String? delayTypeId;
@@ -83,6 +102,7 @@ class WorkStatus {
     this.siteLiftName,
     this.projectName,
     this.workType,
+    this.staffType,
     this.isDelay,
     this.delayHours,
     this.delayTypeId,
@@ -112,6 +132,7 @@ class WorkStatus {
         siteLiftName: json["site_lift_name"]?.toString() ?? json["site_lift_no_name"]?.toString() ?? json["siteLiftName"]?.toString() ?? json["site_lift_no"]?.toString(),
         projectName: json["project_name"]?.toString() ?? json["projectName"]?.toString(),
         workType: json["work_type"]?.toString() ?? json["workType"]?.toString(),
+        staffType: _extractWorkStatusStaffType(json),
         isDelay: json["is_delay"]?.toString(),
         delayHours: json["delay_hours"]?.toString() ?? json["hours"]?.toString(),
         delayTypeId: json["delay_type_id"]?.toString() ?? json["delay_type"]?.toString(),
@@ -144,6 +165,7 @@ class Task {
   final String description;
   final List<String> remarks;
   final String completion;
+  final String? staffType;
   final String? isDelay;
   final String? delayTypeId;
   final String? looseTypeId;
@@ -160,6 +182,7 @@ class Task {
     required this.description,
     required this.remarks,
     this.completion = '0',
+    this.staffType,
     this.isDelay,
     this.delayTypeId,
     this.looseTypeId,
@@ -177,6 +200,7 @@ class Task {
         description: json["description"]?.toString() ?? "",
         remarks: json["remarks"] != null ? List<String>.from(json["remarks"].map((x) => x.toString())) : [],
         completion: json["completion"]?.toString() ?? "0",
+        staffType: _extractWorkStatusStaffType(json),
         isDelay: json["is_delay"]?.toString(),
         delayTypeId: json["delay_type_id"]?.toString() ?? json["delay_type"]?.toString(),
         looseTypeId: json["loose_type_id"]?.toString() ?? json["loose_type"]?.toString(),

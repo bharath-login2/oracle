@@ -337,6 +337,7 @@ class AssignedWork {
   final String unreadCount;
   final String completion;
   final String workType;
+  final String staffType;
   final String phNo;
 
   AssignedWork({
@@ -373,6 +374,7 @@ class AssignedWork {
     required this.unreadCount,
     required this.completion,
     this.workType = '',
+    this.staffType = '',
     this.phNo = '',
   });
 
@@ -431,6 +433,12 @@ class AssignedWork {
       notification: NotificationSettings.fromJson(json['notification'] ?? {}),
       unreadCount: json['unread_count'] ?? '',
       workType: (json['work_type'] ?? json['workType'] ?? '').toString(),
+      staffType: (json['staff_type_name'] ??
+              json['staff_type'] ??
+              json['staffTypeName'] ??
+              json['staffType'] ??
+              '')
+          .toString(),
       phNo: (json['phone_number'] ?? json['phone_number'] ?? '').toString(),
       completion: (json['completion'] ??
               json['work_complete_percent'] ??

@@ -55,6 +55,8 @@ class EditWorkPage extends StatefulWidget {
 class _EditWorkPageState extends State<EditWorkPage> {
   late TextEditingController titleController;
   late List<EditTaskForm> tasks = [];
+  String selectedWorkCategory = 'site';
+  bool get _isOfficeWork => selectedWorkCategory == 'office';
   String? selectedWorkType;
   String? selectedProjectId;
   String? selectedProjectName;
@@ -134,6 +136,36 @@ class _EditWorkPageState extends State<EditWorkPage> {
       selectedWorkType = 'repair';
     } else if (wt.isNotEmpty) {
       selectedWorkType = wt;
+    }
+
+    final st = work.staffType.trim().toLowerCase();
+    final hasProject = work.projectId.trim().isNotEmpty &&
+        work.projectId.trim() != '0' &&
+        work.projectId.trim().toLowerCase() != 'null';
+    final hasProjectName = work.projectName.trim().isNotEmpty &&
+        work.projectName.trim().toLowerCase() != 'null';
+    if (st == '1' ||
+        st == 'office' ||
+        st == 'office_work' ||
+        st == 'office work') {
+      selectedWorkCategory = 'office';
+    } else if (st == '2' ||
+        st == 'site' ||
+        st == 'site_work' ||
+        st == 'site work') {
+      selectedWorkCategory = 'site';
+    } else if (wt == 'office' || wt == 'office_work' || wt == 'office work') {
+      selectedWorkCategory = 'office';
+    } else if (!hasProject &&
+        !hasProjectName &&
+        wt != 'installation' &&
+        wt != 'install' &&
+        wt != 'amc' &&
+        wt != 'repair' &&
+        wt != 'repairing') {
+      selectedWorkCategory = 'office';
+    } else {
+      selectedWorkCategory = 'site';
     }
     titleController = TextEditingController(text: work.moduleName);
     selectedProjectId = work.projectId.toString();
@@ -631,6 +663,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
 
   Map<String, dynamic> _getCurrentData() {
     return {
+      'work_category': selectedWorkCategory,
+      'staff_type': _isOfficeWork ? 1 : 2,
       'work_type': selectedWorkType,
       'projectId': selectedProjectId,
       'unitId': selectedUnitId,
@@ -709,6 +743,70 @@ class _EditWorkPageState extends State<EditWorkPage> {
     });
 
     try {
+      if (!_isOfficeWork) {
+        if (selectedProjectId == null ||
+            selectedProjectId!.trim().isEmpty ||
+            selectedProjectId!.trim() == '0' ||
+            selectedProjectId!.trim().toLowerCase() == 'null') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a project'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        if ((selectedStageId == null || selectedStageId!.trim().isEmpty) &&
+            (selectedStageName == null || selectedStageName!.trim().isEmpty) &&
+            titleController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a stage'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
+      for (int i = 0; i < tasks.length; i++) {
+        final task = tasks[i];
+        if (task.controller.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tasks.length > 1
+                  ? 'Please enter/select an activity for Task ${i + 1}'
+                  : 'Please enter/select an activity'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        if (task.startDate == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tasks.length > 1
+                  ? 'Please select a start date for Task ${i + 1}'
+                  : 'Please select a start date'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+        if (task.endDate == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tasks.length > 1
+                  ? 'Please select an end date for Task ${i + 1}'
+                  : 'Please select an end date'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -721,16 +819,20 @@ class _EditWorkPageState extends State<EditWorkPage> {
         'id': widget.assignedWork.id,
         'work_id': widget.assignedWork.id,
         'assignedId': widget.assignedWork.id,
-        'work_type': selectedWorkType,
-        'project_id': selectedProjectId,
-        'project_name': selectedProjectName,
-        'unit_id': selectedUnitId,
-        'unit_no': selectedUnitNo,
-        'site_lift_id': selectedSiteLiftId,
-        'site_lift_no': selectedSiteLiftNo,
-        'site_lift_name': selectedSiteLiftNo,
-        'stage_id': selectedStageId,
-        'stage_name': selectedStageName ?? titleController.text,
+        'staff_type': _isOfficeWork ? 1 : 2,
+        'staff_type_name': _isOfficeWork ? 1 : 2,
+        'work_type': _isOfficeWork ? null : selectedWorkType,
+        'project_id': _isOfficeWork ? null : selectedProjectId,
+        'project_name': _isOfficeWork ? null : selectedProjectName,
+        'unit_id': _isOfficeWork ? null : selectedUnitId,
+        'unit_no': _isOfficeWork ? null : selectedUnitNo,
+        'site_lift_id': _isOfficeWork ? null : selectedSiteLiftId,
+        'site_lift_no': _isOfficeWork ? null : selectedSiteLiftNo,
+        'site_lift_name': _isOfficeWork ? null : selectedSiteLiftNo,
+        'stage_id': _isOfficeWork ? null : selectedStageId,
+        'stage_name': _isOfficeWork
+            ? null
+            : (selectedStageName ?? titleController.text),
         'supporting_staff_ids':
             tasks.expand((t) => t.supportingStaffIds).toSet().join(','),
         'title': titleController.text.isNotEmpty
@@ -1034,9 +1136,93 @@ class _EditWorkPageState extends State<EditWorkPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Work Category Radio Buttons (Site Work / Office Work)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: null,
+                              child: Row(
+                                children: [
+                                  Radio<String>(
+                                    value: 'site',
+                                    groupValue: selectedWorkCategory,
+                                    activeColor: const Color(0xFF2a86c9),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    onChanged: selectedWorkCategory == 'site'
+                                        ? (val) {}
+                                        : null,
+                                  ),
+                                  Text(
+                                    'Site Work',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: selectedWorkCategory == 'site'
+                                          ? Colors.black87
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: null,
+                              child: Row(
+                                children: [
+                                  Radio<String>(
+                                    value: 'office',
+                                    groupValue: selectedWorkCategory,
+                                    activeColor: const Color(0xFF2a86c9),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    onChanged: selectedWorkCategory == 'office'
+                                        ? (val) {}
+                                        : null,
+                                  ),
+                                  Text(
+                                    'Office Work',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: selectedWorkCategory == 'office'
+                                          ? Colors.black87
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     // Card 1: Work Details (Project, Unit No, Site Lift No, Stages)
-                    _buildSectionCard(
-                      title: 'Work Details',
+                    if (!_isOfficeWork)
+                      _buildSectionCard(
+                        title: 'Work Details',
                       icon: Icons.assignment_outlined,
                       children: [
                         // Work Type *
@@ -1419,7 +1605,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                if (selectedWorkType?.toLowerCase() == 'amc' ||
+                                if (_isOfficeWork ||
+                                    selectedWorkType?.toLowerCase() == 'amc' ||
                                     selectedWorkType?.toLowerCase() ==
                                         'repair' ||
                                     selectedWorkType?.toLowerCase() ==
@@ -1928,136 +2115,150 @@ class _EditWorkPageState extends State<EditWorkPage> {
                     ),
 
                     // Card 3: Notification Settings
-                    // _buildSectionCard(
-                    //   title: 'Notification Settings',
-                    //   icon: Icons.notifications_active_outlined,
-                    //   children: [
-                        // _buildNotificationOption(
-                        //   icon: Icons.chat_rounded,
-                        //   iconColor: const Color(0xFF25D366),
-                        //   title: 'WhatsApp Notification',
-                        //   value: whatsappNotification,
-                        //   onChanged: (val) {
-                        //     setState(() {
-                        //       whatsappNotification = val;
-                        //       _checkForChanges();
-                        //     });
-                        //   },
-                        // ),
-                        // const SizedBox(height: 10),
-                        // _buildNotificationOption(
-                        //   icon: Icons.notifications_rounded,
-                        //   iconColor: const Color(0xFF2a86c9),
-                        //   title: 'Push Notification',
-                        //   value: pushNotification,
-                        //   onChanged: (val) {
-                        //     setState(() {
-                        //       pushNotification = val;
-                        //       _checkForChanges();
-                        //     });
-                        //   },
-                        // ),
-                        // const SizedBox(height: 10),
-                        // _buildNotificationOption(
-                        //   icon: Icons.play_arrow_rounded,
-                        //   iconColor: Colors.amber.shade700,
-                        //   title: 'Notify On Start',
-                        //   value: notifyOnStart,
-                        //   onChanged: (val) {
-                        //     setState(() {
-                        //       notifyOnStart = val;
-                        //       _checkForChanges();
-                        //     });
-                        //   },
-                        // ),
-                        // const SizedBox(height: 10),
-                        // _buildNotificationOption(
-                        //   icon: Icons.check_circle_rounded,
-                        //   iconColor: Colors.green,
-                        //   title: 'Notify On Complete',
-                        //   value: notifyOnComplete,
-                        //   onChanged: (val) {
-                        //     setState(() {
-                        //       notifyOnComplete = val;
-                        //       _checkForChanges();
-                        //     });
-                        //   },
-                        // ),
-                        // const SizedBox(height: 14),
-                        // Row(
-                        //   children: [
-                        //     Expanded(
-                        //       child: InkWell(
-                        //         onTap: () => _showMultiStaffSelectionDialog(
-                        //             context, false),
-                        //         child: Container(
-                        //           padding: const EdgeInsets.symmetric(
-                        //               horizontal: 12, vertical: 10),
-                        //           decoration: BoxDecoration(
-                        //             border:
-                        //                 Border.all(color: Colors.grey.shade300),
-                        //             borderRadius: BorderRadius.circular(8),
-                        //             color: Colors.white,
-                        //           ),
-                        //           child: Row(
-                        //             children: [
-                        //               const Icon(Icons.people_outline,
-                        //                   size: 16, color: Color(0xFF2a86c9)),
-                        //               const SizedBox(width: 8),
-                        //               Expanded(
-                        //                 child: Text(
-                        //                   selectedStaffIds.isEmpty
-                        //                       ? 'Staff to Notify'
-                        //                       : '${selectedStaffIds.length} Staff Selected',
-                        //                   style: const TextStyle(fontSize: 12),
-                        //                   maxLines: 1,
-                        //                   overflow: TextOverflow.ellipsis,
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       ),
-                        //     ),
-                        //     const SizedBox(width: 10),
-                        //     // Expanded(
-                        //     //   child: InkWell(
-                        //     //     onTap: () => _showMultiStaffSelectionDialog(
-                        //     //         context, true),
-                        //     //     child: Container(
-                        //     //       padding: const EdgeInsets.symmetric(
-                        //     //           horizontal: 12, vertical: 10),
-                        //     //       decoration: BoxDecoration(
-                        //     //         border:
-                        //     //             Border.all(color: Colors.grey.shade300),
-                        //     //         borderRadius: BorderRadius.circular(8),
-                        //     //         color: Colors.white,
-                        //     //       ),
-                        //     //       child: Row(
-                        //     //         children: [
-                        //     //           const Icon(Icons.chat_bubble_outline,
-                        //     //               size: 16, color: Color(0xFF2a86c9)),
-                        //     //           const SizedBox(width: 8),
-                        //     //           Expanded(
-                        //     //             child: Text(
-                        //     //               participantIds.isEmpty
-                        //     //                   ? 'Chat Participants'
-                        //     //                   : '${participantIds.length} Selected',
-                        //     //               style: const TextStyle(fontSize: 12),
-                        //     //               maxLines: 1,
-                        //     //               overflow: TextOverflow.ellipsis,
-                        //     //             ),
-                        //     //           ),
-                        //     //         ],
-                        //     //       ),
-                        //     //     ),
-                        //     //   ),
-                        //     // ),
-                        //   ],
-                        // ),
-                      
-                    //   ],
-                    // ),
+                    _buildSectionCard(
+                      title: 'Notification Settings',
+                      icon: Icons.notifications_active_outlined,
+                      children: [
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.notifications_active_rounded,
+                          iconColor: const Color(0xFF2a86c9),
+                          title: 'Push Notification',
+                          value: pushNotification,
+                          onChanged: (val) {
+                            setState(() {
+                              pushNotification = val;
+                              _checkForChanges();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.person_rounded,
+                          iconColor: Colors.orange,
+                          title: 'Notify to Assigned Staff',
+                          value: notifyToAssignedStaff,
+                          onChanged: (val) {
+                            setState(() {
+                              notifyToAssignedStaff = val;
+                              _checkForChanges();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.change_circle_rounded,
+                          iconColor: Colors.purple,
+                          title: 'Notify on Status Change',
+                          value: notifyOnStatusChange,
+                          onChanged: (val) {
+                            setState(() {
+                              notifyOnStatusChange = val;
+                              _checkForChanges();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.play_arrow_rounded,
+                          iconColor: Colors.teal,
+                          title: 'Notify When Work Starts',
+                          value: notifyOnStart,
+                          onChanged: (val) {
+                            setState(() {
+                              notifyOnStart = val;
+                              _checkForChanges();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.check_circle_rounded,
+                          iconColor: Colors.green,
+                          title: 'Notify When Work Completes',
+                          value: notifyOnComplete,
+                          onChanged: (val) {
+                            setState(() {
+                              notifyOnComplete = val;
+                              _checkForChanges();
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _buildNotificationOption(
+                          icon: Icons.group_rounded,
+                          iconColor: Colors.indigo,
+                          title: 'Notify Other People',
+                          value: notifyOtherPeople,
+                          onChanged: (val) {
+                            setState(() {
+                              notifyOtherPeople = val;
+                              if (!notifyOtherPeople) {
+                                selectedStaffIds.clear();
+                              }
+                              _checkForChanges();
+                            });
+                          },
+                        ),
+                        if (notifyOtherPeople) ...[
+                          const SizedBox(height: 14),
+                          Text(
+                            'Select Staff to Notify:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          InkWell(
+                            onTap: () =>
+                                _showMultiStaffSelectionDialog(context, false),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                                color: Colors.white,
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.group_add_rounded,
+                                        color: Colors.grey[600],
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        selectedStaffIds.isEmpty
+                                            ? 'Select Staff to Notify'
+                                            : '${selectedStaffIds.length} staff selected',
+                                        style: TextStyle(
+                                          color: selectedStaffIds.isEmpty
+                                              ? Colors.grey[500]
+                                              : Colors.grey[800],
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.grey[600],
+                                    size: 22,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 14),
+                      ],
+                    ),
                   ],
                 ),
               ),
