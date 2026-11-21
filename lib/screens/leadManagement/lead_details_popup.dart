@@ -2173,7 +2173,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     };
   }
 
-  bool _validatePricingDetails() {
+  bool _validateEstimationFields() {
     if (_pQuotationTitle.text.trim().isEmpty) {
       Common.toastMessaage('Subject is required', Colors.red);
       return false;
@@ -2206,6 +2206,10 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       Common.toastMessaage('Door Opening Size is required', Colors.red);
       return false;
     }
+    return true;
+  }
+
+  bool _validatePricingFields() {
     if (_pUnitPrice.text.trim().isEmpty ||
         (double.tryParse(_pUnitPrice.text.trim()) ?? 0) <= 0) {
       Common.toastMessaage('Unit Price is required', Colors.red);
@@ -2215,6 +2219,12 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
       Common.toastMessaage('Company Profit (%) is required', Colors.red);
       return false;
     }
+    return true;
+  }
+
+  bool _validatePricingDetails() {
+    if (!_validateEstimationFields()) return false;
+    if (!_validatePricingFields()) return false;
     return true;
   }
 
@@ -3355,6 +3365,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
   }
 
   Widget _buildPricingCard(BuildContext context, dynamic data) {
+    _initPricingControllers();
     return _pricingCardSection(
       title: 'Pricing',
       icon: Icons.payments_outlined,
@@ -5159,7 +5170,7 @@ class _LeadDetailsPopupState extends State<LeadDetailsPopup>
     }
 
     if (isEstimationOrAmc && !isAmcCategory) {
-      if (!_validatePricingDetails()) {
+      if (!_validateEstimationFields()) {
         return;
       }
     }

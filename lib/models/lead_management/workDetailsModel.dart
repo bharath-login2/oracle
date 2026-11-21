@@ -38,7 +38,7 @@ class WorkDetailsModel {
 
 class workDetailsList {
   final String id;
-    final String projectName;
+  final String projectName;
   final String projectId;
   final String customerName;
   final String title;
@@ -51,6 +51,8 @@ class workDetailsList {
   final String longitude;
   final String gapDuration;
   final String is_paused;
+  final bool showRestart;
+  final String currentStatus;
   final List<Task> tasks;
   final List<Assign> assigns;
   final String loginTime;
@@ -61,7 +63,7 @@ class workDetailsList {
 
   workDetailsList({
     required this.id,
-     required this.projectName,
+    required this.projectName,
     required this.projectId,
     required this.customerName,
     required this.title,
@@ -74,6 +76,8 @@ class workDetailsList {
     required this.longitude,
     required this.gapDuration,
     required this.is_paused,
+    this.showRestart = false,
+    this.currentStatus = "",
     required this.tasks,
     required this.assigns,
     required this.loginTime,
@@ -85,37 +89,43 @@ class workDetailsList {
 
   factory workDetailsList.fromJson(Map<String, dynamic> json) =>
       workDetailsList(
-        id: json["id"] ?? "",
-          projectName: json["project_name"] ?? "",
-        projectId: json["project_id"] ?? "",
-        customerName: json["customer_name"] ?? "",
-        title: json["title"] ?? "",
-        titleName: json["title_name"] ?? "",
-        createdAt: json["created_at"] != null
-            ? DateTime.parse(json["created_at"])
+        id: json["id"]?.toString() ?? "",
+        projectName: json["project_name"]?.toString() ?? "",
+        projectId: json["project_id"]?.toString() ?? "",
+        customerName: json["customer_name"]?.toString() ?? "",
+        title: json["title"]?.toString() ?? "",
+        titleName: json["title_name"]?.toString() ?? "",
+        createdAt: json["created_at"] != null &&
+                json["created_at"].toString().trim().isNotEmpty
+            ? (DateTime.tryParse(json["created_at"].toString().trim()) ??
+                DateTime.now())
             : DateTime.now(),
-        startTime: json["start_time"] ?? "",
-        endTime: json["end_time"] ?? "",
-        totalDuration: json["total_duration"] ?? "",
-        latitude: json["latitude"] ?? "",
-        longitude: json["longitude"] ?? "",
-        gapDuration: json["gap_duration"] ?? "",
-        is_paused: json["is_paused"] ?? "",
-        tasks: json["tasks"] != null
+        startTime: json["start_time"]?.toString() ?? "",
+        endTime: json["end_time"]?.toString() ?? "",
+        totalDuration: json["total_duration"]?.toString() ?? "",
+        latitude: json["latitude"]?.toString() ?? "",
+        longitude: json["longitude"]?.toString() ?? "",
+        gapDuration: json["gap_duration"]?.toString() ?? "",
+        is_paused: json["is_paused"]?.toString() ?? "",
+        showRestart: json["show_restart"] == true ||
+            json["show_restart"]?.toString().toLowerCase() == "true" ||
+            json["show_restart"]?.toString() == "1",
+        currentStatus: json["current_status"]?.toString() ?? "",
+        tasks: json["tasks"] != null && json["tasks"] is List
             ? List<Task>.from(json["tasks"].map((x) => Task.fromJson(x)))
             : [],
-        assigns: json["assigns"] != null
+        assigns: json["assigns"] != null && json["assigns"] is List
             ? List<Assign>.from(json["assigns"].map((x) => Assign.fromJson(x)))
             : [],
-        loginTime: json["login_time"] ?? "",
-        logoutTime: json["logout_time"] ?? "",
-        TimeDifference: json["time_difference"] ?? "",
-        totalIdeaTime: json["total_gap_duration"] ?? "",
-        totalWorkingTime: json["total_work_duration"] ?? "",
+        loginTime: json["login_time"]?.toString() ?? "",
+        logoutTime: json["logout_time"]?.toString() ?? "",
+        TimeDifference: json["time_difference"]?.toString() ?? "",
+        totalIdeaTime: json["total_gap_duration"]?.toString() ?? "",
+        totalWorkingTime: json["total_work_duration"]?.toString() ?? "",
       );
   Map<String, dynamic> toJson() => {
         "id": id,
-          "project_name": projectName,
+        "project_name": projectName,
         "project_id": projectId,
         "customer_name": customerName,
         "title": title,
@@ -128,6 +138,8 @@ class workDetailsList {
         "longitude": longitude,
         "gap_duration": gapDuration,
         "is_paused": is_paused,
+        "show_restart": showRestart,
+        "current_status": currentStatus,
         "tasks": List<dynamic>.from(tasks.map((x) => x.toJson())),
         "assigns": List<dynamic>.from(assigns.map((x) => x.toJson())),
         "login_time": loginTime,

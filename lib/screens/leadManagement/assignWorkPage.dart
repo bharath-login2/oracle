@@ -1,8 +1,12 @@
 import 'dart:developer';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
 import 'package:login2/models/lead_management/taskStatusModel.dart';
 import '../../core/common.dart';
@@ -22,6 +26,8 @@ class TaskForm {
   String? assignedStaffId;
   List<String> supportingStaffIds;
   List<TextEditingController> remarksControllers;
+  List<File> files;
+  List<String> existingAttachments;
 
   TaskForm({
     required this.controller,
@@ -33,8 +39,12 @@ class TaskForm {
     this.assignedStaffId,
     List<String>? supportingStaffIds,
     List<TextEditingController>? remarks,
+    List<File>? files,
+    List<String>? existingAttachments,
   })  : supportingStaffIds = supportingStaffIds ?? [],
-        remarksControllers = remarks ?? [TextEditingController()];
+        remarksControllers = remarks ?? [TextEditingController()],
+        files = files ?? [],
+        existingAttachments = existingAttachments ?? [];
 }
 
 class AssignWorkPage extends StatefulWidget {
@@ -154,6 +164,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                   remarks: task.remarks
                       .map((remark) => TextEditingController(text: remark))
                       .toList(),
+                  files: [],
+                  existingAttachments: List.from(task.attachments),
                 ))
             .toList()
         : [
@@ -167,6 +179,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
               assignedStaffId: null,
               supportingStaffIds: [],
               remarks: [TextEditingController()],
+              files: [],
+              existingAttachments: [],
             )
           ];
 
@@ -513,6 +527,16 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         ),
       );
 
+      final List<File> allFiles = [];
+      final Map<int, List<File>> taskFilesMap = {};
+
+      for (int i = 0; i < tasks.length; i++) {
+        if (tasks[i].files.isNotEmpty) {
+          allFiles.addAll(tasks[i].files);
+          taskFilesMap[i] = tasks[i].files;
+        }
+      }
+
       final workData = {
         'work_id': widget.existingWork?.id,
         'staff_type': _isOfficeWork ? 1 : 2,
@@ -539,6 +563,9 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         'latitude': currentLatitude,
         'longitude': currentLongitude,
         'participant_ids': participantIds.join(','),
+        if (allFiles.isNotEmpty) 'files': allFiles,
+        if (allFiles.isNotEmpty) 'file': allFiles.first,
+        if (taskFilesMap.isNotEmpty) 'task_files': taskFilesMap,
         'notification': {
           'whatsapp': whatsappNotification,
           'push': pushNotification,
@@ -570,6 +597,12 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
             'status': (task.status != null && task.status.toString().isNotEmpty)
                 ? task.status
                 : 1,
+            if (task.files.isNotEmpty)
+              'files': task.files
+                  .map((f) => f.path.split(Platform.pathSeparator).last)
+                  .toList(),
+            if (task.existingAttachments.isNotEmpty)
+              'attachments': task.existingAttachments,
           };
         }).toList(),
       };
@@ -618,6 +651,520 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
         setState(() => _isAssigning = false);
       }
     }
+  }
+
+  bool _isImageFile(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.bmp') ||
+        lower.endsWith('.heic');
+  }
+
+  bool _isPdfFile(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.pdf');
+  }
+
+  bool _isImageUrl(String url) {
+    final clean = url.split('?').first.toLowerCase();
+    return clean.endsWith('.jpg') ||
+        clean.endsWith('.jpeg') ||
+        clean.endsWith('.png') ||
+        clean.endsWith('.webp') ||
+        clean.endsWith('.gif') ||
+        clean.endsWith('.bmp');
+  }
+
+  bool _isPdfUrl(String url) {
+    final clean = url.split('?').first.toLowerCase();
+    return clean.endsWith('.pdf');
+  }
+
+  String _getFileNameFromUrl(String url) {
+    try {
+      final clean = url.split('?').first;
+      final name = clean.split('/').last;
+      return name.isNotEmpty ? Uri.decodeComponent(name) : 'Attachment';
+    } catch (_) {
+      return 'Attachment';
+    }
+  }
+
+  void _showImagePreviewDialog({File? file, String? url}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: InteractiveViewer(
+                child: file != null
+                    ? Image.file(file, fit: BoxFit.contain)
+                    : (url != null
+                        ? Image.network(
+                            url,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.broken_image,
+                                  color: Colors.white, size: 48),
+                            ),
+                          )
+                        : const SizedBox.shrink()),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                ),
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openAttachmentUrl(String urlStr) async {
+    final trimmed = urlStr.trim();
+    if (trimmed.isEmpty) return;
+    if (_isImageUrl(trimmed)) {
+      _showImagePreviewDialog(url: trimmed);
+      return;
+    }
+    try {
+      final uri = Uri.parse(trimmed);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(uri);
+      }
+    } catch (e) {
+      log('Could not open attachment: $e');
+    }
+  }
+
+  Future<void> _pickFilesForTask(int taskIndex) async {
+    try {
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(allowMultiple: true);
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          for (final picked in result.files) {
+            if (picked.path != null) {
+              final newFile = File(picked.path!);
+              if (!tasks[taskIndex].files.any((f) => f.path == newFile.path)) {
+                tasks[taskIndex].files.add(newFile);
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {
+      log('Error picking files: $e');
+    }
+  }
+
+  Future<void> _capturePhotoFromCameraForTask(int taskIndex) async {
+    try {
+      final XFile? photo =
+          await ImagePicker().pickImage(source: ImageSource.camera);
+      if (photo != null) {
+        setState(() {
+          final file = File(photo.path);
+          if (!tasks[taskIndex].files.any((f) => f.path == file.path)) {
+            tasks[taskIndex].files.add(file);
+          }
+        });
+      }
+    } catch (e) {
+      log('Error capturing photo: $e');
+    }
+  }
+
+  Widget _buildFileUploadFieldForTask(int taskIndex) {
+    final task = tasks[taskIndex];
+    final fileCount = task.files.length + task.existingAttachments.length;
+    String displayText = 'No file chosen';
+    if (task.files.isNotEmpty && task.existingAttachments.isNotEmpty) {
+      displayText =
+          '${task.existingAttachments.length} uploaded, ${task.files.length} new selected';
+    } else if (task.files.isNotEmpty) {
+      displayText =
+          '${task.files.length} file${task.files.length > 1 ? 's' : ''} selected';
+    } else if (task.existingAttachments.isNotEmpty) {
+      displayText =
+          '${task.existingAttachments.length} file${task.existingAttachments.length > 1 ? 's' : ''} uploaded';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.attach_file_rounded,
+              size: 16,
+              color: Colors.black87,
+            ),
+            const SizedBox(width: 4),
+            const Text(
+              'File Upload',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '(Optional)',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade500,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              // Gallery / File Picker button
+              InkWell(
+                onTap: () => _pickFilesForTask(taskIndex),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(7),
+                  bottomLeft: Radius.circular(7),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(7),
+                      bottomLeft: Radius.circular(7),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.photo_library_outlined,
+                        size: 16,
+                        color: Colors.grey.shade800,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Choose Files',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // File text label
+              Expanded(
+                child: InkWell(
+                  onTap: () => _pickFilesForTask(taskIndex),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      displayText,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: fileCount > 0
+                            ? Colors.black87
+                            : Colors.grey.shade500,
+                        fontWeight: fileCount > 0
+                            ? FontWeight.w500
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Divider
+              Container(
+                height: 44,
+                width: 1,
+                color: Colors.grey.shade300,
+              ),
+              // Camera button
+              Tooltip(
+                message: 'Capture Photo',
+                child: InkWell(
+                  onTap: () => _capturePhotoFromCameraForTask(taskIndex),
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(7),
+                    bottomRight: Radius.circular(7),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(7),
+                        bottomRight: Radius.circular(7),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt_outlined,
+                      size: 20,
+                      color: Color(0xFF2a86c9),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (task.existingAttachments.isNotEmpty || task.files.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _buildTaskFilesPreview(taskIndex),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTaskFilesPreview(int taskIndex) {
+    final task = tasks[taskIndex];
+    final totalCount = task.existingAttachments.length + task.files.length;
+    if (totalCount == 0) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 84,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: totalCount,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index < task.existingAttachments.length) {
+            // Existing attachment
+            final url = task.existingAttachments[index];
+            final fileName = _getFileNameFromUrl(url);
+            final isImg = _isImageUrl(url);
+            final isPdf = _isPdfUrl(url);
+
+            return Stack(
+              children: [
+                GestureDetector(
+                  onTap: () => _openAttachmentUrl(url),
+                  child: Container(
+                    width: isImg ? 84 : 130,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: isImg
+                        ? Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.grey.shade500,
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isPdf
+                                      ? Icons.picture_as_pdf
+                                      : Icons.insert_drive_file_outlined,
+                                  color: isPdf
+                                      ? Colors.red
+                                      : Colors.blue.shade700,
+                                  size: 26,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  fileName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 4,
+                  left: 4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade700.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Uploaded',
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        task.existingAttachments.removeAt(index);
+                      });
+                    },
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            // New local file
+            final fileIndex = index - task.existingAttachments.length;
+            final file = task.files[fileIndex];
+            final fileName = file.path.split(Platform.pathSeparator).last;
+            final isImg = _isImageFile(file.path);
+            final isPdf = _isPdfFile(file.path);
+
+            return Stack(
+              children: [
+                GestureDetector(
+                  onTap: isImg
+                      ? () => _showImagePreviewDialog(file: file)
+                      : null,
+                  child: Container(
+                    width: isImg ? 84 : 130,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: isImg
+                        ? Image.file(
+                            file,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.grey.shade500,
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isPdf
+                                      ? Icons.picture_as_pdf
+                                      : Icons.insert_drive_file_outlined,
+                                  color: isPdf
+                                      ? Colors.red
+                                      : Colors.blue.shade700,
+                                  size: 26,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  fileName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        task.files.removeAt(fileIndex);
+                      });
+                    },
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -1845,6 +2392,10 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                         ),
                                       ],
                                     ),
+                                    if (_isOfficeWork) ...[
+                                      const SizedBox(height: 14),
+                                      _buildFileUploadFieldForTask(taskIndex),
+                                    ],
                                   ],
                                 )
                               ],
@@ -1872,6 +2423,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                                   assignedStaffId: null,
                                   supportingStaffIds: [],
                                   remarks: [TextEditingController()],
+                                  files: [],
+                                  existingAttachments: [],
                                 ));
                               });
                             },
@@ -2490,6 +3043,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                 assignedStaffId: null,
                 supportingStaffIds: [],
                 remarks: [TextEditingController()],
+                files: [],
+                existingAttachments: [],
               )
             ];
           } else if (widget.existingWork == null) {
@@ -2505,6 +3060,8 @@ class _AssignWorkPageState extends State<AssignWorkPage> {
                 assignedStaffId: null,
                 supportingStaffIds: [],
                 remarks: [TextEditingController()],
+                files: [],
+                existingAttachments: [],
               )
             ];
           } else {

@@ -39,6 +39,8 @@ class _WorkListPageState extends State<WorkListPage>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   bool isWorkStarted = false;
+  bool _isActionInProgress = false;
+  String? _processingWorkId;
   @override
   @override
   void initState() {
@@ -67,15 +69,25 @@ class _WorkListPageState extends State<WorkListPage>
     final roleModel = await httpService.getRoleId();
 
     if (roleModel != null && roleModel.status == "success") {
-      setState(() {
-        roleId = roleModel.data.role;
-      });
+      if (mounted) {
+        setState(() {
+          roleId = roleModel.data.role;
+        });
+      }
       log("✅ Role ID from API: $roleId");
     } else {
-      roleId = await Common.getSharedPref("roleId") ?? "2";
+      final fallbackRole = await Common.getSharedPref("roleId") ?? "2";
+      if (mounted) {
+        setState(() {
+          roleId = fallbackRole;
+        });
+      }
       log("⚠️ Using fallback Role ID: $roleId");
     }
   }
+
+  String _normalizeStatus(String? status) =>
+      (status ?? '').trim().toLowerCase();
 
   Future<void> _fetchMaterials() async {
     try {
@@ -198,16 +210,20 @@ class _WorkListPageState extends State<WorkListPage>
     if (workId == null) return;
 
     String? selectedProduct;
-    String? selectedStatus = "New";
     String? selectedMilestone;
     String? selectedCustomerId;
     final List<String> statusOptions = [
       "New",
       "In Progress",
+      "Pending",
       "Completed",
       "On Hold",
       "Cancelled",
     ];
+    String? selectedStatus = statusOptions.firstWhere(
+      (s) => s.toLowerCase() == _normalizeStatus(work.status),
+      orElse: () => "New",
+    );
 
     List<WorkType> workTypes = [];
     List<MaterialData> materialsList = [];
@@ -761,15 +777,19 @@ class _WorkListPageState extends State<WorkListPage>
     if (workId == null) return;
 
     String? selectedProduct;
-    String? selectedStatus = "In Progress";
     String? selectedMilestone;
     String? selectedCustomerId;
     final List<String> statusOptions = [
       "In Progress",
+      "Pending",
       "Completed",
       "On Hold",
       "Cancelled",
     ];
+    String? selectedStatus = statusOptions.firstWhere(
+      (s) => s.toLowerCase() == _normalizeStatus(work.status),
+      orElse: () => "In Progress",
+    );
 
     List<WorkType> workTypes = [];
     List<MaterialData> materialsList = [];
@@ -1371,7 +1391,18 @@ class _WorkListPageState extends State<WorkListPage>
     final String? workId = work.workOrderId;
     if (workId == null) return;
 
-    String? selectedStatus = "On Hold";
+    final List<String> statusOptions = [
+      "New",
+      "In Progress",
+      "Pending",
+      "Completed",
+      "On Hold",
+      "Cancelled",
+    ];
+    String? selectedStatus = statusOptions.firstWhere(
+      (s) => s.toLowerCase() == _normalizeStatus(work.status),
+      orElse: () => "Pending",
+    );
     String? selectedMilestone;
     String? selectedProduct;
 
@@ -1391,13 +1422,6 @@ class _WorkListPageState extends State<WorkListPage>
             [];
 
     String? selectedCustomerId;
-    final List<String> statusOptions = [
-      "New",
-      "In Progress",
-      "Completed",
-      "On Hold",
-      "Cancelled",
-    ];
 
     List<WorkType> workTypes = [];
     List<MaterialData> materialsList = [];
@@ -1952,6 +1976,12 @@ class _WorkListPageState extends State<WorkListPage>
     List<Map<String, dynamic>> selectedMaterials,
     String? selectedCustomerId,
   ) async {
+    if (_isActionInProgress) return;
+    setState(() {
+      _isActionInProgress = true;
+      _processingWorkId = workId;
+    });
+
     final http = HttpService();
     Map<String, dynamic> response = {};
 
@@ -1979,14 +2009,16 @@ class _WorkListPageState extends State<WorkListPage>
           selectedCustomerId,
         );
       }
+      if (!mounted) return;
       if (response["status"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green.shade600,
-            content: Text("Work $action successful!"),
+            content: Text(response["message"] ?? "Work $action successful!"),
           ),
         );
-        _fetchWorkList();
+        await _fetchWorkList();
+        await _fetchWorkStatus();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1996,9 +2028,17 @@ class _WorkListPageState extends State<WorkListPage>
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error performing $action: $e")));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isActionInProgress = false;
+          _processingWorkId = null;
+        });
+      }
     }
   }
 
@@ -2012,6 +2052,12 @@ class _WorkListPageState extends State<WorkListPage>
     List<Map<String, dynamic>> selectedMaterials,
     String? selectedCustomerId,
   ) async {
+    if (_isActionInProgress) return;
+    setState(() {
+      _isActionInProgress = true;
+      _processingWorkId = workId;
+    });
+
     final http = HttpService();
     Map<String, dynamic> response = {};
 
@@ -2031,14 +2077,16 @@ class _WorkListPageState extends State<WorkListPage>
             await http.pauseWorkService(workId, status, remarks, milestone);
       }
 
+      if (!mounted) return;
       if (response["status"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green.shade600,
-            content: Text("Work $action successful!"),
+            content: Text(response["message"] ?? "Work $action successful!"),
           ),
         );
-        _fetchWorkList();
+        await _fetchWorkList();
+        await _fetchWorkStatus();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2048,9 +2096,17 @@ class _WorkListPageState extends State<WorkListPage>
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error performing $action: $e")));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isActionInProgress = false;
+          _processingWorkId = null;
+        });
+      }
     }
   }
 
@@ -2064,6 +2120,12 @@ class _WorkListPageState extends State<WorkListPage>
     List<Map<String, dynamic>> selectedMaterials,
     String? selectedCustomerId,
   ) async {
+    if (_isActionInProgress) return;
+    setState(() {
+      _isActionInProgress = true;
+      _processingWorkId = workId;
+    });
+
     final http = HttpService();
     Map<String, dynamic> response = {};
 
@@ -2092,14 +2154,16 @@ class _WorkListPageState extends State<WorkListPage>
         );
       }
 
+      if (!mounted) return;
       if (response["status"] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green.shade600,
-            content: Text("Work $action successful!"),
+            content: Text(response["message"] ?? "Work $action successful!"),
           ),
         );
-        _fetchWorkList();
+        await _fetchWorkList();
+        await _fetchWorkStatus();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2109,9 +2173,17 @@ class _WorkListPageState extends State<WorkListPage>
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Error performing $action: $e")));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isActionInProgress = false;
+          _processingWorkId = null;
+        });
+      }
     }
   }
 
@@ -2272,17 +2344,35 @@ class _WorkListPageState extends State<WorkListPage>
                     )
                   else
                     const SizedBox(),
-                  if ((work.status == "New") && roleId != null && roleId == "3")
+                  if (_normalizeStatus(work.status) == "new" &&
+                      roleId?.trim() == "3")
                     ElevatedButton.icon(
-                      onPressed: () {
-                        if (isWorkStarted) {
-                          _showWorkInProgressDialog();
-                        } else {
-                          _confirmAction("Start Work", work, "start");
-                        }
-                      },
-                      icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                      label: const Text("Start"),
+                      onPressed: _isActionInProgress
+                          ? null
+                          : () {
+                              if (isWorkStarted) {
+                                _showWorkInProgressDialog();
+                              } else {
+                                _confirmAction("Start Work", work, "start");
+                              }
+                            },
+                      icon: (_isActionInProgress &&
+                              _processingWorkId == work.workOrderId)
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.play_arrow_rounded, size: 18),
+                      label: Text(
+                        (_isActionInProgress &&
+                                _processingWorkId == work.workOrderId)
+                            ? "Starting..."
+                            : "Start Work",
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green.shade600,
                         foregroundColor: Colors.white,
@@ -2411,14 +2501,33 @@ class _WorkListPageState extends State<WorkListPage>
                         minimumSize: const Size(0, 36),
                       ),
                     ),
-                  ] else if ((work.status == "In Progress") &&
-                      roleId != null &&
-                      roleId == "3")
+                  ] else if (_normalizeStatus(work.status) == "in progress" &&
+                      roleId?.trim() == "3")
                     ElevatedButton.icon(
-                      onPressed: () =>
-                          _confirmActionStop("Stop Work", work, "stop"),
-                      icon: const Icon(Icons.stop, size: 18),
-                      label: const Text("Stop"),
+                      onPressed: _isActionInProgress
+                          ? null
+                          : () => _confirmActionStop(
+                                "Complete Work",
+                                work,
+                                "stop",
+                              ),
+                      icon: (_isActionInProgress &&
+                              _processingWorkId == work.workOrderId)
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.check_circle_outline, size: 18),
+                      label: Text(
+                        (_isActionInProgress &&
+                                _processingWorkId == work.workOrderId)
+                            ? "Completing..."
+                            : "Complete Work",
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(255, 238, 15, 15),
                         foregroundColor: Colors.white,
@@ -2431,23 +2540,40 @@ class _WorkListPageState extends State<WorkListPage>
                         ),
                       ),
                     )
-                  else if ((work.status == "On Hold") &&
-                      roleId != null &&
-                      roleId == "3")
+                  else if ((_normalizeStatus(work.status) == "pending" ||
+                          _normalizeStatus(work.status) == "on hold") &&
+                      roleId?.trim() == "3")
                     ElevatedButton.icon(
-                      onPressed: () {
-                        if (isWorkStarted) {
-                          _showWorkInProgressDialog();
-                        } else {
-                          _confirmActionRestart(
-                            "Restart Work",
-                            work,
-                            "restart",
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.restart_alt, size: 18),
-                      label: const Text("Restart"),
+                      onPressed: _isActionInProgress
+                          ? null
+                          : () {
+                              if (isWorkStarted) {
+                                _showWorkInProgressDialog();
+                              } else {
+                                _confirmActionRestart(
+                                  "Restart Work",
+                                  work,
+                                  "restart",
+                                );
+                              }
+                            },
+                      icon: (_isActionInProgress &&
+                              _processingWorkId == work.workOrderId)
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.restart_alt, size: 18),
+                      label: Text(
+                        (_isActionInProgress &&
+                                _processingWorkId == work.workOrderId)
+                            ? "Restarting..."
+                            : "Restart Work",
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromARGB(
                           255,
@@ -2538,7 +2664,7 @@ class _WorkListPageState extends State<WorkListPage>
   }
 
   Color _getCardColor(String? status) {
-    switch (status?.toLowerCase()) {
+    switch (_normalizeStatus(status)) {
       case "new":
         return const Color(0xFFD7E9FF);
       case "assigned":
@@ -2547,6 +2673,7 @@ class _WorkListPageState extends State<WorkListPage>
         return const Color(0xFFFFEFC2);
       case "completed":
         return const Color.fromARGB(255, 223, 247, 225);
+      case "pending":
       case "on hold":
         return const Color(0xFFFFE3B3);
       default:
@@ -2555,7 +2682,7 @@ class _WorkListPageState extends State<WorkListPage>
   }
 
   Color _getStatusChipColor(String? status) {
-    switch (status?.toLowerCase()) {
+    switch (_normalizeStatus(status)) {
       case "new":
         return Colors.blueAccent;
       case "assigned":
@@ -2564,6 +2691,8 @@ class _WorkListPageState extends State<WorkListPage>
         return Colors.orangeAccent;
       case "completed":
         return Colors.green;
+      case "pending":
+        return Colors.deepOrange;
       case "on hold":
         return Colors.redAccent;
       default:

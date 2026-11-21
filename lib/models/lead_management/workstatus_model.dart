@@ -82,6 +82,7 @@ class WorkStatus {
   final String? looseTypeId;
   final String? responsibleParty;
   final String? previousTimeline;
+  final List<String> attachments;
 
   WorkStatus({
     required this.id,
@@ -109,6 +110,7 @@ class WorkStatus {
     this.looseTypeId,
     this.responsibleParty,
     this.previousTimeline,
+    this.attachments = const [],
   });
 
   factory WorkStatus.fromJson(Map<String, dynamic> json) => WorkStatus(
@@ -139,6 +141,11 @@ class WorkStatus {
         looseTypeId: json["loose_type_id"]?.toString() ?? json["loose_type"]?.toString(),
         responsibleParty: json["responsible_party"]?.toString(),
         previousTimeline: json["previous_timeline"]?.toString(),
+        attachments: (json["attachments"] is List)
+            ? List<String>.from(json["attachments"].map((x) => x.toString()))
+            : (json["attachment"] != null
+                ? [json["attachment"].toString()]
+                : []),
       );
 
   Map<String, dynamic> toJson() => {
@@ -173,6 +180,7 @@ class Task {
   final String? hours;
   final String? delayHours;
   final String? previousTimeline;
+  final List<String> attachments;
 
   Task({
     required this.taskId,
@@ -190,9 +198,39 @@ class Task {
     this.hours,
     this.delayHours,
     this.previousTimeline,
+    this.attachments = const [],
   });
 
-  factory Task.fromJson(Map<String, dynamic> json) => Task(
+  factory Task.fromJson(Map<String, dynamic> json) {
+    List<String> parsedAttachments = [];
+    final rawAttachments =
+        json["attachments"] ?? json["attachment"] ?? json["files"] ?? json["file"];
+    if (rawAttachments != null) {
+      if (rawAttachments is List) {
+        for (var item in rawAttachments) {
+          if (item == null) continue;
+          if (item is String && item.trim().isNotEmpty) {
+            parsedAttachments.add(item.trim());
+          } else if (item is Map) {
+            final url = item['url'] ??
+                item['file'] ??
+                item['attachment'] ??
+                item['path'] ??
+                item['link'];
+            if (url != null && url.toString().trim().isNotEmpty) {
+              parsedAttachments.add(url.toString().trim());
+            }
+          } else {
+            final str = item.toString().trim();
+            if (str.isNotEmpty) parsedAttachments.add(str);
+          }
+        }
+      } else if (rawAttachments is String && rawAttachments.trim().isNotEmpty) {
+        parsedAttachments.add(rawAttachments.trim());
+      }
+    }
+
+    return Task(
         taskId: json["task_id"]?.toString() ?? "",
         activityId: json["activity_id"]?.toString() ?? json["task_id"]?.toString() ?? "",
         taskName: json["task_name"]?.toString() ?? "",
@@ -208,7 +246,9 @@ class Task {
         hours: json["hours"]?.toString() ?? json["delay_hours"]?.toString(),
         delayHours: json["delay_hours"]?.toString() ?? json["hours"]?.toString(),
         previousTimeline: json["previous_timeline"]?.toString(),
+        attachments: parsedAttachments,
       );
+  }
 
   Map<String, dynamic> toJson() => {
         "task_id": taskId,

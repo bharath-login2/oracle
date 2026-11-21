@@ -1,5 +1,46 @@
 import 'dart:convert';
 
+List<String> _parseAttachmentStringList(dynamic raw) {
+  final List<String> result = [];
+  if (raw == null) return result;
+  if (raw is List) {
+    for (var item in raw) {
+      if (item == null) continue;
+      final str = item.toString().trim();
+      if (str.isNotEmpty) result.add(str);
+    }
+  } else if (raw is String) {
+    final trimmed = raw.trim();
+    if (trimmed.isNotEmpty) {
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+          final decoded = jsonDecode(trimmed);
+          if (decoded is List) {
+            for (var item in decoded) {
+              if (item != null && item.toString().trim().isNotEmpty) {
+                result.add(item.toString().trim());
+              }
+            }
+          }
+        } catch (_) {
+          result.add(trimmed);
+        }
+      } else {
+        result.addAll(
+          trimmed
+              .split(RegExp(r'[,\n]'))
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty),
+        );
+      }
+    }
+  } else {
+    final str = raw.toString().trim();
+    if (str.isNotEmpty) result.add(str);
+  }
+  return result;
+}
+
 class SupportingStaff {
   final String id;
   final String staffName;
@@ -32,6 +73,8 @@ class WorkSession {
   final List<SupportingStaff> supportingStaff;
   final List<Work> works;
   final List<String> attachments;
+  final List<String> attachmentIds;
+  final List<String> attachmentFileIds;
 
   WorkSession({
     required this.projectId,
@@ -48,10 +91,17 @@ class WorkSession {
     this.supportingStaff = const [],
     required this.works,
     this.attachments = const [],
+    this.attachmentIds = const [],
+    this.attachmentFileIds = const [],
   });
 
   factory WorkSession.fromJson(Map<String, dynamic> json) {
     List<String> parsedSessionAttachments = [];
+    List<String> parsedSessionAttachmentIds = _parseAttachmentStringList(
+        json['attachment_ids'] ?? json['attachment_id']);
+    List<String> parsedSessionAttachmentFileIds = _parseAttachmentStringList(
+        json['attachment_file_ids'] ?? json['attachment_file_id']);
+
     final rawSessionAttachments = json['attachments'] ?? json['attachment'];
     if (rawSessionAttachments != null) {
       if (rawSessionAttachments is List) {
@@ -67,6 +117,21 @@ class WorkSession {
                 item['link'];
             if (url != null && url.toString().trim().isNotEmpty) {
               parsedSessionAttachments.add(url.toString().trim());
+              if (parsedSessionAttachmentIds.length <
+                  parsedSessionAttachments.length) {
+                final idVal =
+                    (item['attachment_id'] ?? item['id'] ?? '').toString().trim();
+                parsedSessionAttachmentIds.add(idVal);
+              }
+              if (parsedSessionAttachmentFileIds.length <
+                  parsedSessionAttachments.length) {
+                final fileIdVal = (item['attachment_file_id'] ??
+                        item['file_id'] ??
+                        '')
+                    .toString()
+                    .trim();
+                parsedSessionAttachmentFileIds.add(fileIdVal);
+              }
             }
           } else {
             final str = item.toString().trim();
@@ -143,6 +208,8 @@ class WorkSession {
           [],
       works: parsedWorks,
       attachments: parsedSessionAttachments,
+      attachmentIds: parsedSessionAttachmentIds,
+      attachmentFileIds: parsedSessionAttachmentFileIds,
     );
   }
 }
@@ -155,6 +222,8 @@ class Work {
   final List<String> remarks;
   final String completionPercent;
   final List<String> attachments;
+  final List<String> attachmentIds;
+  final List<String> attachmentFileIds;
 
   Work({
     required this.workedDate,
@@ -164,6 +233,8 @@ class Work {
     required this.remarks,
     this.completionPercent = '',
     this.attachments = const [],
+    this.attachmentIds = const [],
+    this.attachmentFileIds = const [],
   });
 
   factory Work.fromJson(Map<String, dynamic> json) {
@@ -188,6 +259,11 @@ class Work {
     }
 
     List<String> parsedAttachments = [];
+    List<String> parsedAttachmentIds = _parseAttachmentStringList(
+        json['attachment_ids'] ?? json['attachment_id']);
+    List<String> parsedAttachmentFileIds = _parseAttachmentStringList(
+        json['attachment_file_ids'] ?? json['attachment_file_id']);
+
     final rawAttachments = json['attachments'] ?? json['attachment'];
     if (rawAttachments != null) {
       if (rawAttachments is List) {
@@ -203,6 +279,19 @@ class Work {
                 item['link'];
             if (url != null && url.toString().trim().isNotEmpty) {
               parsedAttachments.add(url.toString().trim());
+              if (parsedAttachmentIds.length < parsedAttachments.length) {
+                final idVal =
+                    (item['attachment_id'] ?? item['id'] ?? '').toString().trim();
+                parsedAttachmentIds.add(idVal);
+              }
+              if (parsedAttachmentFileIds.length < parsedAttachments.length) {
+                final fileIdVal = (item['attachment_file_id'] ??
+                        item['file_id'] ??
+                        '')
+                    .toString()
+                    .trim();
+                parsedAttachmentFileIds.add(fileIdVal);
+              }
             }
           } else {
             final str = item.toString().trim();
@@ -255,6 +344,8 @@ class Work {
       remarks: parsedRemarks,
       completionPercent: parsedCompletionPercent,
       attachments: parsedAttachments,
+      attachmentIds: parsedAttachmentIds,
+      attachmentFileIds: parsedAttachmentFileIds,
     );
   }
 }
@@ -339,6 +430,9 @@ class AssignedWork {
   final String workType;
   final String staffType;
   final String phNo;
+  final List<String> attachments;
+  final List<String> attachmentIds;
+  final List<String> attachmentFileIds;
 
   AssignedWork({
     required this.total,
@@ -376,9 +470,83 @@ class AssignedWork {
     this.workType = '',
     this.staffType = '',
     this.phNo = '',
+    this.attachments = const [],
+    this.attachmentIds = const [],
+    this.attachmentFileIds = const [],
   });
 
   factory AssignedWork.fromJson(Map<String, dynamic> json) {
+    List<String> parsedRootAttachments = [];
+    List<String> parsedRootAttachmentIds = _parseAttachmentStringList(
+        json['attachment_ids'] ?? json['attachment_id']);
+    List<String> parsedRootAttachmentFileIds = _parseAttachmentStringList(
+        json['attachment_file_ids'] ?? json['attachment_file_id']);
+
+    final rawRootAttachments =
+        json['attachments'] ?? json['attachment'] ?? json['files'] ?? json['file'];
+    if (rawRootAttachments != null) {
+      if (rawRootAttachments is List) {
+        for (var item in rawRootAttachments) {
+          if (item == null) continue;
+          if (item is String && item.trim().isNotEmpty) {
+            parsedRootAttachments.add(item.trim());
+          } else if (item is Map) {
+            final url = item['url'] ??
+                item['file'] ??
+                item['attachment'] ??
+                item['path'] ??
+                item['link'];
+            if (url != null && url.toString().trim().isNotEmpty) {
+              parsedRootAttachments.add(url.toString().trim());
+              if (parsedRootAttachmentIds.length <
+                  parsedRootAttachments.length) {
+                final idVal =
+                    (item['attachment_id'] ?? item['id'] ?? '').toString().trim();
+                parsedRootAttachmentIds.add(idVal);
+              }
+              if (parsedRootAttachmentFileIds.length <
+                  parsedRootAttachments.length) {
+                final fileIdVal = (item['attachment_file_id'] ??
+                        item['file_id'] ??
+                        '')
+                    .toString()
+                    .trim();
+                parsedRootAttachmentFileIds.add(fileIdVal);
+              }
+            }
+          } else {
+            final str = item.toString().trim();
+            if (str.isNotEmpty) parsedRootAttachments.add(str);
+          }
+        }
+      } else if (rawRootAttachments is String) {
+        final trimmed = rawRootAttachments.trim();
+        if (trimmed.isNotEmpty) {
+          if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+              final decoded = jsonDecode(trimmed);
+              if (decoded is List) {
+                for (var item in decoded) {
+                  if (item != null && item.toString().trim().isNotEmpty) {
+                    parsedRootAttachments.add(item.toString().trim());
+                  }
+                }
+              }
+            } catch (_) {
+              parsedRootAttachments.add(trimmed);
+            }
+          } else {
+            parsedRootAttachments.addAll(
+              trimmed
+                  .split(RegExp(r'[,\n]'))
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty),
+            );
+          }
+        }
+      }
+    }
+
     final workSessions = (json['work_sessions'] as List<dynamic>?)
             ?.map((session) => WorkSession.fromJson(session))
             .toList() ??
@@ -445,6 +613,9 @@ class AssignedWork {
               json['completion_percent'] ??
               '')
           .toString(),
+      attachments: parsedRootAttachments,
+      attachmentIds: parsedRootAttachmentIds,
+      attachmentFileIds: parsedRootAttachmentFileIds,
     );
   }
 }

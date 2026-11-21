@@ -5410,6 +5410,51 @@ class HttpService {
       "action": workData['action'] ?? '',
       "tasks": jsonEncode(workData['tasks']),
     });
+
+    final rawTaskFiles = workData['task_files'];
+    final rawFiles = workData['files'];
+    final rawFile = workData['file'];
+
+    if (rawTaskFiles is Map && rawTaskFiles.isNotEmpty) {
+      for (final entry in rawTaskFiles.entries) {
+        final taskIdx = entry.key;
+        final files = entry.value;
+        if (files is List) {
+          for (final f in files) {
+            if (f is File) {
+              final fileName = f.path.split(Platform.pathSeparator).last;
+              formData.files.add(
+                MapEntry(
+                  'attachments[$taskIdx][]',
+                  await MultipartFile.fromFile(f.path, filename: fileName),
+                ),
+              );
+            }
+          }
+        }
+      }
+    } else if (rawFiles is List && rawFiles.isNotEmpty) {
+      for (final f in rawFiles) {
+        if (f is File) {
+          final fileName = f.path.split(Platform.pathSeparator).last;
+          formData.files.add(
+            MapEntry(
+              'attachments[0][]',
+              await MultipartFile.fromFile(f.path, filename: fileName),
+            ),
+          );
+        }
+      }
+    } else if (rawFile is File) {
+      final fileName = rawFile.path.split(Platform.pathSeparator).last;
+      formData.files.add(
+        MapEntry(
+          'attachments[0][]',
+          await MultipartFile.fromFile(rawFile.path, filename: fileName),
+        ),
+      );
+    }
+
     try {
       var result = await _dio.post(
         "${await Config.getUrl()}end_work",
@@ -5774,20 +5819,74 @@ class HttpService {
       "longitude": workData['longitude'],
       "tasks": jsonEncode(workData['tasks']),
       "work_start_time": workData['work_time'],
-      "whatsapp_notification": workData['notification']['whatsapp'] ?? false,
-      "push_notification": workData['notification']['push'] ?? false,
+      "whatsapp_notification": workData['notification']?['whatsapp'] ?? false,
+      "push_notification": workData['notification']?['push'] ?? false,
       "notify_to_assigned":
-          workData['notification']['notify_to_assigned'] ?? false,
+          workData['notification']?['notify_to_assigned'] ?? false,
       "notify_on_status_change":
-          workData['notification']['notify_on_status_change'] ?? false,
+          workData['notification']?['notify_on_status_change'] ?? false,
       "notify_other_people":
-          workData['notification']['notify_other_people'] ?? false,
-      "notify_staff_ids": workData['notification']['staff_ids'] ?? '',
-      "notify_on_start": workData['notification']['on_start'] ?? false,
-      "notify_on_complete": workData['notification']['on_complete'] ?? false,
+          workData['notification']?['notify_other_people'] ?? false,
+      "notify_staff_ids": workData['notification']?['staff_ids'] ?? '',
+      "notify_on_start": workData['notification']?['on_start'] ?? false,
+      "notify_on_complete": workData['notification']?['on_complete'] ?? false,
       "participant_ids": workData['participant_ids'] ?? '',
     });
-    // try {
+
+    final rawTaskFiles = workData['task_files'];
+    final rawFiles = workData['files'];
+    final rawFile = workData['file'];
+
+    if (rawTaskFiles is Map && rawTaskFiles.isNotEmpty) {
+      for (final entry in rawTaskFiles.entries) {
+        final taskIdx = entry.key;
+        final files = entry.value;
+
+        if (files is List) {
+          for (final f in files) {
+            if (f is File) {
+              final fileName = f.path.split(Platform.pathSeparator).last;
+              formData.files.add(
+                MapEntry(
+                  'attachments[$taskIdx][]',
+                  await MultipartFile.fromFile(
+                    f.path,
+                    filename: fileName,
+                  ),
+                ),
+              );
+            }
+          }
+        }
+      }
+    } else if (rawFiles is List && rawFiles.isNotEmpty) {
+      for (final f in rawFiles) {
+        if (f is File) {
+          final fileName = f.path.split(Platform.pathSeparator).last;
+          formData.files.add(
+            MapEntry(
+              'attachments[0][]',
+              await MultipartFile.fromFile(
+                f.path,
+                filename: fileName,
+              ),
+            ),
+          );
+        }
+      }
+    } else if (rawFile is File) {
+      final fileName = rawFile.path.split(Platform.pathSeparator).last;
+      formData.files.add(
+        MapEntry(
+          'attachments[0][]',
+          await MultipartFile.fromFile(
+            rawFile.path,
+            filename: fileName,
+          ),
+        ),
+      );
+    }
+
     var result = await _dio.post(
       "${await Config.getUrl()}assign_work",
       data: formData,
@@ -12470,10 +12569,51 @@ class HttpService {
   Future<CommonResponse?> updateAssignedWork(Map<String, dynamic> data) async {
     try {
       final token = await Common.getSharedPref("token");
-      final formData = FormData.fromMap({
-        "token": token,
-        ...data,
-      });
+      final rawFiles = data['files'];
+      final rawFile = data['file'];
+      final rawTaskFiles = data['task_files'];
+
+      final Map<String, dynamic> mapData = Map<String, dynamic>.from(data);
+      mapData.remove('files');
+      mapData.remove('file');
+      mapData.remove('task_files');
+      mapData['token'] = token;
+
+      final formData = FormData.fromMap(mapData, ListFormat.multiCompatible);
+
+      if (rawTaskFiles is Map && rawTaskFiles.isNotEmpty) {
+        for (final entry in rawTaskFiles.entries) {
+          final taskIdx = entry.key;
+          final files = entry.value;
+          if (files is List) {
+            for (final f in files) {
+              if (f is File) {
+                final fileName = f.path.split(Platform.pathSeparator).last;
+                formData.files.add(MapEntry(
+                  'attachments[$taskIdx][]',
+                  await MultipartFile.fromFile(f.path, filename: fileName),
+                ));
+              }
+            }
+          }
+        }
+      } else if (rawFiles is List && rawFiles.isNotEmpty) {
+        for (final f in rawFiles) {
+          if (f is File) {
+            final fileName = f.path.split(Platform.pathSeparator).last;
+            formData.files.add(MapEntry(
+              'attachments[0][]',
+              await MultipartFile.fromFile(f.path, filename: fileName),
+            ));
+          }
+        }
+      } else if (rawFile is File) {
+        final fileName = rawFile.path.split(Platform.pathSeparator).last;
+        formData.files.add(MapEntry(
+          'attachments[0][]',
+          await MultipartFile.fromFile(rawFile.path, filename: fileName),
+        ));
+      }
 
       final response = await _dio.post(
         "${await Config.getUrl()}update_assigned_work",

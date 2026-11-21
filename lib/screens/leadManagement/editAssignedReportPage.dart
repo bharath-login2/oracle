@@ -1,5 +1,11 @@
+import 'dart:developer';
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:login2/core/common.dart';
 import 'package:login2/models/lead_management/AssignedWorkModel.dart';
 import 'package:login2/models/lead_management/priorityStatusModel.dart';
@@ -8,6 +14,18 @@ import 'package:login2/models/lead_management/taskStatusModel.dart';
 import 'package:login2/models/lead_management/titleListModel.dart';
 import 'package:login2/service/service.dart';
 import 'package:login2/models/expense/staffListModel.dart';
+
+class ExistingAttachmentItem {
+  final String url;
+  final String attachmentId;
+  final String attachmentFileId;
+
+  const ExistingAttachmentItem({
+    required this.url,
+    this.attachmentId = '',
+    this.attachmentFileId = '',
+  });
+}
 
 class EditTaskForm {
   TextEditingController controller;
@@ -21,6 +39,15 @@ class EditTaskForm {
   List<String> supportingStaffIds;
   List<TextEditingController> remarksControllers;
   bool isExisting;
+  List<ExistingAttachmentItem> existingAttachmentItems;
+  List<String> deleteAttachmentIds;
+  List<String> deleteAttachmentFileIds;
+  List<File> newFiles;
+
+  List<String> get existingAttachments =>
+      existingAttachmentItems.map((e) => e.url).toList();
+
+  List<File> get files => newFiles;
 
   EditTaskForm({
     required this.controller,
@@ -34,8 +61,21 @@ class EditTaskForm {
     List<String>? supportingStaffIds,
     List<TextEditingController>? remarks,
     this.isExisting = false,
+    List<ExistingAttachmentItem>? existingAttachmentItems,
+    List<String>? existingAttachments,
+    List<String>? deleteAttachmentIds,
+    List<String>? deleteAttachmentFileIds,
+    List<File>? newFiles,
   })  : supportingStaffIds = supportingStaffIds ?? [],
-        remarksControllers = remarks ?? [TextEditingController()];
+        remarksControllers = remarks ?? [TextEditingController()],
+        existingAttachmentItems = existingAttachmentItems ??
+            (existingAttachments
+                    ?.map((u) => ExistingAttachmentItem(url: u))
+                    .toList() ??
+                []),
+        deleteAttachmentIds = deleteAttachmentIds ?? [],
+        deleteAttachmentFileIds = deleteAttachmentFileIds ?? [],
+        newFiles = newFiles ?? [];
 }
 
 class EditWorkPage extends StatefulWidget {
@@ -211,6 +251,42 @@ class _EditWorkPageState extends State<EditWorkPage> {
 
     priority = _mapPriorityToId(work.priority);
 
+    List<ExistingAttachmentItem> mergeAttachmentItems(
+      List<ExistingAttachmentItem> target,
+      List<String> urls,
+      List<String> ids,
+      List<String> fileIds,
+    ) {
+      for (int i = 0; i < urls.length; i++) {
+        final url = urls[i].trim();
+        if (url.isEmpty) continue;
+        final id = i < ids.length ? ids[i].trim() : '';
+        final fileId = i < fileIds.length ? fileIds[i].trim() : '';
+        final existingIdx = target.indexWhere((item) => item.url == url);
+        if (existingIdx == -1) {
+          target.add(ExistingAttachmentItem(
+            url: url,
+            attachmentId: id,
+            attachmentFileId: fileId,
+          ));
+        } else {
+          final current = target[existingIdx];
+          if ((current.attachmentId.isEmpty && id.isNotEmpty) ||
+              (current.attachmentFileId.isEmpty && fileId.isNotEmpty)) {
+            target[existingIdx] = ExistingAttachmentItem(
+              url: current.url,
+              attachmentId:
+                  current.attachmentId.isNotEmpty ? current.attachmentId : id,
+              attachmentFileId: current.attachmentFileId.isNotEmpty
+                  ? current.attachmentFileId
+                  : fileId,
+            );
+          }
+        }
+      }
+      return target;
+    }
+
     if (work.workSessions.isNotEmpty) {
       tasks = work.workSessions.map((session) {
         final remarkList = session.remark.isNotEmpty
@@ -224,6 +300,30 @@ class _EditWorkPageState extends State<EditWorkPage> {
             .map((staff) => staff.id)
             .where((id) => id.isNotEmpty)
             .toList();
+
+        final List<ExistingAttachmentItem> sessionItems = [];
+        mergeAttachmentItems(
+          sessionItems,
+          session.attachments,
+          session.attachmentIds,
+          session.attachmentFileIds,
+        );
+        for (final w in session.works) {
+          mergeAttachmentItems(
+            sessionItems,
+            w.attachments,
+            w.attachmentIds,
+            w.attachmentFileIds,
+          );
+        }
+        if (work.workSessions.length == 1) {
+          mergeAttachmentItems(
+            sessionItems,
+            work.attachments,
+            work.attachmentIds,
+            work.attachmentFileIds,
+          );
+        }
 
         return EditTaskForm(
           controller: TextEditingController(text: session.taskName),
@@ -241,9 +341,18 @@ class _EditWorkPageState extends State<EditWorkPage> {
           supportingStaffIds: supportingStaffIds,
           remarks: remarkList,
           isExisting: true,
+          existingAttachmentItems: sessionItems,
+          newFiles: [],
         );
       }).toList();
     } else {
+      final List<ExistingAttachmentItem> rootItems = [];
+      mergeAttachmentItems(
+        rootItems,
+        work.attachments,
+        work.attachmentIds,
+        work.attachmentFileIds,
+      );
       tasks = [
         EditTaskForm(
           controller: TextEditingController(text: work.taskName),
@@ -259,6 +368,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
           supportingStaffIds: [],
           remarks: [TextEditingController()],
           isExisting: false,
+          existingAttachmentItems: rootItems,
+          newFiles: [],
         )
       ];
     }
@@ -689,6 +800,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
           'assignedStaffId': task.assignedStaffId,
           'supportingStaffIds': task.supportingStaffIds,
           'remarks': task.remarksControllers.map((c) => c.text).toList(),
+          'existingAttachments': task.existingAttachments.toList(),
+          'deleteAttachmentIds': task.deleteAttachmentIds.toList(),
+          'deleteAttachmentFileIds': task.deleteAttachmentFileIds.toList(),
+          'newFiles': task.newFiles.map((f) => f.path).toList(),
         };
       }).toList(),
       'whatsappNotification': whatsappNotification,
@@ -815,6 +930,16 @@ class _EditWorkPageState extends State<EditWorkPage> {
         ),
       );
 
+      final List<File> allNewFiles = [];
+      final Map<int, List<File>> taskFilesMap = {};
+
+      for (int i = 0; i < tasks.length; i++) {
+        if (tasks[i].newFiles.isNotEmpty) {
+          allNewFiles.addAll(tasks[i].newFiles);
+          taskFilesMap[i] = tasks[i].newFiles;
+        }
+      }
+
       final workData = {
         'id': widget.assignedWork.id,
         'work_id': widget.assignedWork.id,
@@ -830,9 +955,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
         'site_lift_no': _isOfficeWork ? null : selectedSiteLiftNo,
         'site_lift_name': _isOfficeWork ? null : selectedSiteLiftNo,
         'stage_id': _isOfficeWork ? null : selectedStageId,
-        'stage_name': _isOfficeWork
-            ? null
-            : (selectedStageName ?? titleController.text),
+        'stage_name':
+            _isOfficeWork ? null : (selectedStageName ?? titleController.text),
         'supporting_staff_ids':
             tasks.expand((t) => t.supportingStaffIds).toSet().join(','),
         'title': titleController.text.isNotEmpty
@@ -846,6 +970,9 @@ class _EditWorkPageState extends State<EditWorkPage> {
         'task_type': taskType,
         'category': category,
         'participant_ids': participantIds.join(','),
+        if (allNewFiles.isNotEmpty) 'files': allNewFiles,
+        if (allNewFiles.isNotEmpty) 'file': allNewFiles.first,
+        if (taskFilesMap.isNotEmpty) 'task_files': taskFilesMap,
         'notification': {
           'whatsapp': whatsappNotification,
           'push': pushNotification,
@@ -882,6 +1009,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                 .map((c) => c.text)
                 .where((t) => t.isNotEmpty)
                 .join(','),
+            'delete_attachment_file': task.deleteAttachmentFileIds,
+            'delete_attachment_id': task.deleteAttachmentIds,
           };
         }).toList(),
       };
@@ -1060,6 +1189,659 @@ class _EditWorkPageState extends State<EditWorkPage> {
     );
   }
 
+  bool _isImageFile(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.png') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.bmp') ||
+        lower.endsWith('.heic');
+  }
+
+  bool _isPdfFile(String path) {
+    final lower = path.toLowerCase();
+    return lower.endsWith('.pdf');
+  }
+
+  bool _isImageUrl(String url) {
+    final clean = url.split('?').first.toLowerCase();
+    return clean.endsWith('.jpg') ||
+        clean.endsWith('.jpeg') ||
+        clean.endsWith('.png') ||
+        clean.endsWith('.webp') ||
+        clean.endsWith('.gif') ||
+        clean.endsWith('.bmp');
+  }
+
+  bool _isPdfUrl(String url) {
+    final clean = url.split('?').first.toLowerCase();
+    return clean.endsWith('.pdf');
+  }
+
+  String _getFileNameFromUrl(String url) {
+    try {
+      final clean = url.split('?').first;
+      final name = clean.split('/').last;
+      return name.isNotEmpty ? Uri.decodeComponent(name) : 'Attachment';
+    } catch (_) {
+      return 'Attachment';
+    }
+  }
+
+  String _extractDriveFileId(ExistingAttachmentItem item) {
+    final directId = item.attachmentFileId.trim();
+    if (directId.isNotEmpty && directId.toLowerCase() != 'null') {
+      return directId;
+    }
+    final url = item.url.trim();
+    if (url.isEmpty) return '';
+
+    final fileDMatch = RegExp(r'/file/d/([a-zA-Z0-9_-]+)').firstMatch(url);
+    if (fileDMatch != null) return fileDMatch.group(1) ?? '';
+
+    final dMatch = RegExp(r'/d/([a-zA-Z0-9_-]+)').firstMatch(url);
+    if (dMatch != null) return dMatch.group(1) ?? '';
+
+    final queryIdMatch = RegExp(r'[?&]id=([a-zA-Z0-9_-]+)').firstMatch(url);
+    if (queryIdMatch != null) return queryIdMatch.group(1) ?? '';
+
+    if (!url.contains('/') && !url.contains('.') && url.length >= 15) {
+      return url;
+    }
+    return '';
+  }
+
+  List<String> _getAttachmentImageUrls(
+    ExistingAttachmentItem item, {
+    bool highRes = false,
+  }) {
+    final List<String> urls = [];
+    final driveId = _extractDriveFileId(item);
+    final rawUrl = item.url.trim();
+    final size = highRes ? 'w1600' : 'w400';
+
+    if (driveId.isNotEmpty) {
+      urls.add('https://drive.google.com/thumbnail?id=$driveId&sz=$size');
+      urls.add('https://lh3.googleusercontent.com/d/$driveId=$size');
+      urls.add('https://drive.google.com/uc?export=view&id=$driveId');
+    }
+
+    if (rawUrl.isNotEmpty &&
+        rawUrl.startsWith('http') &&
+        !rawUrl.contains('/view') &&
+        !rawUrl.contains('/preview')) {
+      if (!urls.contains(rawUrl)) {
+        urls.add(rawUrl);
+      }
+    } else if (rawUrl.isNotEmpty && urls.isEmpty) {
+      urls.add(rawUrl);
+    }
+
+    return urls;
+  }
+
+  bool _isImageAttachment(ExistingAttachmentItem item) {
+    if (_isPdfUrl(item.url)) return false;
+    if (_isImageUrl(item.url)) return true;
+    if (_extractDriveFileId(item).isNotEmpty) return true;
+    return false;
+  }
+
+  Widget _buildNetworkImageWithFallbacks({
+    required List<String> urls,
+    int index = 0,
+    BoxFit fit = BoxFit.cover,
+    required Widget fallback,
+  }) {
+    if (index >= urls.length) return fallback;
+    return Image.network(
+      urls[index],
+      fit: fit,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return const Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      },
+      errorBuilder: (_, __, ___) {
+        if (index + 1 < urls.length) {
+          return _buildNetworkImageWithFallbacks(
+            urls: urls,
+            index: index + 1,
+            fit: fit,
+            fallback: fallback,
+          );
+        }
+        return fallback;
+      },
+    );
+  }
+
+  void _showImagePreviewDialog({
+    File? file,
+    ExistingAttachmentItem? attachmentItem,
+    String? url,
+  }) {
+    final List<String> candidateUrls = attachmentItem != null
+        ? _getAttachmentImageUrls(attachmentItem, highRes: true)
+        : (url != null && url.trim().isNotEmpty
+            ? _getAttachmentImageUrls(
+                ExistingAttachmentItem(url: url.trim()),
+                highRes: true,
+              )
+            : const []);
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        child: SafeArea(
+          child: SizedBox.expand(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: InteractiveViewer(
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: file != null
+                          ? Image.file(file, fit: BoxFit.contain)
+                          : (candidateUrls.isNotEmpty
+                              ? _buildNetworkImageWithFallbacks(
+                                  urls: candidateUrls,
+                                  fit: BoxFit.contain,
+                                  fallback: const Center(
+                                    child: Icon(
+                                      Icons.broken_image_outlined,
+                                      color: Colors.white70,
+                                      size: 56,
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox.shrink()),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: IconButton(
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.black54,
+                      padding: const EdgeInsets.all(10),
+                    ),
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openAttachmentItem(ExistingAttachmentItem item) async {
+    if (_isImageAttachment(item)) {
+      _showImagePreviewDialog(attachmentItem: item);
+      return;
+    }
+    final trimmed = item.url.trim();
+    if (trimmed.isEmpty) return;
+    try {
+      final uri = Uri.parse(trimmed);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(uri);
+      }
+    } catch (e) {
+      log('Could not open attachment: $e');
+    }
+  }
+
+  Future<void> _pickFilesForTask(int taskIndex) async {
+    try {
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(allowMultiple: true);
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          for (final picked in result.files) {
+            if (picked.path != null) {
+              final newFile = File(picked.path!);
+              if (!tasks[taskIndex]
+                  .newFiles
+                  .any((f) => f.path == newFile.path)) {
+                tasks[taskIndex].newFiles.add(newFile);
+              }
+            }
+          }
+          _checkForChanges();
+        });
+      }
+    } catch (e) {
+      log('Error picking files: $e');
+    }
+  }
+
+  Future<void> _capturePhotoFromCameraForTask(int taskIndex) async {
+    try {
+      final XFile? photo =
+          await ImagePicker().pickImage(source: ImageSource.camera);
+      if (photo != null) {
+        setState(() {
+          final file = File(photo.path);
+          if (!tasks[taskIndex].newFiles.any((f) => f.path == file.path)) {
+            tasks[taskIndex].newFiles.add(file);
+          }
+          _checkForChanges();
+        });
+      }
+    } catch (e) {
+      log('Error capturing photo: $e');
+    }
+  }
+
+  Widget _buildFileUploadFieldForTask(int taskIndex) {
+    final task = tasks[taskIndex];
+    final fileCount = task.newFiles.length + task.existingAttachments.length;
+    String displayText = 'No file chosen';
+    if (task.newFiles.isNotEmpty && task.existingAttachments.isNotEmpty) {
+      displayText =
+          '${task.existingAttachments.length} uploaded, ${task.newFiles.length} new selected';
+    } else if (task.newFiles.isNotEmpty) {
+      displayText =
+          '${task.newFiles.length} file${task.newFiles.length > 1 ? 's' : ''} selected';
+    } else if (task.existingAttachments.isNotEmpty) {
+      displayText =
+          '${task.existingAttachments.length} file${task.existingAttachments.length > 1 ? 's' : ''} uploaded';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.attach_file_rounded,
+              size: 16,
+              color: Colors.black87,
+            ),
+            const SizedBox(width: 4),
+            const Text(
+              'File Upload',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '(Optional)',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey.shade500,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+            color: Colors.white,
+          ),
+          child: Row(
+            children: [
+              // Gallery / File Picker button
+              InkWell(
+                onTap: () => _pickFilesForTask(taskIndex),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(7),
+                  bottomLeft: Radius.circular(7),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(7),
+                      bottomLeft: Radius.circular(7),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.photo_library_outlined,
+                        size: 16,
+                        color: Colors.grey.shade800,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Choose Files',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // File text label
+              Expanded(
+                child: InkWell(
+                  onTap: () => _pickFilesForTask(taskIndex),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      displayText,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: fileCount > 0
+                            ? Colors.black87
+                            : Colors.grey.shade500,
+                        fontWeight:
+                            fileCount > 0 ? FontWeight.w500 : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Divider
+              Container(
+                height: 44,
+                width: 1,
+                color: Colors.grey.shade300,
+              ),
+              // Camera button
+              Tooltip(
+                message: 'Capture Photo',
+                child: InkWell(
+                  onTap: () => _capturePhotoFromCameraForTask(taskIndex),
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(7),
+                    bottomRight: Radius.circular(7),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(7),
+                        bottomRight: Radius.circular(7),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt_outlined,
+                      size: 20,
+                      color: Color(0xFF2a86c9),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (task.existingAttachments.isNotEmpty ||
+            task.newFiles.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _buildTaskFilesPreview(taskIndex),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTaskFilesPreview(int taskIndex) {
+    final task = tasks[taskIndex];
+    final totalCount = task.existingAttachments.length + task.newFiles.length;
+    if (totalCount == 0) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 84,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: totalCount,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index < task.existingAttachmentItems.length) {
+            // Existing attachment
+            final item = task.existingAttachmentItems[index];
+            final url = item.url;
+            final fileName = _getFileNameFromUrl(url);
+            final isImg = _isImageAttachment(item);
+            final isPdf = _isPdfUrl(url);
+            final candidateUrls = _getAttachmentImageUrls(item);
+
+            return Stack(
+              children: [
+                GestureDetector(
+                  onTap: () => _openAttachmentItem(item),
+                  child: Container(
+                    width: isImg ? 84 : 130,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: isImg && candidateUrls.isNotEmpty
+                        ? _buildNetworkImageWithFallbacks(
+                            urls: candidateUrls,
+                            fit: BoxFit.cover,
+                            fallback: Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.grey.shade500,
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isPdf
+                                      ? Icons.picture_as_pdf
+                                      : Icons.insert_drive_file_outlined,
+                                  color:
+                                      isPdf ? Colors.red : Colors.blue.shade700,
+                                  size: 26,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  fileName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 4,
+                  left: 4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade700.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Uploaded',
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        final removed =
+                            task.existingAttachmentItems.removeAt(index);
+                        final attId = removed.attachmentId.trim();
+                        if (attId.isNotEmpty &&
+                            !task.deleteAttachmentIds.contains(attId)) {
+                          task.deleteAttachmentIds.add(attId);
+                        }
+                        final fileId = removed.attachmentFileId.trim();
+                        if (fileId.isNotEmpty &&
+                            !task.deleteAttachmentFileIds.contains(fileId)) {
+                          task.deleteAttachmentFileIds.add(fileId);
+                        }
+                        _checkForChanges();
+                      });
+                    },
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            // New local file
+            final fileIndex = index - task.existingAttachments.length;
+            final file = task.newFiles[fileIndex];
+            final fileName = file.path.split(Platform.pathSeparator).last;
+            final isImg = _isImageFile(file.path);
+            final isPdf = _isPdfFile(file.path);
+
+            return Stack(
+              children: [
+                GestureDetector(
+                  onTap:
+                      isImg ? () => _showImagePreviewDialog(file: file) : null,
+                  child: Container(
+                    width: isImg ? 84 : 130,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: isImg
+                        ? Image.file(
+                            file,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Icon(
+                              Icons.broken_image_outlined,
+                              color: Colors.grey.shade500,
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.all(6.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  isPdf
+                                      ? Icons.picture_as_pdf
+                                      : Icons.insert_drive_file_outlined,
+                                  color:
+                                      isPdf ? Colors.red : Colors.blue.shade700,
+                                  size: 26,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  fileName,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        task.newFiles.removeAt(fileIndex);
+                        _checkForChanges();
+                      });
+                    },
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -1223,285 +2005,33 @@ class _EditWorkPageState extends State<EditWorkPage> {
                     if (!_isOfficeWork)
                       _buildSectionCard(
                         title: 'Work Details',
-                      icon: Icons.assignment_outlined,
-                      children: [
-                        // Work Type *
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            RichText(
-                              text: const TextSpan(
-                                text: 'Work Type ',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                        icon: Icons.assignment_outlined,
+                        children: [
+                          // Work Type *
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RichText(
+                                text: const TextSpan(
+                                  text: 'Work Type ',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: '*',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
                                 ),
-                                children: [
-                                  TextSpan(
-                                    text: '*',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ],
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              height: 48,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                                color: Colors.white,
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      _getWorkTypeDisplay(selectedWorkType),
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: (selectedWorkType != null &&
-                                                selectedWorkType!.isNotEmpty)
-                                            ? Colors.grey[800]
-                                            : Colors.grey[500],
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const Icon(Icons.keyboard_arrow_down,
-                                      color: Colors.grey, size: 18),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Row 1: Project *, Unit No, Site Lift No
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Project *
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  RichText(
-                                    text: const TextSpan(
-                                      text: 'Project ',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black87,
-                                      ),
-                                      children: [
-                                        TextSpan(
-                                          text: '*',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  InkWell(
-                                    onTap: null,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey.shade300),
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.white,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              selectedProjectController
-                                                      .text.isEmpty
-                                                  ? 'Select Project'
-                                                  : selectedProjectController
-                                                      .text,
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: selectedProjectController
-                                                        .text.isEmpty
-                                                    ? Colors.grey[500]
-                                                    : Colors.grey[800],
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const Icon(Icons.keyboard_arrow_down,
-                                              color: Colors.grey, size: 18),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-
-                            // Unit No
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Unit No',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  InkWell(
-                                    onTap: null,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey.shade300),
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.white,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              selectedUnitNo ??
-                                                  'Select Unit No',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: selectedUnitNo != null
-                                                    ? Colors.grey[800]
-                                                    : Colors.grey[500],
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          isLoadingUnits
-                                              ? const SizedBox(
-                                                  width: 14,
-                                                  height: 14,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                          strokeWidth: 2),
-                                                )
-                                              : const Icon(
-                                                  Icons.keyboard_arrow_down,
-                                                  color: Colors.grey,
-                                                  size: 18),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-
-                            // Site Lift No
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Site Lift No',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  InkWell(
-                                    onTap: null,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 12),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                            color: Colors.grey.shade300),
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.white,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              (selectedSiteLiftNo != null && selectedSiteLiftNo!.isNotEmpty) ? selectedSiteLiftNo! : 'Select Site Lift No',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                color: (selectedSiteLiftNo != null && selectedSiteLiftNo!.isNotEmpty)
-                                                    ? Colors.grey[800]
-                                                    : Colors.grey[500],
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          isLoadingSiteLifts
-                                              ? const SizedBox(
-                                                  width: 14,
-                                                  height: 14,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                          strokeWidth: 2),
-                                                )
-                                              : const Icon(
-                                                  Icons.keyboard_arrow_down,
-                                                  color: Colors.grey,
-                                                  size: 18),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Row 2: Stages *
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            RichText(
-                              text: const TextSpan(
-                                text: 'Stages ',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: '*',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            InkWell(
-                              onTap: () async {
-                                await _showStageSelectionDialog(context);
-                              },
-                              child: Container(
-                                height: 44,
+                              const SizedBox(height: 6),
+                              Container(
+                                height: 48,
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
-                                alignment: Alignment.centerLeft,
                                 decoration: BoxDecoration(
                                   border:
                                       Border.all(color: Colors.grey.shade300),
@@ -1512,15 +2042,11 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        selectedStageName ??
-                                            (titleController.text.isNotEmpty
-                                                ? titleController.text
-                                                : 'Select Stage'),
+                                        _getWorkTypeDisplay(selectedWorkType),
                                         style: TextStyle(
                                           fontSize: 13,
-                                          color: (selectedStageName != null ||
-                                                  titleController
-                                                      .text.isNotEmpty)
+                                          color: (selectedWorkType != null &&
+                                                  selectedWorkType!.isNotEmpty)
                                               ? Colors.grey[800]
                                               : Colors.grey[500],
                                         ),
@@ -1528,23 +2054,295 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    isLoadingStages
-                                        ? const SizedBox(
-                                            width: 14,
-                                            height: 14,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2),
-                                          )
-                                        : const Icon(Icons.keyboard_arrow_down,
-                                            color: Colors.grey, size: 18),
+                                    const Icon(Icons.keyboard_arrow_down,
+                                        color: Colors.grey, size: 18),
                                   ],
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Row 1: Project *, Unit No, Site Lift No
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Project *
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RichText(
+                                      text: const TextSpan(
+                                        text: 'Project ',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: '*',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    InkWell(
+                                      onTap: null,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color: Colors.white,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                selectedProjectController
+                                                        .text.isEmpty
+                                                    ? 'Select Project'
+                                                    : selectedProjectController
+                                                        .text,
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color:
+                                                      selectedProjectController
+                                                              .text.isEmpty
+                                                          ? Colors.grey[500]
+                                                          : Colors.grey[800],
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const Icon(
+                                                Icons.keyboard_arrow_down,
+                                                color: Colors.grey,
+                                                size: 18),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Unit No
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Unit No',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    InkWell(
+                                      onTap: null,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color: Colors.white,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                selectedUnitNo ??
+                                                    'Select Unit No',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: selectedUnitNo != null
+                                                      ? Colors.grey[800]
+                                                      : Colors.grey[500],
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            isLoadingUnits
+                                                ? const SizedBox(
+                                                    width: 14,
+                                                    height: 14,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 2),
+                                                  )
+                                                : const Icon(
+                                                    Icons.keyboard_arrow_down,
+                                                    color: Colors.grey,
+                                                    size: 18),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              // Site Lift No
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Site Lift No',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    InkWell(
+                                      onTap: null,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Colors.grey.shade300),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color: Colors.white,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                (selectedSiteLiftNo != null &&
+                                                        selectedSiteLiftNo!
+                                                            .isNotEmpty)
+                                                    ? selectedSiteLiftNo!
+                                                    : 'Select Site Lift No',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  color: (selectedSiteLiftNo !=
+                                                              null &&
+                                                          selectedSiteLiftNo!
+                                                              .isNotEmpty)
+                                                      ? Colors.grey[800]
+                                                      : Colors.grey[500],
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            isLoadingSiteLifts
+                                                ? const SizedBox(
+                                                    width: 14,
+                                                    height: 14,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 2),
+                                                  )
+                                                : const Icon(
+                                                    Icons.keyboard_arrow_down,
+                                                    color: Colors.grey,
+                                                    size: 18),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Row 2: Stages *
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RichText(
+                                text: const TextSpan(
+                                  text: 'Stages ',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text: '*',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                onTap: () async {
+                                  await _showStageSelectionDialog(context);
+                                },
+                                child: Container(
+                                  height: 44,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  alignment: Alignment.centerLeft,
+                                  decoration: BoxDecoration(
+                                    border:
+                                        Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.white,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          selectedStageName ??
+                                              (titleController.text.isNotEmpty
+                                                  ? titleController.text
+                                                  : 'Select Stage'),
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: (selectedStageName != null ||
+                                                    titleController
+                                                        .text.isNotEmpty)
+                                                ? Colors.grey[800]
+                                                : Colors.grey[500],
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      isLoadingStages
+                                          ? const SizedBox(
+                                              width: 14,
+                                              height: 14,
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2),
+                                            )
+                                          : const Icon(
+                                              Icons.keyboard_arrow_down,
+                                              color: Colors.grey,
+                                              size: 18),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
 
                     // Card 2: Tasks Section Card
                     _buildSectionCard(
@@ -2069,6 +2867,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                     ),
                                   ],
                                 ),
+                                if (_isOfficeWork) ...[
+                                  const SizedBox(height: 14),
+                                  _buildFileUploadFieldForTask(taskIndex),
+                                ],
                               ],
                             ),
                           );
@@ -2094,6 +2896,8 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                   assignedStaffId: assignedTo,
                                   supportingStaffIds: [],
                                   remarks: [TextEditingController()],
+                                  existingAttachments: [],
+                                  newFiles: [],
                                 ));
                                 _checkForChanges();
                               });
@@ -2607,7 +3411,10 @@ class _EditWorkPageState extends State<EditWorkPage> {
                                         : Colors.grey,
                                     size: 20,
                                   ),
-                                  title: Text(_extractSiteLiftName(item).isNotEmpty ? _extractSiteLiftName(item) : lNo),
+                                  title: Text(
+                                      _extractSiteLiftName(item).isNotEmpty
+                                          ? _extractSiteLiftName(item)
+                                          : lNo),
                                   onTap: () => Navigator.pop(context, item),
                                 );
                               },
